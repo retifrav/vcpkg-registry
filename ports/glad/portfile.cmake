@@ -12,13 +12,14 @@ vcpkg_cmake_configure(
         -DPYTHON_EXECUTABLE=${PYTHON3}
         -DGLAD_API="gl="
         -DGLAD_REPRODUCIBLE=1
+        -DGLAD_INSTALL=1
 )
 
 vcpkg_cmake_install()
 
 # fixing possible problems with imported targets, such as "Policy CMP0111
 # is not set: An imported target missing its location property fails during generation" and so on
-vcpkg_cmake_config_fixup()
+vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
 
 #vcpkg_fixup_pkgconfig()
 
