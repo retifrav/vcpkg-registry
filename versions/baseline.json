@@ -5,6 +5,16 @@
         {
             "baseline": "0.1.36",
             "port-version": 0
+        },
+        "vcpkg-cmake":
+        {
+            "baseline": "2022-08-18",
+            "port-version": 0
+        },
+        "vcpkg-cmake-config":
+        {
+            "baseline": "2022-02-06",
+            "port-version": 0
         }
     }
 }
