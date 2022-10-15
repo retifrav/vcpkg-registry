@@ -5,4 +5,4 @@
 # let packages decide what modules they want to include
 #include("${CMAKE_CURRENT_LIST_DIR}/Installing.cmake")
 
-include("${CMAKE_CURRENT_LIST_DIR}/decovar_vcpkg_cmake_installing.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/decovar_vcpkg_cmake_ololo.cmake")
