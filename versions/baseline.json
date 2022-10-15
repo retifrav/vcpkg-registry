@@ -1,6 +1,11 @@
 {
     "default":
     {
+        "decovar-vcpkg-cmake":
+        {
+            "baseline": "2022-10-15",
+            "port-version": 0
+        },
         "glad":
         {
             "baseline": "0.1.36",
