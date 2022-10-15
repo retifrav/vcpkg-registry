@@ -1,0 +1,16 @@
+{
+    "name": "glfw",
+    "version": "3.3.8",
+    "description": "A multi-platform library for OpenGL/Vulkan/etc, window and input",
+    "homepage": "https://www.glfw.org/",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
