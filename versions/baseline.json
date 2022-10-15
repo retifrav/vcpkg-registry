@@ -1,6 +1,11 @@
 {
     "default":
     {
+        "dear-imgui":
+        {
+            "baseline": "1.88.0",
+            "port-version": 0
+        },
         "decovar-vcpkg-cmake":
         {
             "baseline": "2022-10-15",
