@@ -1,0 +1,10 @@
+{
+    "default":
+    {
+        "glad":
+        {
+            "baseline": "0.1.36",
+            "port-version": 0
+        }
+    }
+}
