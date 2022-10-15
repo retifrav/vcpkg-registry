@@ -3,7 +3,8 @@
     "version": "1.88.0",
     "description": "Bloat-free Graphical User interface for C++ with minimal dependencies",
     "homepage": "https://github.com/ocornut/imgui",
-    "dependencies": [
+    "dependencies":
+    [
         {
             "name": "vcpkg-cmake",
             "host": true
@@ -16,5 +17,16 @@
             "name": "decovar-vcpkg-cmake",
             "host": true
         }
-    ]
+    ],
+    "features":
+    {
+        "backend-glfw":
+        {
+            "description": "Using GLFW as graphics backend",
+            "dependencies":
+            [
+                "glfw"
+            ]
+        }
+    }
 }

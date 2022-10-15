@@ -13,6 +13,12 @@ option(BACKEND_SDL     "SDL backend"               0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+    # you won't get .lib on Windows, as it doesn't export symbols out of the box,
+    # so this needs to be forced
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
+endif()
+
 add_library(${PROJECT_NAME})
 
 set(sources
@@ -54,6 +60,9 @@ if(BACKEND_GLFW)
     list(APPEND public_headers
         ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_glfw.h
     )
+
+    find_package(glfw3 CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
 endif()
 
 if(BACKEND_SDL)
@@ -87,4 +96,7 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
-decovar_vcpkg_cmake_install()
+# list(APPEND CMAKE_MODULE_PATH
+#     "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/decovar-vcpkg-cmake"
+# )
+include("${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/decovar-vcpkg-cmake/Installing.cmake")
