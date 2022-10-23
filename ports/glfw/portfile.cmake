@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:glfw/glfw.git
-    REF 7482de6071d21db77a7236155da44c172a7f6c9e
+    REF 45ce5ddd197d5c58f50fdd3296a5131c894e5527
 )
 
 vcpkg_cmake_configure(
