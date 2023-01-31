@@ -96,7 +96,4 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
-# list(APPEND CMAKE_MODULE_PATH
-#     "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/decovar-vcpkg-cmake"
-# )
-include("${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/decovar-vcpkg-cmake/Installing.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
