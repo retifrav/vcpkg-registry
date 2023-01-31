@@ -18,7 +18,7 @@ install(EXPORT ${PROJECT_NAME}Targets
 # create config file
 configure_package_config_file(
     #${DECOVAR_VCPKG_CMAKE_DIR}/Config.cmake.in
-    ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/decovar-vcpkg-cmake/Config.cmake.in
+    ${VCPKG_INSTALLED_DIR}/${VCPKG_HOST_TRIPLET}/share/decovar-vcpkg-cmake/Config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     INSTALL_DESTINATION share/${PROJECT_NAME}
 )
