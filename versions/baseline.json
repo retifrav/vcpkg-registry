@@ -30,6 +30,11 @@
         {
             "baseline": "2022-02-06",
             "port-version": 0
+        },
+        "xerces-c":
+        {
+            "baseline": "3.2.3",
+            "port-version": 0
         }
     }
 }

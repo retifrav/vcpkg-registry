@@ -1,0 +1,35 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4254f89bb..8c4a81445 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -32,6 +32,10 @@ if (POLICY CMP0067)
+   cmake_policy(SET CMP0067 NEW)
+ endif(POLICY CMP0067)
+ 
++option(ENABLE_DOCS    "Build documentation" 0)
++option(ENABLE_SAMPLES "Build samples"       0)
++option(ENABLE_TESTS   "Build tests"         0)
++
+ # Try C++14, then fall back to C++11 and C++98.  Used for feature tests
+ # for optional features.
+ set(CMAKE_CXX_STANDARD 14)
+@@ -175,10 +179,16 @@ install(
+   COMPONENT "development")
+ 
+ # Process subdirectories
+-add_subdirectory(doc)
++if(ENABLE_DOC)
++    add_subdirectory(doc)
++endif()
+ add_subdirectory(src)
+-add_subdirectory(tests)
+-add_subdirectory(samples)
++if(ENABLE_TESTS)
++    add_subdirectory(tests)
++endif()
++if(ENABLE_SAMPLES)
++    add_subdirectory(samples)
++endif()
+ 
+ # Display configuration summary
+ message(STATUS "")
