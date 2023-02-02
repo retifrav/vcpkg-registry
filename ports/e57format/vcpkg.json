@@ -1,0 +1,29 @@
+{
+    "name": "e57format",
+    "version": "2.3.0",
+    "description": "Library for reading and writing the E57 file format",
+    "homepage": "https://github.com/asmaloney/libE57Format",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "xerces-c",
+            "platform": "!ios"
+        },
+        {
+            "name": "xerces-c",
+            "features":
+            [
+                "icu"
+            ],
+            "platform": "ios"
+        }
+    ]
+}

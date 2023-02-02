@@ -11,6 +11,11 @@
             "baseline": "2022-10-15",
             "port-version": 0
         },
+        "e57format":
+        {
+            "baseline": "2.3.0",
+            "port-version": 0
+        },
         "glad":
         {
             "baseline": "0.1.36",
