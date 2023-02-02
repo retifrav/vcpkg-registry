@@ -1,0 +1,25 @@
+{
+    "name": "icu",
+    "version": "72.1.0",
+    "description": "A mature, widely used set of libraries providing Unicode and globalization support for software applications",
+    "homepage": "https://icu.unicode.org/",
+    "supports": "!uwp",
+    "dependencies":
+    [
+        {
+            "name": "icu",
+            "host": true,
+            "features":
+            [
+                "tools"
+            ]
+        }
+    ],
+    "features":
+    {
+        "tools":
+        {
+            "description": "Build tools"
+        }
+    }
+}
