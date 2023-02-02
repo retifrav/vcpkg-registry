@@ -1,0 +1,32 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 33bc40f41..a7d990924 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -148,6 +148,7 @@ configure_file(
+   ${CMAKE_CURRENT_BINARY_DIR}/doc/style/dtd/entities.ent
+   @ONLY)
+ 
++if(NOT DISABLE_PKG)
+ # Generate pkg-config file
+ set(pkgconfig-dir "${CMAKE_INSTALL_LIBDIR}/pkgconfig" CACHE STRING "pkg-config installation directory (default ${CMAKE_INSTALL_LIBDIR}/pkgconfig)")
+ set(PKGCONFIGDIR "${pkgconfig-dir}")
+@@ -162,12 +163,19 @@ install(
+   FILES ${CMAKE_CURRENT_BINARY_DIR}/xerces-c.pc
+   DESTINATION "${PKGCONFIGDIR}"
+   COMPONENT "development")
++endif()
+ 
+ # Process subdirectories
++if(NOT DISABLE_DOC)
+ add_subdirectory(doc)
++endif()
+ add_subdirectory(src)
++if(NOT DISABLE_TESTS)
+ add_subdirectory(tests)
++endif()
++if(NOT DISABLE_SAMPLES)
+ add_subdirectory(samples)
++endif()
+ 
+ # Display configuration summary
+ message(STATUS "")

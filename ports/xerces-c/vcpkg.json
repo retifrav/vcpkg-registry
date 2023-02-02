@@ -1,6 +1,6 @@
 {
     "name": "xerces-c",
-    "version": "3.2.3",
+    "version": "3.2.4",
     "description": "Validating XML parser",
     "homepage": "https://xerces.apache.org/xerces-c/",
     "dependencies":
@@ -19,6 +19,18 @@
         "network":
         {
             "description": "Enable network support"
+        },
+        "icu":
+        {
+            "description": "Enable ICU support",
+            "dependencies":
+            [
+                "icu"
+            ]
+        },
+        "xmlch-wchar":
+        {
+            "description": "XMLCh type will use wchar_t"
         }
     }
 }

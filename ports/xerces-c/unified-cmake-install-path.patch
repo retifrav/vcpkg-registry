@@ -1,8 +1,8 @@
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 344851fad..52e5c6ac0 100644
+index a168db125..53185d548 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -1310,11 +1310,7 @@ else()
+@@ -1310,11 +1310,12 @@ else()
  endif()
  set_target_properties(xerces-c PROPERTIES FOLDER "Library")
  
@@ -11,6 +11,11 @@ index 344851fad..52e5c6ac0 100644
 -else()
 -  set(xerces_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/XercesC")
 -endif()
++# if(WIN32)
++#   set(xerces_config_dir "cmake")
++# else()
++#   set(xerces_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/XercesC")
++# endif()
 +set(xerces_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/XercesC")
  
  install(TARGETS xerces-c
