@@ -1,12 +1,20 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:glfw/glfw.git
-    REF 45ce5ddd197d5c58f50fdd3296a5131c894e5527
+    REF 7482de6071d21db77a7236155da44c172a7f6c9e
+    PATCHES
+        disable-pkgconfig.patch
+)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        vulkan-static GLFW_VULKAN_STATIC
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
+        ${FEATURE_OPTIONS}
         -DGLFW_BUILD_EXAMPLES=0
         -DGLFW_BUILD_TESTS=0
         -DGLFW_BUILD_DOCS=0

@@ -1,0 +1,15 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 75069161..b3bb69f7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -368,8 +368,8 @@ if (GLFW_INSTALL)
+     install(EXPORT glfwTargets FILE glfw3Targets.cmake
+             EXPORT_LINK_INTERFACE_LIBRARIES
+             DESTINATION "${GLFW_CONFIG_PATH}")
+-    install(FILES "${GLFW_BINARY_DIR}/src/glfw3.pc"
+-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
++    # install(FILES "${GLFW_BINARY_DIR}/src/glfw3.pc"
++    #         DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+ 
+     # Only generate this target if no higher-level project already has
+     if (NOT TARGET uninstall)
