@@ -1,5 +1,3 @@
-include_guard(GLOBAL)
-
 # doesn't do anything, if you are not using find_package(), which you cannot use
 # when all the CMake helpers have the same file name (vcpkg-port-config.cmake)
 #set(DECOVAR_VCPKG_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR})
