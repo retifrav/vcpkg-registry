@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("DearImGui"
-    VERSION 1.88.0
+    VERSION 1.89.3
 )
 
 option(BACKEND_OPENGL2 "OpenGL 2 graphics backend" 0)
 option(BACKEND_OPENGL3 "OpenGL 3 graphics backend" 1)
+option(BACKEND_VULKAN  "Vulkan graphics backend"   0)
 option(BACKEND_GLFW    "GLFW backend"              1)
 #option(BACKEND_SDL     "SDL backend"               0)
 # ...and so on
@@ -72,6 +73,25 @@ if(BACKEND_OPENGL3)
     )
     list(APPEND public_headers
         ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_opengl3.h
+    )
+endif()
+
+if(BACKEND_VULKAN)
+    find_package(Vulkan REQUIRED)
+    target_include_directories(${PROJECT_NAME}
+        PRIVATE
+            ${Vulkan_INCLUDE_DIRS}
+    )
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+            ${Vulkan_LIBRARIES}
+    )
+
+    list(APPEND sources
+        ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+    )
+    list(APPEND public_headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_vulkan.h
     )
 endif()
 

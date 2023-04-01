@@ -1,6 +1,6 @@
 {
     "name": "dear-imgui",
-    "version": "1.88.0",
+    "version": "1.89.3",
     "description": "Bloat-free Graphical User interface for C++ with minimal dependencies",
     "homepage": "https://github.com/ocornut/imgui",
     "dependencies":
@@ -20,12 +20,26 @@
     ],
     "features":
     {
-        "backend-glfw":
+        "backend-glfw-opengl":
         {
-            "description": "Using GLFW as graphics backend",
+            "description": "Using GLFW with OpenGL",
             "dependencies":
             [
                 "glfw"
+            ]
+        },
+        "backend-glfw-vulkan":
+        {
+            "description": "Using GLFW with Vulkan",
+            "dependencies":
+            [
+                {
+                    "name": "glfw",
+                    "features":
+                    [
+                        "vulkan-static"
+                    ]
+                }
             ]
         }
     }
