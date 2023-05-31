@@ -31,6 +31,11 @@
             "baseline": "72.1.0",
             "port-version": 0
         },
+        "lyra":
+        {
+            "baseline": "1.6.1",
+            "port-version": 0
+        },
         "sqlite":
         {
             "baseline": "3.41.0",

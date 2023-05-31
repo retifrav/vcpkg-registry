@@ -1,0 +1,52 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 48a55ae..5915ffa 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -30,25 +30,26 @@ project( lyra )
+ # Simple INTERFACE, and header only, library target.
+ add_library( lyra INTERFACE )
+ 
++include(GNUInstallDirs)
++
+ # The only usage requirement is include dir for consumers.
+ target_include_directories(
+   lyra
+   INTERFACE
+   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+-  $<INSTALL_INTERFACE:include>
++  $<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}>
+   )
+ 
+ # Add an alias to public name.
+ add_library( bfg::lyra ALIAS lyra )
+ 
+ ## Installation Code
+-include(GNUInstallDirs)
+ 
+ include(CMakePackageConfigHelpers)
+ configure_package_config_file(
+   ${PROJECT_SOURCE_DIR}/data/cmake/lyraConfig.cmake.in
+   ${PROJECT_BINARY_DIR}/lyraConfig.cmake
+-  INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/lyra
++  INSTALL_DESTINATION share/${PROJECT_NAME}
+   )
+ 
+ install(
+@@ -60,7 +61,7 @@ install(
+   EXPORT lyraTarget
+   FILE  lyraTarget.cmake
+   NAMESPACE bfg::
+-  DESTINATION ${CMAKE_INSTALL_DATADIR}/lyra/cmake
++  DESTINATION share/${PROJECT_NAME}
+   )
+ 
+ install(
+@@ -71,7 +72,7 @@ install(
+ install(
+   FILES
+   ${PROJECT_BINARY_DIR}/lyraConfig.cmake
+-  DESTINATION ${CMAKE_INSTALL_DATADIR}/lyra/cmake/
++  DESTINATION share/${PROJECT_NAME}
+   )
+ 
+ 
