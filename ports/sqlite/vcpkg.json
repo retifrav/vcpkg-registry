@@ -1,0 +1,90 @@
+{
+    "name": "sqlite",
+    "version": "3.41.0",
+    "description": "Small, fast, self-contained, high-reliability, full-featured, SQL database engine",
+    "homepage": "https://sqlite.org/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ],
+    "default-features":
+    [
+        "recommended-options",
+        "math",
+        "omit-decltype"
+    ],
+    "features":
+    {
+        "recommended-options":
+        {
+            "description": "Build with SQLite3 recommended options"
+        },
+        "column-metadata":
+        {
+            "description": "Enable column metadata"
+        },
+        "dbstat-vtab":
+        {
+            "description": "Enable dbstat virtual table"
+        },
+        "fts3":
+        {
+            "description": "Enable full text searches version 3"
+        },
+        "fts4":
+        {
+            "description": "Enable full text searches version 3 and 4"
+        },
+        "fts5":
+        {
+            "description": "Enable full text searches version 5"
+        },
+        "geopoly":
+        {
+            "description": "Enable Geopoly extension"
+        },
+        "icu":
+        {
+            "description": "Enable international components for Unicode"
+        },
+        "math":
+        {
+            "description": "Enable built-in SQL math functions"
+        },
+        "rbu":
+        {
+            "description": "Enable resumable bulk update extension"
+        },
+        "rtree":
+        {
+            "description": "Enable R*TRee index extension"
+        },
+        "stat4":
+        {
+            "description": "Enable query planner under certain situations"
+        },
+        "omit-decltype":
+        {
+            "description": "Disable declared type of columns"
+        },
+        "omit-json":
+        {
+            "description": "Disable JSON SQL functions"
+        },
+        "use-uri":
+        {
+            "description": "Enable default URI filename processing"
+        },
+        "tool":
+        {
+            "description": "Build sqlite CLI tool"
+        }
+    }
+}
