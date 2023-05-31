@@ -1,0 +1,17 @@
+{
+    "name": "lzma",
+    "version": "22.1.0",
+    "description": "LZMA provides a high compression ratio and fast decompression",
+    "homepage": "https://7-zip.org/sdk.html",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
