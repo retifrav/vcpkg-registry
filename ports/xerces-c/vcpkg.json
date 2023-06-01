@@ -20,9 +20,17 @@
         {
             "description": "Enable network support"
         },
-        "icu":
+        "transcoder-iconv":
         {
-            "description": "Enable ICU support",
+            "description": "Transcoder will be using iconv",
+            "dependencies":
+            [
+                "iconv"
+            ]
+        },
+        "transcoder-icu":
+        {
+            "description": "Transcoder will be using ICU",
             "dependencies":
             [
                 "icu"

@@ -1,0 +1,147 @@
+diff --git a/cmake/XercesFileMgrSelection.cmake b/cmake/XercesFileMgrSelection.cmake
+index 59037da3d..778a4bf23 100644
+--- a/cmake/XercesFileMgrSelection.cmake
++++ b/cmake/XercesFileMgrSelection.cmake
+@@ -39,4 +39,9 @@ if(file-manager STREQUAL "POSIX")
+ endif()
+ if(file-manager STREQUAL "windows")
+   set(XERCES_USE_FILEMGR_WINDOWS 1)
++  # for UWP
++  add_compile_options(/wd4996)
++  if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
++      set(XERCES_WINDOWS_UWP 1)
++  endif()
+ endif()
+diff --git a/config.h.cmake.in b/config.h.cmake.in
+index 4972d29fd..297be900d 100644
+--- a/config.h.cmake.in
++++ b/config.h.cmake.in
+@@ -509,3 +509,5 @@ code using `volatile' can become incorrect without. Disable with care. */
+ #if !@HAVE_VOLATILE@
+ #define volatile
+ #endif
++
++#cmakedefine XERCES_WINDOWS_UWP 1
+diff --git a/src/xercesc/util/FileManagers/WindowsFileMgr.cpp b/src/xercesc/util/FileManagers/WindowsFileMgr.cpp
+index fdc67c70e..1def5d1b1 100644
+--- a/src/xercesc/util/FileManagers/WindowsFileMgr.cpp
++++ b/src/xercesc/util/FileManagers/WindowsFileMgr.cpp
+@@ -19,6 +19,7 @@
+  * $Id$
+  */
+ 
++#include <config.h>
+ #include <windows.h>
+ 
+ #include <xercesc/util/FileManagers/WindowsFileMgr.hpp>
+@@ -41,10 +42,14 @@ static bool isBackSlash(XMLCh c) {
+ WindowsFileMgr::WindowsFileMgr()
+ {
+     // Figure out if we are on NT and save that flag for later use
++#ifdef XERCES_WINDOWS_UWP
++    _onNT = true;
++#else
+     OSVERSIONINFO   OSVer;
+     OSVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+     ::GetVersionEx(&OSVer);
+     _onNT = (OSVer.dwPlatformId == VER_PLATFORM_WIN32_NT);
++#endif
+ }
+ 
+ 
+@@ -138,6 +143,23 @@ WindowsFileMgr::fileOpen(const XMLCh* fileName, bool toWrite, MemoryManager* con
+         nameToOpen = tmpUName;
+     }
+     FileHandle retVal = 0;
++#ifdef XERCES_WINDOWS_UWP
++    _CREATEFILE2_EXTENDED_PARAMETERS parameters;
++    parameters.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
++    parameters.dwFileAttributes=FILE_ATTRIBUTE_NORMAL;
++    parameters.dwFileFlags = (toWrite?0:FILE_FLAG_SEQUENTIAL_SCAN);
++    parameters.dwSecurityQosFlags=SECURITY_ANONYMOUS;
++    parameters.lpSecurityAttributes=0;
++    parameters.hTemplateFile=NULL;
++
++    retVal = ::CreateFile2(
++        (LPCWSTR) nameToOpen
++        , toWrite?GENERIC_WRITE:GENERIC_READ
++        , FILE_SHARE_READ
++        , toWrite?CREATE_ALWAYS:OPEN_EXISTING
++        , &parameters
++    );
++#else
+     if (_onNT)
+     {
+         retVal = ::CreateFileW
+@@ -170,6 +192,7 @@ WindowsFileMgr::fileOpen(const XMLCh* fileName, bool toWrite, MemoryManager* con
+             );
+         manager->deallocate(tmpName);//delete [] tmpName;
+     }
++#endif
+ 
+     if (tmpUName)
+         manager->deallocate(tmpUName);//delete [] tmpUName;
+@@ -267,8 +290,17 @@ WindowsFileMgr::fileSize(FileHandle f, MemoryManager* const manager)
+     if (!f)
+ 		ThrowXMLwithMemMgr(XMLPlatformUtilsException, XMLExcepts::CPtr_PointerIsZero, manager);
+ 	
+-    DWORD high=0;
+-    DWORD low=::GetFileSize(f, &high);
++    DWORD high=0, low=0;
++
++#ifdef XERCES_WINDOWS_UWP
++    FILE_STANDARD_INFO finfo = {0};
++    if(GetFileInformationByHandleEx (f, FileStandardInfo, &finfo, sizeof(finfo)) == 0)
++        low = INVALID_FILE_SIZE;
++    else
++        high = finfo.EndOfFile.QuadPart;
++#else
++    low=::GetFileSize(f, &high);
++#endif
+     if(low==INVALID_FILE_SIZE && GetLastError()!=NO_ERROR)
+         // TODO: find a better exception
+ 		ThrowXMLwithMemMgr(XMLPlatformUtilsException, XMLExcepts::File_CouldNotGetCurPos, manager);
+@@ -366,29 +398,31 @@ WindowsFileMgr::getCurrentDirectory(MemoryManager* const manager)
+     //  We have to do it manually since we are only built in ASCII mode from
+     //  the standpoint of the APIs.
+     //
+-    if (_onNT)
++#ifndef XERCES_WINDOWS_UWP
++    if (!_onNT)
+     {
+         // Use a local buffer that is big enough for the largest legal path
+-        const unsigned int bufSize = 1024;
+-        XMLCh tmpPath[bufSize + 1];
++        const unsigned int bufSize = 511;
++        char tmpPath[511 + 1];
+ 
+-        if (!::GetCurrentDirectoryW(bufSize, (LPWSTR)tmpPath))
++        if (!::GetCurrentDirectoryA(bufSize, tmpPath))
+             return 0;
+ 
+-        // Return a copy of the path
+-        return XMLString::replicate(tmpPath, manager);
++        // Return a transcoded copy of the path
++        return XMLString::transcode(tmpPath, manager);
+     }
+-     else
++    else
++#endif
+     {
+         // Use a local buffer that is big enough for the largest legal path
+-        const unsigned int bufSize = 511;
+-        char tmpPath[511 + 1];
++        const unsigned int bufSize = 1024;
++        XMLCh tmpPath[bufSize + 1];
+ 
+-        if (!::GetCurrentDirectoryA(bufSize, tmpPath))
++        if (!::GetCurrentDirectoryW(bufSize, (LPWSTR)tmpPath))
+             return 0;
+ 
+-        // Return a transcoded copy of the path
+-        return XMLString::transcode(tmpPath, manager);
++        // Return a copy of the path
++        return XMLString::replicate(tmpPath, manager);
+     }
+ }
+ 
