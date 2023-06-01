@@ -197,7 +197,7 @@ if(DUMMY_DLLS)
 endif()
 
 #vcpkg_copy_pdbs()
-#vcpkg_fixup_pkgconfig()
+vcpkg_fixup_pkgconfig()
 
 vcpkg_replace_string(
     "${CURRENT_PACKAGES_DIR}/tools/icu/bin/icu-config"
