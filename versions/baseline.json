@@ -1,6 +1,11 @@
 {
     "default":
     {
+        "curl":
+        {
+            "baseline": "7.84.0",
+            "port-version": 0
+        },
         "dearimgui":
         {
             "baseline": "1.88.0",

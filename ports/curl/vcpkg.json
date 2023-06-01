@@ -1,0 +1,79 @@
+{
+    "name": "curl",
+    "version": "7.84.0",
+    "description": "Library for transferring data with URL syntax",
+    "homepage": "https://curl.se/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ],
+    "default-features":
+    [
+        "ssl"
+    ],
+    "features":
+    {
+        "schannel":
+        {
+            "description": "Enable Secure Channel security support provider (SSL support)",
+            "supports": "windows & !uwp",
+            "dependencies":
+            [
+                {
+                    "name": "curl",
+                    "default-features": false,
+                    "features":
+                    [
+                        "sspi"
+                    ]
+                }
+            ]
+        },
+        "sectransp":
+        {
+            "description": "Enable sectransp (SSL support)",
+            "supports": "osx | ios"
+        },
+        "sspi":
+        {
+            "description": "Enable Security Support Provider Interface (SSL support)",
+            "supports": "windows & !uwp"
+        },
+        "ssl":
+        {
+            "description": "Default SSL backend",
+            "dependencies":
+            [
+                {
+                    "name": "curl",
+                    "default-features": false,
+                    "features":
+                    [
+                        "sectransp"
+                    ],
+                    "platform": "osx | ios"
+                },
+                {
+                    "name": "curl",
+                    "default-features": false,
+                    "features":
+                    [
+                        "schannel"
+                    ],
+                    "platform": "(windows & !uwp) | mingw"
+                }
+            ]
+        },
+        "tool":
+        {
+            "description": "Build cURL CLI tool"
+        }
+    }
+}
