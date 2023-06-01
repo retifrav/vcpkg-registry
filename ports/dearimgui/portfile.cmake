@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:ocornut/imgui.git
-    REF 458a1090314a965dd37b02c918d83077a0142ad5
+    REF 9aae45eb4a05a5a1f96be1ef37eb503a12ceb889
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"   DESTINATION "${SOURCE_PATH}")
@@ -10,8 +10,7 @@ file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"  DESTINATION "${SOURCE_PAT
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        backend-glfw-opengl BACKEND_OPENGL3
-        backend-glfw-vulkan BACKEND_VULKAN
+        backend-glfw BACKEND_GLFW
 )
 
 vcpkg_cmake_configure(
@@ -23,8 +22,6 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
-
-#vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
