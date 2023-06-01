@@ -27,7 +27,7 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     DESTINATION share/${PROJECT_NAME}
 )
-# generate the export targets for the build tree
-export(EXPORT ${PROJECT_NAME}Targets
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}Targets.cmake
-)
+# # generate the export targets for the build tree
+# export(EXPORT ${PROJECT_NAME}Targets
+#     FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}Targets.cmake
+# )
