@@ -68,8 +68,8 @@ if("tool" IN_LIST FEATURES)
 endif()
 
 vcpkg_cmake_config_fixup(
-    PACKAGE_NAME "SQLite3"
-    CONFIG_PATH "share/SQLite3"
+    PACKAGE_NAME "sqlite3"
+    CONFIG_PATH "share/sqlite3"
 )
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")

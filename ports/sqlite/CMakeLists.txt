@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project("SQLite3"
+project("sqlite3"
     VERSION 3.41.0
     DESCRIPTION "Small, fast, self-contained, high-reliability, full-featured SQL database engine"
     LANGUAGES C
@@ -91,6 +91,7 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
+# taken from https://github.com/azadkuh/sqlite-amalgamation/blob/master/CMakeLists.txt
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:
         $<$<BOOL:${SQLITE_ENABLE_COLUMN_METADATA}>:SQLITE_ENABLE_COLUMN_METADATA>
@@ -179,7 +180,7 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # public headers are expected without subfolder
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} # include/SQLite3
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
 )
 # generate and install export file
