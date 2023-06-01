@@ -22,12 +22,7 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-# fixing possible problems with imported targets, such as "Policy CMP0111
-# is not set: An imported target missing its location property fails during generation" and so on
-vcpkg_cmake_config_fixup(
-    PACKAGE_NAME "DearImGui"
-    CONFIG_PATH "share/DearImGui"
-)
+vcpkg_cmake_config_fixup()
 
 #vcpkg_fixup_pkgconfig()
 

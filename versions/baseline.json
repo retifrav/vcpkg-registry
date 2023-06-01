@@ -1,7 +1,7 @@
 {
     "default":
     {
-        "dear-imgui":
+        "dearimgui":
         {
             "baseline": "1.88.0",
             "port-version": 0

@@ -7,7 +7,7 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} # include/dearimgui
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
 )
 # generate and install export file
@@ -25,8 +25,4 @@ configure_package_config_file(
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     DESTINATION share/${PROJECT_NAME}
-)
-# generate the export targets for the build tree
-export(EXPORT ${PROJECT_NAME}Targets
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}Targets.cmake
 )

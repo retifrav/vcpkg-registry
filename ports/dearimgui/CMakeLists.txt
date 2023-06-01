@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project("DearImGui"
+project("dearimgui"
     VERSION 1.89.3
 )
 
