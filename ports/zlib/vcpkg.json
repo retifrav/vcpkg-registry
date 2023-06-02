@@ -1,0 +1,17 @@
+{
+    "name": "zlib",
+    "version": "1.2.12",
+    "description": "A massively spiffy yet delicately unobtrusive compression library",
+    "homepage": "http://zlib.net/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}

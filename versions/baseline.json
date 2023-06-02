@@ -70,6 +70,11 @@
         {
             "baseline": "3.2.3",
             "port-version": 0
+        },
+        "zlib":
+        {
+            "baseline": "1.2.12",
+            "port-version": 0
         }
     }
 }
