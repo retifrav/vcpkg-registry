@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ad20777f3..93cb25b17 100644
+index 49a44eabf..329f5707f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -48,6 +48,7 @@ include(CMakeDependentOption)
+@@ -70,6 +70,7 @@ include(CMakeDependentOption)
  include(CheckCCompilerFlag)
  
  project(CURL C)
@@ -10,7 +10,17 @@ index ad20777f3..93cb25b17 100644
  
  file(STRINGS ${CURL_SOURCE_DIR}/include/curl/curlver.h CURL_VERSION_H_CONTENTS REGEX "#define LIBCURL_VERSION( |_NUM )")
  string(REGEX MATCH "#define LIBCURL_VERSION \"[^\"]*"
-@@ -144,7 +145,7 @@ endif()
+@@ -79,6 +80,9 @@ string(REGEX MATCH "#define LIBCURL_VERSION_NUM 0x[0-9a-fA-F]+"
+   CURL_VERSION_NUM ${CURL_VERSION_H_CONTENTS})
+ string(REGEX REPLACE "[^0]+0x" "" CURL_VERSION_NUM ${CURL_VERSION_NUM})
+ 
++set(CURL_VERSION_SEMVER ${CURL_VERSION})
++string(REGEX REPLACE "-[A-Za-z]+$" "" CURL_VERSION_SEMVER ${CURL_VERSION_SEMVER})
++#message("CURL_VERSION_SEMVER: ${CURL_VERSION_SEMVER}")
+ 
+ # Setup package meta-data
+ # SET(PACKAGE "curl")
+@@ -141,7 +145,7 @@ endif()
  
  # For debug libs and exes, add "-d" postfix
  if(NOT DEFINED CMAKE_DEBUG_POSTFIX)
@@ -19,7 +29,7 @@ index ad20777f3..93cb25b17 100644
  endif()
  
  # initialize CURL_LIBS
-@@ -1388,14 +1389,6 @@ function(transform_makefile_inc INPUT_FILE OUTPUT_FILE)
+@@ -1391,14 +1395,6 @@ function(transform_makefile_inc INPUT_FILE OUTPUT_FILE)
    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${INPUT_FILE}")
  endfunction()
  
@@ -34,7 +44,7 @@ index ad20777f3..93cb25b17 100644
  if(USE_MANUAL)
    add_subdirectory(docs)
  endif()
-@@ -1575,74 +1568,37 @@ set(REQUIRE_LIB_DEPS        "no")
+@@ -1586,83 +1582,44 @@ set(REQUIRE_LIB_DEPS        "no")
  # SUPPORT_PROTOCOLS
  set(VERSIONNUM              "${CURL_VERSION_NUM}")
  
@@ -69,14 +79,7 @@ index ad20777f3..93cb25b17 100644
 -    "${version_config}"
 -    VERSION ${CURL_VERSION}
 -    COMPATIBILITY SameMajorVersion
--)
- 
--# Use:
--# * TARGETS_EXPORT_NAME
--# * PROJECT_NAME
--configure_package_config_file(CMake/curl-config.cmake.in
--        "${project_config}"
--        INSTALL_DESTINATION ${CURL_INSTALL_CMAKE_DIR}
++
 +file(GLOB public_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/curl/*.h")
 +set_target_properties(${PROJECT_NAME_LOWER} PROPERTIES PUBLIC_HEADER "${public_headers}")
 +
@@ -86,8 +89,35 @@ index ad20777f3..93cb25b17 100644
 +    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
 +    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
 +    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME_LOWER} # include/CURL
++    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME_LOWER} # include/curl
 +    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
+ )
+-file(READ "${version_config}" generated_version_config)
+-file(WRITE "${version_config}"
+-"if(NOT PACKAGE_FIND_VERSION_RANGE AND PACKAGE_FIND_VERSION_MAJOR STREQUAL \"7\")
+-    # Version 8 satisfies version 7... requirements
+-    set(PACKAGE_FIND_VERSION_MAJOR 8)
+-    set(PACKAGE_FIND_VERSION_COUNT 1)
+-endif()
+-${generated_version_config}"
++# generate and install export file
++install(EXPORT "${PROJECT_NAME_LOWER}Targets"
++    FILE "${PROJECT_NAME_LOWER}Targets.cmake"
++    NAMESPACE ${PROJECT_NAME}::
++    DESTINATION "share/${PROJECT_NAME_LOWER}"
+ )
+-
+-# Use:
+-# * TARGETS_EXPORT_NAME
+-# * PROJECT_NAME
+-configure_package_config_file(CMake/curl-config.cmake.in
+-        "${project_config}"
+-        INSTALL_DESTINATION ${CURL_INSTALL_CMAKE_DIR}
++# generate the version file for the config file
++write_basic_package_version_file(
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME_LOWER}ConfigVersion.cmake"
++    VERSION "${CURL_VERSION_SEMVER}"
++    COMPATIBILITY AnyNewerVersion
  )
 -
 -if(CURL_ENABLE_EXPORT_TARGET)
@@ -101,22 +131,11 @@ index ad20777f3..93cb25b17 100644
 -install(
 -        FILES ${version_config} ${project_config}
 -        DESTINATION ${CURL_INSTALL_CMAKE_DIR}
-+# generate and install export file
-+install(EXPORT "${PROJECT_NAME_LOWER}Targets"
-+    FILE "${PROJECT_NAME_LOWER}Targets.cmake"
-+    NAMESPACE ${PROJECT_NAME}::
-+    DESTINATION "share/${PROJECT_NAME_LOWER}"
-+)
 +# create config file
 +configure_package_config_file(
 +    "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
 +    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME_LOWER}Config.cmake"
 +    INSTALL_DESTINATION "share/${PROJECT_NAME_LOWER}"
-+)
-+# install config files
-+install(FILES
-+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME_LOWER}Config.cmake"
-+    DESTINATION "share/${PROJECT_NAME_LOWER}"
  )
 -
 -# Workaround for MSVS10 to avoid the Dialog Hell
@@ -128,29 +147,45 @@ index ad20777f3..93cb25b17 100644
 -  endif()
 -endif()
 -
--if(NOT TARGET uninstall)
+-if(NOT TARGET curl_uninstall)
 -  configure_file(
 -      ${CMAKE_CURRENT_SOURCE_DIR}/CMake/cmake_uninstall.cmake.in
 -      ${CMAKE_CURRENT_BINARY_DIR}/CMake/cmake_uninstall.cmake
 -      IMMEDIATE @ONLY)
 -
--  add_custom_target(uninstall
+-  add_custom_target(curl_uninstall
 -      COMMAND ${CMAKE_COMMAND} -P
 -      ${CMAKE_CURRENT_BINARY_DIR}/CMake/cmake_uninstall.cmake)
 -endif()
++# install config files
++install(FILES
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME_LOWER}Config.cmake"
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME_LOWER}ConfigVersion.cmake"
++    DESTINATION "share/${PROJECT_NAME_LOWER}"
++ )
 diff --git a/Config.cmake.in b/Config.cmake.in
 new file mode 100644
-index 000000000..8c9ad12aa
+index 000000000..2cc3a82c1
 --- /dev/null
 +++ b/Config.cmake.in
-@@ -0,0 +1,5 @@
+@@ -0,0 +1,15 @@
 +@PACKAGE_INIT@
 +
-+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
++include(CMakeFindDependencyMacro)
++
++if(@USE_OPENSSL@)
++    find_dependency(OpenSSL CONFIG REQUIRED)
++endif()
++
++if(@USE_ZLIB@)
++    find_dependency(zlib CONFIG REQUIRED)
++endif()
++
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME_LOWER@Targets.cmake")
 +
 +check_required_components(@PROJECT_NAME@)
 diff --git a/lib/CMakeLists.txt b/lib/CMakeLists.txt
-index f9987517d..1c90e3959 100644
+index 845d1e319..11f5cb724 100644
 --- a/lib/CMakeLists.txt
 +++ b/lib/CMakeLists.txt
 @@ -21,8 +21,8 @@
@@ -160,11 +195,11 @@ index f9987517d..1c90e3959 100644
 -set(LIB_NAME libcurl)
 -set(LIBCURL_OUTPUT_NAME libcurl CACHE STRING "Basename of the curl library")
 +set(LIB_NAME ${PROJECT_NAME_LOWER})
-+#set(LIBCURL_OUTPUT_NAME ${PROJECT_NAME_LOWER} CACHE STRING "Basename of the curl library")
++#set(LIBCURL_OUTPUT_NAME libcurl CACHE STRING "Basename of the curl library")
+ add_definitions(-DBUILDING_LIBCURL)
  
  if(BUILD_SHARED_LIBS)
-   set(CURL_STATICLIB NO)
-@@ -99,7 +99,7 @@ target_link_libraries(${LIB_NAME} ${CURL_LIBS})
+@@ -80,7 +80,7 @@ include(${CMAKE_CURRENT_BINARY_DIR}/Makefile.soname.cmake)
  
  set_target_properties(${LIB_NAME} PROPERTIES
    COMPILE_DEFINITIONS BUILDING_LIBCURL
@@ -172,8 +207,8 @@ index f9987517d..1c90e3959 100644
 +  #OUTPUT_NAME ${LIBCURL_OUTPUT_NAME}
    )
  
- if(HIDES_CURL_PRIVATE_SYMBOLS)
-@@ -108,8 +108,8 @@ if(HIDES_CURL_PRIVATE_SYMBOLS)
+ if(CMAKE_SYSTEM_NAME STREQUAL "AIX" OR
+@@ -114,8 +114,8 @@ if(HIDES_CURL_PRIVATE_SYMBOLS)
  endif()
  
  # Remove the "lib" prefix since the library is already named "libcurl".
@@ -184,10 +219,10 @@ index f9987517d..1c90e3959 100644
  
  if(CURL_HAS_LTO)
    set_target_properties(${LIB_NAME} PROPERTIES
-@@ -120,26 +120,14 @@ endif()
+@@ -125,11 +125,11 @@ endif()
+ 
  if(WIN32)
    if(BUILD_SHARED_LIBS)
-     set_property(TARGET ${LIB_NAME} APPEND PROPERTY COMPILE_DEFINITIONS "_USRDLL")
 -    if(MSVC)
 -      # Add "_imp" as a suffix before the extension to avoid conflicting with
 -      # the statically linked "libcurl.lib"
@@ -199,25 +234,28 @@ index f9987517d..1c90e3959 100644
 +    #  set_target_properties(${LIB_NAME} PROPERTIES IMPORT_SUFFIX "_imp.lib")
 +    #endif()
    endif()
- endif()
- 
+ elseif(NOT CMAKE_CROSSCOMPILING)
+   # on not-Windows and not-crosscompiling, check for writable argv[]
+@@ -147,17 +147,3 @@ endif()
  target_include_directories(${LIB_NAME} INTERFACE
    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
    $<BUILD_INTERFACE:${CURL_SOURCE_DIR}/include>)
 -
--install(TARGETS ${LIB_NAME}
--  EXPORT ${TARGETS_EXPORT_NAME}
--  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
--  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
--  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
--)
+-if(CURL_ENABLE_EXPORT_TARGET)
+-  install(TARGETS ${LIB_NAME}
+-    EXPORT ${TARGETS_EXPORT_NAME}
+-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-  )
 -
--export(TARGETS ${LIB_NAME}
--       APPEND FILE ${PROJECT_BINARY_DIR}/libcurl-target.cmake
--       NAMESPACE ${PROJECT_NAME}::
--)
+-  export(TARGETS ${LIB_NAME}
+-         FILE ${PROJECT_BINARY_DIR}/libcurl-target.cmake
+-         NAMESPACE ${PROJECT_NAME}::
+-  )
+-endif()
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 56d5d530d..507d8eaff 100644
+index 91825ec9a..462a10569 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -21,7 +21,7 @@
@@ -229,7 +267,7 @@ index 56d5d530d..507d8eaff 100644
  
  if(USE_MANUAL)
    # Use the C locale to ensure that only ASCII characters appear in the
-@@ -99,7 +99,7 @@ include_directories(
+@@ -95,7 +95,7 @@ include_directories(
    )
  
  #Build curl executable
@@ -238,17 +276,17 @@ index 56d5d530d..507d8eaff 100644
  
  ################################################################################
  
-@@ -109,8 +109,12 @@ target_link_libraries(${EXE_NAME} libcurl ${CURL_LIBS})
+@@ -105,8 +105,12 @@ target_link_libraries(${EXE_NAME} libcurl ${CURL_LIBS})
  
  #INCLUDE(ModuleInstall OPTIONAL)
  
 -install(TARGETS ${EXE_NAME} EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 -export(TARGETS ${EXE_NAME}
--       APPEND FILE ${PROJECT_BINARY_DIR}/curl-target.cmake
+-       FILE ${PROJECT_BINARY_DIR}/curl-target.cmake
 -       NAMESPACE ${PROJECT_NAME}::
 +set_target_properties(${EXE_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME_LOWER})
 +install(TARGETS ${EXE_NAME}
-+    EXPORT ${PROJECT_NAME_LOWER}Targets
++    #EXPORT ${PROJECT_NAME_LOWER}Targets
 +    DESTINATION ${CMAKE_INSTALL_BINDIR}
  )
 +#export(TARGETS ${EXE_NAME}

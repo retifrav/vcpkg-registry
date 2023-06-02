@@ -1,6 +1,6 @@
 {
     "name": "curl",
-    "version": "7.84.0",
+    "version": "8.1.2",
     "description": "Library for transferring data with URL syntax",
     "homepage": "https://curl.se/",
     "dependencies":
@@ -12,7 +12,8 @@
         {
             "name": "vcpkg-cmake-config",
             "host": true
-        }
+        },
+        "zlib"
     ],
     "default-features":
     [
@@ -20,6 +21,14 @@
     ],
     "features":
     {
+        "openssl":
+        {
+            "description": "Enable OpenSSL backend (SSL support)",
+            "dependencies":
+            [
+                "openssl"
+            ]
+        },
         "schannel":
         {
             "description": "Enable Secure Channel security support provider (SSL support)",
@@ -68,6 +77,15 @@
                         "schannel"
                     ],
                     "platform": "(windows & !uwp) | mingw"
+                },
+                {
+                    "name": "curl",
+                    "default-features": false,
+                    "features":
+                    [
+                        "openssl"
+                    ],
+                    "platform": "(uwp | !windows) & !(osx | ios) & !mingw"
                 }
             ]
         },

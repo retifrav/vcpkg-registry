@@ -1,14 +1,15 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:curl/curl.git
-    REF 45ac4d019475df03562fe0ac54eb67e1d1de0ca7
+    REF 7ab9d43720bc34d9aa351c7ca683c1668ebf8335
     PATCHES
-        installation.patch
+        installation-and-targets.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        #openssl   CURL_USE_OPENSSL # for that openssl feature needs to be added to curl port manifest (and also openssl port needs to exist), check Microsoft's port for an example
+        openssl   CURL_USE_OPENSSL # although OpenSSL port is missing at the moment
+        openssl   USE_OPENSSL # this one is never declared, only set to ON if CURL_USE_OPENSSL is set
         sspi      CURL_WINDOWS_SSPI
         schannel  CURL_USE_SCHANNEL
         sectransp CURL_USE_SECTRANSP
