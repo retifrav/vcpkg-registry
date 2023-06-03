@@ -1,7 +1,8 @@
 # vcpkg-registry
 
-My [vcpkg](https://vcpkg.io/) registry. Created mostly for experiments and is used as an example for [this article](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/).\
-Many ports are heavily based on (*or just copies of*) the ports from the [Microsoft's registry](https://github.com/Microsoft/vcpkg).
+My [vcpkg](https://vcpkg.io/) registry. Initially created as an example for [this article](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/), but then became an actual registry that I use myself for everyday development.
+
+A good portion of the ports are either based on or just copies of the ports from the [Microsoft's registry](https://github.com/Microsoft/vcpkg).
 
 ## An example of installing a port
 
