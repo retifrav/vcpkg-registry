@@ -75,6 +75,11 @@
         {
             "baseline": "1.2.12",
             "port-version": 0
+        },
+        "zstd":
+        {
+            "baseline": "1.5.2",
+            "port-version": 0
         }
     }
 }
