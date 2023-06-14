@@ -1,0 +1,21 @@
+diff --git a/build/cmake/CMakeLists.txt b/build/cmake/CMakeLists.txt
+index 0bffc87d..d692d3c5 100644
+--- a/build/cmake/CMakeLists.txt
++++ b/build/cmake/CMakeLists.txt
+@@ -129,7 +129,15 @@ endif ()
+ #-----------------------------------------------------------------------------
+ if (ZSTD_MULTITHREAD_SUPPORT AND UNIX)
+     set(THREADS_PREFER_PTHREAD_FLAG ON)
+-    find_package(Threads REQUIRED)
++    if(IOS) # building for iOS fails to find Threads
++        set(CMAKE_THREAD_LIBS_INIT "-lpthread")
++        set(CMAKE_HAVE_THREADS_LIBRARY 1)
++        set(CMAKE_USE_WIN32_THREADS_INIT 0)
++        set(CMAKE_USE_PTHREADS_INIT 1)
++        set(THREADS_PREFER_PTHREAD_FLAG 1)
++    else()
++        find_package(Threads REQUIRED)
++    endif()
+     if(CMAKE_USE_PTHREADS_INIT)
+         set(THREADS_LIBS "${CMAKE_THREAD_LIBS_INIT}")
+     else()
