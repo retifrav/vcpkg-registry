@@ -4,6 +4,7 @@ vcpkg_from_git(
     REF 21767c654d31d2dccdde4330529775c6c5fd5389
     PATCHES
         building-and-installation.patch
+        missing-header-unistd.patch
 )
 
 # this file is auto-generated on CMake configure
