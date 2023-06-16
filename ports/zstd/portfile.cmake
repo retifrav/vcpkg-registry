@@ -3,10 +3,9 @@ vcpkg_from_git(
     URL git@github.com:facebook/zstd.git
     REF 63779c798237346c2b245c546c40b72a5a5913fe
     PATCHES
-        no-static-suffix.patch
+        single-target-no-pkgconfig.patch
         fix-emscripten-and-clang-cl.patch
         threads-for-ios.patch
-        disable-pkgconfig.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" ZSTD_BUILD_STATIC)
@@ -32,7 +31,7 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 if(VCPKG_TARGET_IS_WINDOWS AND VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
     foreach(HEADER IN ITEMS zdict.h zstd.h zstd_errors.h)
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/${HEADER}" "defined(ZSTD_DLL_IMPORT) && (ZSTD_DLL_IMPORT==1)" "1" )
+        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/zstd/${HEADER}" "defined(ZSTD_DLL_IMPORT) && (ZSTD_DLL_IMPORT==1)" "1" )
     endforeach()
 endif()
 
