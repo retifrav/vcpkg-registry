@@ -6,6 +6,11 @@
             "baseline": "5.2.5",
             "port-version": 0
         },
+        "cpp-base64":
+        {
+            "baseline": "2.0.8",
+            "port-version": 0
+        },
         "curl":
         {
             "baseline": "7.84.0",

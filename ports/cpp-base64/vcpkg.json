@@ -1,0 +1,17 @@
+{
+    "name": "cpp-base64",
+    "version": "2.0.8",
+    "description": "Base64 encoding and decoding with C++",
+    "homepage": "https://renenyffenegger.ch/notes/development/Base64/Encoding-and-decoding-base-64-with-cpp/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
