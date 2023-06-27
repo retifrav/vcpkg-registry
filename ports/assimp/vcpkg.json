@@ -1,0 +1,93 @@
+{
+    "name": "assimp",
+    "version": "5.2.5",
+    "description": "Asset Importer",
+    "homepage": "https://assimp.org/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "zlib"
+    ],
+    "features":
+    {
+        "no-export":
+        {
+            "description": "Disable export functionality"
+        },
+        "exporter-obj":
+        {
+            "description": "Enable OBJ exporter"
+        },
+        "exporter-opengex":
+        {
+            "description": "Enable OpenGEX exporter"
+        },
+        "exporter-ply":
+        {
+            "description": "Enable PLY exporter"
+        },
+        "exporter-3ds":
+        {
+            "description": "Enable 3DS exporter"
+        },
+        "exporter-assbin":
+        {
+            "description": "Enable Assbin exporter"
+        },
+        "exporter-assxml":
+        {
+            "description": "Enable Assxml exporter"
+        },
+        "exporter-m3d":
+        {
+            "description": "Enable M3D exporter"
+        },
+        "exporter-collada":
+        {
+            "description": "Enable Collada exporter"
+        },
+        "exporter-fbx":
+        {
+            "description": "Enable FBX exporter"
+        },
+        "exporter-stl":
+        {
+            "description": "Enable STL exporter"
+        },
+        "exporter-x":
+        {
+            "description": "Enable X exporter"
+        },
+        "exporter-x3d":
+        {
+            "description": "Enable X3D exporter"
+        },
+        "exporter-gltf":
+        {
+            "description": "Enable glTF exporter"
+        },
+        "exporter-3mf":
+        {
+            "description": "Enable 3MF exporter"
+        },
+        "exporter-pbrt":
+        {
+            "description": "Enable Pbrt exporter"
+        },
+        "exporter-assjson":
+        {
+            "description": "Enable Assjson exporter"
+        },
+        "exporter-step":
+        {
+            "description": "Enable Step exporter"
+        }
+    }
+}

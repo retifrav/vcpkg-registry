@@ -1,6 +1,11 @@
 {
     "default":
     {
+        "assimp":
+        {
+            "baseline": "5.2.5",
+            "port-version": 0
+        },
         "curl":
         {
             "baseline": "7.84.0",
