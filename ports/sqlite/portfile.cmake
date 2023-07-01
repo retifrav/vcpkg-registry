@@ -20,7 +20,8 @@ set(SQLITE_VERSION_VALUE "3410000")
 # download the file yourself first and get its hash with sha512sum
 set(SQLITE_VERSION_HASH "0280218058789e97a9ec874c8631aaa0a2b700ed040e5a721b5ccec411fe3cde81b55c7a94766c510e20044a3b1271204b98cde1d8451c4c0455b0aff630e88a")
 
-vcpkg_download_distfile(ARCHIVE
+vcpkg_download_distfile(
+    ARCHIVE
     URLS "https://sqlite.org/${SQLITE_VERSION_YEAR}/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
     FILENAME "sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
     SHA512 ${SQLITE_VERSION_HASH}

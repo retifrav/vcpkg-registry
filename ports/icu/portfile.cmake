@@ -9,7 +9,8 @@ vcpkg_download_distfile(
     SHA512 848c341b37c0ff077e34a95d92c6200d5aaddd0ee5e06134101a74e04deb08256a5e817c8aefab020986abe810b7827dd7b2169a60dacd250c298870518dcae8
 )
 
-vcpkg_extract_source_archive(SOURCE_PATH
+vcpkg_extract_source_archive(
+    SOURCE_PATH
     ARCHIVE "${ARCHIVE}"
     PATCHES
         disable-escapestr-tool.patch
