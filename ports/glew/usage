@@ -1,0 +1,4 @@
+To use GLEW in your project:
+
+    find_package(glew CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE GLEW::GLEW)

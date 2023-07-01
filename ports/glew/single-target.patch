@@ -1,0 +1,274 @@
+diff --git a/build/cmake/CMakeLists.txt b/build/cmake/CMakeLists.txt
+index 419c243..7cee5f0 100644
+--- a/build/cmake/CMakeLists.txt
++++ b/build/cmake/CMakeLists.txt
+@@ -40,10 +40,15 @@ set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+ 
+-find_package (OpenGL REQUIRED)
++cmake_policy(PUSH)
++if(POLICY CMP0072)
++    cmake_policy(SET CMP0072 NEW) # prefer GLVND
++endif()
++find_package(OpenGL REQUIRED)
++cmake_policy(POP)
+ 
+ # X11 required except for Windows and Apple OSX platforms
+-if (NOT WIN32 AND NOT APPLE)
++if (NOT WIN32 AND NOT APPLE AND NOT VCPKG_TARGET_TRIPLET STREQUAL "wasm32-emscripten")
+   find_package (X11)
+ endif()
+ 
+@@ -104,36 +109,49 @@ if (WIN32)
+   list (APPEND GLEW_SRC_FILES ${GLEW_DIR}/build/glew.rc)
+ endif ()
+ 
+-add_library (glew SHARED ${GLEW_PUBLIC_HEADERS_FILES} ${GLEW_SRC_FILES})
+-set_target_properties (glew PROPERTIES COMPILE_DEFINITIONS "GLEW_BUILD" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX "${DLL_PREFIX}"
+-                                       VERSION ${GLEW_VERSION}
+-                                       SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR})
+-add_library (glew_s STATIC ${GLEW_PUBLIC_HEADERS_FILES} ${GLEW_SRC_FILES})
+-set_target_properties (glew_s PROPERTIES COMPILE_DEFINITIONS "GLEW_STATIC" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX lib)
++add_library(${PROJECT_NAME} ${GLEW_PUBLIC_HEADERS_FILES} ${GLEW_SRC_FILES})
++if(BUILD_SHARED_LIBS)
++  set_target_properties(${PROJECT_NAME}
++    PROPERTIES
++      COMPILE_DEFINITIONS "GLEW_BUILD"
++      OUTPUT_NAME "${GLEW_LIB_NAME}"
++      PREFIX "${DLL_PREFIX}"
++      VERSION ${GLEW_VERSION}
++      SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}
++  )
++else()
++  set_target_properties(${PROJECT_NAME}
++    PROPERTIES
++      COMPILE_DEFINITIONS "GLEW_STATIC"
++      OUTPUT_NAME "${GLEW_LIB_NAME}"
++      PREFIX lib
++  )
++endif()
+ 
+ if (MSVC)
+   # add options from visual studio project
+-  target_compile_definitions (glew PRIVATE "GLEW_BUILD;VC_EXTRALEAN")
+-  target_compile_definitions (glew_s PRIVATE "GLEW_STATIC;VC_EXTRALEAN")
+-  target_link_libraries (glew LINK_PRIVATE -BASE:0x62AA0000)
++  if(BUILD_SHARED_LIBS)
++    target_compile_definitions(${PROJECT_NAME} PRIVATE "GLEW_BUILD;VC_EXTRALEAN")
++    target_link_libraries(${PROJECT_NAME} LINK_PRIVATE -BASE:0x62AA0000)
++  else()
++    target_compile_definitions(${PROJECT_NAME} PRIVATE "GLEW_STATIC;VC_EXTRALEAN")
++  endif()
+   # kill security checks which are dependent on stdlib
+-  target_compile_options (glew PRIVATE -GS-)
+-  target_compile_options (glew_s PRIVATE -GS-)
++  target_compile_options (${PROJECT_NAME} PRIVATE -GS-)
+   # remove stdlib dependency
+-  target_link_libraries (glew LINK_PRIVATE -nodefaultlib -noentry)
+-  target_link_libraries (glew LINK_PRIVATE libvcruntime.lib)
+-  target_link_libraries (glew LINK_PRIVATE msvcrt.lib )
++  # target_link_libraries (${PROJECT_NAME} LINK_PRIVATE -nodefaultlib -noentry)
++  # target_link_libraries (${PROJECT_NAME} LINK_PRIVATE libvcruntime.lib)
++  # target_link_libraries (${PROJECT_NAME} LINK_PRIVATE msvcrt.lib )
+   string(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
+ elseif (WIN32 AND ((CMAKE_C_COMPILER_ID MATCHES "GNU") OR (CMAKE_C_COMPILER_ID MATCHES "Clang")))
+   # remove stdlib dependency on windows with GCC and Clang (for similar reasons
+   # as to MSVC - to allow it to be used with any Windows compiler)
+-  target_compile_options (glew PRIVATE -fno-builtin -fno-stack-protector)
+-  target_compile_options (glew_s PRIVATE -fno-builtin -fno-stack-protector)
+-  target_link_libraries (glew LINK_PRIVATE -nostdlib)
++  target_compile_options (${PROJECT_NAME} PRIVATE -fno-builtin -fno-stack-protector)
++  target_link_libraries (${PROJECT_NAME} LINK_PRIVATE -nostdlib)
+ endif ()
+ 
+ if (BUILD_FRAMEWORK)
+-  set_target_properties(glew PROPERTIES
++  set_target_properties(${PROJECT_NAME} PROPERTIES
+     FRAMEWORK TRUE
+     FRAMEWORK_VERSION ${GLEW_VERSION}
+     MACOSX_FRAMEWORK_IDENTIFIER net.sourceforge.glew
+@@ -145,27 +163,32 @@ if (BUILD_FRAMEWORK)
+   )
+ endif()
+ 
+-target_link_libraries (glew LINK_PUBLIC ${GLEW_LIBRARIES})
+-target_link_libraries (glew_s ${GLEW_LIBRARIES})
++if(BUILD_SHARED_LIBS)
++  target_link_libraries (${PROJECT_NAME} LINK_PUBLIC ${GLEW_LIBRARIES})
++else()
++  target_link_libraries (${PROJECT_NAME} ${GLEW_LIBRARIES})
++endif()
+ 
+ if(CMAKE_VERSION VERSION_LESS 2.8.12)
+   set(MAYBE_EXPORT "")
+ else()
+-  target_compile_definitions(glew_s INTERFACE "GLEW_STATIC")
+-  foreach(t glew glew_s)
+-    target_include_directories(${t} PUBLIC $<INSTALL_INTERFACE:include>)
+-  endforeach()
++  if(NOT BUILD_SHARED_LIBS)
++    target_compile_definitions(${PROJECT_NAME} INTERFACE "GLEW_STATIC")
++  endif()
++  #foreach(t glew glew_s)
++    target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:include>)
++  #endforeach()
+   set(MAYBE_EXPORT EXPORT glew-targets)
+ endif()
+ 
+-set(targets_to_install "")
+-if(NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
+-  list(APPEND targets_to_install glew)
+-endif()
++set(targets_to_install ${PROJECT_NAME})
++# if(NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
++#   list(APPEND targets_to_install glew)
++# endif()
+ 
+-if(NOT DEFINED BUILD_SHARED_LIBS OR NOT BUILD_SHARED_LIBS)
+-  list(APPEND targets_to_install glew_s)
+-endif()
++# if(NOT DEFINED BUILD_SHARED_LIBS OR NOT BUILD_SHARED_LIBS)
++#   list(APPEND targets_to_install ${PROJECT_NAME})
++# endif()
+ 
+ install ( TARGETS ${targets_to_install}
+           ${MAYBE_EXPORT}
+@@ -181,11 +204,7 @@ if (BUILD_UTILS)
+     list (APPEND GLEWINFO_SRC_FILES ${GLEW_DIR}/build/glewinfo.rc)
+   endif ()
+   add_executable (glewinfo ${GLEWINFO_SRC_FILES})
+-  if(NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
+-     target_link_libraries (glewinfo glew)
+-  else()
+-     target_link_libraries (glewinfo glew_s)
+-  endif()
++  target_link_libraries (glewinfo ${PROJECT_NAME})
+   if (NOT WIN32)
+     target_link_libraries(glewinfo ${X11_LIBRARIES})
+   endif ()
+@@ -195,11 +214,7 @@ if (BUILD_UTILS)
+     list (APPEND VISUALINFO_SRC_FILES ${GLEW_DIR}/build/visualinfo.rc)
+   endif ()
+   add_executable (visualinfo ${VISUALINFO_SRC_FILES})
+-  if(NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
+-     target_link_libraries (visualinfo glew)
+-  else()
+-     target_link_libraries (visualinfo glew_s)
+-  endif()
++  target_link_libraries (visualinfo ${PROJECT_NAME})
+   if (NOT WIN32)
+     target_link_libraries(visualinfo ${X11_LIBRARIES})
+   endif ()
+@@ -222,19 +237,19 @@ if (APPLE)
+   set (requireslib)
+ endif ()
+ 
+-configure_file (${GLEW_DIR}/glew.pc.in ${CMAKE_CURRENT_BINARY_DIR}/glew.pc @ONLY)
++#configure_file (${GLEW_DIR}/glew.pc.in ${CMAKE_CURRENT_BINARY_DIR}/glew.pc @ONLY)
+ 
+-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/glew.pc
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+-)
++#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/glew.pc
++#        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
++#)
+ 
+-if(WIN32 AND MSVC AND (NOT MSVC_VERSION LESS 1600) AND (NOT CMAKE_VERSION VERSION_LESS "3.1"))
+-    install(
+-        FILES $<TARGET_PDB_FILE:glew>
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-        CONFIGURATIONS Debug RelWithDebInfo
+-    )
+-endif()
++# if(WIN32 AND MSVC AND (NOT MSVC_VERSION LESS 1600) AND (NOT CMAKE_VERSION VERSION_LESS "3.1"))
++#     install(
++#         FILES $<TARGET_PDB_FILE:glew>
++#         DESTINATION ${CMAKE_INSTALL_LIBDIR}
++#         CONFIGURATIONS Debug RelWithDebInfo
++#     )
++# endif()
+ 
+ install (FILES
+     ${GLEW_DIR}/include/GL/wglew.h
+diff --git a/build/cmake/glew-config.cmake b/build/cmake/glew-config.cmake
+index 0b79c0b..3223040 100644
+--- a/build/cmake/glew-config.cmake
++++ b/build/cmake/glew-config.cmake
+@@ -1,60 +1,30 @@
+-# This config-module creates the following import libraries:
+-#
+-# - GLEW::glew shared lib
+-# - GLEW::glew_s static lib
+-#
+-# Additionally GLEW::GLEW will be created as an
+-# copy of either the shared (default) or the static libs.
+-#
+-# Dependending on the setting of BUILD_SHARED_LIBS at GLEW build time
+-# either the static or shared versions may not be available.
+-#
+-# Set GLEW_USE_STATIC_LIBS to OFF or ON to force using the shared
+-# or static lib for GLEW::GLEW 
+-#
+-
+ include(${CMAKE_CURRENT_LIST_DIR}/glew-targets.cmake)
+ include(${CMAKE_CURRENT_LIST_DIR}/CopyImportedTargetProperties.cmake)
+ 
+-# decide which import library (glew/glew_s)
+-# needs to be copied to GLEW::GLEW
+-set(_glew_target_postfix "")
+-set(_glew_target_type SHARED)
+-if(DEFINED GLEW_USE_STATIC_LIBS)
+-  # if defined, use only static or shared
+-  if(GLEW_USE_STATIC_LIBS)
+-    set(_glew_target_postfix "_s")
+-  endif()
+-  # else use static only if no shared
+-elseif(NOT TARGET GLEW::glew AND TARGET GLEW::glew_s)
+-  set(_glew_target_postfix "_s")
+-endif()
+-if(_glew_target_postfix STREQUAL "")
+-  set(_glew_target_type SHARED)
+-else()
+-  set(_glew_target_type STATIC)
++set(_glew_target_type STATIC)
++if(NOT GLEW_USE_STATIC_LIBS)
++    set(_glew_target_type SHARED)
+ endif()
+ 
+ # CMake doesn't allow creating ALIAS lib for an IMPORTED lib
+ # so create imported ones and copy the properties
+-foreach(_glew_target glew)
+-  set(_glew_src_target "GLEW::${_glew_target}${_glew_target_postfix}")
+-  string(TOUPPER "GLEW::${_glew_target}" _glew_dest_target)
+-  if(TARGET ${_glew_dest_target})
++
++set(_glew_src_target "GLEW::${glew}")
++string(TOUPPER "GLEW::${glew}" _glew_dest_target)
++if(TARGET ${_glew_dest_target})
+     get_target_property(_glew_previous_src_target ${_glew_dest_target}
+-      _GLEW_SRC_TARGET)
++        _GLEW_SRC_TARGET)
+     if(NOT _glew_previous_src_target STREQUAL _glew_src_target)
+-      message(FATAL_ERROR "find_package(GLEW) was called the second time with "
+-        "different GLEW_USE_STATIC_LIBS setting. Previously, "
+-        "`glew-config.cmake` created ${_glew_dest_target} as a copy of "
+-        "${_glew_previous_src_target}. Now it attempted to copy it from "
+-        "${_glew_src_target}. ")
++        message(FATAL_ERROR "find_package(GLEW) was called the second time with "
++            "different GLEW_USE_STATIC_LIBS setting. Previously, "
++            "`glew-config.cmake` created ${_glew_dest_target} as a copy of "
++            "${_glew_previous_src_target}. Now it attempted to copy it from "
++            "${_glew_src_target}. ")
+     endif()
+-  else()
++else()
+     add_library(${_glew_dest_target} ${_glew_target_type} IMPORTED)
+     # message(STATUS "add_library(${_glew_dest_target} ${_glew_target_type} IMPORTED)")
+     copy_imported_target_properties(${_glew_src_target} ${_glew_dest_target})
+     set_target_properties(${_glew_dest_target} PROPERTIES
+-      _GLEW_SRC_TARGET ${_glew_src_target})
+-  endif()
+-endforeach()
++        _GLEW_SRC_TARGET ${_glew_src_target})
++endif()

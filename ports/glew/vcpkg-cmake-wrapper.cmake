@@ -1,0 +1,6 @@
+if(BUILD_SHARED_LIBS)
+    set(GLEW_USE_STATIC_LIBS 0)
+else()
+    set(GLEW_USE_STATIC_LIBS 1)
+endif()
+_find_package(${ARGS} CONFIG)
