@@ -2,6 +2,9 @@ vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:Dav1dde/glad.git
     REF 1ecd45775d96f35170458e6b148eb0708967e402
+    PATCHES
+        dont-look-for-python.patch
+        deleting-weird-symbol.patch
 )
 
 vcpkg_find_acquire_program(PYTHON3)
@@ -17,11 +20,7 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-# fixing possible problems with imported targets, such as "Policy CMP0111
-# is not set: An imported target missing its location property fails during generation" and so on
 vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
-
-#vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
