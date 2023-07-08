@@ -18,6 +18,10 @@
             "host": true
         }
     ],
+    "default-features":
+    [
+        "backend-glfw"
+    ],
     "features":
     {
         "backend-glfw":
