@@ -10,6 +10,20 @@ vcpkg_from_git(
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
+        double-precision ASSIMP_DOUBLE_PRECISION
+        # importers
+        all-importers     ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT
+        importer-3ds      ASSIMP_BUILD_3DS_IMPORTER
+        importer-3mf      ASSIMP_BUILD_3MF_IMPORTER
+        importer-collada  ASSIMP_BUILD_COLLADA_IMPORTER
+        importer-dxf      ASSIMP_BUILD_DXF_IMPORTER
+        importer-fbx      ASSIMP_BUILD_FBX_IMPORTER
+        importer-gltf     ASSIMP_BUILD_GLTF_IMPORTER
+        importer-ifc      ASSIMP_BUILD_IFC_IMPORTER
+        importer-obj      ASSIMP_BUILD_OBJ_IMPORTER
+        importer-ply      ASSIMP_BUILD_PLY_IMPORTER
+        importer-stl      ASSIMP_BUILD_STL_IMPORTER
+        # exporters
         no-export        ASSIMP_NO_EXPORT # if the feature is not set, then -DASSIMP_NO_EXPORT=0
         exporter-obj     ASSIMP_BUILD_OBJ_EXPORTER
         exporter-opengex ASSIMP_BUILD_OPENGEX_EXPORTER

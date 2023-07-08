@@ -15,8 +15,60 @@
         },
         "zlib"
     ],
+    "default-features":
+    [
+        "all-importers"
+    ],
     "features":
     {
+        "double-precision":
+        {
+            "description": "Enable double precision"
+        },
+        "all-importers":
+        {
+            "description": "Enable importer"
+        },
+        "importer-3ds":
+        {
+            "description": "Enable 3DS importer"
+        },
+        "importer-3mf":
+        {
+            "description": "Enable 3MF importer"
+        },
+        "importer-collada":
+        {
+            "description": "Enable COLLADA importer"
+        },
+        "importer-dxf":
+        {
+            "description": "Enable DXF importer"
+        },
+        "importer-fbx":
+        {
+            "description": "Enable FBX importer"
+        },
+        "importer-gltf":
+        {
+            "description": "Enable glTF importer"
+        },
+        "importer-ifc":
+        {
+            "description": "Enable IFC importer"
+        },
+        "importer-obj":
+        {
+            "description": "Enable OBJ importer"
+        },
+        "importer-ply":
+        {
+            "description": "Enable PLY importer"
+        },
+        "importer-stl":
+        {
+            "description": "Enable STL importer"
+        },
         "no-export":
         {
             "description": "Disable export functionality"
