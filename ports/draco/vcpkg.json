@@ -1,0 +1,28 @@
+{
+    "name": "draco",
+    "version": "1.5.3",
+    "description": "A library for compressing and decompressing 3D geometric meshes and point clouds",
+    "homepage": "https://google.github.io/draco/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ],
+    "features":
+    {
+        "tools":
+        {
+            "description": "Build tools"
+        },
+        "wasm":
+        {
+            "description": "Enable WASM support"
+        }
+    }
+}
