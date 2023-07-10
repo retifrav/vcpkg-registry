@@ -4,6 +4,7 @@ vcpkg_from_git(
     REF 9519a62dd20799c5493c638d1ef5a6f484e5faf1
     PATCHES
         cmake-config-paths.patch
+        do-not-override-flags.patch
         do-not-vendor-zlib-ffs.patch
         disable-pkgconfig.patch
         winapi-uwp.patch
