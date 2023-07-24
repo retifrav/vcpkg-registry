@@ -1,0 +1,17 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c35d2eb3..eb376c68 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -112,7 +112,11 @@ endif()
+ 
+ if(SIMDJSON_ENABLE_THREADS)
+   find_package(Threads REQUIRED)
+-  simdjson_add_props(target_link_libraries PUBLIC Threads::Threads)
++  #set(THREADS_LIBRARIES_NAME "Threads::Threads")
++  #if(APPLE)
++  #    set(THREADS_LIBRARIES_NAME "-lpthread")
++  #endif()
++  simdjson_add_props(target_link_libraries PUBLIC ${CMAKE_THREAD_LIBS_INIT}) # ${THREADS_LIBRARIES_NAME}
+   simdjson_add_props(target_compile_definitions PUBLIC SIMDJSON_THREADS_ENABLED=1)
+ endif()
+ 
