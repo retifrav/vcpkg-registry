@@ -6,6 +6,11 @@
             "baseline": "5.2.5",
             "port-version": 0
         },
+        "brotli":
+        {
+            "baseline": "1.0.9",
+            "port-version": 0
+        },
         "cpp-base64":
         {
             "baseline": "2.0.8",
