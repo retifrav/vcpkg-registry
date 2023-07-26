@@ -12,6 +12,10 @@
         {
             "name": "vcpkg-cmake-config",
             "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
         }
     ],
     "default-features":
