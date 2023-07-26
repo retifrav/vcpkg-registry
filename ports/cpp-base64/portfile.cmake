@@ -4,9 +4,18 @@ vcpkg_from_git(
     REF 07ae5045d67b5bf6ffb46646b8ac2370eff1ae3e
 )
 
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"   DESTINATION "${SOURCE_PATH}")
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/Installing.cmake" DESTINATION "${SOURCE_PATH}")
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"  DESTINATION "${SOURCE_PATH}")
+file(COPY
+    "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"
+    DESTINATION "${SOURCE_PATH}"
+)
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
+    DESTINATION "${SOURCE_PATH}"
+)
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Config.cmake.in"
+    DESTINATION "${SOURCE_PATH}"
+)
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
