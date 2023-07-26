@@ -1,6 +1,6 @@
 if(VCPKG_CROSSCOMPILING)
-    # make FATAL_ERROR in CI when issue #16773 fixed
-    message(WARNING "decovar-vcpkg-cmake is a host-only port, mark it as a host port in your ports dependencies")
+    # should be FATAL_ERROR
+    message(WARNING "${PORT} is a host-only port, mark it as a host dependency in your ports")
 endif()
 
 # functions
