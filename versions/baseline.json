@@ -86,6 +86,11 @@
             "baseline": "22.1.0",
             "port-version": 0
         },
+        "png":
+        {
+            "baseline": "1.6.38",
+            "port-version": 0
+        },
         "simdjson":
         {
             "baseline": "3.2.1",

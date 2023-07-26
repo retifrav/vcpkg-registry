@@ -1,0 +1,22 @@
+{
+    "name": "png",
+    "version": "1.6.38",
+    "description": "PNG reference library",
+    "homepage": "https://png-mng.sourceforge.net/pub/png/libpng.html",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        },
+        "zlib"
+    ]
+}
