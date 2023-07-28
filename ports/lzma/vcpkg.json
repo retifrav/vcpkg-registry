@@ -17,5 +17,16 @@
             "name": "decovar-vcpkg-cmake",
             "host": true
         }
-    ]
+    ],
+    "default-features":
+    [
+        "enable-avx2"
+    ],
+    "features":
+    {
+        "enable-avx2":
+        {
+            "description": "Enable AVX2 intrinsics"
+        }
+    }
 }

@@ -2,6 +2,18 @@ cmake_minimum_required(VERSION 3.22)
 
 project("lzma")
 
+option(ENABLE_AVX2 "Enable AVX2 intrinsics" 1)
+#option(ENABLE_AVX  "Enable AVX intrinsics"  0)
+
+if(WIN32 AND ENABLE_AVX2)
+    # without it compilation with Clang on Windows will fail
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2")
+# elseif(ENABLE_AVX) # AND CMAKE_C_COMPILER_ARCHITECTURE_ID STREQUAL "x64"
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX")
+# else()
+#     message(STATUS "[WARNING] Neither of AVX options is set, so compilation might fail with undeclared identifiers")
+endif()
+
 add_library(${PROJECT_NAME})
 
 set(sources

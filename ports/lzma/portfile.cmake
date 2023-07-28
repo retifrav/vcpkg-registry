@@ -25,7 +25,17 @@ file(COPY
     DESTINATION "${SOURCE_PATH}"
 )
 
-vcpkg_cmake_configure(SOURCE_PATH "${SOURCE_PATH}")
+vcpkg_check_features(
+    OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        enable-avx2 ENABLE_AVX2
+)
+
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        ${FEATURE_OPTIONS}
+)
 
 vcpkg_cmake_install()
 
