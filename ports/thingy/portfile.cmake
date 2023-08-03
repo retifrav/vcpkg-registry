@@ -2,6 +2,8 @@ vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:retifrav/cmake-target-link-libraries-example.git
     REF 7ec26bb06614707302b66dc4a65601c0594da442
+    PATCHES
+        some.patch
 )
 
 vcpkg_cmake_configure(

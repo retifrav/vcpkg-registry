@@ -1,0 +1,12 @@
+diff --git a/dpndnc/CMakeLists.txt b/dpndnc/CMakeLists.txt
+index 2289c1d..f6b5b61 100755
+--- a/dpndnc/CMakeLists.txt
++++ b/dpndnc/CMakeLists.txt
+@@ -39,3 +39,7 @@ set(public_headers
+ )
+ 
+ include(Installing)
++
++# just some meaningless stuff
++
++message(STATUS "Here be patch number 1")
