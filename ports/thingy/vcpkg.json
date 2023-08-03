@@ -1,0 +1,17 @@
+{
+    "name": "thingy",
+    "version": "0.9.1",
+    "description": "Some thing",
+    "homepage": "https://github.com/retifrav/cmake-target-link-libraries-example",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
