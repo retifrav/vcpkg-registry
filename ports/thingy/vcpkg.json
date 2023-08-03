@@ -1,7 +1,7 @@
 {
     "name": "thingy",
     "version": "0.9.1",
-    "port-version": 2,
+    "port-version": 3,
     "description": "Some thing",
     "homepage": "https://github.com/retifrav/cmake-target-link-libraries-example",
     "dependencies":
