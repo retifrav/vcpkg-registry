@@ -1,0 +1,6 @@
+{
+    "name": "iconv",
+    "version": "1.16.0",
+    "description": "GNU Unicode text conversion",
+    "homepage": "https://gnu.org/software/libiconv/"
+}
