@@ -23,12 +23,12 @@
         },
         "curl":
         {
-            "baseline": "7.84.0",
+            "baseline": "8.1.2",
             "port-version": 0
         },
         "dearimgui":
         {
-            "baseline": "1.88.0",
+            "baseline": "1.89.3",
             "port-version": 0
         },
         "decovar-vcpkg-cmake":
@@ -63,7 +63,7 @@
         },
         "glfw":
         {
-            "baseline": "3.3.7",
+            "baseline": "3.3.8",
             "port-version": 0
         },
         "glslang":
@@ -143,7 +143,7 @@
         },
         "zstd":
         {
-            "baseline": "1.5.2",
+            "baseline": "1.5.5",
             "port-version": 0
         }
     }
