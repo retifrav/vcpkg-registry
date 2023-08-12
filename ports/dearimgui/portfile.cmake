@@ -21,6 +21,9 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         backend-glfw-opengl BACKEND_OPENGL3
         backend-glfw-vulkan BACKEND_VULKAN
+        platform-win32 PLATFORM_WIN32
+        with-internal WITH_INTERNAL
+        with-stb-textedit WITH_STB_TEXTEDIT
 )
 
 vcpkg_cmake_configure(
@@ -32,8 +35,6 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
-
-#vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 

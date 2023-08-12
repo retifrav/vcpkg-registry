@@ -20,7 +20,9 @@
     ],
     "default-features":
     [
-        "backend-glfw-opengl"
+        "backend-glfw-opengl",
+        "with-internal",
+        "with-stb-textedit"
     ],
     "features":
     {
@@ -45,6 +47,18 @@
                     ]
                 }
             ]
+        },
+        "platform-win32":
+        {
+            "description": "Support for win32"
+        },
+        "with-internal":
+        {
+            "description": "Using internal header(s)"
+        },
+        "with-stb-textedit":
+        {
+            "description": "Using STB textedit"
         }
     }
 }

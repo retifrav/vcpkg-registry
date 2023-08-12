@@ -4,12 +4,15 @@ project("dearimgui"
     VERSION 1.89.3
 )
 
-option(BACKEND_OPENGL2 "OpenGL 2 graphics backend" 0)
-option(BACKEND_OPENGL3 "OpenGL 3 graphics backend" 1)
-option(BACKEND_VULKAN  "Vulkan graphics backend"   0)
-option(BACKEND_GLFW    "GLFW backend"              1)
-#option(BACKEND_SDL     "SDL backend"               0)
+option(BACKEND_OPENGL2 "OpenGL 2 graphics backend"  0)
+option(BACKEND_OPENGL3 "OpenGL 3 graphics backend"  1)
+option(BACKEND_VULKAN  "Vulkan graphics backend"    0)
+option(BACKEND_GLFW    "GLFW backend"               1)
+#option(BACKEND_SDL     "SDL backend"                0)
 # ...and so on
+option(PLATFORM_WIN32    "Support for win32"        0)
+option(WITH_INTERNAL     "Using internal header(s)" 0)
+option(WITH_STB_TEXTEDIT "Using STB textedit"       0)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -119,6 +122,27 @@ endif()
 #         ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_sdl.h
 #     )
 # endif()
+
+if(PLATFORM_WIN32)
+    list(APPEND sources
+        ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+    )
+    list(APPEND public_headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_win32.h
+    )
+endif()
+
+if(WITH_INTERNAL)
+    list(APPEND public_headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/imgui_internal.h
+    )
+endif()
+
+if(WITH_STB_TEXTEDIT)
+    list(APPEND public_headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/imstb_textedit.h
+    )
+endif()
 
 target_sources(${PROJECT_NAME}
     PRIVATE
