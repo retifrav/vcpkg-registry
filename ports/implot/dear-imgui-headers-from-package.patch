@@ -1,0 +1,26 @@
+diff --git a/implot.h b/implot.h
+index 997d96f..0d59621 100644
+--- a/implot.h
++++ b/implot.h
+@@ -45,7 +45,7 @@
+ // [SECTION] Obsolete API
+ 
+ #pragma once
+-#include "imgui.h"
++#include <dearimgui/imgui.h>
+ 
+ //-----------------------------------------------------------------------------
+ // [SECTION] Macros and Defines
+diff --git a/implot_internal.h b/implot_internal.h
+index b2685ff..5d9344d 100644
+--- a/implot_internal.h
++++ b/implot_internal.h
+@@ -36,7 +36,7 @@
+ #endif
+ 
+ #include <time.h>
+-#include "imgui_internal.h"
++#include <dearimgui/imgui_internal.h>
+ 
+ #ifndef IMPLOT_VERSION
+ #error Must include implot.h before implot_internal.h

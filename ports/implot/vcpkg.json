@@ -1,0 +1,33 @@
+{
+    "name": "implot",
+    "version": "0.14.0",
+    "description": "Immediate mode plotting",
+    "homepage": "https://github.com/epezent/implot",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        },
+        "dearimgui"
+    ],
+    "default-features":
+    [
+        "with-internal"
+    ],
+    "features":
+    {
+        "with-internal":
+        {
+            "description": "Using internal header(s)"
+        }
+    }
+}

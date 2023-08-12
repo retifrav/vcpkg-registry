@@ -81,6 +81,11 @@
             "baseline": "72.1.0",
             "port-version": 0
         },
+        "implot":
+        {
+            "baseline": "0.14.0",
+            "port-version": 0
+        },
         "json-nlohmann":
         {
             "baseline": "3.11.2",
