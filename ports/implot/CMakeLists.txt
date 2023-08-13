@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("implot"
-    VERSION 0.14.0
+    VERSION 0.15.0
 )
 
 option(WITH_INTERNAL "Using internal header(s)" 0)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED 1)
 
-# it is almost never a good idea to do this
 # if(WIN32 AND BUILD_SHARED_LIBS)
 #     # you won't get .lib on Windows, as it doesn't export symbols out of the box,
-#     # so this needs to be forced
+#     # so if you don't want to export symbols manually, this might be an option,
+#     # although it's normally not recommended to export all symbols
 #     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 # endif()
 

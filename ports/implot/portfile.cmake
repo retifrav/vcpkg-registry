@@ -6,7 +6,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:epezent/implot.git
-    REF 15e494b76a78b44ae2c1b76608ff9bc39a661409
+    REF 85573fe04ad27f912074a2e7cde889fdf912b0c6
     PATCHES
         dear-imgui-headers-from-package.patch
 )
@@ -20,7 +20,7 @@ file(COPY
     DESTINATION "${SOURCE_PATH}"
 )
 file(COPY
-    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Config.cmake.in"
+    "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"
     DESTINATION "${SOURCE_PATH}"
 )
 
