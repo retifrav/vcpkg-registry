@@ -1,6 +1,6 @@
 {
     "name": "dearimgui",
-    "version": "1.89.3",
+    "version": "1.89.8",
     "description": "Bloat-free Graphical User interface for C++ with minimal dependencies",
     "homepage": "https://github.com/ocornut/imgui",
     "dependencies":
@@ -47,6 +47,14 @@
                     ]
                 }
             ]
+        },
+        "indices-x32":
+        {
+            "description": "Enable 32-bit indices (in particular, for high-density ImPlot widgets)"
+        },
+        "math-operators":
+        {
+            "description": "Enable bundled math operators"
         },
         "platform-win32":
         {

@@ -1,7 +1,12 @@
+# does not export symbols for making a DLL
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+endif()
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:ocornut/imgui.git
-    REF 458a1090314a965dd37b02c918d83077a0142ad5
+    REF f7eea6387202f1174fdb7072311156d667a6826c
 )
 
 file(COPY
@@ -35,6 +40,22 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
+
+if("math-operators" IN_LIST FEATURES)
+    vcpkg_replace_string(
+        "${CURRENT_PACKAGES_DIR}/include/${PORT}/imconfig.h"
+        "//#define IMGUI_DEFINE_MATH_OPERATORS"
+        "#define IMGUI_DEFINE_MATH_OPERATORS"
+    )
+endif()
+
+if("indices-x32" IN_LIST FEATURES)
+    vcpkg_replace_string(
+        "${CURRENT_PACKAGES_DIR}/include/${PORT}/imconfig.h"
+        "//#define ImDrawIdx unsigned int"
+        "#define ImDrawIdx unsigned int"
+    )
+endif()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("dearimgui"
-    VERSION 1.89.3
+    VERSION 1.89.8
 )
 
 option(BACKEND_OPENGL2 "OpenGL 2 graphics backend"  0)
@@ -15,13 +15,14 @@ option(WITH_INTERNAL     "Using internal header(s)" 0)
 option(WITH_STB_TEXTEDIT "Using STB textedit"       0)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED 1)
 
-if(WIN32 AND BUILD_SHARED_LIBS)
-    # you won't get .lib on Windows, as it doesn't export symbols out of the box,
-    # so this needs to be forced
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
-endif()
+# if(WIN32 AND BUILD_SHARED_LIBS)
+#     # you won't get .lib on Windows, as it doesn't export symbols out of the box,
+#     # so if you don't want to export symbols manually, this might be an option,
+#     # although it's normally not recommended to export all symbols
+#     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
+# endif()
 
 add_library(${PROJECT_NAME})
 
