@@ -17,15 +17,7 @@
             "name": "decovar-vcpkg-cmake",
             "host": true
         },
-        {
-            "name": "dearimgui",
-            "version>=": "1.89.8",
-            "features":
-            [
-                "indices-x32",
-                "math-operators"
-            ]
-        }
+        "dearimgui"
     ],
     "default-features":
     [
