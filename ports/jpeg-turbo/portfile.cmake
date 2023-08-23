@@ -12,9 +12,10 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:libjpeg-turbo/libjpeg-turbo.git
-    REF 3b19db4e6e7493a748369974819b4c5fa84c7614
+    REF 6c610333497302c52ff36046f9ff72f0c3a6dc2e
     PATCHES
         disable-tools-docs-fix-installation.patch
+        boolean-typedef.patch
 )
 
 if(

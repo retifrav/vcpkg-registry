@@ -88,7 +88,7 @@
         },
         "jpeg-turbo":
         {
-            "baseline": "2.1.5",
+            "baseline": "2.1.91",
             "port-version": 0
         },
         "json-nlohmann":
