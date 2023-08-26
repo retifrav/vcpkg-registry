@@ -1,0 +1,30 @@
+{
+    "name": "cpp-http",
+    "version": "0.12.1",
+    "description": "Header-only HTTP/HTTPS server and client library",
+    "homepage": "https://github.com/yhirose/cpp-httplib",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "brotli",
+        "zlib"
+    ],
+    "features":
+    {
+        "tests":
+        {
+            "description": "Enable tests",
+            "dependencies":
+            [
+                "gtest"
+            ]
+        }
+    }
+}
