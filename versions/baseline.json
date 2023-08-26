@@ -71,6 +71,11 @@
             "baseline": "12.2.0",
             "port-version": 0
         },
+        "gtest":
+        {
+            "baseline": "1.13.0",
+            "port-version": 0
+        },
         "iconv":
         {
             "baseline": "1.16.0",

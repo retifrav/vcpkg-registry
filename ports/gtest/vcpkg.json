@@ -1,0 +1,17 @@
+{
+    "name": "gtest",
+    "version": "1.13.0",
+    "description": "Google testing and mocking framework",
+    "homepage": "https://github.com/google/googletest",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
