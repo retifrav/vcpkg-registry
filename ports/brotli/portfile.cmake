@@ -3,12 +3,18 @@ vcpkg_from_git(
     URL git@github.com:google/brotli.git
     REF e61745a6b7add50d380cfd7d3883dd6c62fc2c71
     PATCHES
-        split-debug-release-and-export-config.patch
+        split-debug-release-export-config-option-tools.patch
+)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        tools BROTLI_BUILD_TOOLS
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
+        ${FEATURE_OPTIONS}
         -DBROTLI_BUNDLED_MODE=0
         -DBROTLI_DISABLE_TESTS=1
         # fascinating enough, even if you are in fact targeting Emscripten,
