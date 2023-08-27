@@ -1,0 +1,17 @@
+{
+    "name": "sdl",
+    "version": "2.28.2",
+    "description": "Simple Directmedia Layer",
+    "homepage": "https://libsdl.org/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}

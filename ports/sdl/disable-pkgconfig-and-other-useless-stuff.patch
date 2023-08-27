@@ -1,0 +1,58 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 00cf9b43f..0710f4720 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3109,12 +3109,12 @@ endif()
+ # MESSAGE(STATUS "SDL_LIBS: ${SDL_LIBS}")
+ # MESSAGE(STATUS "SDL_STATIC_LIBS: ${SDL_STATIC_LIBS}")
+ 
+-configure_file("${SDL2_SOURCE_DIR}/sdl2.pc.in"
+-  "${SDL2_BINARY_DIR}/sdl2.pc" @ONLY)
+-configure_file("${SDL2_SOURCE_DIR}/sdl2-config.in"
+-  "${SDL2_BINARY_DIR}/sdl2-config" @ONLY)
+-configure_file("${SDL2_SOURCE_DIR}/SDL2.spec.in"
+-  "${SDL2_BINARY_DIR}/SDL2.spec" @ONLY)
++#configure_file("${SDL2_SOURCE_DIR}/sdl2.pc.in"
++#  "${SDL2_BINARY_DIR}/sdl2.pc" @ONLY)
++#configure_file("${SDL2_SOURCE_DIR}/sdl2-config.in"
++#  "${SDL2_BINARY_DIR}/sdl2-config" @ONLY)
++#configure_file("${SDL2_SOURCE_DIR}/SDL2.spec.in"
++#  "${SDL2_BINARY_DIR}/SDL2.spec" @ONLY)
+ 
+ macro(check_add_debug_flag FLAG SUFFIX)
+     check_c_compiler_flag(${FLAG} HAS_C_FLAG_${SUFFIX})
+@@ -3573,14 +3573,14 @@ if(NOT SDL2_DISABLE_INSTALL)
+     set(SOPOSTFIX "")
+   endif()
+ 
+-  install(FILES "LICENSE.txt" DESTINATION "${LICENSES_PREFIX}")
+-  if(FREEBSD)
+-    # FreeBSD uses ${PREFIX}/libdata/pkgconfig
+-    install(FILES ${SDL2_BINARY_DIR}/sdl2.pc DESTINATION "libdata/pkgconfig")
+-  else()
+-    install(FILES ${SDL2_BINARY_DIR}/sdl2.pc
+-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+-  endif()
++  #install(FILES "LICENSE.txt" DESTINATION "${LICENSES_PREFIX}")
++  #if(FREEBSD)
++  #  # FreeBSD uses ${PREFIX}/libdata/pkgconfig
++  #  install(FILES ${SDL2_BINARY_DIR}/sdl2.pc DESTINATION "libdata/pkgconfig")
++  #else()
++  #  install(FILES ${SDL2_BINARY_DIR}/sdl2.pc
++  #          DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
++  #endif()
+   if(NOT (WINDOWS OR CYGWIN) OR MINGW)
+     if(SDL_SHARED)
+       set(SOEXT ${CMAKE_SHARED_LIBRARY_SUFFIX}) # ".so", ".dylib", etc.
+@@ -3593,9 +3593,9 @@ if(NOT SDL2_DISABLE_INSTALL)
+           install(FILES ${SDL2_BINARY_DIR}/libSDL2${SOPOSTFIX}${SOEXT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+       endif()
+     endif()
+-    install(PROGRAMS ${SDL2_BINARY_DIR}/sdl2-config DESTINATION "${CMAKE_INSTALL_BINDIR}")
++    #install(PROGRAMS ${SDL2_BINARY_DIR}/sdl2-config DESTINATION "${CMAKE_INSTALL_BINDIR}")
+     # TODO: what about the .spec file? Is it only needed for RPM creation?
+-    install(FILES "${SDL2_SOURCE_DIR}/sdl2.m4" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/aclocal")
++    #install(FILES "${SDL2_SOURCE_DIR}/sdl2.m4" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/aclocal")
+   endif()
+ endif()
+ 
