@@ -48,7 +48,12 @@ do
     # is it "version" (proper SemVer) or "version-date"
     versionKind=$(echo ${versionString} | cut -d \" -f2)
 
+    # TODO: next line after `version` property isn't necessary `git-tree` property,
+    # it might be a `port-version` property instead, and so then this RegEx will fail
     gitHashStated=$(grep -E "\"${versionKind}\"\\s*:\\s*\"${versionValue}\"" -A 1 "$pathToRegistry/versions/${p:0:1}-/${p}.json" | grep git-tree | cut -d \" -f4)
+    if [ -z "$gitHashStated" ]; then
+        gitHashStated="--failed-to-find-stated-git-tree-value--"
+    fi
     gitHashActual=$(git -C $pathToRegistry rev-parse HEAD:./ports/${p}) # the HEAD:./ports path is relative to Git working directory, don't put $pathToRegistry here too
 
     # the `==` comparison doesn't work on ash, dash and some other POSIX implementations,
