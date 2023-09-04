@@ -6,7 +6,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:ocornut/imgui.git
-    REF 458a1090314a965dd37b02c918d83077a0142ad5
+    REF c6e0284ac58b3f205c95365478888f7b53b077e2
 )
 
 file(COPY
@@ -41,6 +41,14 @@ vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
 
+if("math-operators" IN_LIST FEATURES)
+    vcpkg_replace_string(
+        "${CURRENT_PACKAGES_DIR}/include/${PORT}/imconfig.h"
+        "//#define IMGUI_DEFINE_MATH_OPERATORS"
+        "#define IMGUI_DEFINE_MATH_OPERATORS"
+    )
+endif()
+
 if("indices-x32" IN_LIST FEATURES)
     vcpkg_replace_string(
         "${CURRENT_PACKAGES_DIR}/include/${PORT}/imconfig.h"
@@ -56,5 +64,3 @@ file(
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
     RENAME copyright
 )
-
-decovar_vcpkg_cmake_ololo()
