@@ -21,3 +21,6 @@ file(
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
     RENAME copyright
 )
+
+# an example of calling a CMake function from a helper port
+decovar_vcpkg_cmake_ololo()
