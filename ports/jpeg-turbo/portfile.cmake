@@ -16,6 +16,7 @@ vcpkg_from_git(
     PATCHES
         disable-tools-docs-fix-installation.patch
         boolean-typedef.patch
+        disable-single-architecture-check.patch
 )
 
 if(
