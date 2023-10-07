@@ -1,0 +1,29 @@
+{
+    "name": "some",
+    "version": "0",
+    "dependencies":
+    [
+        "assimp",
+        "dearimgui",
+        "draco",
+        "glfw",
+        "sqlite",
+        "zlib",
+        "zstd"
+    ],
+    "overrides":
+    [
+        {
+            "name": "dearimgui",
+            "version": "1.89.3"
+        },
+        {
+            "name": "glfw",
+            "version": "3.3.8"
+        },
+        {
+            "name": "zstd",
+            "version": "1.5.5"
+        }
+    ]
+}
