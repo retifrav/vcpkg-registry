@@ -1,0 +1,20 @@
+{
+    "name": "some",
+    "version": "0",
+    "dependencies":
+    [
+        "json-nlohmann",
+        "thingy"
+    ],
+    "overrides":
+    [
+        {
+            "name": "json-nlohmann",
+            "version": "3.11.2"
+        },
+        {
+            "name": "thingy",
+            "version": "0.9.1"
+        }
+    ]
+}

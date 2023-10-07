@@ -1,0 +1,18 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(NOT @BUILD_SHARED_LIBS_VALUE@)
+    # this guard might be required if some other package will also
+    # have `find_dependency(Thingy)` in its config, because in that case
+    # the final project will fail to configure with the following error:
+    # "cannot create imported target "dpndnc::Thingy" because another
+    # target with the same name already exists"
+    #if(NOT Thingy_FOUND)
+        find_dependency(Thingy CONFIG REQUIRED)
+    #endif()
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+
+check_required_components(@PROJECT_NAME@)
