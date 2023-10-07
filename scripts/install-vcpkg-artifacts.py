@@ -46,6 +46,14 @@ argParser.add_argument(
     help="Path to the project"
 )
 argParser.add_argument(
+    "--blacklist",
+    type=lambda blst: set(
+        [d for d in blst.strip().replace(" ", "").split(",")]
+    ),
+    metavar="\"some,thing,another\"",
+    help="blacklisted dependencies"
+)
+argParser.add_argument(
     "--dry-run",
     action='store_true',
     help="only list things to be copied/moved/deleted (default: %(default)s)"
@@ -60,6 +68,8 @@ cliArgs = argParser.parse_args()
 projectPath: pathlib.Path = cliArgs.projectPath
 cmakePreset: str = cliArgs.cmake_preset
 vcpkgTriplet: str = cliArgs.vcpkg_triplet
+userBlacklisted: typing.Optional[typing.Set[str]] = cliArgs.blacklist
+
 dryRun: bool = cliArgs.dry_run
 debugMode: bool = cliArgs.debug
 
@@ -152,57 +162,64 @@ if not vcpkgInfoLists.is_dir():
 # so this is intentional
 #
 # there are also exceptions for some files from those blacklisted dependencies
-# (for instance, we want to keep GDAL DLLs)
+# (for instance, we might want to keep GDAL DLLs)
 dependenciesBlacklist: typing.Dict[str, typing.Dict[str, typing.Any]] = {
-    "datakit":
-    {
-        "exceptions": []
-    },
-    "gdal":
-    {
-        "exceptions":
-        [
-            "bin/gdal304.dll",
-            "share/gdal/dlls/freexl.dll",
-            "share/gdal/dlls/geos.dll",
-            "share/gdal/dlls/geos_c.dll",
-            "share/gdal/dlls/iconv-2.dll",
-            "share/gdal/dlls/libcrypto-1_1-x64.dll",
-            "share/gdal/dlls/libcurl.dll",
-            "share/gdal/dlls/libexpat.dll",
-            "share/gdal/dlls/libmysql.dll",
-            "share/gdal/dlls/libpq.dll",
-            "share/gdal/dlls/libssl-1_1-x64.dll",
-            "share/gdal/dlls/libxml2.dll",
-            "share/gdal/dlls/ogdi.dll",
-            "share/gdal/dlls/openjp2.dll",
-            "share/gdal/dlls/proj_7_2.dll",
-            "share/gdal/dlls/spatialite.dll",
-            "share/gdal/dlls/sqlite3.dll",
-            "share/gdal/dlls/tiff.dll",
-            "share/gdal/dlls/xerces-c_3_2.dll",
-            "share/gdal/dlls/zlib.dll"
-        ]
-    }
+    # "datakit":
+    # {
+    #     "exceptions": []
+    # },
+    # # "something-else": {},
+    # "gdal":
+    # {
+    #     "exceptions":
+    #     [
+    #         "bin/gdal304.dll",
+    #         "share/gdal/dlls/freexl.dll",
+    #         "share/gdal/dlls/geos.dll",
+    #         "share/gdal/dlls/geos_c.dll",
+    #         "share/gdal/dlls/iconv-2.dll",
+    #         "share/gdal/dlls/libcrypto-1_1-x64.dll",
+    #         "share/gdal/dlls/libcurl.dll",
+    #         "share/gdal/dlls/libexpat.dll",
+    #         "share/gdal/dlls/libmysql.dll",
+    #         "share/gdal/dlls/libpq.dll",
+    #         "share/gdal/dlls/libssl-1_1-x64.dll",
+    #         "share/gdal/dlls/libxml2.dll",
+    #         "share/gdal/dlls/ogdi.dll",
+    #         "share/gdal/dlls/openjp2.dll",
+    #         "share/gdal/dlls/proj_7_2.dll",
+    #         "share/gdal/dlls/spatialite.dll",
+    #         "share/gdal/dlls/sqlite3.dll",
+    #         "share/gdal/dlls/tiff.dll",
+    #         "share/gdal/dlls/xerces-c_3_2.dll",
+    #         "share/gdal/dlls/zlib.dll"
+    #     ]
+    # }
 }
+# extend the default blacklist with the ones provided via CLI argument
+if userBlacklisted:
+    for ubd in userBlacklisted:
+        if ubd not in dependenciesBlacklist:
+            dependenciesBlacklist[ubd] = {}
 
 # check which of the blacklisted dependencies are actually installed
 actuallyInstalledDependencies: typing.Dict[str, typing.List[pathlib.Path]] = {}
-for d in dependenciesBlacklist.keys():
-    dependencyLists = list(vcpkgInfoLists.glob(f"{d}*.list"))
-    listsCount: int = len(dependencyLists)
-    logging.info(f"- {d} (lists found: {listsCount})")
-    if not listsCount > 0:
-        logging.info(
-            " ".join((
-                "no lists found for that pattern (most likely",
-                "this is okay, because some dependencies",
-                "are platform-specific)"
-            ))
-        )
-    else:
-        actuallyInstalledDependencies[d] = dependencyLists
-logging.info("-")
+if len(dependenciesBlacklist.keys()) > 0:
+    for d in dependenciesBlacklist.keys():
+        dependencyLists = list(vcpkgInfoLists.glob(f"{d}*.list"))
+        listsCount: int = len(dependencyLists)
+        logging.info(f"- [{d}]* (lists found: {listsCount})")
+        if not listsCount > 0:
+            logging.info(
+                " ".join((
+                    "no lists found for that pattern (most likely",
+                    "this is okay, because some dependencies",
+                    "might be platform-specific)"
+                ))
+            )
+        else:
+            actuallyInstalledDependencies[d] = dependencyLists
+    logging.info("-")
 
 # first process the exceptions
 
@@ -214,25 +231,31 @@ if actuallyInstalledDependenciesCnt > 0:
         logging.info("dry run, not copying exceptions")
     else:
         for dpndnc in actuallyInstalledDependencies:
-            # should probably check first if it has any
-            for dbe in dependenciesBlacklist[dpndnc]["exceptions"]:
-                dbePathSource: pathlib.Path = (
-                    vcpkgInstallationPath / vcpkgTriplet / dbe
-                )
-                dbePathDestination: pathlib.Path = (
-                    projectInstallationPath / dbe
-                )
-                dbePathDestination.parent.mkdir(parents=True, exist_ok=True)
-                try:
-                    shutil.copy(dbePathSource, dbePathDestination)
-                except FileNotFoundError:
-                    logging.error(
-                        " ".join((
-                            f"file [{dbePathSource.resolve()}]",
-                            "does not exist"
-                        ))
+            excptns = dependenciesBlacklist[dpndnc].get("exceptions")
+            if excptns:
+                for dbe in excptns:
+                    dbePathSource: pathlib.Path = (
+                        vcpkgInstallationPath / vcpkgTriplet / dbe
                     )
-                    raise SystemExit(4)
+                    dbePathDestination: pathlib.Path = (
+                        projectInstallationPath / dbe
+                    )
+                    dbePathDestination.parent.mkdir(
+                        parents=True,
+                        exist_ok=True
+                    )
+                    try:
+                        shutil.copy(dbePathSource, dbePathDestination)
+                    except FileNotFoundError:
+                        logging.error(
+                            " ".join((
+                                f"file [{dbePathSource.resolve()}]",
+                                "does not exist"
+                            ))
+                        )
+                        raise SystemExit(4)
+            else:
+                logging.debug(f"[{dpndnc}]* pattern has no exceptions")
 else:
     logging.info(
         " ".join((
@@ -259,6 +282,7 @@ if actuallyInstalledDependenciesCnt > 0:
         logging.info("Filtering out blacklisted dependencies...")
         # first delete the files
         for d in actuallyInstalledDependencies:
+            logging.info(f"- [{d}]*")
             artifactsPaths: typing.List[str] = []
             for lst in actuallyInstalledDependencies[d]:
                 with open(lst, "r") as lf:
@@ -270,7 +294,7 @@ if actuallyInstalledDependenciesCnt > 0:
                 if commonFoldersMatches:
                     # ap = re.sub(commonFoldersRegEx, r"\2", ap)
                     foldersToDelete.add(commonFoldersMatches.group(0))
-            logging.debug(f"folders to delete: {foldersToDelete}")
+            logging.debug(f"folders to delete: {list(foldersToDelete)}")
 
             filesToDelete: typing.Set[str] = set(
                 ap for ap in artifactsPaths
@@ -279,7 +303,7 @@ if actuallyInstalledDependenciesCnt > 0:
                     and not ap.startswith(tuple(foldersToDelete))
                 )
             )
-            logging.debug(f"files to delete: {filesToDelete}")
+            logging.debug(f"files to delete: {list(filesToDelete)}")
 
             if dryRun:
                 logging.info("dry run, not deleting anything")
