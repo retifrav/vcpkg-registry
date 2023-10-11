@@ -1,0 +1,17 @@
+{
+    "name": "pybind11",
+    "version": "2.11.1",
+    "description": "Seamless operability between C++ and Python",
+    "homepage": "https://github.com/pybind/pybind11",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
