@@ -11,6 +11,9 @@ A good portion of the ports here are based on the ports from the [Microsoft's re
     - [Installing ports in a dummy project](#installing-ports-in-a-dummy-project)
     - [Resolving dependencies in an actual project](#resolving-dependencies-in-an-actual-project)
     - [Custom triplets](#custom-triplets)
+- [Scripts](#scripts)
+    - [check-versions-and-hashes](#check-versions-and-hashes)
+    - [install-vcpkg-artifacts](#install-vcpkg-artifacts)
 
 <!-- /MarkdownTOC -->
 
@@ -180,3 +183,30 @@ $ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     ..
 $ cmake --build .
 ```
+
+## Scripts
+
+### check-versions-and-hashes
+
+Checks that declared rev-parse hashes in ports versions match their actual values:
+
+``` sh
+$ cd /path/to/vcpkg-registry
+$ ./scripts/check-versions-and-hashes.sh
+```
+
+More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#checking-versions-and-hashes).
+
+### install-vcpkg-artifacts
+
+Merges vcpkg installation with project installation:
+
+``` sh
+$ cd /path/to/project
+$ python /path/to/vcpkg-registry/scripts/install-vcpkg-artifacts.py \
+    --cmake-preset vcpkg-default-triplet \
+    --vcpkg-triplet arm64-osx \
+    --blacklist "vcpkg-cmake,json-nlohmann"
+```
+
+More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#distributing-your-project).
