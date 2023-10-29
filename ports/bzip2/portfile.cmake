@@ -1,3 +1,8 @@
+# does not export symbols for making a DLL
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+endif()
+
 vcpkg_download_distfile(ARCHIVE
     URLS "https://sourceware.org/pub/bzip2/bzip2-${VERSION}.tar.gz" # 1.0.8
     FILENAME "bzip2-${VERSION}.tar.gz" # 1.0.8
