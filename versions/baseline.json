@@ -156,6 +156,11 @@
             "baseline": "2022-02-06",
             "port-version": 0
         },
+        "wtl":
+        {
+            "baseline": "10.0.10320",
+            "port-version": 0
+        },
         "xerces-c":
         {
             "baseline": "3.2.3",
