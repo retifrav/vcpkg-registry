@@ -1,0 +1,122 @@
+diff --git a/contrib/minizip/ioapi.h b/contrib/minizip/ioapi.h
+index 114bfab..93451dd 100644
+--- a/contrib/minizip/ioapi.h
++++ b/contrib/minizip/ioapi.h
+@@ -43,7 +43,7 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #if defined(USE_FILE32API)
+ #define fopen64 fopen
+diff --git a/contrib/minizip/iowin32.c b/contrib/minizip/iowin32.c
+index 274f39e..4f84914 100644
+--- a/contrib/minizip/iowin32.c
++++ b/contrib/minizip/iowin32.c
+@@ -13,7 +13,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #include "ioapi.h"
+ #include "iowin32.h"
+ 
+diff --git a/contrib/minizip/mztools.c b/contrib/minizip/mztools.c
+index 96891c2..68613c2 100644
+--- a/contrib/minizip/mztools.c
++++ b/contrib/minizip/mztools.c
+@@ -8,7 +8,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #include "unzip.h"
+ 
+ #define READ_8(adr)  ((unsigned char)*(adr))
+diff --git a/contrib/minizip/mztools.h b/contrib/minizip/mztools.h
+index a49a426..15c2876 100644
+--- a/contrib/minizip/mztools.h
++++ b/contrib/minizip/mztools.h
+@@ -12,7 +12,7 @@ extern "C" {
+ #endif
+ 
+ #ifndef _ZLIB_H
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #endif
+ 
+ #include "unzip.h"
+diff --git a/contrib/minizip/unzip.c b/contrib/minizip/unzip.c
+index 5e12e47..b893b52 100644
+--- a/contrib/minizip/unzip.c
++++ b/contrib/minizip/unzip.c
+@@ -72,7 +72,7 @@
+         #define NOUNCRYPT
+ #endif
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #include "unzip.h"
+ 
+ #ifdef STDC
+diff --git a/contrib/minizip/unzip.h b/contrib/minizip/unzip.h
+index 6f95e94..1161501 100644
+--- a/contrib/minizip/unzip.h
++++ b/contrib/minizip/unzip.h
+@@ -48,7 +48,7 @@ extern "C" {
+ #endif
+ 
+ #ifndef _ZLIB_H
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #endif
+ 
+ #ifndef  _ZLIBIOAPI_H
+@@ -56,7 +56,7 @@ extern "C" {
+ #endif
+ 
+ #ifdef HAVE_BZIP2
+-#include "bzlib.h"
++#include <bzip2/bzlib.h>
+ #endif
+ 
+ #define Z_BZIP2ED 12
+diff --git a/contrib/minizip/zip.c b/contrib/minizip/zip.c
+index 4e611e1..3d1915e 100644
+--- a/contrib/minizip/zip.c
++++ b/contrib/minizip/zip.c
+@@ -26,7 +26,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #include "zip.h"
+ 
+ #ifdef STDC
+diff --git a/contrib/minizip/zip.h b/contrib/minizip/zip.h
+index 7e4509d..68a19a7 100644
+--- a/contrib/minizip/zip.h
++++ b/contrib/minizip/zip.h
+@@ -47,7 +47,7 @@ extern "C" {
+ //#define HAVE_BZIP2
+ 
+ #ifndef _ZLIB_H
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #endif
+ 
+ #ifndef _ZLIBIOAPI_H
+@@ -55,7 +55,7 @@ extern "C" {
+ #endif
+ 
+ #ifdef HAVE_BZIP2
+-#include "bzlib.h"
++#include <bzip2/bzlib.h>
+ #endif
+ 
+ #define Z_BZIP2ED 12

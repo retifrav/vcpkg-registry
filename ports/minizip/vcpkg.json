@@ -1,0 +1,38 @@
+{
+    "name": "minizip",
+    "version": "1.2.12",
+    "description": "A massively spiffy yet delicately unobtrusive compression library",
+    "homepage": "https://github.com/madler/zlib",
+    "supports": "!uwp",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        },
+        "zlib"
+    ],
+    "features":
+    {
+        "bzip2":
+        {
+            "description": "Compression using bzip2",
+            "dependencies":
+            [
+                "bzip2"
+            ]
+        },
+        "tools":
+        {
+            "description": "Build tools"
+        }
+    }
+}

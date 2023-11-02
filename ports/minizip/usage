@@ -1,0 +1,4 @@
+To use minizip in your project:
+
+    find_package(minizip CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE minizip)
