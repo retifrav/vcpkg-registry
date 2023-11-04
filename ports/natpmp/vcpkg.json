@@ -1,0 +1,28 @@
+{
+    "name": "natpmp",
+    "version": "2023.6.18",
+    "description": "NAT Port Mapping Protocol implementation",
+    "homepage": "http://miniupnp.free.fr/libnatpmp.html",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ],
+    "features":
+    {
+        "tools":
+        {
+            "description": "Build tools"
+        }
+    }
+}
