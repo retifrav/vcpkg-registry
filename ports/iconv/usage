@@ -1,4 +1,4 @@
-iconv provides CMake targets:
+To use iconv in your project:
 
     find_package(Iconv)
     target_link_libraries(main PRIVATE Iconv::Iconv)
