@@ -116,6 +116,11 @@
             "baseline": "22.1.0",
             "port-version": 0
         },
+        "miniupnpc":
+        {
+            "baseline": "2.2.5",
+            "port-version": 0
+        },
         "minizip":
         {
             "baseline": "1.2.12",
