@@ -1,0 +1,39 @@
+diff --git a/include/GL/glu.h b/include/GL/glu.h
+index 421f25d..c9961e3 100644
+--- a/include/GL/glu.h
++++ b/include/GL/glu.h
+@@ -45,17 +45,23 @@
+ #define GLAPIENTRYP GLAPIENTRY *
+ #endif
+ 
+-#if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GLU32)
+-# undef GLAPI
+-# define GLAPI __declspec(dllexport)
+-#elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL)
+-/* tag specifying we're building for DLL runtime support */
+-# undef GLAPI
+-# define GLAPI __declspec(dllimport)
+-#elif !defined(GLAPI)
+-/* for use with static link lib build of Win32 edition only */
+-# define GLAPI extern
+-#endif /* _STATIC_MESA support */
++#ifdef tess_EXPORTS // CMake sets that when BUILD_SHARED_LIBS=1
++    #if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GLU32)
++    # undef GLAPI
++    # define GLAPI __declspec(dllexport)
++    #elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL)
++    /* tag specifying we're building for DLL runtime support */
++    # undef GLAPI
++    # define GLAPI __declspec(dllimport)
++    #elif !defined(GLAPI)
++    /* for use with static link lib build of Win32 edition only */
++    # define GLAPI extern
++    #endif /* _STATIC_MESA support */
++#endif
++
++#ifndef GLAPI
++    #define GLAPI // so it doesn't fail being undefined
++#endif
+ 
+ #ifdef __cplusplus
+ extern "C" {

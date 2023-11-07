@@ -1,0 +1,16 @@
+diff --git a/include/GL/glu.h b/include/GL/glu.h
+index 421f25d..83de565 100644
+--- a/include/GL/glu.h
++++ b/include/GL/glu.h
+@@ -31,7 +31,11 @@
+ #ifndef __glu_h__
+ #define __glu_h__
+ 
++#if defined(__APPLE__)
++#include <OpenGL/gl.h>
++#else
+ #include <GL/gl.h>
++#endif
+ 
+ #ifndef GLAPIENTRY
+ #if defined(_MSC_VER) || defined(__MINGW32__)

@@ -1,0 +1,28 @@
+{
+    "name": "tess",
+    "version": "9.0.3",
+    "description": "GLU tessellator library",
+    "homepage": "https://gitlab.freedesktop.org/mesa/glu/tree/master/src/libtess",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ],
+    "features":
+    {
+        "with-glu-header":
+        {
+            "description": "Install GL/glu.h header too"
+        }
+    }
+}

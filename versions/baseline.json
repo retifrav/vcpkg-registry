@@ -161,6 +161,11 @@
             "baseline": "3.41.0",
             "port-version": 0
         },
+        "tess":
+        {
+            "baseline": "9.0.3",
+            "port-version": 0
+        },
         "thingy":
         {
             "baseline": "0.9.1",
