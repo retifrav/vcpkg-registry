@@ -14,6 +14,7 @@ A good portion of the ports here are based on the ports from the [Microsoft's re
 - [Scripts](#scripts)
     - [check-versions-and-hashes](#check-versions-and-hashes)
     - [install-vcpkg-artifacts](#install-vcpkg-artifacts)
+- [Branches](#branches)
 
 <!-- /MarkdownTOC -->
 
@@ -210,3 +211,8 @@ $ python /path/to/vcpkg-registry/scripts/install-vcpkg-artifacts.py \
 ```
 
 More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#distributing-your-project).
+
+## Branches
+
+- `master` - ready to use, tested ports;
+- `experimental` - drafts, scraps and experiments, ports from this branch are not done and are unlikely to work.
