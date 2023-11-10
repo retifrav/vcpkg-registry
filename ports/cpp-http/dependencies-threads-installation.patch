@@ -1,8 +1,24 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index c98daf5..68b1ee9 100644
+index c98daf5..32a4513 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -114,26 +114,17 @@ if(OPENSSL_FOUND)
+@@ -102,7 +102,14 @@ endif()
+ 
+ # Threads needed for <thread> on some systems, and for <pthread.h> on Linux
+ set(THREADS_PREFER_PTHREAD_FLAG true)
+-find_package(Threads REQUIRED)
++
++set(THREADS_LIBRARIES_NAME "Threads::Threads")
++if(CMAKE_CROSSCOMPILING AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND EMSCRIPTEN)
++    set(THREADS_LIBRARIES_NAME "-lpthread")
++else()
++	find_package(Threads REQUIRED)
++endif()
++
+ # Since Cmake v3.11, Crypto & SSL became optional when not specified as COMPONENTS.
+ if(HTTPLIB_REQUIRE_OPENSSL)
+ 	find_package(OpenSSL ${_HTTPLIB_OPENSSL_MIN_VER} COMPONENTS Crypto SSL REQUIRED)
+@@ -114,26 +121,17 @@ if(OPENSSL_FOUND)
  	set(HTTPLIB_IS_USING_OPENSSL TRUE)
  endif()
  
@@ -34,7 +50,7 @@ index c98daf5..68b1ee9 100644
  	set(HTTPLIB_IS_USING_BROTLI TRUE)
  endif()
  
-@@ -172,7 +163,7 @@ if(HTTPLIB_COMPILE)
+@@ -172,7 +170,7 @@ if(HTTPLIB_COMPILE)
  	target_sources(${PROJECT_NAME}
  		PUBLIC
  			$<BUILD_INTERFACE:${_httplib_build_includedir}/httplib.h>
@@ -43,7 +59,16 @@ index c98daf5..68b1ee9 100644
  	)
  	set_target_properties(${PROJECT_NAME}
  		PROPERTIES
-@@ -209,10 +200,10 @@ target_link_libraries(${PROJECT_NAME} ${_INTERFACE_OR_PUBLIC}
+@@ -201,7 +199,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM ${_INTERFACE_OR_PUBLIC}
+ 
+ # Always require threads
+ target_link_libraries(${PROJECT_NAME} ${_INTERFACE_OR_PUBLIC}
+-		Threads::Threads
++		${THREADS_LIBRARIES_NAME}
+ 		# Needed for Windows libs on Mingw, as the pragma comment(lib, "xyz") aren't triggered.
+ 		$<$<PLATFORM_ID:Windows>:ws2_32>
+ 		$<$<PLATFORM_ID:Windows>:crypt32>
+@@ -209,10 +207,10 @@ target_link_libraries(${PROJECT_NAME} ${_INTERFACE_OR_PUBLIC}
  		# Needed for API from MacOS Security framework
  		"$<$<AND:$<PLATFORM_ID:Darwin>,$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>>:-framework CoreFoundation -framework Security>"
  		# Can't put multiple targets in a single generator expression or it bugs out.
@@ -58,7 +83,7 @@ index c98daf5..68b1ee9 100644
  		$<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::SSL>
  		$<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::Crypto>
  )
-@@ -225,7 +216,7 @@ target_compile_definitions(${PROJECT_NAME} ${_INTERFACE_OR_PUBLIC}
+@@ -225,7 +223,7 @@ target_compile_definitions(${PROJECT_NAME} ${_INTERFACE_OR_PUBLIC}
  )
  
  # CMake configuration files installation directory
@@ -67,7 +92,7 @@ index c98daf5..68b1ee9 100644
  
  include(CMakePackageConfigHelpers)
  
-@@ -254,21 +245,27 @@ else()
+@@ -254,21 +252,27 @@ else()
  	)
  endif()
  

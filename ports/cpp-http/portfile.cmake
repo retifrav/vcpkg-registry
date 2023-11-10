@@ -3,7 +3,7 @@ vcpkg_from_git(
     URL git@github.com:yhirose/cpp-httplib.git
     REF f2f47284890e9ed1ab1750a21c06441bdd5fcb6c
     PATCHES
-        dependencies-discovery-installation.patch
+        dependencies-threads-installation.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
