@@ -1,0 +1,22 @@
+diff --git a/glslang/OSDependent/Unix/CMakeLists.txt b/glslang/OSDependent/Unix/CMakeLists.txt
+index f6b1c6af..6b4503b9 100644
+--- a/glslang/OSDependent/Unix/CMakeLists.txt
++++ b/glslang/OSDependent/Unix/CMakeLists.txt
+@@ -37,8 +37,15 @@ set_property(TARGET OSDependent PROPERTY POSITION_INDEPENDENT_CODE ON)
+ 
+ # Link pthread
+ set(THREADS_PREFER_PTHREAD_FLAG ON)
+-find_package(Threads REQUIRED)
+-target_link_libraries(OSDependent Threads::Threads)
++
++set(THREADS_LIBRARIES_NAME "Threads::Threads")
++if(CMAKE_CROSSCOMPILING AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND EMSCRIPTEN)
++    set(THREADS_LIBRARIES_NAME "-lpthread")
++else()
++    find_package(Threads REQUIRED)
++endif()
++
++target_link_libraries(OSDependent ${THREADS_LIBRARIES_NAME})
+ 
+ if(ENABLE_GLSLANG_INSTALL AND NOT BUILD_SHARED_LIBS)
+     install(TARGETS OSDependent EXPORT glslang-targets)

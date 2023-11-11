@@ -9,7 +9,7 @@ vcpkg_from_git(
     REF d1517d64cfca91f573af1bf7341dc3a5113349c0
     PATCHES
         install-to-datadir.patch
-        no-threads-on-macos.patch
+        threads-on-apple.patch
 )
 
 vcpkg_find_acquire_program(PYTHON3)
