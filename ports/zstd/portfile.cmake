@@ -3,9 +3,8 @@ vcpkg_from_git(
     URL git@github.com:facebook/zstd.git
     REF 63779c798237346c2b245c546c40b72a5a5913fe
     PATCHES
-        single-target-no-pkgconfig.patch
+        single-target-no-pkgconfig-threads.patch
         fix-emscripten-and-clang-cl.patch
-        threads-for-ios.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" ZSTD_BUILD_STATIC)
