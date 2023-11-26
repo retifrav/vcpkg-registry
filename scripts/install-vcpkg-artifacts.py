@@ -4,6 +4,7 @@ import pathlib
 import argparse
 import re
 import os
+import sys
 import shutil
 
 import typing
@@ -77,9 +78,11 @@ if debugMode:
     loggingLevel = logging.DEBUG
     # 8 is the length of "CRITICAL" - the longest log level name
     loggingFormat = "%(asctime)s | %(levelname)-8s | %(message)s"
+
 logging.basicConfig(
     format=loggingFormat,
-    level=loggingLevel
+    level=loggingLevel,
+    stream=sys.stdout
 )
 
 logging.debug(f"CLI arguments: {cliArgs}")
