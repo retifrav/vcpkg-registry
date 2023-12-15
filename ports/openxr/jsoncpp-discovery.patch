@@ -1,0 +1,81 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index d055b7a..a3ee93e 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -107,7 +107,7 @@ if(NOT VULKAN_INCOMPATIBLE)
+ endif()
+ 
+ find_package(Threads REQUIRED)
+-find_package(JsonCpp)
++find_package(JsonCpp CONFIG REQUIRED)
+ 
+ ### All options defined here
+ option(BUILD_LOADER "Build loader" ON)
+diff --git a/src/loader/CMakeLists.txt b/src/loader/CMakeLists.txt
+index 89c9f2c..8cffd09 100644
+--- a/src/loader/CMakeLists.txt
++++ b/src/loader/CMakeLists.txt
+@@ -100,29 +100,29 @@ if(Vulkan_FOUND)
+ endif()
+ 
+ # Get jsoncpp externally or internally
+-if(BUILD_WITH_SYSTEM_JSONCPP)
++# if(BUILD_WITH_SYSTEM_JSONCPP)
+     target_link_libraries(openxr_loader PRIVATE JsonCpp::JsonCpp)
+-else()
+-    if(NOT BUILD_LOADER_WITH_EXCEPTION_HANDLING)
+-        target_compile_definitions(openxr_loader PRIVATE JSON_USE_EXCEPTION=0)
+-    endif()
+-
+-    target_sources(
+-        openxr_loader
+-        PRIVATE
+-            "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/src/lib_json/json_reader.cpp"
+-            "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/src/lib_json/json_value.cpp"
+-            "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/src/lib_json/json_writer.cpp"
+-    )
+-    target_include_directories(
+-        openxr_loader
+-        PRIVATE "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/include"
+-    )
+-    if(SUPPORTS_Werrorunusedparameter)
+-        # Don't error on this - triggered by jsoncpp
+-        target_compile_options(openxr_loader PRIVATE -Wno-unused-parameter)
+-    endif()
+-endif()
++# else()
++#     if(NOT BUILD_LOADER_WITH_EXCEPTION_HANDLING)
++#         target_compile_definitions(openxr_loader PRIVATE JSON_USE_EXCEPTION=0)
++#     endif()
++
++#     target_sources(
++#         openxr_loader
++#         PRIVATE
++#             "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/src/lib_json/json_reader.cpp"
++#             "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/src/lib_json/json_value.cpp"
++#             "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/src/lib_json/json_writer.cpp"
++#     )
++#     target_include_directories(
++#         openxr_loader
++#         PRIVATE "${PROJECT_SOURCE_DIR}/src/external/jsoncpp/include"
++#     )
++#     if(SUPPORTS_Werrorunusedparameter)
++#         # Don't error on this - triggered by jsoncpp
++#         target_compile_options(openxr_loader PRIVATE -Wno-unused-parameter)
++#     endif()
++# endif()
+ 
+ if(LOADER_EXTERNAL_GEN_DEPENDS)
+     set_source_files_properties(
+diff --git a/src/loader/OpenXRConfig.cmake.in b/src/loader/OpenXRConfig.cmake.in
+index edf34ee..edcac1d 100644
+--- a/src/loader/OpenXRConfig.cmake.in
++++ b/src/loader/OpenXRConfig.cmake.in
+@@ -6,6 +6,7 @@
+ 
+ include(CMakeFindDependencyMacro)
+ find_dependency(Threads)
++find_dependency(JsonCpp)
+ 
+ include("${CMAKE_CURRENT_LIST_DIR}/OpenXRTargets.cmake")
+ 
