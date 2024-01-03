@@ -1,0 +1,21 @@
+{
+    "name": "xrutility",
+    "version": "113.2309.7002",
+    "description": "Helper library for working with OpenXR API",
+    "homepage": "https://github.com/microsoft/OpenXR-MixedReality/tree/main/shared/XrUtility",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ]
+}
