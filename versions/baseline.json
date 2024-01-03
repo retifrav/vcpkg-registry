@@ -196,6 +196,11 @@
             "baseline": "3.2.3",
             "port-version": 0
         },
+        "xrutility":
+        {
+            "baseline": "113.2309.7002",
+            "port-version": 0
+        },
         "zlib":
         {
             "baseline": "1.2.12",
