@@ -1,3 +1,8 @@
+# does not export symbols for making a DLL
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+endif()
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:ReneNyffenegger/cpp-base64.git
