@@ -280,6 +280,8 @@ commonFoldersRegEx = re.compile(
     ))
 )
 
+# compose a list of paths to ignore on copying
+pathsToIgnore: typing.List[str] = []
 if actuallyInstalledDependenciesCnt > 0:
     if filterOutBlacklistedDependencies:
         logging.info("Filtering out blacklisted dependencies...")
@@ -291,47 +293,66 @@ if actuallyInstalledDependenciesCnt > 0:
                 with open(lst, "r") as lf:
                     artifactsPaths.extend(lf.read().splitlines())
 
-            foldersToDelete: typing.Set[str] = set()
+            foldersToIgnore: typing.Set[str] = set()
             for ap in artifactsPaths:
                 commonFoldersMatches = commonFoldersRegEx.match(ap)
                 if commonFoldersMatches:
                     # ap = re.sub(commonFoldersRegEx, r"\2", ap)
-                    foldersToDelete.add(commonFoldersMatches.group(0))
-            logging.debug(f"folders to delete: {list(foldersToDelete)}")
+                    foldersToIgnore.add(
+                        commonFoldersMatches.group(0).rstrip("/")
+                    )
+            logging.debug(f"folders to ignore: {list(foldersToIgnore)}")
+            pathsToIgnore.extend(
+                [
+                    (vcpkgInstallationPath / fl).absolute().as_posix()
+                    for fl in foldersToIgnore
+                ]
+            )
 
-            filesToDelete: typing.Set[str] = set(
+            filesToIgnore: typing.Set[str] = set(
                 ap for ap in artifactsPaths
                 if (
                     not folderRegEx.match(ap)
-                    and not ap.startswith(tuple(foldersToDelete))
+                    and not ap.startswith(tuple(foldersToIgnore))
                 )
             )
-            logging.debug(f"files to delete: {list(filesToDelete)}")
+            logging.debug(f"files to ignore: {list(filesToIgnore)}")
+            pathsToIgnore.extend(
+                [
+                    (vcpkgInstallationPath / fl).absolute().as_posix()
+                    for fl in filesToIgnore
+                ]
+            )
 
-            if dryRun:
-                logging.info("dry run, not deleting anything")
-            else:
-                logging.info("deleting artifacts...")
-                for fl in filesToDelete:
-                    try:
-                        os.remove(vcpkgInstallationPath / fl)
-                    except FileNotFoundError:
-                        logging.error(
-                            " ".join((
-                                f"file [{vcpkgInstallationPath / fl}]",
-                                "is marked for deletion, but it isn't there"
-                            ))
-                        )
-                for fld in foldersToDelete:
-                    try:
-                        shutil.rmtree(vcpkgInstallationPath / fld)
-                    except FileNotFoundError:
-                        logging.error(
-                            " ".join((
-                                f"directory [{vcpkgInstallationPath / fld}]",
-                                "is marked for deletion, but it isn't there"
-                            ))
-                        )
+            # instead of implementing ignore patterns
+            # for the final `shutil.copytree`, you might prefer
+            # to delete blacklisted artifacts before calling it,
+            # although that way is likely to be slower
+            #
+            # if dryRun:
+            #     logging.info("dry run, not deleting anything")
+            # else:
+            #     logging.info("deleting artifacts...")
+            #     for fl in filesToIgnore:
+            #         try:
+            #             os.remove(vcpkgInstallationPath / fl)
+            #         except FileNotFoundError:
+            #             logging.error(
+            #                 " ".join((
+            #                     f"file [{vcpkgInstallationPath / fl}]",
+            #                     "is marked for deletion, but it isn't there"
+            #                 ))
+            #             )
+            #     for fld in foldersToIgnore:
+            #         try:
+            #             shutil.rmtree(vcpkgInstallationPath / fld)
+            #         except FileNotFoundError:
+            #             logging.error(
+            #                 " ".join((
+            #                     f"directory [{vcpkgInstallationPath / fld}]",
+            #                     "is marked for deletion, but it isn't there"
+            #                 ))
+            #             )
     else:
         logging.info("Filtering out blacklisted dependencies has been skipped")
 else:
@@ -341,9 +362,30 @@ else:
             "nothing to filter out"
         ))
     )
+# logging.debug(
+#     "".join((
+#         "The full list of paths to ignore on copying:\n",
+#         "- ",
+#         "\n- ".join(pathsToIgnore)
+#     ))
+# )
+logging.debug(f"The full list of paths to ignore on copying: {pathsToIgnore}")
 logging.info("-")
 
 # --- copy (or rather merge) the vcpkg installation into project installation
+
+
+def ignoredPaths(
+    folder: str,
+    contents: typing.List[str]
+) -> typing.List[str]:
+    paths: typing.List[str] = []
+    for fl in contents:
+        # or `os.path.join(folder, fl)`
+        if (pathlib.Path(folder) / fl).as_posix() in pathsToIgnore:
+            paths.append(fl)
+    return paths
+
 
 logging.info("Merging vcpkg installed artifacts into project installation...")
 if dryRun:
@@ -355,9 +397,10 @@ if dryRun:
     )
 else:
     shutil.copytree(
-        vcpkgTripletInstallationPath,
-        projectInstallationPath,
-        dirs_exist_ok=True
+        vcpkgTripletInstallationPath.absolute(),
+        projectInstallationPath.absolute(),
+        dirs_exist_ok=True,
+        ignore=ignoredPaths
     )
 
 logging.info("-")
