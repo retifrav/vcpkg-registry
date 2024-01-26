@@ -1,6 +1,11 @@
 {
     "default":
     {
+        "abseil":
+        {
+            "baseline": "2024.1.16",
+            "port-version": 0
+        },
         "assimp":
         {
             "baseline": "5.2.5",
