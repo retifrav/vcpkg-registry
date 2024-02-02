@@ -1,0 +1,5 @@
+{
+    "name": "vcpkg-get-python-packages",
+    "version-date": "2024-01-24",
+    "supports": "native"
+}

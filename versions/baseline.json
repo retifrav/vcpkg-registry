@@ -196,6 +196,11 @@
             "baseline": "2023-03-02",
             "port-version": 0
         },
+        "vcpkg-get-python-packages":
+        {
+            "baseline": "2024-01-24",
+            "port-version": 0
+        },
         "wtl":
         {
             "baseline": "10.0.10320",
