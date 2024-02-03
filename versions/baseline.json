@@ -171,6 +171,11 @@
             "baseline": "3.2.1",
             "port-version": 0
         },
+        "spirv-headers":
+        {
+            "baseline": "2023.3.8",
+            "port-version": 0
+        },
         "sqlite":
         {
             "baseline": "3.41.0",
