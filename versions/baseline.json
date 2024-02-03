@@ -211,6 +211,11 @@
             "baseline": "2024-01-24",
             "port-version": 0
         },
+        "vulkan-headers":
+        {
+            "baseline": "2024.1.5",
+            "port-version": 0
+        },
         "wtl":
         {
             "baseline": "10.0.10320",
