@@ -56,6 +56,11 @@
             "baseline": "2.3.0",
             "port-version": 0
         },
+        "egl-registry":
+        {
+            "baseline": "2024.1.25",
+            "port-version": 0
+        },
         "freetype":
         {
             "baseline": "2.12.1",
