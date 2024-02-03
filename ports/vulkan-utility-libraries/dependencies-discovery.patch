@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ae4bd3f..fe085da 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -25,7 +25,7 @@ set(API_TYPE "vulkan")
+ 
+ add_subdirectory(scripts)
+ 
+-find_package(VulkanHeaders CONFIG)
++find_package(VulkanHeaders CONFIG REQUIRED)
+ 
+ add_subdirectory(src)
+ add_subdirectory(include)
+@@ -65,7 +65,7 @@ if (VUL_IS_TOP_LEVEL)
+     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/VulkanUtilityLibrariesConfig.cmake.in" [=[
+         include(CMakeFindDependencyMacro)
+         # NOTE: Because VulkanHeaders is a PUBLIC dependency it needs to be found prior to VulkanUtilityLibraries
+-        find_dependency(VulkanHeaders REQUIRED)
++        find_dependency(VulkanHeaders CONFIG REQUIRED)
+ 
+         @PACKAGE_INIT@
+ 
