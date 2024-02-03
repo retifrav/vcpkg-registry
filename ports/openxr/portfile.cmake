@@ -34,7 +34,7 @@ else()
     vcpkg_cmake_config_fixup(
         PACKAGE_NAME "OpenXR"
         CONFIG_PATH "lib/cmake/openxr"
-)
+    )
 endif()
 
 vcpkg_fixup_pkgconfig()
