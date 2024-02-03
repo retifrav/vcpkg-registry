@@ -1,0 +1,123 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 75830b44..03706988 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -270,19 +270,24 @@ else()
+ endif()
+ 
+ if(ENABLE_SPIRV_TOOLS_INSTALL)
+-  if(WIN32 AND NOT MINGW)
+-    macro(spvtools_config_package_dir TARGET PATH)
+-      set(${PATH} ${TARGET}/cmake)
+-    endmacro()
+-  else()
++  # if(WIN32 AND NOT MINGW)
++  #   macro(spvtools_config_package_dir TARGET PATH)
++  #     set(${PATH} ${TARGET}/cmake)
++  #   endmacro()
++  # else()
+     macro(spvtools_config_package_dir TARGET PATH)
+       set(${PATH} ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
+     endmacro()
+-  endif()
++  # endif()
+ 
+   macro(spvtools_generate_config_file TARGET)
++    set(SPIRV_TOOLS_OPT_DEPENDENCY "")
++    if(NOT "${TARGET}" STREQUAL "SPIRV-Tools-opt")
++      set(SPIRV_TOOLS_OPT_DEPENDENCY "find_dependency(SPIRV-Tools-opt)\n")
++    endif()
+     file(WRITE ${CMAKE_BINARY_DIR}/${TARGET}Config.cmake
+       "include(CMakeFindDependencyMacro)\n"
++      ${SPIRV_TOOLS_OPT_DEPENDENCY}
+       "find_dependency(${SPIRV_TOOLS})\n"
+       "include(\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake)\n"
+       "set(${TARGET}_LIBRARIES ${TARGET})\n"
+@@ -342,6 +347,8 @@ add_subdirectory(tools)
+ add_subdirectory(test)
+ add_subdirectory(examples)
+ 
++option(SPIRV_TOOLS_INSTALL_SOURCE_HEADERS "Install additional source headers" 0)
++
+ if(ENABLE_SPIRV_TOOLS_INSTALL)
+   install(
+     FILES
+@@ -351,7 +358,31 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+       ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/linker.hpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/instrument.hpp
+     DESTINATION
+-      ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/)
++      ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/
++  )
++  if(SPIRV_TOOLS_INSTALL_SOURCE_HEADERS)
++    file(GLOB SPIRV_TOOLS_SOURCE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.h")
++    file(GLOB SPIRV_TOOLS_SOURCE_HEADERS_OPT "${CMAKE_CURRENT_SOURCE_DIR}/source/opt/*.h")
++    file(GLOB SPIRV_TOOLS_SOURCE_HEADERS_UTIL "${CMAKE_CURRENT_SOURCE_DIR}/source/util/*.h")
++    list(APPEND SPIRV_TOOLS_SOURCE_HEADERS
++      ${SPIRV_TOOLS_SOURCE_HEADERS_OPT}
++      ${SPIRV_TOOLS_SOURCE_HEADERS_UTIL}
++    )
++    foreach(header ${SPIRV_TOOLS_SOURCE_HEADERS})
++        file(RELATIVE_PATH rel_file_path "${CMAKE_CURRENT_SOURCE_DIR}" "${header}")
++        get_filename_component(rel_path "${rel_file_path}" DIRECTORY)
++        install(FILES "${header}" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/${rel_path}")
++    endforeach()
++
++    install(
++      FILES
++        ${CMAKE_BINARY_DIR}/extension_enum.inc
++        ${CMAKE_BINARY_DIR}/NonSemanticShaderDebugInfo100.h
++        ${CMAKE_BINARY_DIR}/OpenCLDebugInfo100.h
++      DESTINATION
++        ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/
++    )
++  endif()
+ endif(ENABLE_SPIRV_TOOLS_INSTALL)
+ 
+ if (NOT "${SPIRV_SKIP_TESTS}")
+@@ -390,10 +421,14 @@ add_custom_target(spirv-tools-shared-pkg-config ALL
+ 
+ # Install pkg-config file
+ if (ENABLE_SPIRV_TOOLS_INSTALL)
++  set(SPIRV_TOOLS_PKG_CONFIG_SHARED "")
++  if(BUILD_SHARED_LIBS)
++    set(SPIRV_TOOLS_PKG_CONFIG_SHARED "${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools-shared.pc")
++  endif()
+   install(
+     FILES
+       ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools.pc
+-      ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools-shared.pc
++      ${SPIRV_TOOLS_PKG_CONFIG_SHARED}
+     DESTINATION
+       ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+ endif()
+diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
+index acfa0c12..b51da53e 100644
+--- a/source/CMakeLists.txt
++++ b/source/CMakeLists.txt
+@@ -425,7 +425,24 @@ if (ANDROID)
+ endif()
+ 
+ if(ENABLE_SPIRV_TOOLS_INSTALL)
+-  install(TARGETS ${SPIRV_TOOLS_TARGETS} EXPORT ${SPIRV_TOOLS}Targets)
++  if(NOT BUILD_SHARED_LIBS)
++    set_target_properties(${SPIRV_TOOLS}-shared PROPERTIES EXCLUDE_FROM_ALL 1)
++    list(REMOVE_ITEM SPIRV_TOOLS_TARGETS ${SPIRV_TOOLS}-shared)
++  endif()
++  if(NOT SPIRV_TOOLS_INSTALL_SOURCE_HEADERS)
++    install(
++      TARGETS ${SPIRV_TOOLS_TARGETS}
++      EXPORT ${SPIRV_TOOLS}Targets
++      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
++    )
++  else()
++    install(
++      TARGETS ${SPIRV_TOOLS_TARGETS}
++      EXPORT ${SPIRV_TOOLS}Targets
++      # Dawn project sources include headers using all of these paths
++      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/source
++    )
++  endif()
+   export(EXPORT ${SPIRV_TOOLS}Targets FILE ${SPIRV_TOOLS}Target.cmake)
+ 
+   spvtools_config_package_dir(${SPIRV_TOOLS} PACKAGE_DIR)
