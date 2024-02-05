@@ -1,0 +1,16 @@
+diff --git a/src/dawn/common/Platform.h b/src/dawn/common/Platform.h
+index 58f2e10fa0..17d896e36c 100644
+--- a/src/dawn/common/Platform.h
++++ b/src/dawn/common/Platform.h
+@@ -153,9 +153,9 @@
+ #define DAWN_PLATFORM_IS_MIPS64 1
+ #endif
+ 
+-#elif defiend(__s390__)
++#elif defined(__s390__)
+ #define DAWN_PLATFORM_IS_S390 1
+-#elif defiend(__s390x__)
++#elif defined(__s390x__)
+ #define DAWN_PLATFORM_IS_S390X 1
+ 
+ #elif defined(__PPC__)

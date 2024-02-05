@@ -1,0 +1,57 @@
+{
+    "name": "dawn",
+    "version": "2024.1.13",
+    "description": "An implementation of the WebGPU standard",
+    "homepage": "https://dawn.googlesource.com/dawn",
+    "supports": "!emscripten",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "vcpkg-get-python-packages",
+            "host": true
+        },
+        "abseil",
+        "spirv-headers",
+        {
+            "name": "spirv-tools",
+            "features": [ "with-source-headers" ]
+        }
+    ],
+    "features":
+    {
+        "glfw":
+        {
+            "description": "Enable GLFW support",
+            "dependencies":
+            [
+                "glfw"
+            ]
+        },
+        "opengl":
+        {
+            "description": "Enable OpenGL backend",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        },
+        "vulkan":
+        {
+            "description": "Enable Vulkan backend",
+            "dependencies":
+            [
+                "vulkan-headers",
+                "vulkan-utility-libraries"
+            ]
+        }
+    }
+}

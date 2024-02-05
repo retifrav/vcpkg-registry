@@ -1,0 +1,25 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(absl CONFIG REQUIRED)
+
+if(@DAWN_USE_GLFW@)
+    find_dependency(glfw3 CONFIG REQUIRED)
+endif()
+
+#if("@CMAKE_SYSTEM_NAME@" STREQUAL "Windows")
+    find_dependency(SPIRV-Headers CONFIG REQUIRED)
+    find_dependency(SPIRV-Tools CONFIG REQUIRED)
+    find_dependency(SPIRV-Tools-opt CONFIG REQUIRED)
+    # some other SPIRV targets?
+#endif()
+
+if(@DAWN_ENABLE_VULKAN@)
+    find_dependency(VulkanHeaders CONFIG REQUIRED)
+    find_dependency(VulkanUtilityLibraries CONFIG REQUIRED)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+
+check_required_components(@PROJECT_NAME@)

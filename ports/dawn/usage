@@ -1,0 +1,12 @@
+To use Dawn in your project:
+
+    find_package(Dawn CONFIG REQUIRED)
+    target_link_libraries(main
+        PRIVATE
+            dawn::cpp
+            dawn::native
+            dawn::proc
+            dawn::tint_api
+            # there are many more targets available there,
+            # you'll need find out whichever of those you need in your project
+    )
