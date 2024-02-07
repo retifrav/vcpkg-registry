@@ -1,0 +1,67 @@
+{
+    "name": "tint",
+    "version": "2024.1.15",
+    "description": "A compiler for the WebGPU Shader Language",
+    "homepage": "https://dawn.googlesource.com/tint",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "vcpkg-get-python-packages",
+            "host": true
+        },
+        "abseil",
+        "spirv-headers",
+        {
+            "name": "spirv-tools",
+            "features": [ "with-source-headers" ]
+        }
+    ],
+    "default-features":
+    [
+        "spv-reader",
+        "wgsl-writer"
+    ],
+    "features":
+    {
+        "spv-reader":
+        {
+            "description": "Build SPIR-V input reader"
+        },
+        "spv-writer":
+        {
+            "description": "Build SPIR-V output writer"
+        },
+        "wgsl-reader":
+        {
+            "description": "Build WGSL input reader"
+        },
+        "wgsl-writer":
+        {
+            "description": "Build WGSL output writer"
+        },
+        "glsl-writer":
+        {
+            "description": "Build GLSL output writer"
+        },
+        "hlsl-writer":
+        {
+            "description": "Build HLSL output writer"
+        },
+        "msl-writer":
+        {
+            "description": "Build MSL output writer"
+        },
+        "fuzzers":
+        {
+            "description": "Build fuzzers"
+        }
+    }
+}

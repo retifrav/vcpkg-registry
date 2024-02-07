@@ -1,0 +1,14 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0deacd352..3c21d6f4b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -163,6 +163,9 @@ function(common_compile_options TARGET)
+ 
+       -Wno-deprecated-builtins
+       -Wno-unknown-warning-option
++      -Wno-disabled-macro-expansion # otherwise it fails with `disabled expansion of recursive macro` when building with Emscripten
++      -Wno-switch-default # recent versions of Emscripten (somewhere after 3.1.30?) fail to build
++      -Wno-cpp # https://github.com/emscripten-core/emscripten/issues/5447 | /path/to/emsdk/upstream/emscripten/cache/sysroot/include/sys/poll.h
+     )
+ 
+     if (${TINT_ENABLE_MSAN})

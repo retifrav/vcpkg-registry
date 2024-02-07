@@ -1,0 +1,370 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0deacd352..0a9bae3d7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -15,11 +15,15 @@
+ cmake_minimum_required(VERSION 3.10.2)
+ 
+ project(tint)
+-enable_testing()
++
++#enable_testing()
++
+ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+ set(CMAKE_CXX_STANDARD 17)
+-set(CMAKE_DEBUG_POSTFIX "")
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
++include(GNUInstallDirs)
+ 
+ if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+   message(STATUS "No build type selected, default to Debug")
+@@ -67,22 +71,23 @@ function (set_if_not_defined name value description)
+     endif()
+ endfunction()
+ 
+-set_if_not_defined(TINT_THIRD_PARTY_DIR "${tint_SOURCE_DIR}/third_party" "Directory in which to find third-party dependencies.")
+-set_if_not_defined(TINT_VULKAN_DEPS_DIR "${TINT_THIRD_PARTY_DIR}/vulkan-deps" "Directory in which to find vulkan-deps")
++# set_if_not_defined(TINT_THIRD_PARTY_DIR "${tint_SOURCE_DIR}/third_party" "Directory in which to find third-party dependencies.")
++# set_if_not_defined(TINT_VULKAN_DEPS_DIR "${TINT_THIRD_PARTY_DIR}/vulkan-deps" "Directory in which to find vulkan-deps")
+ 
+-set_if_not_defined(TINT_ABSEIL_DIR "${TINT_THIRD_PARTY_DIR}/abseil-cpp" "Directory in which to find Abseil")
+-set_if_not_defined(TINT_GLFW_DIR "${TINT_THIRD_PARTY_DIR}/glfw" "Directory in which to find GLFW")
+-set_if_not_defined(TINT_JINJA2_DIR "${TINT_THIRD_PARTY_DIR}/jinja2" "Directory in which to find Jinja2")
+-set_if_not_defined(TINT_MARKUPSAFE_DIR "${TINT_THIRD_PARTY_DIR}/markupsafe" "Directory in which to find MarkupSafe")
+-set_if_not_defined(TINT_KHRONOS_DIR "${TINT_THIRD_PARTY_DIR}/khronos" "Directory in which to find Khronos GL headers")
+-set_if_not_defined(TINT_SWIFTSHADER_DIR "${TINT_THIRD_PARTY_DIR}/swiftshader" "Directory in which to find swiftshader")
+-set_if_not_defined(TINT_PROTOBUF_DIR "${TINT_THIRD_PARTY_DIR}/protobuf" "Directory in which to find protobuf")
++# set_if_not_defined(TINT_ABSEIL_DIR "${TINT_THIRD_PARTY_DIR}/abseil-cpp" "Directory in which to find Abseil")
++# set_if_not_defined(TINT_GLFW_DIR "${TINT_THIRD_PARTY_DIR}/glfw" "Directory in which to find GLFW")
++# set_if_not_defined(TINT_JINJA2_DIR "${TINT_THIRD_PARTY_DIR}/jinja2" "Directory in which to find Jinja2")
++# set_if_not_defined(TINT_MARKUPSAFE_DIR "${TINT_THIRD_PARTY_DIR}/markupsafe" "Directory in which to find MarkupSafe")
++# set_if_not_defined(TINT_KHRONOS_DIR "${TINT_THIRD_PARTY_DIR}/khronos" "Directory in which to find Khronos GL headers")
++# set_if_not_defined(TINT_SWIFTSHADER_DIR "${TINT_THIRD_PARTY_DIR}/swiftshader" "Directory in which to find swiftshader")
++# set_if_not_defined(TINT_PROTOBUF_DIR "${TINT_THIRD_PARTY_DIR}/protobuf" "Directory in which to find protobuf")
+ 
+-set_if_not_defined(TINT_SPIRV_TOOLS_DIR "${TINT_VULKAN_DEPS_DIR}/spirv-tools/src" "Directory in which to find SPIRV-Tools")
+-set_if_not_defined(TINT_SPIRV_HEADERS_DIR "${TINT_VULKAN_DEPS_DIR}/spirv-headers/src" "Directory in which to find SPIRV-Headers")
+-set_if_not_defined(TINT_VULKAN_HEADERS_DIR "${TINT_VULKAN_DEPS_DIR}/vulkan-headers/src" "Directory in which to find Vulkan-Headers")
+-set_if_not_defined(TINT_VULKAN_TOOLS_DIR "${TINT_VULKAN_DEPS_DIR}/vulkan-tools/src" "Directory in which to find Vulkan-Tools")
++# set_if_not_defined(TINT_SPIRV_TOOLS_DIR "${TINT_VULKAN_DEPS_DIR}/spirv-tools/src" "Directory in which to find SPIRV-Tools")
++# set_if_not_defined(TINT_SPIRV_HEADERS_DIR "${TINT_VULKAN_DEPS_DIR}/spirv-headers/src" "Directory in which to find SPIRV-Headers")
++# set_if_not_defined(TINT_VULKAN_HEADERS_DIR "${TINT_VULKAN_DEPS_DIR}/vulkan-headers/src" "Directory in which to find Vulkan-Headers")
++# set_if_not_defined(TINT_VULKAN_TOOLS_DIR "${TINT_VULKAN_DEPS_DIR}/vulkan-tools/src" "Directory in which to find Vulkan-Tools")
+ 
++option_if_not_defined(TINT_ENABLE_INSTALL "Enable install step for Tint libraries" ON)
+ option_if_not_defined(TINT_BUILD_CMD_TOOLS "Build the Tint command line tools" ON)
+ option_if_not_defined(TINT_BUILD_DOCS "Build documentation" ${TINT_BUILD_DOCS_DEFAULT})
+ option_if_not_defined(TINT_DOCS_WARN_AS_ERROR "When building documentation, treat warnings as errors" OFF)
+@@ -148,8 +153,11 @@ if (NOT ${TINT_LIB_FUZZING_ENGINE_LINK_OPTIONS} STREQUAL "")
+   message(STATUS "Using provided LIB_FUZZING_ENGINE options: ${TINT_LIB_FUZZING_ENGINE_LINK_OPTIONS}")
+ endif()
+ 
+-message(STATUS "Using python3")
+-find_package(PythonInterp 3 REQUIRED)
++#if(NOT Python3_FOUND)
++    find_package(Python3 COMPONENTS Interpreter REQUIRED)
++    message(STATUS "Python found: ${Python3_FOUND}")
++    message(STATUS "Python path: ${Python3_EXECUTABLE}")
++#endif()
+ 
+ ################################################################################
+ # common_compile_options - sets common Tint compiler and linker options for the
+@@ -341,13 +349,7 @@ if(${TINT_BUILD_DOCS})
+ endif()
+ 
+ function(tint_core_compile_options TARGET)
+-  target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}")
+-  target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}/include")
+-
+-  if (${TINT_BUILD_SPV_READER} OR ${TINT_BUILD_SPV_WRITER})
+-    target_include_directories(${TARGET} PUBLIC
+-        "${TINT_THIRD_PARTY_DIR}/vulkan-deps/spirv-headers/src/include")
+-  endif()
++  target_include_directories(${TARGET} PUBLIC "$<BUILD_INTERFACE:${TINT_ROOT_SOURCE_DIR}>")
+ 
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_SPV_READER=$<BOOL:${TINT_BUILD_SPV_READER}>)
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_WGSL_READER=$<BOOL:${TINT_BUILD_WGSL_READER}>)
+@@ -400,7 +402,9 @@ if (EXISTS "${TINT_PROTOBUF_DIR}/cmake")
+   include("third_party/protobuf.cmake")
+ endif()
+ 
+-add_subdirectory(third_party)
++# don't vendor dependencies
++#add_subdirectory(third_party)
++
+ add_subdirectory(src/tint)
+ 
+ add_custom_target(tint-lint
+@@ -429,3 +433,179 @@ if (TINT_EMIT_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+     COMMENT "Generating tint coverage data"
+     VERBATIM)
+ endif()
++
++# trying to figure out which targets are supposed to be installed
++#
++set(TINT_COMMON_TARGETS "")
++if(TINT_BUILD_MSL_WRITER
++    OR (TINT_BUILD_SPV_READER OR TINT_BUILD_SPV_WRITER)
++    # OR (TINT_BUILD_WGSL_READER OR TINT_BUILD_WGSL_WRITER)
++    # OR SOME_OTHER?
++)
++    list(APPEND TINT_COMMON_TARGETS
++        tint_lang_core_ir_transform
++    )
++endif()
++#
++set(TINT_GLSL_TARGETS "")
++if(TINT_BUILD_GLSL_WRITER)
++    list(APPEND TINT_GLSL_TARGETS
++        tint_lang_glsl_writer
++        tint_lang_glsl_writer_ast_printer
++        tint_lang_glsl_writer_ast_raise
++        tint_lang_glsl_writer_common
++        tint_lang_glsl_writer_printer
++        tint_lang_glsl_writer_raise
++    )
++endif()
++#
++set(TINT_HLSL_TARGETS "")
++if(TINT_BUILD_HLSL_WRITER)
++    list(APPEND TINT_HLSL_TARGETS
++        tint_lang_hlsl_writer
++        tint_lang_hlsl_writer_ast_printer
++        tint_lang_hlsl_writer_ast_raise
++    )
++endif()
++#
++set(TINT_MSL_TARGETS "")
++if(TINT_BUILD_MSL_WRITER)
++    list(APPEND TINT_MSL_TARGETS
++        tint_lang_msl
++        tint_lang_msl_intrinsic
++        tint_lang_msl_ir
++        tint_lang_msl_writer
++        tint_lang_msl_writer_ast_printer
++        tint_lang_msl_writer_ast_raise
++        tint_lang_msl_writer_common
++        tint_lang_msl_writer_printer
++        tint_lang_msl_writer_raise
++    )
++endif()
++#
++set(TINT_SPIRV_TARGETS "")
++if(TINT_BUILD_SPV_READER OR TINT_BUILD_SPV_WRITER)
++    list(APPEND TINT_SPIRV_TARGETS
++        tint_lang_spirv
++        tint_lang_spirv_intrinsic
++        tint_lang_spirv_ir
++        tint_lang_spirv_type
++        tint_lang_spirv_validate
++    )
++endif()
++if(TINT_BUILD_SPV_READER)
++    list(APPEND TINT_SPIRV_TARGETS
++        tint_lang_spirv_reader
++        tint_lang_spirv_reader_ast_lower
++        tint_lang_spirv_reader_ast_parser
++        tint_lang_spirv_reader_parser
++    )
++endif()
++if(TINT_BUILD_SPV_WRITER)
++    list(APPEND TINT_SPIRV_TARGETS
++        tint_lang_spirv_writer
++        tint_lang_spirv_writer_ast_printer
++        tint_lang_spirv_writer_ast_raise
++        tint_lang_spirv_writer_common
++        tint_lang_spirv_writer_printer
++        tint_lang_spirv_writer_raise
++    )
++endif()
++#
++set(TINT_WGSL_TARGETS "")
++if(TINT_BUILD_WGSL_READER OR TINT_BUILD_WGSL_WRITER)
++    list(APPEND TINT_WGSL_TARGETS
++        tint_lang_wgsl_ast_transform
++        tint_lang_wgsl_helpers
++        tint_lang_wgsl_inspector
++    )
++endif()
++if(TINT_BUILD_WGSL_READER)
++    list(APPEND TINT_WGSL_TARGETS
++        tint_lang_wgsl_reader
++        tint_lang_wgsl_reader_lower
++        tint_lang_wgsl_reader_parser
++        tint_lang_wgsl_reader_program_to_ir
++    )
++endif()
++if(TINT_BUILD_WGSL_WRITER)
++    list(APPEND TINT_WGSL_TARGETS
++        tint_lang_wgsl_writer
++        tint_lang_wgsl_writer_ast_printer
++        tint_lang_wgsl_writer_raise
++        tint_lang_wgsl_writer_syntax_tree_printer
++    )
++endif()
++#
++install( # a lot of these are internal targets, which actually shouldn't be exposed
++    TARGETS
++        tint_api
++        tint_api_common
++        tint_api_options
++        ${TINT_COMMON_TARGETS}
++        tint_lang_core
++        tint_lang_core_constant
++        tint_lang_core_intrinsic
++        tint_lang_core_ir
++        tint_lang_core_type
++        ${TINT_GLSL_TARGETS}
++        ${TINT_HLSL_TARGETS}
++        tint_lang_hlsl_writer_common
++        ${TINT_MSL_TARGETS}
++        ${TINT_SPIRV_TARGETS}
++        tint_lang_spirv_reader_common
++        ${TINT_WGSL_TARGETS}
++        tint_lang_wgsl
++        tint_lang_wgsl_ast
++        tint_lang_wgsl_common
++        tint_lang_wgsl_features
++        tint_lang_wgsl_intrinsic
++        tint_lang_wgsl_ir
++        tint_lang_wgsl_program
++        tint_lang_wgsl_resolver
++        tint_lang_wgsl_sem
++        tint_lang_wgsl_writer_ir_to_program
++        tint_utils_containers
++        tint_utils_debug
++        tint_utils_diagnostic
++        tint_utils_generator
++        tint_utils_ice
++        tint_utils_id
++        tint_utils_macros
++        tint_utils_math
++        tint_utils_memory
++        tint_utils_reflection
++        tint_utils_result
++        tint_utils_rtti
++        tint_utils_strconv
++        tint_utils_symbol
++        tint_utils_text
++        tint_utils_traits
++    EXPORT "${PROJECT_NAME}Targets"
++    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}" # to bad there aren't actually any
++    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++)
++
++# generate and install export file
++install(EXPORT "${PROJECT_NAME}Targets"
++    FILE "${PROJECT_NAME}Targets.cmake"
++    NAMESPACE "tint::"
++    DESTINATION "share/${PROJECT_NAME}"
++)
++
++include(CMakePackageConfigHelpers)
++
++configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++    INSTALL_DESTINATION "share/${PROJECT_NAME}"
++)
++
++install(FILES
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++    DESTINATION "share/${PROJECT_NAME}"
++)
++
++install(
++    DIRECTORY "${PROJECT_SOURCE_DIR}/include/tint"
++    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++)
+diff --git a/src/tint/CMakeLists.txt b/src/tint/CMakeLists.txt
+index 9a4eba59b..4ff7a3aa7 100644
+--- a/src/tint/CMakeLists.txt
++++ b/src/tint/CMakeLists.txt
+@@ -51,8 +51,8 @@ endif()
+ # Helper functions
+ ################################################################################
+ function(tint_core_compile_options TARGET)
+-  target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}")
+-  target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}/include")
++  target_include_directories(${TARGET} PRIVATE "$<BUILD_INTERFACE:${TINT_ROOT_SOURCE_DIR}>")
++
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_GLSL_VALIDATOR=$<BOOL:${TINT_BUILD_GLSL_VALIDATOR}>)
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_GLSL_WRITER=$<BOOL:${TINT_BUILD_GLSL_WRITER}>)
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_HLSL_WRITER=$<BOOL:${TINT_BUILD_HLSL_WRITER}>)
+@@ -179,13 +179,13 @@ function(tint_default_compile_options TARGET)
+ endfunction()
+ 
+ function(tint_spvheaders_compile_options TARGET)
+-  target_link_libraries(${TARGET} PRIVATE SPIRV-Headers)
+-  target_include_directories(${TARGET} PRIVATE "${TINT_SPIRV_HEADERS_DIR}/include")
++  find_package(SPIRV-Headers CONFIG REQUIRED)
++  target_link_libraries(${TARGET} PRIVATE SPIRV-Headers::SPIRV-Headers)
+ endfunction()
+ 
+ function(tint_spvtools_compile_options TARGET)
+-  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools)
+-  target_include_directories(${TARGET} PRIVATE "${TINT_SPIRV_TOOLS_DIR}/include")
++  find_package(SPIRV-Tools CONFIG REQUIRED)
++  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools-static)
+ endfunction()
+ 
+ function(tint_lib_compile_options TARGET)
+@@ -393,7 +393,7 @@ function(tint_add_target TARGET KIND)
+   endif()
+ 
+   if(${KIND} STREQUAL lib)
+-    add_library(${TARGET} STATIC EXCLUDE_FROM_ALL)
++    add_library(${TARGET} STATIC)
+     tint_lib_compile_options(${TARGET})
+   elseif(${KIND} STREQUAL proto)
+     add_library(${TARGET} STATIC EXCLUDE_FROM_ALL)
+@@ -497,8 +497,9 @@ function(tint_target_add_external_dependencies TARGET KIND)
+ 
+   foreach(DEPENDENCY ${DEPENDENCIES})  # Each external dependency requires special handling...
+     if(${DEPENDENCY} STREQUAL "abseil")
++      find_package(absl CONFIG REQUIRED)
+       target_link_libraries(${TARGET} PRIVATE
+-        absl_strings
++        absl::strings
+       )
+     elseif(${DEPENDENCY} STREQUAL "glslang")
+       target_link_libraries(${TARGET} PRIVATE glslang)
+@@ -539,15 +540,8 @@ function(tint_target_add_external_dependencies TARGET KIND)
+     elseif(${DEPENDENCY} STREQUAL "spirv-tools")
+       tint_spvtools_compile_options(${TARGET})
+     elseif(${DEPENDENCY} STREQUAL "spirv-opt-internal")
+-      target_link_libraries(${TARGET} PRIVATE
+-        SPIRV-Tools-opt
+-      )
+-      target_include_directories(${TARGET} PRIVATE
+-        "${TINT_SPIRV_TOOLS_DIR}"
+-        "${TINT_SPIRV_TOOLS_DIR}/include"
+-        "${TINT_SPIRV_TOOLS_DIR}/source"
+-        "${spirv-tools_BINARY_DIR}"
+-      )
++      find_package(SPIRV-Tools-opt CONFIG REQUIRED)
++      target_link_libraries(${TARGET} PRIVATE SPIRV-Tools-opt)
+     elseif(${DEPENDENCY} STREQUAL "thread")
+       find_package(Threads REQUIRED)
+       target_link_libraries(${TARGET} PRIVATE Threads::Threads)
+@@ -694,6 +688,6 @@ if (TINT_ENABLE_INSTALL)
+ 
+   foreach(TINT_HEADER_FILE ${TINT_SRC_HEADERS})
+       get_filename_component(TINT_HEADER_DIR ${TINT_HEADER_FILE} DIRECTORY)
+-      install(FILES ${CMAKE_SOURCE_DIR}/src/tint/${TINT_HEADER_FILE}  DESTINATION  ${CMAKE_INSTALL_INCLUDEDIR}/src/tint/${TINT_HEADER_DIR})
++      install(FILES ${CMAKE_SOURCE_DIR}/src/tint/${TINT_HEADER_FILE}  DESTINATION  ${CMAKE_INSTALL_INCLUDEDIR}/tint/${TINT_HEADER_DIR})
+   endforeach ()
+ endif()
+diff --git a/src/tint/lang/spirv/reader/reader.h b/src/tint/lang/spirv/reader/reader.h
+index 9bcd99e55..02d23442a 100644
+--- a/src/tint/lang/spirv/reader/reader.h
++++ b/src/tint/lang/spirv/reader/reader.h
+@@ -32,6 +32,7 @@
+ 
+ #include "src/tint/lang/spirv/reader/common/options.h"
+ #include "src/tint/lang/wgsl/program/program.h"
++#include "src/tint/lang/core/ir/module.h"
+ 
+ // Forward declarations
+ namespace tint::core::ir {
