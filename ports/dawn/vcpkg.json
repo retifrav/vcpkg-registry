@@ -25,6 +25,11 @@
             "features": [ "with-source-headers" ]
         }
     ],
+    "default-features":
+    [
+        "spv-reader",
+        "wgsl-writer"
+    ],
     "features":
     {
         "glfw":
@@ -52,6 +57,38 @@
                 "vulkan-headers",
                 "vulkan-utility-libraries"
             ]
+        },
+        "spv-reader":
+        {
+            "description": "Build SPIR-V input reader"
+        },
+        "spv-writer":
+        {
+            "description": "Build SPIR-V output writer"
+        },
+        "wgsl-reader":
+        {
+            "description": "Build WGSL input reader"
+        },
+        "wgsl-writer":
+        {
+            "description": "Build WGSL output writer"
+        },
+        "glsl-writer":
+        {
+            "description": "Build GLSL output writer"
+        },
+        "hlsl-writer":
+        {
+            "description": "Build HLSL output writer"
+        },
+        "msl-writer":
+        {
+            "description": "Build MSL output writer"
+        },
+        "fuzzers":
+        {
+            "description": "Build fuzzers"
         }
     }
 }

@@ -49,3 +49,15 @@ index f27f4d905c..57d2166b7d 100644
  
  #ifdef DAWN_ENABLE_SPIRV_VALIDATION
  #include "dawn/native/SpirvValidation.h"
+diff --git a/src/tint/lang/spirv/reader/reader.h b/src/tint/lang/spirv/reader/reader.h
+index 9bcd99e550..02d23442a5 100644
+--- a/src/tint/lang/spirv/reader/reader.h
++++ b/src/tint/lang/spirv/reader/reader.h
+@@ -32,6 +32,7 @@
+ 
+ #include "src/tint/lang/spirv/reader/common/options.h"
+ #include "src/tint/lang/wgsl/program/program.h"
++#include "src/tint/lang/core/ir/module.h"
+ 
+ // Forward declarations
+ namespace tint::core::ir {

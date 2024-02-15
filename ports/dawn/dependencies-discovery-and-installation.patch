@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index bfebca84d4..2d755ced05 100644
+index bfebca84d4..ec86980089 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -25,7 +25,7 @@
@@ -95,15 +95,13 @@ index bfebca84d4..2d755ced05 100644
  )
  target_link_libraries(dawn_internal_config INTERFACE dawn_public_config)
  
-@@ -576,7 +589,27 @@ if (EXISTS "${DAWN_PROTOBUF_DIR}/cmake")
+@@ -576,7 +589,25 @@ if (EXISTS "${DAWN_PROTOBUF_DIR}/cmake")
    include("third_party/protobuf.cmake")
  endif()
  
 -add_subdirectory(third_party)
 +# don't vendor dependencies
 +#add_subdirectory(third_party)
-+
-+include(GNUInstallDirs)
 +
 +function(add_includes_list HEADERS ROOT_DIR)
 +    foreach(header ${HEADERS})
@@ -124,7 +122,7 @@ index bfebca84d4..2d755ced05 100644
  
  # TODO(crbug.com/tint/455): Tint does not currently build with CMake when
  # BUILD_SHARED_LIBS=1, so always build it as static for now.
-@@ -620,3 +653,185 @@ if (DAWN_EMIT_COVERAGE)
+@@ -620,3 +651,201 @@ if (DAWN_EMIT_COVERAGE)
      VERBATIM)
  endif()
  
@@ -183,12 +181,20 @@ index bfebca84d4..2d755ced05 100644
 +        tint_lang_spirv
 +        tint_lang_spirv_intrinsic
 +        tint_lang_spirv_ir
++        tint_lang_spirv_type
++        tint_lang_spirv_validate
++    )
++endif()
++if(TINT_BUILD_SPV_READER)
++    list(APPEND TINT_SPIRV_TARGETS
 +        tint_lang_spirv_reader
 +        tint_lang_spirv_reader_ast_lower
 +        tint_lang_spirv_reader_ast_parser
 +        tint_lang_spirv_reader_parser
-+        tint_lang_spirv_type
-+        tint_lang_spirv_validate
++    )
++endif()
++if(TINT_BUILD_SPV_WRITER)
++    list(APPEND TINT_SPIRV_TARGETS
 +        tint_lang_spirv_writer
 +        tint_lang_spirv_writer_ast_printer
 +        tint_lang_spirv_writer_ast_raise
@@ -204,10 +210,18 @@ index bfebca84d4..2d755ced05 100644
 +        tint_lang_wgsl_ast_transform
 +        tint_lang_wgsl_helpers
 +        tint_lang_wgsl_inspector
++    )
++endif()
++if(TINT_BUILD_WGSL_READER)
++    list(APPEND TINT_WGSL_TARGETS
 +        tint_lang_wgsl_reader
 +        tint_lang_wgsl_reader_lower
 +        tint_lang_wgsl_reader_parser
 +        tint_lang_wgsl_reader_program_to_ir
++    )
++endif()
++if(TINT_BUILD_WGSL_WRITER)
++    list(APPEND TINT_WGSL_TARGETS
 +        tint_lang_wgsl_writer
 +        tint_lang_wgsl_writer_ast_printer
 +        tint_lang_wgsl_writer_raise
@@ -801,7 +815,7 @@ index ab63f046d4..3ca3764f49 100644
      ${DAWN_WIRE_GEN_SOURCES}
      "BufferConsumer.h"
 diff --git a/src/tint/CMakeLists.txt b/src/tint/CMakeLists.txt
-index 9a4eba59b8..248abc481d 100644
+index 9a4eba59b8..2c44db8cef 100644
 --- a/src/tint/CMakeLists.txt
 +++ b/src/tint/CMakeLists.txt
 @@ -51,8 +51,10 @@ endif()
@@ -835,6 +849,15 @@ index 9a4eba59b8..248abc481d 100644
  endfunction()
  
  function(tint_lib_compile_options TARGET)
+@@ -393,7 +395,7 @@ function(tint_add_target TARGET KIND)
+   endif()
+ 
+   if(${KIND} STREQUAL lib)
+-    add_library(${TARGET} STATIC EXCLUDE_FROM_ALL)
++    add_library(${TARGET} STATIC)
+     tint_lib_compile_options(${TARGET})
+   elseif(${KIND} STREQUAL proto)
+     add_library(${TARGET} STATIC EXCLUDE_FROM_ALL)
 @@ -497,8 +499,9 @@ function(tint_target_add_external_dependencies TARGET KIND)
  
    foreach(DEPENDENCY ${DEPENDENCIES})  # Each external dependency requires special handling...

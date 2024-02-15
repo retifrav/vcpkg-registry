@@ -40,6 +40,15 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         # opengl DAWN_ENABLE_OPENGLES
         #
         vulkan DAWN_ENABLE_VULKAN
+        #
+        spv-reader  TINT_BUILD_SPV_READER
+        spv-writer  TINT_BUILD_SPV_WRITER
+        wgsl-reader TINT_BUILD_WGSL_READER
+        wgsl-writer TINT_BUILD_WGSL_WRITER
+        glsl-writer TINT_BUILD_GLSL_WRITER
+        hlsl-writer TINT_BUILD_HLSL_WRITER
+        msl-writer  TINT_BUILD_MSL_WRITER
+        fuzzers     TINT_BUILD_FUZZERS
 )
 
 vcpkg_cmake_configure(
@@ -50,7 +59,7 @@ vcpkg_cmake_configure(
         -DTINT_BUILD_TESTS=0
         -DTINT_BUILD_DOCS=0
         -DTINT_BUILD_CMD_TOOLS=0
-        -DTINT_BUILD_GLSL_VALIDATOR=0 # not sure what this one is for and if it is needed (a tool?)
+        -DTINT_BUILD_GLSL_VALIDATOR=0 # might need to be a feature
         -DDAWN_BUILD_SAMPLES=0
         -DDAWN_ENABLE_INSTALL=1
     MAYBE_UNUSED_VARIABLES
