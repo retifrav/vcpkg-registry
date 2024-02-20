@@ -1,0 +1,318 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cdd5495..539bb46 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -159,7 +159,7 @@ if(tiff-docs)
+ endif()
+ 
+ # pkg-config support
+-include(PkgConfig)
++#include(PkgConfig)
+ 
+ message(STATUS "")
+ message(STATUS "Libtiff is now configured for ${CMAKE_SYSTEM}")
+diff --git a/cmake/DeflateCodec.cmake b/cmake/DeflateCodec.cmake
+index 76e5673..fc01cf0 100644
+--- a/cmake/DeflateCodec.cmake
++++ b/cmake/DeflateCodec.cmake
+@@ -25,21 +25,30 @@
+ 
+ 
+ # ZLIB
++
+ set(ZLIB_SUPPORT FALSE)
+-find_package(ZLIB)
+-option(zlib "use zlib (required for Deflate compression)" ${ZLIB_FOUND})
+-if(zlib AND ZLIB_FOUND)
++
++option(zlib "use zlib (required for Deflate compression)" 0)
++
++if(zlib)
++    find_package(zlib CONFIG REQUIRED)
+     set(ZLIB_SUPPORT TRUE)
+ endif()
++
+ set(ZIP_SUPPORT ${ZLIB_SUPPORT})
+ 
+ # libdeflate
++
+ set(LIBDEFLATE_SUPPORT FALSE)
+-find_package(Deflate)
+-option(libdeflate "use libdeflate (optional for faster Deflate support, still requires zlib)" ${Deflate_FOUND})
+-if (libdeflate AND Deflate_FOUND AND ZIP_SUPPORT)
+-    set(LIBDEFLATE_SUPPORT TRUE)
+-endif()
+-if(Deflate_FOUND AND NOT ZIP_SUPPORT)
+-    message(WARNING "libdeflate available but zlib is not. libdeflate cannot be used")
++
++option(libdeflate "use libdeflate (optional for faster Deflate support, still requires zlib)" 0)
++
++if(libdeflate)
++    find_package(Deflate)
++    if(Deflate_FOUND AND ZIP_SUPPORT)
++        set(LIBDEFLATE_SUPPORT TRUE)
++    endif()
++    if(Deflate_FOUND AND NOT ZIP_SUPPORT)
++        message(WARNING "libdeflate available but zlib is not. libdeflate cannot be used")
++    endif()
+ endif()
+diff --git a/cmake/FindCMath.cmake b/cmake/FindCMath.cmake
+index ad92218..dd42aba 100644
+--- a/cmake/FindCMath.cmake
++++ b/cmake/FindCMath.cmake
+@@ -31,7 +31,7 @@ include(CheckSymbolExists)
+ include(CheckLibraryExists)
+ 
+ check_symbol_exists(pow "math.h" CMath_HAVE_LIBC_POW)
+-find_library(CMath_LIBRARY NAMES m)
++find_library(CMath_LIBRARY NAMES m PATHS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
+ 
+ if(NOT CMath_HAVE_LIBC_POW)
+     set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
+diff --git a/cmake/LZMACodec.cmake b/cmake/LZMACodec.cmake
+index c51afe8..c0963e2 100644
+--- a/cmake/LZMACodec.cmake
++++ b/cmake/LZMACodec.cmake
+@@ -25,10 +25,12 @@
+ 
+ 
+ # liblzma2
++
+ set(LZMA_SUPPORT FALSE)
+-find_package(liblzma)
+ 
+-option(lzma "use liblzma (required for LZMA2 compression)" ${LIBLZMA_FOUND})
+-if (lzma AND LIBLZMA_FOUND)
++option(lzma "use liblzma (required for LZMA2 compression)" 0)
++
++if(lzma)
++    find_package(lzma CONFIG REQUIRED) # also need to update target_link_libraries() and check the headers
+     set(LZMA_SUPPORT TRUE)
+ endif()
+diff --git a/cmake/ZSTDCodec.cmake b/cmake/ZSTDCodec.cmake
+index 3fac861..22ebaee 100644
+--- a/cmake/ZSTDCodec.cmake
++++ b/cmake/ZSTDCodec.cmake
+@@ -25,40 +25,42 @@
+ 
+ 
+ # libzstd
++
+ set(ZSTD_SUPPORT FALSE)
+ set(ZSTD_USABLE FALSE)
+ 
+-find_package(ZSTD)
++option(zstd "use libzstd (required for ZSTD compression)" 1)
+ 
+-if(ZSTD_FOUND)
+-    if(TARGET zstd::libzstd_shared)
+-        add_library(ZSTD::ZSTD ALIAS zstd::libzstd_shared)
+-        set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
+-    elseif(TARGET zstd::libzstd_static)
+-        add_library(ZSTD::ZSTD ALIAS zstd::libzstd_static)
+-        set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
+-    endif()
++if(zstd)
++    find_package(zstd CONFIG REQUIRED)
+ 
+-    if(NOT DEFINED ZSTD_HAVE_DECOMPRESS_STREAM)
+-      set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
+-      set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ZSTD_INCLUDE_DIRS})
+-      set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
+-      set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${ZSTD_LIBRARIES})
+-      check_symbol_exists(ZSTD_decompressStream "zstd.h" ZSTD_HAVE_DECOMPRESS_STREAM)
+-      set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
+-      set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
+-    endif()
+-    set(ZSTD_RECENT_ENOUGH ${ZSTD_HAVE_DECOMPRESS_STREAM})
++    # if(ZSTD_FOUND)
++        # if(TARGET zstd::libzstd_shared)
++        #     add_library(ZSTD::ZSTD ALIAS zstd::libzstd_shared)
++        #     set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
++        # elseif(TARGET zstd::libzstd_static)
++        #     add_library(ZSTD::ZSTD ALIAS zstd::libzstd_static)
++        #     set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
++        # endif()
++        # set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
+ 
+-    if (ZSTD_RECENT_ENOUGH)
+-        set(ZSTD_USABLE TRUE)
+-    else()
+-        message(WARNING "Found ZSTD library, but not recent enough. Use zstd >= 1.0")
+-    endif()
+-endif()
++        # if(NOT DEFINED ZSTD_HAVE_DECOMPRESS_STREAM)
++        #   set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
++        #   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ZSTD_INCLUDE_DIRS})
++        #   set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
++        #   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${ZSTD_LIBRARIES})
++        #   check_symbol_exists(ZSTD_decompressStream "zstd.h" ZSTD_HAVE_DECOMPRESS_STREAM)
++        #   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
++        #   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
++        # endif()
++        # set(ZSTD_RECENT_ENOUGH ${ZSTD_HAVE_DECOMPRESS_STREAM})
+ 
+-option(zstd "use libzstd (required for ZSTD compression)" ${ZSTD_USABLE})
++        # if (ZSTD_RECENT_ENOUGH)
++        #     set(ZSTD_USABLE TRUE)
++        # else()
++        #     message(WARNING "Found ZSTD library, but not recent enough. Use zstd >= 1.0")
++        # endif()
++    # endif()
+ 
+-if (zstd AND ZSTD_USABLE)
+     set(ZSTD_SUPPORT TRUE)
+ endif()
+diff --git a/libtiff/CMakeLists.txt b/libtiff/CMakeLists.txt
+index 9c8024e..585e365 100644
+--- a/libtiff/CMakeLists.txt
++++ b/libtiff/CMakeLists.txt
+@@ -125,7 +125,7 @@ set(tiff_libs_private_list "") # cmake list
+ set(tiff_requires_private "") # cmake string
+ 
+ if(ZIP_SUPPORT)
+-  target_link_libraries(tiff PRIVATE ZLIB::ZLIB)
++  target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
+   string(APPEND tiff_requires_private " zlib")
+ endif()
+ if(ZIP_SUPPORT AND LIBDEFLATE_SUPPORT)
+@@ -154,11 +154,11 @@ if(LERC_SUPPORT)
+   endif()
+ endif()
+ if(LZMA_SUPPORT)
+-  target_link_libraries(tiff PRIVATE liblzma::liblzma)
++  target_link_libraries(${PROJECT_NAME} PRIVATE lzma)
+   string(APPEND tiff_requires_private " liblzma")
+ endif()
+ if(ZSTD_SUPPORT)
+-  target_link_libraries(tiff PRIVATE ZSTD::ZSTD)
++  target_link_libraries(${PROJECT_NAME} PRIVATE zstd::zstd)
+   string(APPEND tiff_requires_private " libzstd")
+ endif()
+ if(WEBP_SUPPORT)
+@@ -166,7 +166,7 @@ if(WEBP_SUPPORT)
+   string(APPEND tiff_requires_private " libwebp")
+ endif()
+ if(CMath_LIBRARY)
+-  target_link_libraries(tiff PRIVATE CMath::CMath)
++  target_link_libraries(tiff PRIVATE ${CMath_LIBRARY})
+   list(APPEND tiff_libs_private_list "${CMath_LIBRARY}")
+ endif()
+ 
+@@ -187,32 +187,48 @@ if(HAVE_LD_VERSION_SCRIPT)
+ endif()
+ 
+ if(tiff-install)
+-  export(TARGETS tiff NAMESPACE TIFF:: FILE "${CMAKE_CURRENT_BINARY_DIR}/libtiffTargets.cmake")
+-  install(TARGETS tiff EXPORT TiffTargets
+-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
++  set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${tiff_public_HEADERS}")
+ 
+-  install(FILES ${tiff_public_HEADERS}
+-          DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
++  include(CMakePackageConfigHelpers)
+ 
+-  set(TIFF_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/tiff)
+-  install(EXPORT TiffTargets
+-          FILE TiffTargets.cmake
+-          NAMESPACE TIFF::
+-          DESTINATION ${TIFF_CONFIGDIR}
++  # install the target and create export-set
++  install(TARGETS ${PROJECT_NAME}
++      EXPORT ${PROJECT_NAME}Targets
++      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
++      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
++      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
++      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiff
++      #INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
+   )
+-
+-  include(CMakePackageConfigHelpers)
++  # generate and install export file
++  install(EXPORT "${PROJECT_NAME}Targets"
++      FILE "${PROJECT_NAME}Targets.cmake"
++      NAMESPACE TIFF::
++      DESTINATION "share/${PROJECT_NAME}"
++  )
++  # generate the version file for the config file
+   write_basic_package_version_file(
+-    TiffConfigVersion.cmake
+-    VERSION ${LIBTIFF_VERSION}
+-    COMPATIBILITY SameMajorVersion)
+-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TiffConfigVersion.cmake DESTINATION ${TIFF_CONFIGDIR})
+-
+-  configure_file(${PROJECT_SOURCE_DIR}/cmake/TiffConfig.cmake.in
+-                 ${CMAKE_CURRENT_BINARY_DIR}/TiffConfig.cmake @ONLY)
+-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TiffConfig.cmake DESTINATION ${TIFF_CONFIGDIR})
++      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
++      VERSION ${LIBTIFF_VERSION}
++      COMPATIBILITY SameMajorVersion
++  )
++  # create config file
++  configure_package_config_file(
++      "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
++      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++      INSTALL_DESTINATION "share/${PROJECT_NAME}"
++  )
++  # install config files
++  install(FILES
++      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
++      DESTINATION "share/${PROJECT_NAME}"
++  )
++  # generate the export targets for the build tree
++  export(EXPORT "${PROJECT_NAME}Targets"
++      FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}Targets.cmake"
++      NAMESPACE TIFF::
++  )
+ endif()
+ 
+ if(CXX_SUPPORT)
+diff --git a/libtiff/Config.cmake.in b/libtiff/Config.cmake.in
+new file mode 100644
+index 0000000..8561285
+--- /dev/null
++++ b/libtiff/Config.cmake.in
+@@ -0,0 +1,14 @@
++@PACKAGE_INIT@
++
++include(CMakeFindDependencyMacro)
++
++if(@ZIP_SUPPORT@)
++    find_dependency(zlib CONFIG REQUIRED)
++endif()
++if(@ZSTD_SUPPORT@)
++    find_dependency(zstd CONFIG REQUIRED)
++endif()
++
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
++
++check_required_components(@PROJECT_NAME@)
+diff --git a/libtiff/tif_zip.c b/libtiff/tif_zip.c
+index fcf5100..e49e8db 100644
+--- a/libtiff/tif_zip.c
++++ b/libtiff/tif_zip.c
+@@ -38,7 +38,7 @@
+  * For scanline access, zlib will be sued as a fallback.
+  */
+ #include "tif_predict.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #if LIBDEFLATE_SUPPORT
+ #include "libdeflate.h"
+diff --git a/libtiff/tif_zstd.c b/libtiff/tif_zstd.c
+index 6469931..0008957 100644
+--- a/libtiff/tif_zstd.c
++++ b/libtiff/tif_zstd.c
+@@ -32,7 +32,7 @@
+  */
+ 
+ #include "tif_predict.h"
+-#include "zstd.h"
++#include <zstd/zstd.h>
+ 
+ #include <stdio.h>
+ 
