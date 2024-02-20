@@ -1,9 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:google/brotli.git
-    REF e61745a6b7add50d380cfd7d3883dd6c62fc2c71
+    REF ed738e842d2fbdf2d6459e39267a633c4a9b2f5d
     PATCHES
-        split-debug-release-export-config-option-tools.patch
+        installation.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -26,8 +26,15 @@ vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
+vcpkg_fixup_pkgconfig()
+
+file(REMOVE_RECURSE
+    "${CURRENT_PACKAGES_DIR}/debug/include"
 )
+
+file(
+    INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+)
+
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
