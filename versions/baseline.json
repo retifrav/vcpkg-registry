@@ -28,7 +28,7 @@
         },
         "cpp-http":
         {
-            "baseline": "0.12.1",
+            "baseline": "0.15.3",
             "port-version": 0
         },
         "curl":
