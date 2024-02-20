@@ -14,11 +14,11 @@
 #     "${SQLITE_VERSION_VALUE}"
 # )
 # what genius had the idea to put year into URL
-set(SQLITE_VERSION_YEAR "2023")
+set(SQLITE_VERSION_YEAR "2024")
 # is it the same genius who came up with this version string format
-set(SQLITE_VERSION_VALUE "3410000")
+set(SQLITE_VERSION_VALUE "3450100")
 # download the file yourself first and get its hash with sha512sum
-set(SQLITE_VERSION_HASH "0280218058789e97a9ec874c8631aaa0a2b700ed040e5a721b5ccec411fe3cde81b55c7a94766c510e20044a3b1271204b98cde1d8451c4c0455b0aff630e88a")
+set(SQLITE_VERSION_HASH "0faf245778f51953e15280084efb027ed59cc55fe9c524ae92a44d0b5494b49f454313bc5330ba25d3d9bb127356b879befef3a70ee80835ee3dcf88ebe3b660")
 
 vcpkg_download_distfile(
     ARCHIVE
@@ -73,19 +73,20 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-if("tool" IN_LIST FEATURES)
-    vcpkg_copy_tools(TOOL_NAMES sqlite3 AUTO_CLEAN)
-endif()
-
 vcpkg_cmake_config_fixup(
     PACKAGE_NAME "sqlite3"
     CONFIG_PATH "share/sqlite3"
 )
 
+if("tool" IN_LIST FEATURES)
+    vcpkg_copy_tools(TOOL_NAMES sqlite3 AUTO_CLEAN)
+    # the tool installation is only enabled in Release configuration
+    # file(REMOVE
+    #     "${CURRENT_PACKAGES_DIR}/debug/bin/sqlite3d"     # non-Windows
+    #     "${CURRENT_PACKAGES_DIR}/debug/bin/sqlite3d.exe" # Windows
+    # )
+endif()
+
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${CMAKE_CURRENT_LIST_DIR}/license.md"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${CMAKE_CURRENT_LIST_DIR}/license.md")

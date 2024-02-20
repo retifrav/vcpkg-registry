@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("sqlite3"
-    VERSION 3.41.0
+    VERSION 3.45.1
     DESCRIPTION "Small, fast, self-contained, high-reliability, full-featured SQL database engine"
     LANGUAGES C
 )
+
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 option(SQLITE_RECOMMENDED_OPTIONS    "Build with SQLite3 recommended options"          1)
 option(SQLITE_ENABLE_COLUMN_METADATA "Enables column metadata"                         0)
@@ -146,7 +148,11 @@ endif()
 if(BUILD_SQLITE_TOOL)
    set(SQLITE_TOOL_NAME "sqlite")
    add_executable(${SQLITE_TOOL_NAME} shell.c)
-   set_target_properties(${SQLITE_TOOL_NAME} PROPERTIES OUTPUT_NAME sqlite3)
+   set_target_properties(${SQLITE_TOOL_NAME}
+        PROPERTIES
+            OUTPUT_NAME sqlite3
+            DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}"
+    )
    target_link_libraries(${SQLITE_TOOL_NAME} PRIVATE ${PROJECT_NAME})
    # if(UNIX)
    #     if(CMAKE_BUILD_TYPE STREQUAL Release)
@@ -168,7 +174,8 @@ if(BUILD_SQLITE_TOOL)
    # endif()
    install(TARGETS ${SQLITE_TOOL_NAME}
        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-       )
+       CONFIGURATIONS Release
+   )
 endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
