@@ -1,0 +1,50 @@
+{
+    "name": "proj",
+    "version": "9.3.1",
+    "description": "Cartographic projections and coordinate transformations",
+    "homepage": "https://proj.org/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "sqlite",
+        {
+            "name": "sqlite",
+            "host": true,
+            "features":
+            [
+                "tool"
+            ]
+        },
+        "json-nlohmann"
+    ],
+    "default-features":
+    [
+        "tiff"
+    ],
+    "features":
+    {
+        "curl":
+        {
+            "description": "Enable network capability with cURL",
+            "dependencies":
+            [
+                "curl"
+            ]
+        },
+        "tiff":
+        {
+            "description": "Enable TIFF support",
+            "dependencies":
+            [
+                "tiff"
+            ]
+        }
+    }
+}

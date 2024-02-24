@@ -1,0 +1,223 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index df42815b..4b1462bd 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -141,7 +141,7 @@ set_property(CACHE NLOHMANN_JSON_ORIGIN PROPERTY STRINGS auto internal external)
+ set(MIN_NLOHMANN_JSON_VERSION 3.7.0)
+ 
+ if(NLOHMANN_JSON_ORIGIN STREQUAL "external")
+-  find_package(nlohmann_json REQUIRED)
++  find_package(nlohmann_json CONFIG REQUIRED)
+   set(NLOHMANN_JSON "external")
+ elseif(NLOHMANN_JSON_ORIGIN STREQUAL "internal")
+   set(NLOHMANN_JSON "internal")
+@@ -176,14 +176,14 @@ if(NOT EXE_SQLITE3)
+   message(SEND_ERROR "sqlite3 binary not found!")
+ endif()
+ 
+-find_package(Sqlite3 REQUIRED)
+-if(NOT SQLITE3_FOUND)
+-  message(SEND_ERROR "sqlite3 dependency not found!")
+-endif()
++find_package(SQLite3 CONFIG REQUIRED)
++#if(NOT SQLITE3_FOUND) # it is REQUIRED
++#  message(SEND_ERROR "sqlite3 dependency not found!")
++#endif()
+ 
+ # Would build and run with older versions, but with horrible performance
+ # See https://github.com/OSGeo/PROJ/issues/1718
+-if("${SQLITE3_VERSION}" VERSION_LESS "3.11")
++if("${SQLite3_VERSION}" VERSION_LESS "3.11")
+   message(SEND_ERROR "sqlite3 >= 3.11 required!")
+ endif()
+ 
+@@ -195,13 +195,13 @@ option(ENABLE_TIFF "Enable TIFF support to read some grids" ON)
+ mark_as_advanced(ENABLE_TIFF)
+ set(TIFF_ENABLED FALSE)
+ if(ENABLE_TIFF)
+-  find_package(TIFF REQUIRED)
+-  if(TIFF_FOUND)
++  find_package(tiff CONFIG REQUIRED)
++  # if(TIFF_FOUND) # it is REQUIRED
+     set(TIFF_ENABLED TRUE)
+-  else()
+-    message(SEND_ERROR
+-      "libtiff dependency not found! Use ENABLE_TIFF=OFF to force it off")
+-  endif()
++  # else()
++  #   message(SEND_ERROR
++  #     "libtiff dependency not found! Use ENABLE_TIFF=OFF to force it off")
++  # endif()
+ else()
+   message(WARNING
+     "TIFF support is not enabled and will result in the inability to read "
+@@ -215,22 +215,22 @@ endif()
+ option(ENABLE_CURL "Enable Curl support" ON)
+ set(CURL_ENABLED FALSE)
+ if(ENABLE_CURL)
+-  find_package(CURL REQUIRED)
+-  if(CURL_FOUND)
++  find_package(curl CONFIG REQUIRED)
++  # if(CURL_FOUND) # it is REQUIRED
+     set(CURL_ENABLED TRUE)
+ 
+     # Target CURL::libcurl only defined since CMake 3.12
+     # TODO: remove this when CMake >= 3.12 required
+-    if(NOT TARGET CURL::libcurl)
+-      add_library(CURL::libcurl INTERFACE IMPORTED)
+-      set_target_properties(CURL::libcurl PROPERTIES
+-        INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
+-        INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
+-      )
+-    endif()
+-  else()
+-    message(SEND_ERROR "curl dependency not found!")
+-  endif()
++    # if(NOT TARGET CURL::libcurl)
++    #   add_library(CURL::libcurl INTERFACE IMPORTED)
++    #   set_target_properties(CURL::libcurl PROPERTIES
++    #     INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
++    #     INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
++    #   )
++    # endif()
++  # else()
++  #   message(SEND_ERROR "curl dependency not found!")
++  # endif()
+ endif()
+ 
+ ################################################################################
+diff --git a/cmake/project-config.cmake.in b/cmake/project-config.cmake.in
+index a9997c43..c1bef7b0 100644
+--- a/cmake/project-config.cmake.in
++++ b/cmake/project-config.cmake.in
+@@ -28,20 +28,20 @@ endif()
+ cmake_policy(POP)
+ 
+ if(DEFINED PROJ_CONFIG_FIND_TIFF_DEP)
+-    find_dependency(TIFF)
++    find_dependency(tiff CONFIG REQUIRED)
+ endif()
+ 
+ if(DEFINED PROJ_CONFIG_FIND_CURL_DEP)
+   # Chainload CURL usage requirements
+-  find_dependency(CURL)
++  find_dependency(curl CONFIG REQUIRED)
+   # Target CURL::libcurl only defined since CMake 3.12
+-  if(NOT TARGET CURL::libcurl)
+-      add_library(CURL::libcurl INTERFACE IMPORTED)
+-      set_target_properties(CURL::libcurl PROPERTIES
+-        INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
+-        INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
+-      )
+-  endif()
++  # if(NOT TARGET CURL::libcurl)
++  #     add_library(CURL::libcurl INTERFACE IMPORTED)
++  #     set_target_properties(CURL::libcurl PROPERTIES
++  #       INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
++  #       INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
++  #     )
++  # endif()
+ endif()
+ 
+ function(set_variable_from_rel_or_absolute_path var root rel_or_abs_path)
+diff --git a/src/grids.cpp b/src/grids.cpp
+index fac25a67..47a7e064 100644
+--- a/src/grids.cpp
++++ b/src/grids.cpp
+@@ -38,7 +38,7 @@
+ #include "proj_internal.h"
+ 
+ #ifdef TIFF_ENABLED
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ #endif
+ 
+ #include <algorithm>
+diff --git a/src/lib_proj.cmake b/src/lib_proj.cmake
+index c49310f1..5adfb021 100644
+--- a/src/lib_proj.cmake
++++ b/src/lib_proj.cmake
+@@ -438,8 +438,8 @@ if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+   target_link_libraries(proj PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+ endif()
+ 
+-target_include_directories(proj PRIVATE ${SQLITE3_INCLUDE_DIR})
+-target_link_libraries(proj PRIVATE ${SQLITE3_LIBRARY})
++#target_include_directories(proj PRIVATE ${SQLITE3_INCLUDE_DIR})
++target_link_libraries(proj PRIVATE SQLite3)
+ 
+ if(NLOHMANN_JSON STREQUAL "external")
+   target_compile_definitions(proj PRIVATE EXTERNAL_NLOHMANN_JSON)
+@@ -449,26 +449,28 @@ endif()
+ 
+ if(TIFF_ENABLED)
+   target_compile_definitions(proj PRIVATE -DTIFF_ENABLED)
+-  if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
+-      # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
+-      # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
+-      target_include_directories(proj PRIVATE ${TIFF_INCLUDE_DIRS})
+-      target_link_libraries(proj PRIVATE ${TIFF_LIBRARIES})
+-  else()
+-      target_link_libraries(proj PRIVATE TIFF::TIFF)
+-  endif()
++  # if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
++  #     # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
++  #     # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
++  #     target_include_directories(proj PRIVATE ${TIFF_INCLUDE_DIRS})
++  #     target_link_libraries(proj PRIVATE ${TIFF_LIBRARIES})
++  # else()
++  #     target_link_libraries(proj PRIVATE TIFF::TIFF)
++      target_link_libraries(proj PRIVATE TIFF::tiff)
++  # endif()
+ endif()
+ 
+ if(CURL_ENABLED)
+   target_compile_definitions(proj PRIVATE -DCURL_ENABLED)
+-  if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
+-      # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
+-      # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
+-      target_include_directories(proj PRIVATE ${CURL_INCLUDE_DIRS})
+-      target_link_libraries(proj PRIVATE ${CURL_LIBRARIES})
+-  else()
+-      target_link_libraries(proj PRIVATE CURL::libcurl)
+-  endif()
++  # if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
++  #     # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
++  #     # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
++  #     target_include_directories(proj PRIVATE ${CURL_INCLUDE_DIRS})
++  #     target_link_libraries(proj PRIVATE ${CURL_LIBRARIES})
++  # else()
++  #     target_link_libraries(proj PRIVATE CURL::libcurl)
++      target_link_libraries(proj PRIVATE CURL::curl)
++  # endif()
+   target_link_libraries(proj
+     PRIVATE
+       $<$<CXX_COMPILER_ID:MSVC>:ws2_32>
+diff --git a/test/unit/CMakeLists.txt b/test/unit/CMakeLists.txt
+index e58b1193..054d7daf 100644
+--- a/test/unit/CMakeLists.txt
++++ b/test/unit/CMakeLists.txt
+@@ -177,14 +177,15 @@ add_executable(test_network
+   test_network.cpp)
+ if(CURL_ENABLED)
+   target_compile_definitions(test_network PRIVATE -DCURL_ENABLED)
+-  if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
+-      # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
+-      # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
+-      target_include_directories(test_network PRIVATE ${CURL_INCLUDE_DIRS})
+-      target_link_libraries(test_network PRIVATE ${CURL_LIBRARIES})
+-  else()
+-      target_link_libraries(test_network PRIVATE CURL::libcurl)
+-  endif()
++  # if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
++  #     # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
++  #     # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
++  #     target_include_directories(test_network PRIVATE ${CURL_INCLUDE_DIRS})
++  #     target_link_libraries(test_network PRIVATE ${CURL_LIBRARIES})
++  # else()
++  #     target_link_libraries(test_network PRIVATE CURL::libcurl)
++        target_link_libraries(test_network PRIVATE CURL::curl)
++  # endif()
+ endif()
+ target_link_libraries(test_network
+   PRIVATE GTest::gtest

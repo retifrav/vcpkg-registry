@@ -1,0 +1,4 @@
+To use PROJ in your project:
+
+    find_package(proj CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE PROJ::proj)
