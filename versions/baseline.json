@@ -83,7 +83,7 @@
         },
         "glfw":
         {
-            "baseline": "3.3.8",
+            "baseline": "3.4.0",
             "port-version": 0
         },
         "glslang":

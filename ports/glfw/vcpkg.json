@@ -1,8 +1,8 @@
 {
     "name": "glfw",
-    "version": "3.3.8",
+    "version": "3.4.0",
     "description": "A multi-platform library for OpenGL/Vulkan/etc, window and input",
-    "homepage": "https://www.glfw.org/",
+    "homepage": "https://glfw.org/",
     "dependencies":
     [
         {
@@ -13,12 +13,5 @@
             "name": "vcpkg-cmake-config",
             "host": true
         }
-    ],
-    "features":
-    {
-        "vulkan-static":
-        {
-            "description": "Call the Vulkan loader directly instead of dynamically loading it at runtime"
-        }
-    }
+    ]
 }
