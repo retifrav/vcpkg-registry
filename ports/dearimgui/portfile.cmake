@@ -6,7 +6,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:ocornut/imgui.git
-    REF c6e0284ac58b3f205c95365478888f7b53b077e2
+    REF 277ae93c41314ba5f4c7444f37c4319cdf07e8cf
 )
 
 file(COPY
@@ -14,11 +14,11 @@ file(COPY
     DESTINATION "${SOURCE_PATH}"
 )
 file(COPY
-    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
+    "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"
     DESTINATION "${SOURCE_PATH}"
 )
 file(COPY
-    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Config.cmake.in"
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
     DESTINATION "${SOURCE_PATH}"
 )
 
