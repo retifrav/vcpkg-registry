@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 49a44eabf..329f5707f 100644
+index 49a44eabf..5bb16437d 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -70,6 +70,7 @@ include(CMakeDependentOption)
@@ -165,7 +165,7 @@ index 49a44eabf..329f5707f 100644
 + )
 diff --git a/Config.cmake.in b/Config.cmake.in
 new file mode 100644
-index 000000000..2cc3a82c1
+index 000000000..f4aa95c0b
 --- /dev/null
 +++ b/Config.cmake.in
 @@ -0,0 +1,15 @@
@@ -174,7 +174,7 @@ index 000000000..2cc3a82c1
 +include(CMakeFindDependencyMacro)
 +
 +if(@USE_OPENSSL@)
-+    find_dependency(OpenSSL CONFIG REQUIRED)
++    find_dependency(OpenSSL REQUIRED) # no CONFIG, unfortunately
 +endif()
 +
 +if(@USE_ZLIB@)
