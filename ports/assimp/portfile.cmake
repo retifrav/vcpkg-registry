@@ -1,18 +1,16 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:assimp/assimp.git
-    REF 9519a62dd20799c5493c638d1ef5a6f484e5faf1
+    REF 6a08c39e3a91ef385e76515cfad86aca4bfd57ff
     PATCHES
-        cmake-config-paths.patch
-        do-not-override-flags.patch
-        do-not-vendor-zlib-ffs.patch
-        disable-pkgconfig.patch
-        winapi-uwp.patch
+        dependencies-discovery-and-installation.patch
+        missing-include-algorithm.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         double-precision ASSIMP_DOUBLE_PRECISION
+        with-draco       ASSIMP_BUILD_DRACO
         # importers
         all-importers     ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT
         importer-3ds      ASSIMP_BUILD_3DS_IMPORTER
@@ -54,7 +52,6 @@ vcpkg_cmake_configure(
         -DASSIMP_BUILD_SAMPLES=0
         -DASSIMP_BUILD_TESTS=0
         -DASSIMP_INSTALL_PDB=0
-        -DASSIMP_BUILD_ZLIB=0
         -DASSIMP_WARNINGS_AS_ERRORS=0
 )
 
@@ -64,8 +61,4 @@ vcpkg_cmake_config_fixup()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

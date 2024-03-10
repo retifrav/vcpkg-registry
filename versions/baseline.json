@@ -8,7 +8,7 @@
         },
         "assimp":
         {
-            "baseline": "5.2.5",
+            "baseline": "5.3.1",
             "port-version": 0
         },
         "brotli":

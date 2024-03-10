@@ -1,6 +1,6 @@
 {
     "name": "assimp",
-    "version": "5.2.5",
+    "version": "5.3.1",
     "description": "Asset Importer",
     "homepage": "https://assimp.org/",
     "dependencies":
@@ -140,6 +140,22 @@
         "exporter-step":
         {
             "description": "Enable Step exporter"
+        },
+        "with-draco":
+        {
+            "description": "Use Draco functionality",
+            "dependencies":
+            [
+                {
+                    "name": "draco",
+                    "platform": "!emscripten"
+                },
+                {
+                    "name": "draco",
+                    "features": [ "wasm" ],
+                    "platform": "emscripten"
+                }
+            ]
         }
     }
 }

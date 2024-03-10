@@ -1,0 +1,12 @@
+diff --git a/code/Common/StackAllocator.h b/code/Common/StackAllocator.h
+index 191010cac..9aebaf895 100644
+--- a/code/Common/StackAllocator.h
++++ b/code/Common/StackAllocator.h
+@@ -50,6 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ #include <vector>
+ #include <stdint.h>
+ #include <stddef.h>
++#include <algorithm>
+ 
+ namespace Assimp {
+ 
