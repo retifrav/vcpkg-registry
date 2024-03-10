@@ -1,0 +1,114 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e7b8f15..2884b6d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -37,7 +37,12 @@ if("${draco_root}" STREQUAL "${draco_build}")
+       "And re-run CMake from the draco_build directory.")
+ endif()
+ 
+-include(FindPythonInterp)
++if(NOT Python3_FOUND)
++    find_package(Python3 COMPONENTS Interpreter REQUIRED)
++    #message(STATUS "Python found: ${Python3_FOUND}")
++    #message(STATUS "Python path: ${Python3_EXECUTABLE}")
++endif()
++
+ include("${draco_root}/cmake/draco_build_definitions.cmake")
+ include("${draco_root}/cmake/draco_cpu_detection.cmake")
+ include("${draco_root}/cmake/draco_dependencies.cmake")
+@@ -88,6 +93,8 @@ draco_set_cxx_flags()
+ draco_set_exe_linker_flags()
+ draco_generate_features_h()
+ 
++option(DRACO_WITH_TOOLS "Build tools" 0)
++
+ # Draco source file listing variables.
+ list(
+   APPEND draco_attributes_sources
+@@ -706,6 +713,8 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
+                 "DRACO_ATTRIBUTE_VALUES_DEDUPLICATION_SUPPORTED")
+   endif()
+ 
++  if(DRACO_WITH_TOOLS)
++  #
+   draco_add_emscripten_executable(
+     NAME draco_decoder
+     SOURCES ${draco_decoder_src}
+@@ -760,6 +769,8 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
+       PRE_LINK_JS_SOURCES ${draco_pre_link_js_sources}
+       POST_LINK_JS_SOURCES ${draco_post_link_js_sources})
+   endif()
++  #
++  endif()
+ else()
+   # Standard Draco libs, encoder and decoder. Object collections that mirror the
+   # Draco directory structure.
+@@ -1105,6 +1116,8 @@ else()
+     endif()
+   endif()
+ 
++  if(DRACO_WITH_TOOLS)
++  #
+   # Draco app targets.
+   draco_add_executable(
+     NAME draco_decoder
+@@ -1144,6 +1157,8 @@ else()
+         LIB_DEPS ${draco_dependency})
+     endif()
+   endif()
++  #
++  endif()
+ 
+   draco_setup_install_target()
+   draco_setup_test_targets()
+diff --git a/cmake/draco_emscripten.cmake b/cmake/draco_emscripten.cmake
+index c9616ae..ea0bc51 100644
+--- a/cmake/draco_emscripten.cmake
++++ b/cmake/draco_emscripten.cmake
+@@ -18,7 +18,7 @@ endif() # DRACO_CMAKE_DRACO_EMSCRIPTEN_CMAKE_
+ 
+ # Checks environment for Emscripten prerequisites.
+ macro(draco_check_emscripten_environment)
+-  if(NOT PYTHONINTERP_FOUND)
++  if(NOT Python3_FOUND)
+     message(
+       FATAL_ERROR
+         "Python required for Emscripten builds, but cmake cannot find it.")
+@@ -200,6 +200,8 @@ macro(draco_add_emscripten_executable)
+   # passed in with the target.
+   list(APPEND emexe_LINK_FLAGS ${DRACO_CXX_FLAGS})
+ 
++  if(DRACO_WITH_TOOLS)
++  #
+   if(DRACO_GLTF_BITSTREAM)
+     # Add "_gltf" suffix to target output name.
+     draco_add_executable(
+@@ -217,6 +219,8 @@ macro(draco_add_emscripten_executable)
+       INCLUDES ${emexe_INCLUDES}
+       LINK_FLAGS ${emexe_LINK_FLAGS})
+   endif()
++  #
++  endif()
+ 
+   foreach(feature ${emexe_FEATURES})
+     draco_enable_feature(FEATURE ${feature} TARGETS ${emexe_NAME})
+diff --git a/cmake/draco_install.cmake b/cmake/draco_install.cmake
+index b9dda26..e552689 100644
+--- a/cmake/draco_install.cmake
++++ b/cmake/draco_install.cmake
+@@ -51,10 +51,14 @@ macro(draco_setup_install_target)
+     install(FILES "${draco_build}/draco/draco_features.h"
+             DESTINATION "${includes_path}/draco/")
+ 
++    if(DRACO_WITH_TOOLS)
++    #
+     install(TARGETS draco_decoder DESTINATION "${bin_path}")
+     install(TARGETS draco_encoder DESTINATION "${bin_path}")
++    #
++    endif()
+ 
+-    if(DRACO_TRANSCODER_SUPPORTED)
++    if(DRACO_TRANSCODER_SUPPORTED AND DRACO_WITH_TOOLS)
+       install(TARGETS draco_transcoder DESTINATION "${bin_path}")
+     endif()
+ 

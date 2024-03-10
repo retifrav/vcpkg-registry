@@ -1,6 +1,6 @@
 {
     "name": "draco",
-    "version": "1.5.3",
+    "version": "1.5.7",
     "description": "A library for compressing and decompressing 3D geometric meshes and point clouds",
     "homepage": "https://google.github.io/draco/",
     "dependencies":
@@ -16,6 +16,10 @@
     ],
     "features":
     {
+        "gltf-bitstream":
+        {
+            "description": "Limit Draco features to those included in the Draco glTF specification"
+        },
         "tools":
         {
             "description": "Build tools"
