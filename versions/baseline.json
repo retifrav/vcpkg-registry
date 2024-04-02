@@ -208,7 +208,7 @@
         },
         "sqlite":
         {
-            "baseline": "3.45.1",
+            "baseline": "3.45.2",
             "port-version": 0
         },
         "thingy":

@@ -16,9 +16,9 @@
 # what genius had the idea to put year into URL
 set(SQLITE_VERSION_YEAR "2024")
 # is it the same genius who came up with this version string format
-set(SQLITE_VERSION_VALUE "3450100")
+set(SQLITE_VERSION_VALUE "3450200")
 # download the file yourself first and get its hash with sha512sum
-set(SQLITE_VERSION_HASH "0faf245778f51953e15280084efb027ed59cc55fe9c524ae92a44d0b5494b49f454313bc5330ba25d3d9bb127356b879befef3a70ee80835ee3dcf88ebe3b660")
+set(SQLITE_VERSION_HASH "7541c05cdb5954d37a45e5ca29fed7c5cbb53e65f0683cad7f7307564f470280574ca49acb3b637f4f5d82bb99e6ba28076826f9e8f6b28ad7e6bb96d01885cd")
 
 vcpkg_download_distfile(
     ARCHIVE

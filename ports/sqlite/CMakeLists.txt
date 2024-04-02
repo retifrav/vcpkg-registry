@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("sqlite3"
-    VERSION 3.45.1
+    VERSION 3.45.2
     DESCRIPTION "Small, fast, self-contained, high-reliability, full-featured SQL database engine"
     LANGUAGES C
 )
