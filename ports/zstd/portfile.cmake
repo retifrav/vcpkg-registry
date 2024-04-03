@@ -1,11 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:facebook/zstd.git
-    REF 63779c798237346c2b245c546c40b72a5a5913fe
+    REF 794ea1b0afca0f020f4e57b6732332231fb23c70
     PATCHES
-        single-target-no-pkgconfig.patch
-        fix-emscripten-and-clang-cl.patch
-        threads-for-ios.patch
+        single-target.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" ZSTD_BUILD_STATIC)
@@ -16,7 +14,7 @@ vcpkg_cmake_configure(
     OPTIONS
         -DZSTD_BUILD_SHARED=${ZSTD_BUILD_SHARED}
         -DZSTD_BUILD_STATIC=${ZSTD_BUILD_STATIC}
-        -DZSTD_LEGACY_SUPPORT=1
+        -DZSTD_LEGACY_SUPPORT=0
         -DZSTD_BUILD_PROGRAMS=0
         -DZSTD_BUILD_TESTS=0
         -DZSTD_BUILD_CONTRIB=0
@@ -26,6 +24,8 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
+
+vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
