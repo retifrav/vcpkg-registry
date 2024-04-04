@@ -1,0 +1,27 @@
+{
+    "name": "xxhash",
+    "version": "0.8.2",
+    "description": "Extremely fast non-cryptographic hash algorithm",
+    "homepage": "https://xxhash.com/",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ],
+    "features":
+    {
+        "tool":
+        {
+            "description": "Build xxhsum CLI tool"
+        }
+    }
+}

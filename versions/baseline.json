@@ -266,6 +266,11 @@
             "baseline": "3.2.3",
             "port-version": 0
         },
+        "xxhash":
+        {
+            "baseline": "0.8.2",
+            "port-version": 0
+        },
         "zlib":
         {
             "baseline": "1.3.1",
