@@ -59,6 +59,8 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "lib/cmake/${ACTUAL_PACKAGE_NAME}"
 )
 
+vcpkg_fixup_pkgconfig()
+
 file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/include"
     "${CURRENT_PACKAGES_DIR}/debug/share"
