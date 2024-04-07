@@ -1,0 +1,843 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9a28899..3153290 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -46,32 +46,10 @@ project( E57Format
+ 
+ string( TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE )
+ 
+-# Creates a build tag which is used in the REVISION_ID
+-#	e.g. "x86_64-darwin-AppleClang140"
+-include( Tags )
++#set(CMAKE_CXX_STANDARD 11)
+ 
+-# Check if we are building ourself or being included and use this to set some defaults
+-if ( ${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME} )
+-    set( E57_BUILDING_SELF ON )
+-endif()
+-
+-# propose a default installation directory
+-if ( E57_BUILDING_SELF )
+-    if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+-        string( REGEX REPLACE "/${PROJECT_NAME}" "" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} )
+-        set( T_ ${PROJECT_NAME} )
+-        set( T_ ${T_}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} )
+-        set( T_ ${T_}-${${PROJECT_NAME}_BUILD_TAG} )
+-        set( CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${T_}
+-                CACHE PATH
+-                "Install path prefix, prepended onto install directories."
+-                FORCE
+-        )
+-    endif()
+-endif()
+-
+-find_package( Threads REQUIRED )
+-find_package( XercesC REQUIRED )
++# choose XML implementation
++set(XML_LIBRARY "RapidXml" CACHE STRING "Which XML parsing library to use, XercesC or RapidXml")
+ 
+ option( E57_BUILD_SHARED
+ 	"Compile E57Format as a shared library"
+@@ -114,17 +92,46 @@ option( E57_RELEASE_LTO "Compile release library with link-time optimization" ON
+ set( REVISION_ID "${PROJECT_NAME}-${PROJECT_VERSION}-${${PROJECT_NAME}_BUILD_TAG}" )
+ message( STATUS "[${PROJECT_NAME}] Revision ID: ${REVISION_ID}" )
+ 
+-# Target
+ if ( E57_BUILD_SHARED )
+ 	message( STATUS "[${PROJECT_NAME}] Building shared library" )
+-	add_library( E57Format SHARED )
+ else()
+ 	message( STATUS "[${PROJECT_NAME}] Building static library" )
+-	add_library( E57Format STATIC )
++endif()
++
++add_library(${PROJECT_NAME})
++
++if(XML_LIBRARY STREQUAL "RapidXml")
++    find_package(rapidxml CONFIG REQUIRED)
++    target_link_libraries(${PROJECT_NAME}
++        PRIVATE
++            rapidxml
++    )
++    target_compile_definitions(${PROJECT_NAME} PRIVATE RAPIDXML)
++elseif(XML_LIBRARY STREQUAL "XercesC")
++    find_package(Threads REQUIRED)
++
++    find_package(XercesC CONFIG REQUIRED)
++    target_compile_definitions(${PROJECT_NAME} PRIVATE XERCESC)
++
++    if(WIN32)
++        option(USING_STATIC_XERCES "Turn on if you are linking with Xerces as a static lib" OFF)
++        if(USING_STATIC_XERCES)
++            target_compile_definitions(${PROJECT_NAME}
++                PUBLIC
++                    XERCES_STATIC_LIBRARY
++            )
++        endif()
++    endif()
++
++    target_link_libraries(${PROJECT_NAME} PRIVATE XercesC::XercesC)
++
++    # jeez
++    target_include_directories(${PROJECT_NAME} PRIVATE ${XercesC_INCLUDE_DIRS})
++else()
++    message(FATAL_ERROR "Unknown XML implementation")
+ endif()
+ 
+ include( E57ExportHeader )
+-include( GitUpdate )
+ 
+ # Main sources and includes
+ add_subdirectory( extern/CRCpp )
+@@ -144,7 +151,7 @@ set_target_properties( E57Format
+ if( NOT DEFINED CMAKE_DEBUG_POSTFIX )
+ 	set_target_properties( E57Format
+ 		PROPERTIES
+-		    DEBUG_POSTFIX "-d"
++		    DEBUG_POSTFIX "d"
+ 	)
+ endif()
+ 
+@@ -180,30 +187,20 @@ target_compile_definitions( E57Format
+         $<$<BOOL:${E57_WRITE_CRAZY_PACKET_MODE}>:E57_WRITE_CRAZY_PACKET_MODE>
+ )
+ 
+-# sanitizers
+-include( Sanitizers )
+-
+-# xerces
+-if ( WIN32 )
+-    option( USING_STATIC_XERCES "Turn on if you are linking with Xerces as a static lib" OFF )
+-    if ( USING_STATIC_XERCES )
+-        target_compile_definitions( E57Format
+-            PUBLIC
+-                XERCES_STATIC_LIBRARY
+-        )
++if(${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
++    if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
++        target_compile_definitions(${PROJECT_NAME} PRIVATE "__linux__")
++    elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
++        target_compile_definitions(${PROJECT_NAME} PRIVATE "__APPLE__")
++    elseif(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
++        target_compile_definitions(${PROJECT_NAME} PRIVATE "_WIN32")
++    else()
++        message(STATUS "[WARNING] unsupported OS, as it seems, the build might fail")
+     endif()
+ endif()
+ 
+-# Target Libraries
+-target_link_libraries( E57Format PRIVATE XercesC::XercesC )
+-
+-# Install
+-install(
+-    TARGETS
+-        E57Format
+-    EXPORT
+-        E57Format-export
+-)
++# sanitizers
++include( Sanitizers )
+ 
+ # ccache
+ # Turns on ccache if found
+@@ -226,17 +223,15 @@ if ( E57_BUILD_TEST )
+     add_subdirectory( test )
+ endif()
+ 
+-# CMake package files
+-install(
+-    EXPORT
+-        E57Format-export
+-    DESTINATION
+-        lib/cmake/E57Format
++set(public_headers
++    include/E57Format.h
++    include/E57Exception.h
++    include/E57SimpleData.h
++    include/E57SimpleReader.h
++    include/E57SimpleWriter.h
++    include/E57Version.h
+ )
+ 
+-install(
+-    FILES
+-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/e57format-config.cmake
+-    DESTINATION
+-        lib/cmake/E57Format
+-)
++set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
++
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
+diff --git a/include/CMakeLists.txt b/include/CMakeLists.txt
+index c47a558..0cbe2c9 100644
+--- a/include/CMakeLists.txt
++++ b/include/CMakeLists.txt
+@@ -11,20 +11,8 @@ target_sources( ${PROJECT_NAME}
+ 		E57Version.h
+ )
+ 
+-install(
+-	FILES
+-		E57Format.h
+-		E57Exception.h
+-		E57SimpleData.h
+-		E57SimpleReader.h
+-		E57SimpleWriter.h
+-		E57Version.h
+-	DESTINATION
+-		include/E57Format
+-)
+-
+ target_include_directories( ${PROJECT_NAME}
+ 	PUBLIC
+-		$<INSTALL_INTERFACE:include/E57Format>
+ 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+ )
+diff --git a/src/E57XmlParser.cpp b/src/E57XmlParser.cpp
+index 3908823..3562273 100644
+--- a/src/E57XmlParser.cpp
++++ b/src/E57XmlParser.cpp
+@@ -28,12 +28,8 @@
+ #include <limits>
+ #include <locale>
+ #include <sstream>
+-
+-#include <xercesc/sax2/Attributes.hpp>
+-#include <xercesc/sax2/XMLReaderFactory.hpp>
+-
+-#include <xercesc/util/BinInputStream.hpp>
+-#include <xercesc/util/TransService.hpp>
++#include <stack>
++#include <cstring>
+ 
+ #include "BlobNodeImpl.h"
+ #include "CheckedFile.h"
+@@ -48,8 +44,127 @@
+ #include "VectorNodeImpl.h"
+ 
+ using namespace e57;
++
++#if XERCESC
++#include <xercesc/sax2/Attributes.hpp>
++#include <xercesc/sax2/XMLReaderFactory.hpp>
++#include <xercesc/sax2/DefaultHandler.hpp>
++#include <xercesc/sax/InputSource.hpp>
++
++#include <xercesc/util/BinInputStream.hpp>
++#include <xercesc/util/TransService.hpp>
++
+ using namespace XERCES_CPP_NAMESPACE;
+ 
++namespace e57 {
++   class CheckedFile;
++
++   //NB: XML data is written back to e57 through sideffects, class must be called e57::E57XmlParser because of class friendship
++   class E57XmlParser : public DefaultHandler
++   {
++      public:
++         E57XmlParser(ImageFileImplSharedPtr imf);
++         ~E57XmlParser() override;
++
++         void init();
++
++         void  parse( InputSource &inputSource );
++
++      private:
++         /// SAX interface
++         void startElement(const XMLCh* const uri, const XMLCh* const localName, const XMLCh* const qName, const Attributes& attributes) override;
++         void endElement( const XMLCh* const uri,
++                          const XMLCh* const localName,
++                          const XMLCh* const qName) override;
++         void characters(const XMLCh* const chars, const XMLSize_t length) override;
++
++         /// SAX error interface
++         void warning(const SAXParseException& ex) override;
++         void error(const SAXParseException& ex) override;
++         void fatalError(const SAXParseException& ex) override;
++
++         ustring toUString(const XMLCh* const xml_str);
++         ustring lookupAttribute(const Attributes& attributes, const XMLCh* attribute_name);
++         bool    isAttributeDefined(const Attributes& attributes, const XMLCh* attribute_name);
++
++         ImageFileImplSharedPtr imf_;   /// Image file we are reading
++
++         struct ParseInfo {
++               /// All the fields need to remember while parsing the XML
++               /// Not all fields are used at same time, depends on node type
++               /// Needed because not all info is available at one time to create the node.
++               NodeType        nodeType;       // used by all types
++               int64_t         minimum;        // used in E57_INTEGER, E57_SCALED_INTEGER
++               int64_t         maximum;        // used in E57_INTEGER, E57_SCALED_INTEGER
++               double          scale;          // used in E57_SCALED_INTEGER
++               double          offset;         // used in E57_SCALED_INTEGER
++               FloatPrecision  precision;      // used in E57_FLOAT
++               double          floatMinimum;   // used in E57_FLOAT
++               double          floatMaximum;   // used in E57_FLOAT
++               int64_t         fileOffset;     // used in E57_BLOB, E57_COMPRESSED_VECTOR
++               int64_t         length;         // used in E57_BLOB
++               bool            allowHeterogeneousChildren;  // used in E57_VECTOR
++               int64_t         recordCount;    // used in E57_COMPRESSED_VECTOR
++               ustring         childText;      // used by all types, accumlates all child text between tags
++
++               /// Holds node for Structure, Vector, and CompressedVector so can append child elements
++               NodeImplSharedPtr container_ni;
++
++               ParseInfo();  // default ctor
++               void    dump(int indent = 0, std::ostream& os = std::cout) const;
++         };
++         std::stack<ParseInfo>    stack_; /// Stores the current path in tree we are reading
++
++         SAX2XMLReader  *xmlReader;
++   };
++
++   class E57XmlFileInputSource : public InputSource
++   {
++      public :
++         E57XmlFileInputSource(CheckedFile* cf, uint64_t logicalStart, uint64_t logicalLength);
++         ~E57XmlFileInputSource() override = default;
++
++         E57XmlFileInputSource(const E57XmlFileInputSource&) = delete;
++         E57XmlFileInputSource& operator=(const E57XmlFileInputSource&) = delete;
++
++         BinInputStream* makeStream() const override;
++
++      private :
++         //??? lifetime of cf_ must be longer than this object!
++         CheckedFile*    cf_;
++         uint64_t        logicalStart_;
++         uint64_t        logicalLength_;
++   };
++
++   class E57XmlParserInterface::Impl
++   {
++      public:
++         E57XmlParser* parser;
++         E57XmlFileInputSource* source;
++         ~Impl()
++         {
++            delete parser;
++            delete source;
++         }
++   };
++
++   E57XmlParserInterface::E57XmlParserInterface( ImageFileImplSharedPtr imf, CheckedFile *cf, std::uint64_t logicalStart, std::uint64_t logicalLength )
++   {
++      pimpl.reset( new E57XmlParserInterface::Impl{ new E57XmlParser(imf), new E57XmlFileInputSource( cf, logicalStart, logicalLength ) } );
++   }
++
++   E57XmlParserInterface::~E57XmlParserInterface()
++   {
++   }
++
++   void E57XmlParserInterface::parse()
++   {
++      pimpl->parser->init();
++      /// Do the parse, building up the node tree
++      pimpl->parser->parse( *pimpl->source );
++   }
++}
++
+ // define convenient constants for the attribute names
+ static const XMLCh att_minimum[] = { chLatin_m, chLatin_i, chLatin_n, chLatin_i,
+                                      chLatin_m, chLatin_u, chLatin_m, chNull };
+@@ -362,7 +477,7 @@ void E57XmlParser::startElement( const XMLCh *const uri, const XMLCh *const loca
+       }
+       else
+       {
+-         // Not defined defined in XML, so defaults to E57_INT64_MIN
++         // Not defined defined in XML, so defaults to INT64_MIN
+          pi.minimum = INT64_MIN;
+       }
+ 
+@@ -374,7 +489,7 @@ void E57XmlParser::startElement( const XMLCh *const uri, const XMLCh *const loca
+       }
+       else
+       {
+-         // Not defined defined in XML, so defaults to E57_INT64_MAX
++         // Not defined defined in XML, so defaults to INT64_MAX
+          pi.maximum = INT64_MAX;
+       }
+ 
+@@ -396,7 +511,7 @@ void E57XmlParser::startElement( const XMLCh *const uri, const XMLCh *const loca
+       }
+       else
+       {
+-         // Not defined defined in XML, so defaults to E57_INT64_MIN
++         // Not defined defined in XML, so defaults to INT64_MIN
+          pi.minimum = INT64_MIN;
+       }
+ 
+@@ -408,7 +523,7 @@ void E57XmlParser::startElement( const XMLCh *const uri, const XMLCh *const loca
+       }
+       else
+       {
+-         // Not defined defined in XML, so defaults to E57_INT64_MAX
++         // Not defined defined in XML, so defaults to INT64_MAX
+          pi.maximum = INT64_MAX;
+       }
+ 
+@@ -476,7 +591,7 @@ void E57XmlParser::startElement( const XMLCh *const uri, const XMLCh *const loca
+       }
+       else
+       {
+-         // Not defined defined in XML, so defaults to E57_FLOAT_MIN or E57_DOUBLE_MIN
++         // Not defined defined in XML, so defaults to FLOAT_MIN or DOUBLE_MIN
+          if ( pi.precision == PrecisionSingle )
+          {
+             pi.floatMinimum = FLOAT_MIN;
+@@ -948,3 +1063,262 @@ void E57XmlParser::warning( const SAXParseException &ex )
+    std::cerr << ",   xmlLine=" << ex.getLineNumber() << std::endl;
+    std::cerr << ",   xmlColumn=" << ex.getColumnNumber() << std::endl;
+ }
++
++#elif RAPIDXML
++
++#include <rapidxml/rapidxml.hpp>
++
++template<typename T>
++T convertStrTo(const char *str)
++{
++   //UNUSED(str);
++   return 0;
++}
++
++template<>
++std::string convertStrTo<std::string>( const char * str )
++{
++   return std::string(str);
++}
++
++template<>
++double convertStrTo<double>( const char * str )
++{
++   char *end;
++   double res = strtod( str, &end );
++   //FIXME: Crash on invalid parse
++   return res;
++}
++
++template<>
++int64_t convertStrTo<int64_t>( const char * str ){
++   char *end;
++   int64_t res = strtoll( str, &end, 10 );
++   //FIXME: Crash on invalid parse
++   return res;
++}
++
++template<>
++bool convertStrTo<bool>( const char * str ){
++   char *end;
++   int64_t res = strtoll( str, &end, 10 );
++   //FIXME: Crash on invalid parse
++   return res == 1;
++}
++
++namespace e57 {
++   class CheckedFile;
++
++   //NB: XML data is written back to e57 through sideffects, class must be called e57::E57XmlParser because of class friendship
++   class E57XmlParser
++   {
++      public:
++         E57XmlParser( ImageFileImplSharedPtr imf, CheckedFile *cf, std::uint64_t logicalStart, std::uint64_t logicalLength ):
++            imf_(imf), cf_(cf), logicalStart_(logicalStart), logicalLength_(logicalLength)
++         {
++         }
++
++         template< typename T >
++         T readAttribute( rapidxml::xml_node<> *node, std::string name, T defaultValue, bool required )
++         {
++            rapidxml::xml_attribute<> *res = nullptr;
++            for( rapidxml::xml_attribute<> *attr = node->first_attribute(); attr; attr = attr->next_attribute() ){
++               if( attr->name() == name ){
++                  res = attr;
++                  break;
++               }
++            }
++            if( res != nullptr ){
++               return convertStrTo<T>( res->value() );
++            } else {
++               if( required ){
++                  //FIXME: more info
++                  throw E57_EXCEPTION2( E57_ERROR_BAD_XML_FORMAT, "fileName=" + imf_->fileName() );
++               }
++               return defaultValue;
++            }
++         }
++
++         void parse()
++         {
++            char* xml = new char[logicalLength_ + 5];
++            cf_->seek(logicalStart_);
++            cf_->read( xml, logicalLength_);
++            xml[logicalLength_] = '\0';
++            rapidxml::xml_document<> doc;
++            doc.parse<0>(xml);
++            rapidxml::xml_node<> *node = doc.first_node();
++            while( node != NULL ){
++               auto n = parseNode( node );
++               imf_->root_ = std::dynamic_pointer_cast<StructureNodeImpl>(n);
++               node = node->next_sibling();
++            }
++            delete [] xml;
++         }
++
++         NodeImplSharedPtr parseNode( rapidxml::xml_node<> *node )
++         {
++            std::string node_type = readAttribute( node, "type", std::string(), true );
++
++            if( node_type == "Integer" ){
++               int64_t min = readAttribute( node, "minimum", INT64_MIN, false );
++               int64_t max = readAttribute( node, "maximum", INT64_MAX, false );
++               int64_t intValue = node->value_size() > 0 ? convertStrTo<int64_t>( node->value() ) : 0;
++               return std::shared_ptr<IntegerNodeImpl>( new IntegerNodeImpl( imf_, intValue, min, max ) );
++            } else if (node_type == "ScaledInteger") {
++               int64_t min = readAttribute( node, "minimum", INT64_MIN, false );
++               int64_t max = readAttribute( node, "maximum", INT64_MAX, false );
++               double scale = readAttribute( node, "scale", 1.0, false );
++               double offset = readAttribute( node, "offset", 0.0, false );
++               int64_t intValue = node->value_size() > 0 ? convertStrTo<int64_t>( node->value() ) : 0;
++               return std::shared_ptr<ScaledIntegerNodeImpl>( new ScaledIntegerNodeImpl( imf_, intValue, min, max, scale, offset ) );
++            } else if (node_type == "Float") {
++               std::string precision = readAttribute( node, "precision", std::string("double"), false );
++               FloatPrecision prec;
++               if( precision == "single" )
++                  prec = E57_SINGLE;
++               else if( precision == "double" )
++                  prec = E57_DOUBLE;
++               else {
++                  throw E57_EXCEPTION2( E57_ERROR_BAD_XML_FORMAT, "Invalid precision, precisionString=" + precision + " fileName=" + imf_->fileName() );
++               }
++               double min = readAttribute( node, "minimum", prec == E57_SINGLE ? FLOAT_MIN : DOUBLE_MIN, false );
++               double max = readAttribute( node, "maximum", prec == E57_SINGLE ? FLOAT_MAX : DOUBLE_MAX, false );
++               double floatValue = node->value_size() > 0 ? convertStrTo<double>( node->value() ) : 0.0;
++
++               return std::shared_ptr<FloatNodeImpl>( new FloatNodeImpl( imf_, floatValue, true, prec, min, max ) );
++            } else if (node_type == "String") {
++               std::string cdata = node->value();
++               if( node->first_node() != 0 && node->first_node()->type() == rapidxml::node_type::node_cdata ){
++                  cdata = node->first_node()->value();
++               }
++               return std::shared_ptr<StringNodeImpl>( new StringNodeImpl( imf_, cdata ) );
++            } else if (node_type == "Blob") {
++               int64_t fileOffset = readAttribute( node, "fileOffset", int64_t(0), true );
++               int64_t length = readAttribute( node, "length", int64_t(0), true );
++               return std::shared_ptr<BlobNodeImpl>( new BlobNodeImpl( imf_, fileOffset, length ) );
++            } else if (node_type == "Structure") {
++               /// Read name space decls, if e57Root element
++            if (std::strcmp(node->name(), "e57Root") == 0) {
++               /// Search attributes for namespace declarations (only allowed in E57Root structure)
++               bool gotDefault = false;
++               for (rapidxml::xml_attribute<> *attr = node->first_attribute(); attr; attr = attr->next_attribute())
++               {
++                  std::string attrname = attr->name();
++                  if (attrname.find("xmlns") == 0)
++                  {
++                     imf_->extensionsAdd(attrname.size() == 5 ? "" : attrname.substr(6), attr->value());//attr->name() );
++                     gotDefault = true;
++                  }
++                  /// Check if declaring a namespace
++                  if (std::strcmp(attr->value(), "http://www.w3.org/2000/xmlns/") == 0) {
++                     imf_->extensionsAdd(attr->name(), attr->value());
++                  }
++               }
++               if (!gotDefault) {
++                  throw E57_EXCEPTION2(E57_ERROR_BAD_XML_FORMAT, "fileName=" + imf_->fileName());
++               }
++            }
++
++               /// Create container now, so can hold children
++               std::shared_ptr<StructureNodeImpl> s_ni( new StructureNodeImpl(imf_) );
++
++               //Parse children
++               rapidxml::xml_node<> *child = node->first_node();
++               while( child != NULL ){
++                  auto n = parseNode( child );
++                  s_ni->set( child->name(), n ); //FIXME: Name
++                  child = child->next_sibling();
++               }
++
++               /// After have Structure, check again if E57Root, if so mark attached so all children will be attached when added
++               if( std::strcmp( node->name(), "e57Root" ) == 0 )
++                  s_ni->setAttachedRecursive();
++
++               return s_ni;
++            } else if (node_type == "Vector") {
++               bool allowHeterogeneousChildren = readAttribute( node, "allowHeterogeneousChildren", false, false );
++               std::shared_ptr<VectorNodeImpl> v_ni( new VectorNodeImpl(imf_, allowHeterogeneousChildren) );
++
++               //Parse children
++               rapidxml::xml_node<> *child = node->first_node();
++               while( child != NULL ){
++                  auto n = parseNode( child );
++                  v_ni->append(n);
++                  child = child->next_sibling();
++               }
++
++               return v_ni;
++            } else if (node_type == "CompressedVector") {
++               int64_t fileOffset = readAttribute( node, "fileOffset", int64_t(0), true );
++               int64_t recordCount = readAttribute( node, "recordCount", int64_t(0), true );
++
++               /// Create container now, so can hold children
++               std::shared_ptr<CompressedVectorNodeImpl> cv_ni(new CompressedVectorNodeImpl(imf_));
++               cv_ni->setRecordCount(recordCount);
++               cv_ni->setBinarySectionLogicalStart( imf_->file_->physicalToLogical(fileOffset) );  //??? what if file_ is NULL?
++
++               //Parse children
++               rapidxml::xml_node<> *child = node->first_node();
++               while( child != NULL ){
++                  auto childNode = parseNode( child );
++                  /// n can be either prototype or codecs
++                  if( std::strcmp( child->name(), "prototype" ) == 0 ){
++                     cv_ni->setPrototype(childNode);
++                  } else if( std::strcmp( child->name(), "codecs" ) == 0 ){
++                     if( childNode->type() != E57_VECTOR ){
++                        throw E57_EXCEPTION2( E57_ERROR_BAD_XML_FORMAT, "currentType=" + toString(childNode->type()) + " fileName=" + imf_->fileName() );
++                     }
++                     std::shared_ptr<VectorNodeImpl> vi = std::dynamic_pointer_cast<VectorNodeImpl>(childNode);
++                     if( !vi->allowHeteroChildren() ){
++                        throw E57_EXCEPTION2( E57_ERROR_BAD_XML_FORMAT, "currentType=" + toString(childNode->type()) + " fileName=" + imf_->fileName() );
++                     }
++                     cv_ni->setCodecs(vi);
++                  } else {
++                     throw E57_EXCEPTION2( E57_ERROR_BAD_XML_FORMAT, "fileName=" + imf_->fileName() );
++                  }
++                  child = child->next_sibling();
++               }
++
++               return cv_ni;
++            }
++            throw E57_EXCEPTION2( E57_ERROR_BAD_XML_FORMAT, "nodeType=" + node_type + " fileName=" + imf_->fileName() );
++         }
++
++      private:
++         ImageFileImplSharedPtr imf_;
++         CheckedFile*           cf_;
++         uint64_t               logicalStart_;
++         uint64_t               logicalLength_;
++   };
++
++   class E57XmlParserInterface::Impl
++   {
++      public:
++         E57XmlParser* parser;
++         ~Impl()
++         {
++            delete parser;
++         }
++   };
++
++   E57XmlParserInterface::E57XmlParserInterface( ImageFileImplSharedPtr imf, CheckedFile *cf, std::uint64_t logicalStart, std::uint64_t logicalLength )
++   {
++      pimpl.reset( new E57XmlParserInterface::Impl{ new E57XmlParser( imf, cf, logicalStart, logicalLength ) } );
++   }
++
++   E57XmlParserInterface::~E57XmlParserInterface()
++   {
++   }
++
++   void E57XmlParserInterface::parse()
++   {
++      pimpl->parser->parse();
++   }
++}
++
++#else
++
++#error Unsupported XML parser
++
++#endif
+diff --git a/src/E57XmlParser.h b/src/E57XmlParser.h
+index e1a5f86..937c2cf 100644
+--- a/src/E57XmlParser.h
++++ b/src/E57XmlParser.h
+@@ -27,96 +27,20 @@
+ 
+ #pragma once
+ 
+-#include <stack>
+-
+-#include <xercesc/sax/InputSource.hpp>
+-#include <xercesc/sax2/DefaultHandler.hpp>
+-
+ #include "Common.h"
+ 
+-using namespace XERCES_CPP_NAMESPACE;
+-
+-namespace XERCES_CPP_NAMESPACE
+-{
+-   class SAX2XMLReader;
+-}
+-
+ namespace e57
+ {
+    class CheckedFile;
+ 
+-   class E57XmlParser : public DefaultHandler
++   class E57XmlParserInterface
+    {
+    public:
+-      explicit E57XmlParser( ImageFileImplSharedPtr imf );
+-      ~E57XmlParser() override;
+-
+-      void init();
+-
+-      void parse( InputSource &inputSource );
+-
+-   private:
+-      /// SAX interface
+-      void startElement( const XMLCh *uri, const XMLCh *localName, const XMLCh *qName,
+-                         const Attributes &attributes ) override;
+-      void endElement( const XMLCh *uri, const XMLCh *localName, const XMLCh *qName ) override;
+-      void characters( const XMLCh *chars, XMLSize_t length ) override;
+-
+-      /// SAX error interface
+-      void warning( const SAXParseException &ex ) override;
+-      void error( const SAXParseException &ex ) override;
+-      void fatalError( const SAXParseException &ex ) override;
+-
+-      ImageFileImplSharedPtr imf_; /// Image file we are reading
+-
+-      struct ParseInfo
+-      {
+-         // All the fields need to remember while parsing the XML
+-         // Not all fields are used at same time, depends on node type
+-         // Needed because not all info is available at one time to create the
+-         // node.
+-         NodeType nodeType;               // used by all types
+-         int64_t minimum;                 // used in Integer, ScaledInteger
+-         int64_t maximum;                 // used in Integer, ScaledInteger
+-         double scale;                    // used in ScaledInteger
+-         double offset;                   // used in ScaledInteger
+-         FloatPrecision precision;        // used in Float
+-         double floatMinimum;             // used in Float
+-         double floatMaximum;             // used in Float
+-         int64_t fileOffset;              // used in Blob, CompressedVector
+-         int64_t length;                  // used in Blob
+-         bool allowHeterogeneousChildren; // used in Vector
+-         int64_t recordCount;             // used in CompressedVector
+-         ustring childText; // used by all types, accumulates all child text between tags
+-
+-         // Holds node for Structure, Vector, and CompressedVector so can append
+-         // child elements
+-         NodeImplSharedPtr container_ni;
+-
+-         ParseInfo(); // default ctor
+-         void dump( int indent = 0, std::ostream &os = std::cout ) const;
+-      };
+-
+-      std::stack<ParseInfo> stack_; /// Stores the current path in tree we are reading
+-
+-      SAX2XMLReader *xmlReader;
+-   };
+-
+-   class E57XmlFileInputSource : public InputSource
+-   {
+-   public:
+-      E57XmlFileInputSource( CheckedFile *cf, uint64_t logicalStart, uint64_t logicalLength );
+-      ~E57XmlFileInputSource() override = default;
+-
+-      E57XmlFileInputSource( const E57XmlFileInputSource & ) = delete;
+-      E57XmlFileInputSource &operator=( const E57XmlFileInputSource & ) = delete;
+-
+-      BinInputStream *makeStream() const override;
+-
+-   private:
+-      //??? lifetime of cf_ must be longer than this object!
+-      CheckedFile *cf_;
+-      uint64_t logicalStart_;
+-      uint64_t logicalLength_;
++      E57XmlParserInterface( ImageFileImplSharedPtr imf, CheckedFile* cf, uint64_t logicalStart, uint64_t logicalLength );
++      ~E57XmlParserInterface();
++      void parse();
++  private:
++      class Impl;
++      std::unique_ptr<Impl> pimpl;
+    };
+ }
+diff --git a/src/ImageFileImpl.cpp b/src/ImageFileImpl.cpp
+index 6299a44..8b49b2b 100644
+--- a/src/ImageFileImpl.cpp
++++ b/src/ImageFileImpl.cpp
+@@ -25,6 +25,8 @@
+  * DEALINGS IN THE SOFTWARE.
+  */
+ 
++#include <cstring>
++
+ #include "ImageFileImpl.h"
+ #include "ASTMVersion.h"
+ #include "CheckedFile.h"
+@@ -159,18 +161,12 @@ namespace e57
+ 
+       try
+       {
+-         // Create parser state, attach its event handers to the SAX2 reader
+-         E57XmlParser parser( imf );
+-
+-         parser.init();
+-
+-         // Create input source (XML section of E57 file turned into a stream).
+-         E57XmlFileInputSource xmlSection( file_, xmlLogicalOffset_, xmlLogicalLength_ );
++         /// Parse XML header
++         E57XmlParserInterface parser(imf, file_, xmlLogicalOffset_, xmlLogicalLength_);
+ 
+          unusedLogicalStart_ = sizeof( E57FileHeader );
+ 
+-         // Do the parse, building up the node tree
+-         parser.parse( xmlSection );
++         parser.parse();
+       }
+       catch ( ... )
+       {
+@@ -186,7 +182,7 @@ namespace e57
+       // Second phase of construction, now we have a well-formed ImageFile object.
+ 
+ #ifdef E57_VERBOSE
+-      std::cout << "ImageFileImpl() called, fileName=<StreamBuffer> mode=r" << std::endl;
++      std::cout << "ImageFileImpl() called, buffer=" << std::hex << uint64_t(input) << std::dec << ", size=" << size << std::endl;
+ #endif
+       unusedLogicalStart_ = sizeof( E57FileHeader );
+       fileName_ = "<StreamBuffer>";
+@@ -222,18 +218,12 @@ namespace e57
+ 
+       try
+       {
+-         // Create parser state, attach its event handers to the SAX2 reader
+-         E57XmlParser parser( imf );
+-
+-         parser.init();
+-
+-         // Create input source (XML section of E57 file turned into a stream).
+-         E57XmlFileInputSource xmlSection( file_, xmlLogicalOffset_, xmlLogicalLength_ );
++         /// Parse XML header
++         E57XmlParserInterface parser( imf, file_, xmlLogicalOffset_, xmlLogicalLength_ );
+ 
+          unusedLogicalStart_ = sizeof( E57FileHeader );
+ 
+-         // Do the parse, building up the node tree
+-         parser.parse( xmlSection );
++         parser.parse();
+       }
+       catch ( ... )
+       {
+@@ -282,7 +272,7 @@ namespace e57
+          // Init header contents
+          E57FileHeader header;
+ 
+-         memcpy( &header.fileSignature, "ASTM-E57", 8 );
++         std::memcpy( &header.fileSignature, "ASTM-E57", 8 );
+ 
+          header.majorVersion = E57_FORMAT_MAJOR;
+          header.minorVersion = E57_FORMAT_MINOR;
+@@ -892,7 +882,7 @@ namespace e57
+ #endif
+ 
+       // Check signature
+-      if ( strncmp( header.fileSignature, "ASTM-E57", 8 ) != 0 )
++      if ( std::strncmp( header.fileSignature, "ASTM-E57", 8 ) != 0 )
+       {
+          throw E57_EXCEPTION2( ErrorBadFileSignature, "fileName=" + file->fileName() );
+       }

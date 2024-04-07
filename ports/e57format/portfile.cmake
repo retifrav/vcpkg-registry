@@ -1,29 +1,40 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:asmaloney/libE57Format.git
-    REF f28ea52517b65faf5bccfa2ec6f50e5156cf5f1c
+    REF 1914b8ea972251d3bb49a33828497dde683205d9
     PATCHES
-        consistent-debug-postfix.patch
+        optional-rapidxml-instead-of-xerces-c.patch
 )
+
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
+    DESTINATION "${SOURCE_PATH}"
+)
+file(COPY
+    "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"
+    DESTINATION "${SOURCE_PATH}"
+)
+
+if("using-rapidxml" IN_LIST FEATURES)
+    set(XML_LIBRARY "RapidXml")
+else()
+    set(XML_LIBRARY "XercesC")
+endif()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DXML_LIBRARY=${XML_LIBRARY}
+        -DE57_BUILD_TEST=0
+        #-DE57_GIT_SUBMODULE_UPDATE=0
 )
 
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup(
     PACKAGE_NAME "E57Format"
-    CONFIG_PATH "lib/cmake/E57Format"
 )
 
-file(REMOVE_RECURSE
-    "${CURRENT_PACKAGES_DIR}/debug/include"
-    "${CURRENT_PACKAGES_DIR}/debug/share"
-)
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE.md"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.md")

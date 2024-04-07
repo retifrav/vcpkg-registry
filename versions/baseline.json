@@ -63,7 +63,7 @@
         },
         "e57format":
         {
-            "baseline": "2.3.0",
+            "baseline": "3.1.1",
             "port-version": 0
         },
         "egl-registry":
