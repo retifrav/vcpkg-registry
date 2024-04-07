@@ -186,6 +186,11 @@
             "baseline": "2.11.1",
             "port-version": 0
         },
+        "rapidxml":
+        {
+            "baseline": "1.13.0",
+            "port-version": 0
+        },
         "sdl":
         {
             "baseline": "2.28.2",

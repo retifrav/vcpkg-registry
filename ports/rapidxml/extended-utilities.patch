@@ -1,0 +1,279 @@
+diff --git a/rapidxml_print.hpp b/rapidxml_print.hpp
+index 0ae2b14..1bcb4c1 100644
+--- a/rapidxml_print.hpp
++++ b/rapidxml_print.hpp
+@@ -101,68 +101,9 @@ namespace rapidxml
+ 
+         ///////////////////////////////////////////////////////////////////////////
+         // Internal printing operations
+-    
+-        // Print node
+         template<class OutIt, class Ch>
+-        inline OutIt print_node(OutIt out, const xml_node<Ch> *node, int flags, int indent)
+-        {
+-            // Print proper node type
+-            switch (node->type())
+-            {
+-
+-            // Document
+-            case node_document:
+-                out = print_children(out, node, flags, indent);
+-                break;
++        inline OutIt print_node(OutIt out, const xml_node<Ch> *node, int flags, int indent);
+ 
+-            // Element
+-            case node_element:
+-                out = print_element_node(out, node, flags, indent);
+-                break;
+-            
+-            // Data
+-            case node_data:
+-                out = print_data_node(out, node, flags, indent);
+-                break;
+-            
+-            // CDATA
+-            case node_cdata:
+-                out = print_cdata_node(out, node, flags, indent);
+-                break;
+-
+-            // Declaration
+-            case node_declaration:
+-                out = print_declaration_node(out, node, flags, indent);
+-                break;
+-
+-            // Comment
+-            case node_comment:
+-                out = print_comment_node(out, node, flags, indent);
+-                break;
+-            
+-            // Doctype
+-            case node_doctype:
+-                out = print_doctype_node(out, node, flags, indent);
+-                break;
+-
+-            // Pi
+-            case node_pi:
+-                out = print_pi_node(out, node, flags, indent);
+-                break;
+-
+-                // Unknown
+-            default:
+-                assert(0);
+-                break;
+-            }
+-            
+-            // If indenting not disabled, add line break after node
+-            if (!(flags & print_no_indenting))
+-                *out = Ch('\n'), ++out;
+-
+-            // Return modified iterator
+-            return out;
+-        }
+         
+         // Print children of the node                               
+         template<class OutIt, class Ch>
+@@ -372,6 +313,69 @@ namespace rapidxml
+             *out = Ch('>'), ++out;
+             return out;
+         }
++        
++        // Print node
++        template<class OutIt, class Ch>
++        inline OutIt print_node(OutIt out, const xml_node<Ch> *node, int flags, int indent)
++        {
++            // Print proper node type
++            switch (node->type())
++            {
++                    
++                    // Document
++                case node_document:
++                    out = print_children(out, node, flags, indent);
++                    break;
++                    
++                    // Element
++                case node_element:
++                    out = print_element_node(out, node, flags, indent);
++                    break;
++                    
++                    // Data
++                case node_data:
++                    out = print_data_node(out, node, flags, indent);
++                    break;
++                    
++                    // CDATA
++                case node_cdata:
++                    out = print_cdata_node(out, node, flags, indent);
++                    break;
++                    
++                    // Declaration
++                case node_declaration:
++                    out = print_declaration_node(out, node, flags, indent);
++                    break;
++                    
++                    // Comment
++                case node_comment:
++                    out = print_comment_node(out, node, flags, indent);
++                    break;
++                    
++                    // Doctype
++                case node_doctype:
++                    out = print_doctype_node(out, node, flags, indent);
++                    break;
++                    
++                    // Pi
++                case node_pi:
++                    out = print_pi_node(out, node, flags, indent);
++                    break;
++                    
++                    // Unknown
++                default:
++                    assert(0);
++                    break;
++            }
++            
++            // If indenting not disabled, add line break after node
++            if (!(flags & print_no_indenting))
++                *out = Ch('\n'), ++out;
++            
++            // Return modified iterator
++            return out;
++        }
++
+ 
+     }
+     //! \endcond
+diff --git a/rapidxml_utils.hpp b/rapidxml_utils.hpp
+index 37c2953..5efb2ac 100644
+--- a/rapidxml_utils.hpp
++++ b/rapidxml_utils.hpp
+@@ -90,14 +90,14 @@ namespace rapidxml
+     //! Counts children of node. Time complexity is O(n).
+     //! \return Number of children of node
+     template<class Ch>
+-    inline std::size_t count_children(xml_node<Ch> *node)
++    inline std::size_t count_children(xml_node<Ch> *node, const char* name = NULL)
+     {
+-        xml_node<Ch> *child = node->first_node();
++        xml_node<Ch> *child = node->first_node(name);
+         std::size_t count = 0;
+         while (child)
+         {
+             ++count;
+-            child = child->next_sibling();
++            child = child->next_sibling(name);
+         }
+         return count;
+     }
+diff --git a/rapidxml_utils_more.hpp b/rapidxml_utils_more.hpp
+new file mode 100644
+index 0000000..4baf6f4
+--- /dev/null
++++ b/rapidxml_utils_more.hpp
+@@ -0,0 +1,106 @@
++#ifndef RAPIDXML_UTILS_MORE_HPP_INCLUDED
++#define RAPIDXML_UTILS_MORE_HPP_INCLUDED
++
++
++namespace rapidxml
++{
++	inline rapidxml::xml_node<>* get_node_at(rapidxml::xml_node<>* parent, const char* name)
++	{
++		rapidxml::xml_node<>* node = parent;
++		int                   index = 0;
++		
++		do
++		{
++			int start = index;
++			while (name[index] != '/' && name[index])
++				index++;
++			node = node->first_node(name + start, index - start);
++		} while (name[index++] && node);
++		
++		return node;
++	}
++	
++	inline bool get_child_value(rapidxml::xml_node<>* parent, const char* name, double& output)
++	{
++		rapidxml::xml_node<>* child = parent->first_node(name);
++		if (child != NULL)
++			output = atof(child->value());
++		return child != NULL;
++	}
++
++	inline bool get_child_value(rapidxml::xml_node<>* parent, const char* name, float& output)
++	{
++		rapidxml::xml_node<>* child = parent->first_node(name);
++		if (child != NULL)
++			output = (float) atof(child->value());
++		return child != NULL;
++	}
++
++	inline bool get_child_value(rapidxml::xml_node<>* parent, const char* name, int& output)
++	{
++		rapidxml::xml_node<>* child = parent->first_node(name);
++		if (child != NULL)
++			output = atoi(child->value());
++		return child != NULL;
++	}
++
++	inline bool get_child_value(rapidxml::xml_node<>* parent, const char* name, std::string& output)
++	{
++		rapidxml::xml_node<>* child = parent->first_node(name);
++		if (child != NULL)
++			output = child->value();
++		return child != NULL;
++	}
++
++	inline bool get_child_value(rapidxml::xml_node<>* parent, const char* name, bool& output)
++	{
++		rapidxml::xml_node<>* child = parent->first_node(name);
++		if (child != NULL)
++		{
++			char* value = child->value();
++			if (value != NULL)
++			{
++				output = strcmp(value, "true") == 0;
++			}
++		}
++			
++		return child != NULL;
++	}
++
++	inline bool get_attribute_value(rapidxml::xml_node<>* parent, const char* name, float& output)
++	{
++		rapidxml::xml_attribute<>* attr = parent->first_attribute(name);
++		if (attr != NULL)
++			output = (float) atof(attr->value());
++		return attr != NULL;
++	}
++
++	inline bool get_attribute_value(rapidxml::xml_node<>* parent, const char* name, double& output)
++	{
++		rapidxml::xml_attribute<>* attr = parent->first_attribute(name);
++		if (attr != NULL)
++			output = atof(attr->value());
++		return attr != NULL;
++	}
++
++	inline bool get_attribute_value(rapidxml::xml_node<>* parent, const char* name, int& output)
++	{
++		rapidxml::xml_attribute<>* attr = parent->first_attribute(name);
++		if (attr != NULL)
++			output = atoi(attr->value());
++		return attr != NULL;
++
++	}
++
++	inline bool get_attribute_value(rapidxml::xml_node<>* parent, const char* name, std::string& output)
++	{
++		rapidxml::xml_attribute<>* attr = parent->first_attribute(name);
++		if (attr != NULL)
++			output = attr->value();
++		return attr != NULL;
++
++	}
++
++}
++
++#endif
+\ No newline at end of file
