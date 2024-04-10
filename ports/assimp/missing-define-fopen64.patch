@@ -1,0 +1,13 @@
+diff --git a/contrib/unzip/ioapi.h b/contrib/unzip/ioapi.h
+index ae9ca7e83..823c5d611 100644
+--- a/contrib/unzip/ioapi.h
++++ b/contrib/unzip/ioapi.h
+@@ -45,7 +45,7 @@
+ #include <stdlib.h>
+ #include "zlib.h"
+ 
+-#if defined(USE_FILE32API)
++#if defined(USE_FILE32API) || defined(ANDROID) //&& (ANDROID_API < 24)) // https://github.com/assimp/assimp/issues/5408#issuecomment-1907690426
+ #define fopen64 fopen
+ #define ftello64 ftell
+ #define fseeko64 fseek

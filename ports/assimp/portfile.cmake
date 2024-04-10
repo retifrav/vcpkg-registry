@@ -5,6 +5,7 @@ vcpkg_from_git(
     PATCHES
         dependencies-discovery-and-installation.patch
         missing-include-algorithm.patch
+        missing-define-fopen64.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
