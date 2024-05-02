@@ -1,8 +1,17 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index df42815b..a04da006 100644
+index 3fa3ec68..041575fc 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -302,7 +302,9 @@ include(GNUInstallDirs)
+@@ -302,7 +302,7 @@ endif()
+ if(MSVC OR CMAKE_CONFIGURATION_TYPES)
+   # For multi-config systems and for Visual Studio, the debug version of
+   # the library has _d appended.
+-  set(CMAKE_DEBUG_POSTFIX _d)
++  set(CMAKE_DEBUG_POSTFIX d)
+ endif()
+ 
+ # Put the libraries and binaries that get built into directories at the
+@@ -332,7 +332,9 @@ include(GNUInstallDirs)
  
  set(PROJECT_NAME "${PROJECT_NAME_ORIGINAL}")
  
@@ -13,7 +22,7 @@ index df42815b..a04da006 100644
  
  ################################################################################
  # Tests
-@@ -323,7 +325,7 @@ include_directories(${PROJ_SOURCE_DIR}/src)
+@@ -353,7 +355,7 @@ include_directories(${PROJ_SOURCE_DIR}/src)
  add_subdirectory(data)
  add_subdirectory(include)
  add_subdirectory(src)
@@ -22,7 +31,7 @@ index df42815b..a04da006 100644
  add_subdirectory(cmake)
  if(BUILD_TESTING)
    add_subdirectory(test)
-@@ -334,18 +336,18 @@ if(BUILD_EXAMPLES)
+@@ -364,18 +366,18 @@ if(BUILD_EXAMPLES)
    add_subdirectory(examples)
  endif()
  
@@ -36,7 +45,8 @@ index df42815b..a04da006 100644
  ################################################################################
  # pkg-config support
  ################################################################################
- configure_proj_pc()
+-configure_proj_pc()
++#configure_proj_pc()
  
 -install(FILES
 -  ${CMAKE_CURRENT_BINARY_DIR}/proj.pc
@@ -48,10 +58,10 @@ index df42815b..a04da006 100644
  ################################################################################
  # "make dist" workalike
 diff --git a/cmake/project-config.cmake.in b/cmake/project-config.cmake.in
-index a9997c43..452441de 100644
+index 0ca48aaa..9851d7db 100644
 --- a/cmake/project-config.cmake.in
 +++ b/cmake/project-config.cmake.in
-@@ -63,15 +63,15 @@ set_variable_from_rel_or_absolute_path("@PROJECT_VARIANT_NAME@_BINARY_DIRS" "${_
+@@ -65,15 +65,15 @@ set_variable_from_rel_or_absolute_path("@PROJECT_VARIANT_NAME@_BINARY_DIRS" "${_
  set (@PROJECT_VARIANT_NAME@_LIBRARIES @PROJECT_VARIANT_NAME@::proj)
  # Read in the exported definition of the library
  include ("${_DIR}/@PROJECT_NAME_LOWER@-targets.cmake")
@@ -76,10 +86,10 @@ index a9997c43..452441de 100644
 +#     ${@PROJECT_VARIANT_NAME@_INCLUDE_DIRS})
 +# endif ()
 diff --git a/src/lib_proj.cmake b/src/lib_proj.cmake
-index c49310f1..4d676032 100644
+index 8e3b88a6..b83a57ac 100644
 --- a/src/lib_proj.cmake
 +++ b/src/lib_proj.cmake
-@@ -498,7 +498,7 @@ install(TARGETS proj
+@@ -507,7 +507,7 @@ install(TARGETS proj
  
  if(NOT BUILD_FRAMEWORKS_AND_BUNDLE)
    install(FILES ${ALL_LIBPROJ_HEADERS}
