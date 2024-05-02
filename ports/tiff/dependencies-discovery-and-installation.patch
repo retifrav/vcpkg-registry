@@ -12,7 +12,7 @@ index cdd5495..539bb46 100644
  message(STATUS "")
  message(STATUS "Libtiff is now configured for ${CMAKE_SYSTEM}")
 diff --git a/cmake/DeflateCodec.cmake b/cmake/DeflateCodec.cmake
-index 76e5673..fc01cf0 100644
+index 76e5673..f89ef56 100644
 --- a/cmake/DeflateCodec.cmake
 +++ b/cmake/DeflateCodec.cmake
 @@ -25,21 +25,30 @@
@@ -25,7 +25,7 @@ index 76e5673..fc01cf0 100644
 -option(zlib "use zlib (required for Deflate compression)" ${ZLIB_FOUND})
 -if(zlib AND ZLIB_FOUND)
 +
-+option(zlib "use zlib (required for Deflate compression)" 0)
++option(zlib "use zlib (required for Deflate compression)" 1)
 +
 +if(zlib)
 +    find_package(zlib CONFIG REQUIRED)
@@ -290,6 +290,35 @@ index 0000000..8561285
 +include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 +
 +check_required_components(@PROJECT_NAME@)
+diff --git a/libtiff/tif_lerc.c b/libtiff/tif_lerc.c
+index 4f357a6..ccfba8e 100644
+--- a/libtiff/tif_lerc.c
++++ b/libtiff/tif_lerc.c
+@@ -32,9 +32,9 @@
+  */
+ 
+ #include "Lerc_c_api.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #ifdef ZSTD_SUPPORT
+-#include "zstd.h"
++#include <zstd/zstd.h>
+ #endif
+ 
+ #if LIBDEFLATE_SUPPORT
+diff --git a/libtiff/tif_pixarlog.c b/libtiff/tif_pixarlog.c
+index 5c0346b..65bdec2 100644
+--- a/libtiff/tif_pixarlog.c
++++ b/libtiff/tif_pixarlog.c
+@@ -88,7 +88,7 @@
+  */
+ 
+ #include "tif_predict.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #include <math.h>
+ #include <stdio.h>
 diff --git a/libtiff/tif_zip.c b/libtiff/tif_zip.c
 index fcf5100..e49e8db 100644
 --- a/libtiff/tif_zip.c
