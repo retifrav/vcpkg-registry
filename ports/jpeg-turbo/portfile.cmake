@@ -12,14 +12,15 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:libjpeg-turbo/libjpeg-turbo.git
-    REF 6c610333497302c52ff36046f9ff72f0c3a6dc2e
+    REF 7fa4b5b762c9a99b46b0b7838f5fd55071b92ea5
     PATCHES
-        disable-tools-docs-fix-installation.patch
+        disable-tools-docs-single-architecture-fix-installation.patch
         boolean-typedef.patch
-        disable-single-architecture-check.patch
 )
 
-if(
+if(VCPKG_TARGET_ARCHITECTURE STREQUAL "wasm32")
+    set(LIBJPEGTURBO_SIMD -DWITH_SIMD=0)
+elseif(
    VCPKG_TARGET_ARCHITECTURE STREQUAL "arm"
    OR VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64"
    OR (
@@ -27,9 +28,9 @@ if(
         AND NOT VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore"
     )
 )
-    set(JPEGTURBO_SIMD -DWITH_SIMD=ON -DNEON_INTRINSICS=ON)
+    set(JPEGTURBO_SIMD -DWITH_SIMD=1 -DNEON_INTRINSICS=1)
 else()
-    set(JPEGTURBO_SIMD -DWITH_SIMD=ON)
+    set(JPEGTURBO_SIMD -DWITH_SIMD=1)
     vcpkg_find_acquire_program(NASM)
     get_filename_component(NASM_EXE_PATH ${NASM} DIRECTORY)
     set(ENV{PATH} "$ENV{PATH};${NASM_EXE_PATH}")
@@ -71,6 +72,8 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "lib/cmake/jpeg-turbo"
 )
 
+vcpkg_fixup_pkgconfig()
+
 # rename libraries for static builds
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
     if(EXISTS "${CURRENT_PACKAGES_DIR}/lib/jpeg-static.lib")
@@ -104,8 +107,4 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/share/man"
 )
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE.md"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.md")

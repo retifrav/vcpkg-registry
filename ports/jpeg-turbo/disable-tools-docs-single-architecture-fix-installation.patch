@@ -1,17 +1,51 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d866b8da..083a533e 100644
+index ff9c9c27..e0011237 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -9,7 +9,7 @@ if(CMAKE_EXECUTABLE_SUFFIX)
+@@ -4,7 +4,7 @@ if(CMAKE_EXECUTABLE_SUFFIX)
    set(CMAKE_EXECUTABLE_SUFFIX_TMP ${CMAKE_EXECUTABLE_SUFFIX})
  endif()
  
 -project(libjpeg-turbo C)
 +project(jpeg-turbo C)
- set(VERSION 2.1.91)
- set(COPYRIGHT_YEAR "1991-2023")
+ set(VERSION 3.0.3)
+ set(COPYRIGHT_YEAR "1991-2024")
  string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
-@@ -194,6 +194,10 @@ option(ENABLE_SHARED "Build shared libraries" TRUE)
+@@ -90,13 +90,26 @@ include(cmakescripts/PackageInfo.cmake)
+ # Detect CPU type and whether we're building 64-bit or 32-bit code
+ math(EXPR BITS "${CMAKE_SIZEOF_VOID_P} * 8")
+ string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} CMAKE_SYSTEM_PROCESSOR_LC)
+-set(COUNT 1)
+-foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
+-  if(COUNT GREATER 1)
+-    message(FATAL_ERROR "libjpeg-turbo contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES.")
+-  endif()
+-  math(EXPR COUNT "${COUNT}+1")
+-endforeach()
++
++# jpeg-turbo contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES
++#message(STATUS "CMAKE_APPLE_ARCH_SYSROOTS: ${CMAKE_APPLE_ARCH_SYSROOTS}")
++list(LENGTH CMAKE_OSX_ARCHITECTURES CMAKE_OSX_ARCHITECTURES_COUNT)
++if(CMAKE_OSX_ARCHITECTURES_COUNT GREATER 1)
++    message(WARNING "Got more than one value in CMAKE_OSX_ARCHITECTURES, normally jpeg-turbo does not support that")
++endif()
++#
++# disabled the check on iOS, and it seems to build fine into a combined/fat/universal binary
++# however, it still might cause problems at runtime, so we might not be able to use jpeg-turbo in iOS builds
++# if(NOT IOS)
++#   set(COUNT 1)
++#   foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
++#     if(COUNT GREATER 1)
++#       message(FATAL_ERROR "The libjpeg-turbo build system does not support multiple values in CMAKE_OSX_ARCHITECTURES.")
++#     endif()
++#     math(EXPR COUNT "${COUNT}+1")
++#   endforeach()
++# endif()
++
+ if(CMAKE_SYSTEM_PROCESSOR_LC MATCHES "x86_64" OR
+   CMAKE_SYSTEM_PROCESSOR_LC MATCHES "amd64" OR
+   CMAKE_SYSTEM_PROCESSOR_LC MATCHES "i[0-9]86" OR
+@@ -217,6 +230,10 @@ option(ENABLE_SHARED "Build shared libraries" TRUE)
  boolean_number(ENABLE_SHARED)
  option(ENABLE_STATIC "Build static libraries" TRUE)
  boolean_number(ENABLE_STATIC)
@@ -19,10 +53,10 @@ index d866b8da..083a533e 100644
 +boolean_number(ENABLE_EXECUTABLES)
 +option(INSTALL_DOCS "Install documentation files" 0)
 +boolean_number(INSTALL_DOCS)
- option(REQUIRE_SIMD "Generate a fatal error if SIMD extensions are not available for this platform (default is to fall back to a non-SIMD build)" FALSE)
- boolean_number(REQUIRE_SIMD)
- option(WITH_ARITH_DEC "Include arithmetic decoding support when emulating the libjpeg v6b API/ABI" TRUE)
-@@ -653,6 +657,7 @@ if(WITH_TURBOJPEG)
+ option(REQUIRE_SIMD
+   "Generate a fatal error if SIMD extensions are not available for this platform (default is to fall back to a non-SIMD build)"
+   FALSE)
+@@ -721,6 +738,7 @@ if(WITH_TURBOJPEG)
          LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
      endif()
  
@@ -30,15 +64,15 @@ index d866b8da..083a533e 100644
      add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
      target_link_libraries(tjunittest turbojpeg)
  
-@@ -664,6 +669,7 @@ if(WITH_TURBOJPEG)
+@@ -732,6 +750,7 @@ if(WITH_TURBOJPEG)
  
      add_executable(tjexample tjexample.c)
      target_link_libraries(tjexample turbojpeg)
 +    endif() # ENABLE_EXECUTABLES
-   endif()
  
-   if(ENABLE_STATIC)
-@@ -678,6 +684,7 @@ if(WITH_TURBOJPEG)
+     add_custom_target(tjdoc COMMAND doxygen -s doxygen.config
+       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+@@ -755,6 +774,7 @@ if(WITH_TURBOJPEG)
        set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
      endif()
  
@@ -46,7 +80,7 @@ index d866b8da..083a533e 100644
      add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
        md5/md5hl.c)
      target_link_libraries(tjunittest-static turbojpeg-static)
-@@ -687,6 +694,7 @@ if(WITH_TURBOJPEG)
+@@ -764,6 +784,7 @@ if(WITH_TURBOJPEG)
      if(UNIX)
        target_link_libraries(tjbench-static m)
      endif()
@@ -54,7 +88,7 @@ index d866b8da..083a533e 100644
    endif()
  endif()
  
-@@ -696,7 +704,7 @@ endif()
+@@ -773,7 +794,7 @@ endif()
  set(CDJPEG_COMPILE_FLAGS
    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
  
@@ -63,7 +97,7 @@ index d866b8da..083a533e 100644
    # Compile a separate version of these source files with 12-bit and 16-bit
    # data precision.
    add_library(cjpeg12-static OBJECT rdgif.c rdppm.c)
-@@ -735,10 +743,11 @@ if(ENABLE_STATIC)
+@@ -812,10 +833,11 @@ if(ENABLE_STATIC)
    target_link_libraries(example-static jpeg-static)
  endif()
  
@@ -76,7 +110,7 @@ index d866b8da..083a533e 100644
  
  ###############################################################################
  # TESTS
-@@ -748,7 +757,9 @@ if(WITH_FUZZ)
+@@ -825,7 +847,9 @@ if(WITH_FUZZ)
    add_subdirectory(fuzz)
  endif()
  
@@ -86,7 +120,7 @@ index d866b8da..083a533e 100644
  
  add_subdirectory(md5)
  
-@@ -1635,17 +1646,33 @@ endif()
+@@ -1721,17 +1745,32 @@ endif()
  # INSTALLATION
  ###############################################################################
  
@@ -108,72 +142,72 @@ index d866b8da..083a533e 100644
 +    set_target_properties(turbojpeg PROPERTIES PUBLIC_HEADER "${public_headers}")
      install(TARGETS turbojpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
 -      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
--      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
++      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin
 +      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jpeg
 +      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-+
 +    if(ENABLE_EXECUTABLES)
      install(TARGETS tjbench
-       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
 +    endif() # ENABLE_EXECUTABLES
      if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
        CMAKE_C_LINKER_SUPPORTS_PDB)
        install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
-@@ -1653,10 +1680,12 @@ if(WITH_TURBOJPEG)
+@@ -1739,10 +1778,12 @@ if(WITH_TURBOJPEG)
      endif()
    endif()
    if(ENABLE_STATIC)
 +    set_target_properties(turbojpeg-static PROPERTIES PUBLIC_HEADER "${public_headers}")
      install(TARGETS turbojpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
 -      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
--      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
 -    if(NOT ENABLE_SHARED)
-+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
 +      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jpeg
 +      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 +    if(NOT ENABLE_SHARED AND ENABLE_EXECUTABLES)
        if(GENERATOR_IS_MULTI_CONFIG)
          set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
        else()
-@@ -1666,15 +1695,15 @@ if(WITH_TURBOJPEG)
-         DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME tjbench${EXE})
+@@ -1752,15 +1793,15 @@ if(WITH_TURBOJPEG)
+         DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin RENAME tjbench${EXE})
      endif()
    endif()
 -  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h
--    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT include)
  endif()
  
  if(ENABLE_STATIC)
 +  set_target_properties(jpeg-static PROPERTIES PUBLIC_HEADER "${public_headers}")
    install(TARGETS jpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
 -    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
--    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
 -  if(NOT ENABLE_SHARED)
-+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
 +    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jpeg
 +    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 +  if(NOT ENABLE_SHARED AND ENABLE_EXECUTABLES)
      if(GENERATOR_IS_MULTI_CONFIG)
        set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
      else()
-@@ -1689,8 +1718,11 @@ if(ENABLE_STATIC)
+@@ -1775,9 +1816,12 @@ if(ENABLE_STATIC)
    endif()
  endif()
  
 +if(ENABLE_EXECUTABLES)
- install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+ install(TARGETS rdjpgcom wrjpgcom
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
 +endif() # ENABLE_EXECUTABLES
  
 +if(INSTALL_DOCS)
  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
    ${CMAKE_CURRENT_SOURCE_DIR}/README.md ${CMAKE_CURRENT_SOURCE_DIR}/example.c
    ${CMAKE_CURRENT_SOURCE_DIR}/tjexample.c
-@@ -1702,20 +1734,15 @@ if(WITH_JAVA)
+@@ -1790,8 +1834,9 @@ if(WITH_JAVA)
    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJExample.java
-     DESTINATION ${CMAKE_INSTALL_DOCDIR})
+     DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT doc)
  endif()
 +endif() # INSTALL_DOCS
  
@@ -182,26 +216,14 @@ index d866b8da..083a533e 100644
    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cjpeg.1
      ${CMAKE_CURRENT_SOURCE_DIR}/djpeg.1 ${CMAKE_CURRENT_SOURCE_DIR}/jpegtran.1
      ${CMAKE_CURRENT_SOURCE_DIR}/rdjpgcom.1
-     ${CMAKE_CURRENT_SOURCE_DIR}/wrjpgcom.1
-     DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
- endif()
--install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libjpeg.pc
--  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
--if(WITH_TURBOJPEG)
--  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libturbojpeg.pc
--    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
--endif()
- install(FILES
-   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}Config.cmake
-   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}ConfigVersion.cmake
-@@ -1724,11 +1751,6 @@ install(EXPORT ${CMAKE_PROJECT_NAME}Targets
-   NAMESPACE ${CMAKE_PROJECT_NAME}::
-   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
+@@ -1814,11 +1859,6 @@ install(EXPORT ${CMAKE_PROJECT_NAME}Targets
+   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}
+   COMPONENT lib)
  
 -install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jconfig.h
 -  ${CMAKE_CURRENT_SOURCE_DIR}/jerror.h ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h
 -  ${CMAKE_CURRENT_SOURCE_DIR}/jpeglib.h
--  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT include)
 -
  include(cmakescripts/BuildPackages.cmake)
  
