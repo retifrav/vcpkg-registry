@@ -128,7 +128,7 @@
         },
         "json-nlohmann":
         {
-            "baseline": "3.11.2",
+            "baseline": "3.11.3",
             "port-version": 0
         },
         "jsoncpp":

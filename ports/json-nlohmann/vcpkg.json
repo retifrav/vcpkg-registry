@@ -1,6 +1,6 @@
 {
     "name": "json-nlohmann",
-    "version": "3.11.2",
+    "version": "3.11.3",
     "description": "JSON for Modern C++",
     "homepage": "https://json.nlohmann.me/",
     "dependencies":
