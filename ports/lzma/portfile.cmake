@@ -3,11 +3,12 @@ if(VCPKG_TARGET_IS_WINDOWS)
     vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 endif()
 
+set(FILE_TO_DOWNLOAD "lzma2301.7z")
 vcpkg_download_distfile(
     ARCHIVE
-    URLS "https://7-zip.org/a/lzma2201.7z"
-    FILENAME "lzma2201.7z"
-    SHA512 83e320242a51cb37caefd386a5768e64c6872101fd3c3cf4d3318bf834d27e84d8a92e3252987520a578b19ce3e2cddcbf9e10b909f5263c5cdc0710c2f26797
+    URLS "https://7-zip.org/a/${FILE_TO_DOWNLOAD}"
+    FILENAME "${FILE_TO_DOWNLOAD}"
+    SHA512 b797912536bd6e9ddb61c7ffcff2579cfccd94cf788535885e52706a0ff6887eba33c978803e0f4d196ff40f6c1976d97ea9ab3457a68744c4465f44deb04cb0
 )
 
 vcpkg_extract_source_archive(
@@ -22,6 +23,10 @@ file(COPY
 )
 file(COPY
     "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Config.cmake.in"
+    DESTINATION "${SOURCE_PATH}"
+)
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
     DESTINATION "${SOURCE_PATH}"
 )
 

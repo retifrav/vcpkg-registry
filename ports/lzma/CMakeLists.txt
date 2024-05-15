@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 
-project("lzma")
+project("lzma"
+    VERSION 23.1.0
+)
 
 option(ENABLE_AVX2 "Enable AVX2 intrinsics" 1)
 #option(ENABLE_AVX  "Enable AVX intrinsics"  0)
@@ -53,31 +55,4 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-
-# install the target and create export-set
-install(TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}Targets
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} # include/lzma
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
-)
-# generate and install export file
-install(EXPORT "${PROJECT_NAME}Targets"
-    FILE "${PROJECT_NAME}Targets.cmake"
-    DESTINATION "share/${PROJECT_NAME}"
-)
-# create config file
-configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    INSTALL_DESTINATION "share/${PROJECT_NAME}"
-)
-# install config files
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    DESTINATION "share/${PROJECT_NAME}"
-)
+include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
