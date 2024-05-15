@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/OpenXR-SDK.git
-    REF 49e81bbd919af7c0cf513517a730d12253c28902
+    REF 8899a91c17ce9618f565f42408b47db1d6e9ccc7
     PATCHES
         not-hardcoding-crt-linking.patch
         jsoncpp-discovery.patch
@@ -44,8 +44,4 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/share"
 )
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

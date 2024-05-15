@@ -1,5 +1,5 @@
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index d055b7a..a3ee93e 100644
+index e618325..8e1b345 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -107,7 +107,7 @@ if(NOT VULKAN_INCOMPATIBLE)
@@ -7,12 +7,12 @@ index d055b7a..a3ee93e 100644
  
  find_package(Threads REQUIRED)
 -find_package(JsonCpp)
-+find_package(JsonCpp CONFIG REQUIRED)
++find_package(jsoncpp CONFIG REQUIRED)
  
  ### All options defined here
  option(BUILD_LOADER "Build loader" ON)
 diff --git a/src/loader/CMakeLists.txt b/src/loader/CMakeLists.txt
-index 89c9f2c..8cffd09 100644
+index e549110..df5c7f7 100644
 --- a/src/loader/CMakeLists.txt
 +++ b/src/loader/CMakeLists.txt
 @@ -100,29 +100,29 @@ if(Vulkan_FOUND)
@@ -68,14 +68,16 @@ index 89c9f2c..8cffd09 100644
  if(LOADER_EXTERNAL_GEN_DEPENDS)
      set_source_files_properties(
 diff --git a/src/loader/OpenXRConfig.cmake.in b/src/loader/OpenXRConfig.cmake.in
-index edf34ee..edcac1d 100644
+index 81b12e7..1545496 100644
 --- a/src/loader/OpenXRConfig.cmake.in
 +++ b/src/loader/OpenXRConfig.cmake.in
-@@ -6,6 +6,7 @@
+@@ -6,6 +6,9 @@
  
  include(CMakeFindDependencyMacro)
  find_dependency(Threads)
-+find_dependency(JsonCpp)
++if(NOT jsoncpp_FOUND)
++    find_dependency(jsoncpp CONFIG REQUIRED)
++endif()
  
  include("${CMAKE_CURRENT_LIST_DIR}/OpenXRTargets.cmake")
  
