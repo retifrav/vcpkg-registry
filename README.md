@@ -24,7 +24,7 @@ Why would one make one's own ports instead of relying on the Microsoft's registr
 
 I'd say, in most cases one should probably do exactly that - just use the Microsoft's registry as the main source, at the very least because there is unlikely to be a registry bigger than theirs. And since many projects are using it too, it will be easier to collaborate with them, as you'll be in accordance on dependencies sources and applied patches, file names, paths to public headers and so on.
 
-But maintaining projects at my place of work and also personal ones, I eventually discovered that I don't always agree on the ways some dependencies are patched/built/installed in the Microsoft's ports. At the same time, not all of my "disagreements" can be proposed as pull-requests to their registry, because some of those are specific to my particular needs, so they are likely of no use for a broader audience. Hence my own registry, where I can do all sorts of crazy things I might need.
+But having been maintaining projects at my place of work and also personal ones for a while, I eventually discovered that I don't always agree on how patching/building/installation is done in some of the ports in the Microsoft's registry. At the same time, not all of my "disagreements" can be proposed as improvements to their registry, because some of those are specific to my particular needs, so they are likely to be of no use for a broader audience. Hence my own registry, where I can do all sorts of crazy things I might need.
 
 ## How to use it
 
