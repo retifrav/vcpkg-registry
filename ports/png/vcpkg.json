@@ -1,6 +1,6 @@
 {
     "name": "png",
-    "version": "1.6.38",
+    "version": "1.6.43",
     "description": "PNG reference library",
     "homepage": "https://png-mng.sourceforge.net/pub/png/libpng.html",
     "dependencies":
