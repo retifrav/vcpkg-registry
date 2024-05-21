@@ -1,6 +1,6 @@
 {
     "name": "simdjson",
-    "version": "3.2.1",
+    "version": "3.9.2",
     "description": "Parsing gigabytes of JSON per second",
     "homepage": "https://simdjson.org/",
     "dependencies":

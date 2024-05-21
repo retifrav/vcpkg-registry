@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d22188b4..bacfd9a2 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -157,7 +157,7 @@ include(GNUInstallDirs)
+ 
+ install(
+     FILES singleheader/simdjson.h
+-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
+     COMPONENT simdjson_Development
+ )
+ 

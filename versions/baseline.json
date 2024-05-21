@@ -213,7 +213,7 @@
         },
         "simdjson":
         {
-            "baseline": "3.2.1",
+            "baseline": "3.9.2",
             "port-version": 0
         },
         "spirv-headers":

@@ -1,10 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:simdjson/simdjson.git
-    REF c5c43e9c7ff613bf01ca14b9b9083d38a6efd5fc
+    REF bf7834179c1f8fc523c9fd73d29b46348ae1d576
     PATCHES
-        do-not-hardcode-threads-linking.patch # Threads::Threads on Mac OS becomes `pthread` and fails on linking
-        disable-pkgconfig.patch
+        installation.patch
 )
 
 vcpkg_cmake_configure(
@@ -17,10 +16,8 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "lib/cmake/${PORT}"
 )
 
+vcpkg_fixup_pkgconfig()
+
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
