@@ -1,9 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:libsdl-org/SDL.git
-    REF 031912c4b6c5db80b443f04aa56fec3e4e645153
+    REF fb1497566c5a05e2babdcf45ef0ab5c7cca2c4ae
     PATCHES
-        disable-pkgconfig-and-other-useless-stuff.patch
+        not-installing-license.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" SDL_STATIC)
@@ -30,6 +30,8 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "cmake"
 )
 
+vcpkg_fixup_pkgconfig()
+
 file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/include"
     "${CURRENT_PACKAGES_DIR}/debug/share"
@@ -41,8 +43,4 @@ if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
     )
 endif()
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE.txt"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")

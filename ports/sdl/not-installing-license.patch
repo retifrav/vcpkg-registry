@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2a91824c8..1830bb1c3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3662,7 +3662,7 @@ if(NOT SDL2_DISABLE_INSTALL)
+     set(SOPOSTFIX "")
+   endif()
+ 
+-  install(FILES "LICENSE.txt" DESTINATION "${LICENSES_PREFIX}")
++  #install(FILES "LICENSE.txt" DESTINATION "${LICENSES_PREFIX}")
+   if(FREEBSD)
+     # FreeBSD uses ${PREFIX}/libdata/pkgconfig
+     install(FILES ${SDL2_BINARY_DIR}/sdl2.pc DESTINATION "libdata/pkgconfig")
