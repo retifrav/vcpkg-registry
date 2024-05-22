@@ -1,6 +1,6 @@
 {
     "name": "stb",
-    "version": "2023.1.29",
+    "version": "2024.2.13",
     "description": "Single-file libraries for C/C++",
     "homepage": "https://github.com/nothings/stb",
     "dependencies":

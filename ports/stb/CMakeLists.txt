@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.22)
 
 project("stb"
     DESCRIPTION "Single-file libraries for C/C++"
-    VERSION 2023.1.29
+    VERSION 2024.2.13
 )
 
 add_library(${PROJECT_NAME} INTERFACE)
 
 set(public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/stb_image_resize.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/stb_image_resize2.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_image_write.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stb_truetype.h
     # more to be added if needed

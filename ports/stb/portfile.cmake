@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:nothings/stb.git
-    REF 5736b15f7ea0ffb08dd38af21067c314d6a3aae9
+    REF ae721c50eaf761660b4f90cc590453cdb0c2acd0
 )
 
 file(COPY
