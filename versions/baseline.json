@@ -251,6 +251,11 @@
             "baseline": "2024.1.15",
             "port-version": 0
         },
+        "tinygltf":
+        {
+            "baseline": "2.8.21",
+            "port-version": 0
+        },
         "vcpkg-cmake":
         {
             "baseline": "2023-05-04",
