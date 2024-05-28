@@ -1,0 +1,71 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f3e69b845..8e1c5e85b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -430,7 +430,7 @@ if(EIGEN_INCLUDE_INSTALL_DIR AND NOT INCLUDE_INSTALL_DIR)
+       CACHE PATH "The directory relative to CMAKE_INSTALL_PREFIX where Eigen header files are installed")
+ else()
+   set(INCLUDE_INSTALL_DIR
+-      "${CMAKE_INSTALL_INCLUDEDIR}/eigen3"
++      "${CMAKE_INSTALL_INCLUDEDIR}"
+       CACHE PATH "The directory relative to CMAKE_INSTALL_PREFIX where Eigen header files are installed"
+       )
+ endif()
+@@ -461,11 +461,6 @@ macro(ei_add_target_property target prop value)
+   set_target_properties(${target} PROPERTIES ${prop} "${previous} ${value}")
+ endmacro()
+ 
+-install(FILES
+-  signature_of_eigen3_matrix_library
+-  DESTINATION ${INCLUDE_INSTALL_DIR} COMPONENT Devel
+-  )
+-
+ if(EIGEN_BUILD_PKGCONFIG)
+     configure_file(eigen3.pc.in eigen3.pc @ONLY)
+     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/eigen3.pc
+@@ -475,7 +470,6 @@ endif()
+ 
+ install(DIRECTORY Eigen DESTINATION ${INCLUDE_INSTALL_DIR} COMPONENT Devel)
+ 
+-
+ option(EIGEN_BUILD_DOC "Enable creation of Eigen documentation" ON)
+ if(EIGEN_BUILD_DOC)
+   add_subdirectory(doc EXCLUDE_FROM_ALL)
+@@ -533,8 +527,6 @@ if(EIGEN_TEST_SYCL)
+   endif()
+ endif()
+ 
+-add_subdirectory(unsupported)
+-
+ add_subdirectory(demos EXCLUDE_FROM_ALL)
+ 
+ # must be after test and unsupported, for configuring buildtests.in
+diff --git a/cmake/Eigen3Config.cmake.in b/cmake/Eigen3Config.cmake.in
+index 0a1ac61c9..f83ace570 100644
+--- a/cmake/Eigen3Config.cmake.in
++++ b/cmake/Eigen3Config.cmake.in
+@@ -1,23 +1,3 @@
+-# This file exports the Eigen3::Eigen CMake target which should be passed to the
+-# target_link_libraries command.
+-
+ @PACKAGE_INIT@
+ 
+-if (NOT TARGET eigen)
+-  include ("${CMAKE_CURRENT_LIST_DIR}/Eigen3Targets.cmake")
+-endif ()
+-
+-# Legacy variables, do *not* use. May be removed in the future.
+-
+-set (EIGEN3_FOUND 1)
+-set (EIGEN3_USE_FILE    "${CMAKE_CURRENT_LIST_DIR}/UseEigen3.cmake")
+-
+-set (EIGEN3_DEFINITIONS  "@EIGEN_DEFINITIONS@")
+-set (EIGEN3_INCLUDE_DIR  "@PACKAGE_EIGEN_INCLUDE_DIR@")
+-set (EIGEN3_INCLUDE_DIRS "@PACKAGE_EIGEN_INCLUDE_DIR@")
+-set (EIGEN3_ROOT_DIR     "@PACKAGE_EIGEN_ROOT_DIR@")
+-
+-set (EIGEN3_VERSION_STRING "@EIGEN_VERSION_STRING@")
+-set (EIGEN3_VERSION_MAJOR  "@EIGEN_VERSION_MAJOR@")
+-set (EIGEN3_VERSION_MINOR  "@EIGEN_VERSION_MINOR@")
+-set (EIGEN3_VERSION_PATCH  "@EIGEN_VERSION_PATCH@")
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")

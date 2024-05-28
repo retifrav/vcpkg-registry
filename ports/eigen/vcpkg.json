@@ -1,0 +1,17 @@
+{
+    "name": "eigen",
+    "version": "3.4.0",
+    "description": "Linear algebra: matrices, vectors, numerical solvers, and related algorithms",
+    "homepage": "http://eigen.tuxfamily.org/",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
