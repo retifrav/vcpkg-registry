@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e7b8f15..2884b6d 100644
+index e7b8f15..d7b9388 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -37,7 +37,12 @@ if("${draco_root}" STREQUAL "${draco_build}")
+@@ -37,10 +37,15 @@ if("${draco_root}" STREQUAL "${draco_build}")
        "And re-run CMake from the draco_build directory.")
  endif()
  
@@ -15,8 +15,25 @@ index e7b8f15..2884b6d 100644
 +
  include("${draco_root}/cmake/draco_build_definitions.cmake")
  include("${draco_root}/cmake/draco_cpu_detection.cmake")
- include("${draco_root}/cmake/draco_dependencies.cmake")
-@@ -88,6 +93,8 @@ draco_set_cxx_flags()
+-include("${draco_root}/cmake/draco_dependencies.cmake")
++#include("${draco_root}/cmake/draco_dependencies.cmake")
+ include("${draco_root}/cmake/draco_emscripten.cmake")
+ include("${draco_root}/cmake/draco_flags.cmake")
+ include("${draco_root}/cmake/draco_helpers.cmake")
+@@ -52,6 +57,12 @@ include("${draco_root}/cmake/draco_targets.cmake")
+ include("${draco_root}/cmake/draco_tests.cmake")
+ include("${draco_root}/cmake/draco_variables.cmake")
+ 
++if(DRACO_TRANSCODER_SUPPORTED)
++    find_package(Eigen3 CONFIG REQUIRED)
++    find_package(ghc_filesystem CONFIG REQUIRED)
++    find_package(tinygltf CONFIG REQUIRED)
++endif()
++
+ # C++ and linker flags.
+ draco_track_configuration_variable(DRACO_CXX_FLAGS)
+ draco_track_configuration_variable(DRACO_EXE_LINKER_FLAGS)
+@@ -88,6 +99,8 @@ draco_set_cxx_flags()
  draco_set_exe_linker_flags()
  draco_generate_features_h()
  
@@ -25,7 +42,7 @@ index e7b8f15..2884b6d 100644
  # Draco source file listing variables.
  list(
    APPEND draco_attributes_sources
-@@ -706,6 +713,8 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
+@@ -706,6 +719,8 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
                  "DRACO_ATTRIBUTE_VALUES_DEDUPLICATION_SUPPORTED")
    endif()
  
@@ -34,7 +51,7 @@ index e7b8f15..2884b6d 100644
    draco_add_emscripten_executable(
      NAME draco_decoder
      SOURCES ${draco_decoder_src}
-@@ -760,6 +769,8 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
+@@ -760,6 +775,8 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
        PRE_LINK_JS_SOURCES ${draco_pre_link_js_sources}
        POST_LINK_JS_SOURCES ${draco_post_link_js_sources})
    endif()
@@ -43,7 +60,113 @@ index e7b8f15..2884b6d 100644
  else()
    # Standard Draco libs, encoder and decoder. Object collections that mirror the
    # Draco directory structure.
-@@ -1105,6 +1116,8 @@ else()
+@@ -876,12 +893,26 @@ else()
+     SOURCES ${draco_io_sources}
+     DEFINES ${draco_defines}
+     INCLUDES ${draco_include_paths})
++  if(DRACO_TRANSCODER_SUPPORTED)
++      target_link_libraries(draco_io
++          PRIVATE
++              #Eigen3::Eigen
++              ghcFilesystem::ghc_filesystem
++              tinygltf
++      )
++  endif()
+   draco_add_library(
+     NAME draco_mesh
+     TYPE OBJECT
+     SOURCES ${draco_mesh_sources}
+     DEFINES ${draco_defines}
+     INCLUDES ${draco_include_paths})
++  if(DRACO_TRANSCODER_SUPPORTED)
++      target_link_libraries(draco_mesh
++          PRIVATE
++              Eigen3::Eigen
++      )
++  endif()
+   draco_add_library(
+     NAME draco_metadata_dec
+     TYPE OBJECT
+@@ -957,6 +988,10 @@ else()
+       SOURCES ${draco_scene_sources}
+       DEFINES ${draco_defines}
+       INCLUDES ${draco_include_paths})
++    target_link_libraries(draco_scene
++        PRIVATE
++            Eigen3::Eigen
++    )
+ 
+     draco_add_library(
+       NAME draco_texture
+@@ -1005,55 +1040,20 @@ else()
+   endif()
+ 
+   # Library targets that consume the object collections.
+-  if(MSVC)
+-    # In order to produce a DLL and import library the Windows tools require
+-    # that the exported symbols are part of the DLL target. The unfortunate side
+-    # effect of this is that a single configuration cannot output both the
+-    # static library and the DLL: This results in an either/or situation.
+-    # Windows users of the draco build can have a DLL and an import library, or
+-    # they can have a static library; they cannot have both from a single
+-    # configuration of the build.
+-    if(BUILD_SHARED_LIBS)
+-      set(draco_lib_type SHARED)
+-    else()
+-      set(draco_lib_type STATIC)
+-    endif()
+-    draco_add_library(
+-      NAME draco
+-      OUTPUT_NAME draco
+-      TYPE ${draco_lib_type}
+-      DEFINES ${draco_defines}
+-      INCLUDES ${draco_include_paths}
+-      OBJLIB_DEPS ${draco_object_library_deps}
+-      LIB_DEPS ${draco_lib_deps})
+-    add_library(draco::draco ALIAS draco)
+-
++  if(BUILD_SHARED_LIBS)
++    set(draco_lib_type SHARED)
+   else()
+-    draco_add_library(
+-      NAME draco_static
+-      OUTPUT_NAME draco
+-      TYPE STATIC
+-      DEFINES ${draco_defines}
+-      INCLUDES ${draco_include_paths}
+-      OBJLIB_DEPS ${draco_object_library_deps}
+-      LIB_DEPS ${draco_lib_deps})
+-
+-    if(BUILD_SHARED_LIBS)
+-      draco_add_library(
+-        NAME draco_shared
+-        SOURCES "${draco_src_root}/core/draco_version.h"
+-        OUTPUT_NAME draco
+-        TYPE SHARED
+-        DEFINES ${draco_defines}
+-        INCLUDES ${draco_include_paths}
+-        LIB_DEPS draco_static)
+-      add_library(draco::draco ALIAS draco_shared)
+-      set_target_properties(draco_shared PROPERTIES EXPORT_NAME draco)
+-    else()
+-      add_library(draco::draco ALIAS draco_static)
+-      set_target_properties(draco_static PROPERTIES EXPORT_NAME draco)
+-    endif()
++    set(draco_lib_type STATIC)
+   endif()
++  draco_add_library(
++    NAME ${PROJECT_NAME}
++    OUTPUT_NAME ${PROJECT_NAME}
++    TYPE ${draco_lib_type}
++    DEFINES ${draco_defines}
++    INCLUDES ${draco_include_paths}
++    OBJLIB_DEPS ${draco_object_library_deps}
++    LIB_DEPS ${draco_lib_deps})
++  add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+ 
+   if(DRACO_UNITY_PLUGIN)
+     if(IOS)
+@@ -1105,6 +1105,8 @@ else()
      endif()
    endif()
  
@@ -52,7 +175,7 @@ index e7b8f15..2884b6d 100644
    # Draco app targets.
    draco_add_executable(
      NAME draco_decoder
-@@ -1144,6 +1157,8 @@ else()
+@@ -1144,6 +1146,8 @@ else()
          LIB_DEPS ${draco_dependency})
      endif()
    endif()
@@ -61,6 +184,61 @@ index e7b8f15..2884b6d 100644
  
    draco_setup_install_target()
    draco_setup_test_targets()
+diff --git a/cmake/draco-config.cmake.template b/cmake/draco-config.cmake.template
+index ed86823..53f9ac3 100644
+--- a/cmake/draco-config.cmake.template
++++ b/cmake/draco-config.cmake.template
+@@ -1,3 +1,13 @@
+ @PACKAGE_INIT@
+ 
+-include("${CMAKE_CURRENT_LIST_DIR}/draco-targets.cmake")
++include(CMakeFindDependencyMacro)
++
++if(@DRACO_TRANSCODER_SUPPORTED@)
++    find_dependency(cpp-base64 REQUIRED)
++    find_dependency(nlohmann_json REQUIRED)
++    find_dependency(stb CONFIG REQUIRED)
++endif()
++
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
++
++check_required_components(@PROJECT_NAME@)
+diff --git a/cmake/draco_build_definitions.cmake b/cmake/draco_build_definitions.cmake
+index 4c7b3f9..4c92141 100644
+--- a/cmake/draco_build_definitions.cmake
++++ b/cmake/draco_build_definitions.cmake
+@@ -20,17 +20,8 @@ set(DRACO_CMAKE_DRACO_BUILD_DEFINITIONS_CMAKE_ 1)
+ # Utility for controlling the main draco library dependency. This changes in
+ # shared builds, and when an optional target requires a shared library build.
+ macro(set_draco_target)
+-  if(MSVC)
+-    set(draco_dependency draco)
++    set(draco_dependency ${PROJECT_NAME})
+     set(draco_plugin_dependency ${draco_dependency})
+-  else()
+-    if(BUILD_SHARED_LIBS)
+-      set(draco_dependency draco_shared)
+-    else()
+-      set(draco_dependency draco_static)
+-    endif()
+-    set(draco_plugin_dependency draco_static)
+-  endif()
+ endmacro()
+ 
+ # Configures flags and sets build system globals.
+@@ -69,9 +60,9 @@ macro(draco_set_build_definitions)
+               "${draco_build}")
+ 
+   if(DRACO_TRANSCODER_SUPPORTED)
+-    draco_setup_eigen()
+-    draco_setup_filesystem()
+-    draco_setup_tinygltf()
++    # draco_setup_eigen()
++    # draco_setup_filesystem()
++    # draco_setup_tinygltf()
+ 
+ 
+   endif()
 diff --git a/cmake/draco_emscripten.cmake b/cmake/draco_emscripten.cmake
 index c9616ae..ea0bc51 100644
 --- a/cmake/draco_emscripten.cmake
@@ -93,10 +271,10 @@ index c9616ae..ea0bc51 100644
    foreach(feature ${emexe_FEATURES})
      draco_enable_feature(FEATURE ${feature} TARGETS ${emexe_NAME})
 diff --git a/cmake/draco_install.cmake b/cmake/draco_install.cmake
-index b9dda26..e552689 100644
+index b9dda26..69ee6ee 100644
 --- a/cmake/draco_install.cmake
 +++ b/cmake/draco_install.cmake
-@@ -51,10 +51,14 @@ macro(draco_setup_install_target)
+@@ -51,35 +51,24 @@ macro(draco_setup_install_target)
      install(FILES "${draco_build}/draco/draco_features.h"
              DESTINATION "${includes_path}/draco/")
  
@@ -112,3 +290,116 @@ index b9dda26..e552689 100644
        install(TARGETS draco_transcoder DESTINATION "${bin_path}")
      endif()
  
+-    if(MSVC)
+-      install(
+-        TARGETS draco
+-        EXPORT dracoExport
+-        RUNTIME DESTINATION "${bin_path}"
+-        ARCHIVE DESTINATION "${libs_path}"
+-        LIBRARY DESTINATION "${libs_path}")
+-    else()
+-      install(
+-        TARGETS draco_static
+-        EXPORT dracoExport
+-        DESTINATION "${libs_path}")
+-
+-      if(BUILD_SHARED_LIBS)
+-        install(
+-          TARGETS draco_shared
+-          EXPORT dracoExport
+-          RUNTIME DESTINATION "${bin_path}"
+-          ARCHIVE DESTINATION "${libs_path}"
+-          LIBRARY DESTINATION "${libs_path}")
+-      endif()
+-    endif()
++
++    install(
++      TARGETS draco
++      EXPORT dracoExport
++      RUNTIME DESTINATION "${bin_path}"
++      ARCHIVE DESTINATION "${libs_path}"
++      LIBRARY DESTINATION "${libs_path}")
+ 
+     if(DRACO_UNITY_PLUGIN)
+       install(TARGETS dracodec_unity DESTINATION "${libs_path}")
+diff --git a/src/draco/io/file_writer_utils.cc b/src/draco/io/file_writer_utils.cc
+index 08ca4c2..002f86f 100644
+--- a/src/draco/io/file_writer_utils.cc
++++ b/src/draco/io/file_writer_utils.cc
+@@ -8,7 +8,7 @@
+ #include "draco/draco_features.h"
+ 
+ #ifdef DRACO_TRANSCODER_SUPPORTED
+-#include "ghc/filesystem.hpp"
++#include <ghc/filesystem.hpp>
+ #endif  // DRACO_TRANSCODER_SUPPORTED
+ 
+ namespace draco {
+diff --git a/src/draco/io/tiny_gltf_utils.cc b/src/draco/io/tiny_gltf_utils.cc
+index d57e109..aa5cee8 100644
+--- a/src/draco/io/tiny_gltf_utils.cc
++++ b/src/draco/io/tiny_gltf_utils.cc
+@@ -19,7 +19,7 @@
+ #include "draco/animation/node_animation_data.h"
+ #include "draco/core/status.h"
+ #include "draco/core/vector_d.h"
+-#include "tiny_gltf.h"
++#include <tinygltf/tiny_gltf.h>
+ 
+ namespace draco {
+ 
+@@ -225,6 +225,6 @@ void TinyGltfUtils::SetDataImpl(float value, int index,
+ #define TINYGLTF_ENABLE_DRACO
+ #define TINYGLTF_IMPLEMENTATION
+ 
+-#include "tiny_gltf.h"
++#include <tinygltf/tiny_gltf.h>
+ 
+ #endif  // DRACO_TRANSCODER_SUPPORTED
+diff --git a/src/draco/io/tiny_gltf_utils.h b/src/draco/io/tiny_gltf_utils.h
+index a536a70..77e16fe 100644
+--- a/src/draco/io/tiny_gltf_utils.h
++++ b/src/draco/io/tiny_gltf_utils.h
+@@ -18,14 +18,14 @@
+ #include "draco/draco_features.h"
+ 
+ #ifdef DRACO_TRANSCODER_SUPPORTED
+-#include "Eigen/Geometry"
++#include <Eigen/Geometry>
+ #include "draco/animation/animation.h"
+ #include "draco/core/status.h"
+ #include "draco/core/status_or.h"
+ #include "draco/material/material.h"
+ 
+ #define TINYGLTF_ENCLOSING_NAMESPACE draco
+-#include "tiny_gltf.h"
++#include <tinygltf/tiny_gltf.h>
+ 
+ namespace draco {
+ 
+diff --git a/src/draco/mesh/mesh_utils.h b/src/draco/mesh/mesh_utils.h
+index 91833b7..264dec9 100644
+--- a/src/draco/mesh/mesh_utils.h
++++ b/src/draco/mesh/mesh_utils.h
+@@ -18,7 +18,7 @@
+ #include "draco/draco_features.h"
+ 
+ #ifdef DRACO_TRANSCODER_SUPPORTED
+-#include "Eigen/Geometry"
++#include <Eigen/Geometry>
+ #include "draco/core/status_or.h"
+ #include "draco/mesh/mesh.h"
+ 
+diff --git a/src/draco/scene/trs_matrix.h b/src/draco/scene/trs_matrix.h
+index 837d835..b0cfdf9 100644
+--- a/src/draco/scene/trs_matrix.h
++++ b/src/draco/scene/trs_matrix.h
+@@ -18,7 +18,7 @@
+ #include "draco/draco_features.h"
+ 
+ #ifdef DRACO_TRANSCODER_SUPPORTED
+-#include "Eigen/Geometry"
++#include <Eigen/Geometry>
+ #include "draco/core/status_or.h"
+ 
+ namespace draco {

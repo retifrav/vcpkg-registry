@@ -24,6 +24,16 @@
         {
             "description": "Build tools"
         },
+        "transcoder":
+        {
+            "description": "Enable transcoder",
+            "dependencies":
+            [
+                "eigen",
+                "ghc-filesystem",
+                "tinygltf"
+            ]
+        },
         "wasm":
         {
             "description": "Enable WASM support"

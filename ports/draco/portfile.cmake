@@ -10,8 +10,18 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         gltf-bitstream DRACO_GLTF_BITSTREAM
         tools DRACO_WITH_TOOLS
+        transcoder DRACO_TRANSCODER_SUPPORTED
         wasm DRACO_WASM
 )
+
+if("transcoder" IN_LIST FEATURES)
+    message(
+        WARNING
+            "[WARNING] This version of Draco does not support the latest version of TinyGLTF, "
+            "so you'll need to restrict it to an older one (such as `2.4.0`) in your project's "
+            "vcpkg.json manifest (via `overrides`)."
+    )
+endif()
 
 # for some reasons it isn't good enough for them to just use the EMSDK variable
 if(NOT DEFINED ENV{EMSCRIPTEN})
@@ -34,7 +44,6 @@ vcpkg_cmake_configure(
         -DDRACO_UNITY_PLUGIN=0
         -DDRACO_ANIMATION_ENCODING=0
         -DDRACO_MAYA_PLUGIN=0
-        -DDRACO_TRANSCODER_SUPPORTED=0
 )
 
 vcpkg_cmake_install()
