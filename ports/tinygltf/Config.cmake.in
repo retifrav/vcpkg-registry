@@ -2,8 +2,8 @@
 
 include(CMakeFindDependencyMacro)
 
-find_dependency(cpp-base64 REQUIRED)
-find_dependency(nlohmann_json REQUIRED)
+find_dependency(cpp-base64 CONFIG REQUIRED)
+find_dependency(nlohmann_json CONFIG REQUIRED)
 find_dependency(stb CONFIG REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
