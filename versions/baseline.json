@@ -266,6 +266,11 @@
             "baseline": "2.8.21",
             "port-version": 0
         },
+        "tinyxml":
+        {
+            "baseline": "2.6.2",
+            "port-version": 0
+        },
         "vcpkg-cmake":
         {
             "baseline": "2023-05-04",
