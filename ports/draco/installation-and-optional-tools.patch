@@ -185,7 +185,7 @@ index e7b8f15..d7b9388 100644
    draco_setup_install_target()
    draco_setup_test_targets()
 diff --git a/cmake/draco-config.cmake.template b/cmake/draco-config.cmake.template
-index ed86823..53f9ac3 100644
+index ed86823..550fc6a 100644
 --- a/cmake/draco-config.cmake.template
 +++ b/cmake/draco-config.cmake.template
 @@ -1,3 +1,13 @@
@@ -195,9 +195,9 @@ index ed86823..53f9ac3 100644
 +include(CMakeFindDependencyMacro)
 +
 +if(@DRACO_TRANSCODER_SUPPORTED@)
-+    find_dependency(cpp-base64 REQUIRED)
-+    find_dependency(nlohmann_json REQUIRED)
-+    find_dependency(stb CONFIG REQUIRED)
++    find_dependency(Eigen3 CONFIG REQUIRED)
++    find_dependency(ghc_filesystem CONFIG REQUIRED)
++    find_dependency(tinygltf CONFIG REQUIRED)
 +endif()
 +
 +include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")

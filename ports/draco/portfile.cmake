@@ -6,6 +6,11 @@ vcpkg_from_git(
         installation-and-optional-tools.patch
 )
 
+vcpkg_find_acquire_program(PYTHON3)
+# if we want this Python to be available in the PATH
+get_filename_component(PYTHON_DIR ${PYTHON3} DIRECTORY)
+vcpkg_add_to_path("${PYTHON_DIR}") # you might want to PREPEND it
+
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         gltf-bitstream DRACO_GLTF_BITSTREAM
