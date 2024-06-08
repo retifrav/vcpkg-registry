@@ -4,6 +4,8 @@ project("tinyxml"
     VERSION 2.6.2
 )
 
+set(CMAKE_CXX_STANDARD 11)
+
 add_library(${PROJECT_NAME})
 
 set(sources
