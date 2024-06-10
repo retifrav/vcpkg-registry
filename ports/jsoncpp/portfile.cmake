@@ -8,6 +8,8 @@ vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:open-source-parsers/jsoncpp.git
     REF 5defb4ed1a4293b8e2bf641e16b156fb9de498cc
+    PATCHES
+        001-modern-cmake-version.patch
 )
 
 if(NOT VCPKG_TARGET_IS_WINDOWS)
