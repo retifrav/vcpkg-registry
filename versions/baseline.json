@@ -256,6 +256,11 @@
             "baseline": "3.45.2",
             "port-version": 0
         },
+        "srtp":
+        {
+            "baseline": "2.6.0",
+            "port-version": 0
+        },
         "stb":
         {
             "baseline": "2024.2.13",

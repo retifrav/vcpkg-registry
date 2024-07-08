@@ -1,0 +1,75 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7d737e8..59bf8cd 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -255,7 +255,7 @@ add_library(srtp2
+   ${REPLAY_SOURCES_C}
+   ${SOURCES_H}
+ )
+-add_library(libSRTP::srtp2 ALIAS srtp2)
++add_library(SRTP::srtp2 ALIAS srtp2)
+ 
+ if (${ENABLE_WARNINGS})
+     target_set_warnings(
+@@ -299,7 +299,7 @@ if(WIN32)
+ endif()
+ 
+ install(TARGETS srtp2 DESTINATION lib
+-  EXPORT libSRTPTargets
++  EXPORT SRTPTargets
+ )
+ 
+ install(FILES include/srtp.h crypto/include/auth.h
+@@ -477,10 +477,10 @@ endif()
+ 
+ # Export targets
+ install(
+-  EXPORT libSRTPTargets
+-  FILE libSRTPTargets.cmake
+-	NAMESPACE libSRTP::
+-	DESTINATION lib/cmake/libSRTP
++  EXPORT SRTPTargets
++  FILE SRTPTargets.cmake
++	NAMESPACE SRTP::
++	DESTINATION lib/cmake/SRTP
+ )
+ 
+ #--------------------------------------------------------------------
+@@ -490,7 +490,7 @@ include(CMakePackageConfigHelpers)
+ 
+ # Generate the config file that is includes the exports
+ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+-  "${CMAKE_CURRENT_BINARY_DIR}/libSRTPConfig.cmake"
++  "${CMAKE_CURRENT_BINARY_DIR}/SRTPConfig.cmake"
+   INSTALL_DESTINATION "${CONFIG_FILE_DIR}"
+   NO_SET_AND_CHECK_MACRO
+   NO_CHECK_REQUIRED_COMPONENTS_MACRO
+@@ -498,7 +498,7 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+ 
+ # Generate the version file for the config file
+ write_basic_package_version_file(
+-  "${CMAKE_CURRENT_BINARY_DIR}/libSRTPConfigVersion.cmake"
++  "${CMAKE_CURRENT_BINARY_DIR}/SRTPConfigVersion.cmake"
+   VERSION "${PROJECT_VERSION}"
+   COMPATIBILITY AnyNewerVersion
+ )
+@@ -507,7 +507,7 @@ write_basic_package_version_file(
+ # Install CMake config files
+ #--------------------------------------------------------------------
+ install(FILES
+-  ${CMAKE_CURRENT_BINARY_DIR}/libSRTPConfig.cmake
+-  ${CMAKE_CURRENT_BINARY_DIR}/libSRTPConfigVersion.cmake
+-  DESTINATION lib/cmake/libSRTP
++  ${CMAKE_CURRENT_BINARY_DIR}/SRTPConfig.cmake
++  ${CMAKE_CURRENT_BINARY_DIR}/SRTPConfigVersion.cmake
++  DESTINATION lib/cmake/SRTP
+ )
+diff --git a/Config.cmake.in b/Config.cmake.in
+index 0ad9b17..4804183 100644
+--- a/Config.cmake.in
++++ b/Config.cmake.in
+@@ -1,3 +1,3 @@
+ @PACKAGE_INIT@
+ 
+-include ( "${CMAKE_CURRENT_LIST_DIR}/libSRTPTargets.cmake" )
++include ( "${CMAKE_CURRENT_LIST_DIR}/SRTPTargets.cmake" )
