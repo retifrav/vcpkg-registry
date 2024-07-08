@@ -191,6 +191,11 @@
             "baseline": "2021.3.14",
             "port-version": 0
         },
+        "plog":
+        {
+            "baseline": "1.1.10",
+            "port-version": 0
+        },
         "png":
         {
             "baseline": "1.6.43",
