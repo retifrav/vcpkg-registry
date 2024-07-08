@@ -286,6 +286,11 @@
             "baseline": "2.6.2",
             "port-version": 0
         },
+        "usrsctp":
+        {
+            "baseline": "0.9.5",
+            "port-version": 0
+        },
         "vcpkg-cmake":
         {
             "baseline": "2023-05-04",
