@@ -63,12 +63,15 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         omit-json SQLITE_OMIT_JSON
         use-uri SQLITE_USE_URI
         tool BUILD_SQLITE_TOOL
+        in-memory-vfs IN_MEMORY_VFS
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+    MAYBE_UNUSED_VARIABLES
+        IN_MEMORY_VFS
 )
 
 vcpkg_cmake_install()
@@ -88,5 +91,26 @@ if("tool" IN_LIST FEATURES)
 endif()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
+
+if("in-memory-vfs" IN_LIST FEATURES)
+    # it isn't available in amalgamated source package, is it
+    vcpkg_download_distfile(
+        MEMVFS_C
+        URLS "https://www.sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=memvfs.c"
+        FILENAME "memvfs.c"
+        SHA512 e47757db92a4dfb0ad305d19175ef300fc9b86467605d34ed2133e2f80320a4b98f4f519359fd7ab0f3cbeef8958aad45fede63641c54b77aa8ad4d950fdae4c
+    )
+    # in general, this is needed for being able to serialize an SQLite database file
+    # and then load it from VFS (virtual file system), which might be needed in cases
+    # when database file cannot be loaded from local file system, such as in web-applications
+    # with WebAssembly
+    #
+    # might need to come up with a better(?) way of compiling this source file
+    # in the consuming project, perhaps it should be built together with SQLite sources?
+    file(
+        INSTALL "${MEMVFS_C}"
+        DESTINATION "${CURRENT_PACKAGES_DIR}/share/sqlite3/etc"
+    )
+endif()
 
 vcpkg_install_copyright(FILE_LIST "${CMAKE_CURRENT_LIST_DIR}/license.md")

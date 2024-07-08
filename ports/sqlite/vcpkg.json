@@ -89,6 +89,10 @@
         "tool":
         {
             "description": "Build sqlite CLI tool"
+        },
+        "in-memory-vfs":
+        {
+            "description": "Install in-memory VFS implementation sources"
         }
     }
 }
