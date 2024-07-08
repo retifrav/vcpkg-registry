@@ -41,6 +41,11 @@
             "baseline": "8.1.2",
             "port-version": 0
         },
+        "datachannel":
+        {
+            "baseline": "0.21.2",
+            "port-version": 0
+        },
         "dawn":
         {
             "baseline": "2024.1.13",
