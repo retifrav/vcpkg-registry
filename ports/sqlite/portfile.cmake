@@ -76,9 +76,11 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
+set(INSTALLED_CMAKE_PACKAGE_NAME "sqlite3")
+
 vcpkg_cmake_config_fixup(
-    PACKAGE_NAME "sqlite3"
-    CONFIG_PATH "share/sqlite3"
+    PACKAGE_NAME "${INSTALLED_CMAKE_PACKAGE_NAME}"
+    CONFIG_PATH "share/${INSTALLED_CMAKE_PACKAGE_NAME}"
 )
 
 if("tool" IN_LIST FEATURES)
@@ -109,7 +111,7 @@ if("in-memory-vfs" IN_LIST FEATURES)
     # in the consuming project, perhaps it should be built together with SQLite sources?
     file(
         INSTALL "${MEMVFS_C}"
-        DESTINATION "${CURRENT_PACKAGES_DIR}/share/sqlite3/etc"
+        DESTINATION "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
     )
 endif()
 
