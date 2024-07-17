@@ -185,12 +185,14 @@ index 96d13e4..03aa26b 100644
 +	target_link_libraries(stun-fuzzer ${PROJECT_NAME} ${LIB_FUZZING_ENGINE})
  endif()
 diff --git a/cmake/LibJuiceConfig.cmake.in b/cmake/LibJuiceConfig.cmake.in
-index 247e53f..f83ace5 100644
+index 247e53f..587c299 100644
 --- a/cmake/LibJuiceConfig.cmake.in
 +++ b/cmake/LibJuiceConfig.cmake.in
-@@ -1,4 +1,3 @@
+@@ -1,4 +1,6 @@
  @PACKAGE_INIT@
  
 -include("${CMAKE_CURRENT_LIST_DIR}/LibJuiceTargets.cmake")
--
++include(CMakeFindDependencyMacro)
++find_dependency(Threads REQUIRED)
+ 
 +include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
