@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 7d737e8..59bf8cd 100644
+index 7d737e8..b0439d8 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -255,7 +255,7 @@ add_library(srtp2
@@ -31,7 +31,7 @@ index 7d737e8..59bf8cd 100644
 +  EXPORT SRTPTargets
 +  FILE SRTPTargets.cmake
 +	NAMESPACE SRTP::
-+	DESTINATION lib/cmake/SRTP
++	DESTINATION lib/cmake/srtp
  )
  
  #--------------------------------------------------------------------
@@ -62,7 +62,7 @@ index 7d737e8..59bf8cd 100644
 -  DESTINATION lib/cmake/libSRTP
 +  ${CMAKE_CURRENT_BINARY_DIR}/SRTPConfig.cmake
 +  ${CMAKE_CURRENT_BINARY_DIR}/SRTPConfigVersion.cmake
-+  DESTINATION lib/cmake/SRTP
++  DESTINATION lib/cmake/srtp
  )
 diff --git a/Config.cmake.in b/Config.cmake.in
 index 0ad9b17..4804183 100644
