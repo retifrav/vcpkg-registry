@@ -3,10 +3,16 @@ if(VCPKG_TARGET_IS_WINDOWS)
     vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 endif()
 
+# carefully check the commit hashes every time you are updating the version
+set(GIT_COMMIT_HASH "cb16be3a3fc1f9cd146ae24d52b615f8a05fa93d") # version tag commit from master branch
+if("docking" IN_LIST FEATURES)
+    set(GIT_COMMIT_HASH "3369cbd2776d7567ac198b1a3017a4fa2d547cc3") # version tag commit from docking branch
+endif()
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:ocornut/imgui.git
-    REF 277ae93c41314ba5f4c7444f37c4319cdf07e8cf
+    REF ${GIT_COMMIT_HASH}
 )
 
 file(COPY
@@ -59,8 +65,4 @@ endif()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE.txt"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")
