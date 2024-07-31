@@ -1,6 +1,6 @@
 {
     "name": "dearimgui",
-    "version": "1.90.9",
+    "version": "1.91.0",
     "description": "Bloat-free Graphical User interface for C++ with minimal dependencies",
     "homepage": "https://github.com/ocornut/imgui",
     "dependencies":

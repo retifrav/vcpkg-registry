@@ -4,9 +4,9 @@ if(VCPKG_TARGET_IS_WINDOWS)
 endif()
 
 # carefully check the commit hashes every time you are updating the version
-set(GIT_COMMIT_HASH "cb16be3a3fc1f9cd146ae24d52b615f8a05fa93d") # version tag commit from master branch
+set(GIT_COMMIT_HASH "8199457a7d9e453f8d3d9cadc14683fb54a858b5") # version tag commit from master branch
 if("docking" IN_LIST FEATURES)
-    set(GIT_COMMIT_HASH "3369cbd2776d7567ac198b1a3017a4fa2d547cc3") # version tag commit from docking branch
+    set(GIT_COMMIT_HASH "139e99ca37a3e127c87690202faec005cd892d36") # version tag commit from docking branch
 endif()
 
 vcpkg_from_git(
