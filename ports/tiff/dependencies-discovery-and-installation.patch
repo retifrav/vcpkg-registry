@@ -1,7 +1,20 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index cdd5495..539bb46 100644
+index cdd5495..f747c0a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -131,9 +131,9 @@ include(WindowsSupport)
+ # Orthogonal features
+ include(LibraryFeatures)
+ 
+-
+-# math.h/libm portability
+-find_package(CMath REQUIRED)
++if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
++    find_library(MATH_LIBRARY m)
++endif()
+ 
+ # Release support
+ include(Release)
 @@ -159,7 +159,7 @@ if(tiff-docs)
  endif()
  
@@ -163,8 +176,34 @@ index 3fac861..22ebaee 100644
 -if (zstd AND ZSTD_USABLE)
      set(ZSTD_SUPPORT TRUE)
  endif()
+diff --git a/contrib/dbs/CMakeLists.txt b/contrib/dbs/CMakeLists.txt
+index 74b2a02..bdf6d73 100644
+--- a/contrib/dbs/CMakeLists.txt
++++ b/contrib/dbs/CMakeLists.txt
+@@ -26,13 +26,19 @@ add_executable(tiff-bi tiff-bi.c)
+ target_link_libraries(tiff-bi tiff tiff_port)
+ 
+ add_executable(tiff-grayscale tiff-grayscale.c)
+-target_link_libraries(tiff-grayscale tiff tiff_port CMath::CMath)
++target_link_libraries(tiff-grayscale tiff tiff_port)
++if(MATH_LIBRARY)
++    target_link_libraries(tiff-grayscale ${MATH_LIBRARY})
++endif()
+ 
+ add_executable(tiff-palette tiff-palette.c)
+ target_link_libraries(tiff-palette tiff tiff_port)
+ 
+ add_executable(tiff-rgb tiff-rgb.c)
+-target_link_libraries(tiff-rgb tiff tiff_port CMath::CMath)
++target_link_libraries(tiff-rgb tiff tiff_port)
++if(MATH_LIBRARY)
++    target_link_libraries(tiff-rgb ${MATH_LIBRARY})
++endif()
+ 
+ if(WEBP_SUPPORT AND EMSCRIPTEN)
+   # Emscripten is pretty finnicky about linker flags.
 diff --git a/libtiff/CMakeLists.txt b/libtiff/CMakeLists.txt
-index 9c8024e..585e365 100644
+index 9c8024e..710fdb8 100644
 --- a/libtiff/CMakeLists.txt
 +++ b/libtiff/CMakeLists.txt
 @@ -125,7 +125,7 @@ set(tiff_libs_private_list "") # cmake list
@@ -176,7 +215,7 @@ index 9c8024e..585e365 100644
    string(APPEND tiff_requires_private " zlib")
  endif()
  if(ZIP_SUPPORT AND LIBDEFLATE_SUPPORT)
-@@ -154,11 +154,11 @@ if(LERC_SUPPORT)
+@@ -154,20 +154,20 @@ if(LERC_SUPPORT)
    endif()
  endif()
  if(LZMA_SUPPORT)
@@ -190,15 +229,18 @@ index 9c8024e..585e365 100644
    string(APPEND tiff_requires_private " libzstd")
  endif()
  if(WEBP_SUPPORT)
-@@ -166,7 +166,7 @@ if(WEBP_SUPPORT)
+   target_link_libraries(tiff PRIVATE WebP::webp)
    string(APPEND tiff_requires_private " libwebp")
  endif()
- if(CMath_LIBRARY)
+-if(CMath_LIBRARY)
 -  target_link_libraries(tiff PRIVATE CMath::CMath)
-+  target_link_libraries(tiff PRIVATE ${CMath_LIBRARY})
-   list(APPEND tiff_libs_private_list "${CMath_LIBRARY}")
+-  list(APPEND tiff_libs_private_list "${CMath_LIBRARY}")
++if(MATH_LIBRARY)
++  target_link_libraries(tiff PRIVATE ${MATH_LIBRARY})
++  list(APPEND tiff_libs_private_list "${MATH_LIBRARY}")
  endif()
  
+ set(tiff_libs_private_list "${tiff_libs_private_list}" PARENT_SCOPE)
 @@ -187,32 +187,48 @@ if(HAVE_LD_VERSION_SCRIPT)
  endif()
  
@@ -345,3 +387,19 @@ index 6469931..0008957 100644
  
  #include <stdio.h>
  
+diff --git a/tools/unsupported/CMakeLists.txt b/tools/unsupported/CMakeLists.txt
+index c77c35d..f47ea59 100644
+--- a/tools/unsupported/CMakeLists.txt
++++ b/tools/unsupported/CMakeLists.txt
+@@ -38,7 +38,10 @@ target_link_libraries(tiff2pdf PRIVATE tiff tiff_port)
+ 
+ add_executable(tiff2ps ../../placeholder.h)
+ target_sources(tiff2ps PRIVATE tiff2ps.c ${MSVC_RESSOURCE_FILE})
+-target_link_libraries(tiff2ps PRIVATE tiff tiff_port CMath::CMath)
++target_link_libraries(tiff2ps PRIVATE tiff tiff_port)
++if(MATH_LIBRARY)
++    target_link_libraries(tiff2ps PRIVATE ${MATH_LIBRARY})
++endif()
+ 
+ # rgb2ycbcr and thumbnail are intended to *NOT* be installed. They are for
+ # testing purposes only.
