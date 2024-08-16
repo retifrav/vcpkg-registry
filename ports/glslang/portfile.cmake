@@ -16,17 +16,17 @@ vcpkg_find_acquire_program(PYTHON3)
 get_filename_component(PYTHON_PATH ${PYTHON3} DIRECTORY)
 vcpkg_add_to_path("${PYTHON_PATH}")
 
+# on iOS executables will require BUNDLE DESTINATION, so that will fail,
+# and on WASM tools are not built(?), so they will fail to copy with vcpkg_copy_tools()
+set(BUILD_BINARIES 0)
 if("tools" IN_LIST FEATURES AND NOT VCPKG_TARGET_IS_IOS AND NOT VCPKG_TARGET_IS_EMSCRIPTEN)
     set(BUILD_BINARIES 1)
-else()
-    # on iOS executables will require BUNDLE DESTINATION, so that will fail
-    # on WASM tools are not built(?), so they will fail to copy with vcpkg_copy_tools()
-    set(BUILD_BINARIES 0)
 endif()
 
-if(WIN32)
-    set(PLATFORM_OPTIONS "-DOVERRIDE_MSVCCRT=0")
-endif ()
+set(PLATFORM_OPTIONS "")
+if(VCPKG_TARGET_IS_WINDOWS)
+    list(APPEND PLATFORM_OPTIONS "-DOVERRIDE_MSVCCRT=0")
+endif()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
