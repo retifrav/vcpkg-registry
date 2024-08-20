@@ -223,7 +223,7 @@
         },
         "rapidjson":
         {
-            "baseline": "2024.4.9",
+            "baseline": "2024.8.16",
             "port-version": 0
         },
         "rapidxml":
