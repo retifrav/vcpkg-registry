@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:simdjson/simdjson.git
-    REF bf7834179c1f8fc523c9fd73d29b46348ae1d576
+    REF e341c8b43861b43de29c48ab65f292d997096953
     PATCHES
         installation.patch
 )
