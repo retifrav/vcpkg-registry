@@ -1,0 +1,270 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ad633a5..e0a3382 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,10 +1,20 @@
+-cmake_minimum_required(VERSION 3.20)
++cmake_minimum_required(VERSION 3.22)
+ 
+-project(reSL)
++project("reSL"
++    DESCRIPTION "Reverse-engineered DOS game Shortline"
++    VERSION 2024.9.1
++    LANGUAGES CXX
++)
++
++set(CMAKE_CXX_STANDARD 20)
++
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
+ 
+-file(GLOB_RECURSE HEADERS "*.h")
++option(BUILD_FOR_DEVELOPMENT "Enable certain things for debugging the build" 0)
+ 
+-set(SOURCES
++add_executable(${CMAKE_PROJECT_NAME})
++
++set(sources
+     src/game/demo.cpp
+     src/game/drawing.cpp
+     src/game/entrance.cpp
+@@ -81,97 +91,162 @@ set(SOURCES
+     src/ui/manual.cpp
+ )
+ 
+-macro(GroupSources curdir)
+-   file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR}/${curdir}/*)
+-   foreach(child ${children})
+-          if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${curdir}/${child})
+-            GroupSources(${curdir}/${child})
+-          else()
+-            string(REPLACE "/" "\\" groupname ${curdir})
+-            source_group(${groupname} FILES ${PROJECT_SOURCE_DIR}/${curdir}/${child})
+-          endif()
+-   endforeach()
+-endmacro()
+-
+-GroupSources(src)
+-
+-add_executable(resl ${SOURCES} ${HEADERS})
+-
+-set_property(TARGET resl PROPERTY CXX_STANDARD 20)
+-
+-if (EMSCRIPTEN)
+-    target_compile_options(resl PRIVATE "-sUSE_SDL=2" "-msimd128")
+-    target_link_options(resl PRIVATE
+-        "-sASYNCIFY"
+-        "-sUSE_SDL=2"
+-        "-sINVOKE_RUN=0"
+-        "-sEXIT_RUNTIME=1"
+-        "-sMODULARIZE=1"
+-        "-sEXPORT_NAME=\"createModule\""
+-        "-sEXPORTED_RUNTIME_METHODS=[\"callMain\",\"addOnExit\",\"JSEvents\"]"
+-        "-lidbfs.js")
+-
+-    file (GLOB resources LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/*)
+-    file (GLOB extra LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/extra/*)
+-    list (APPEND resources ${extra})
++target_sources(${CMAKE_PROJECT_NAME}
++    PRIVATE
++        ${sources}
++)
++
++if(BUILD_FOR_DEVELOPMENT)
++    file(GLOB_RECURSE headers "*.h")
++
++    macro(GroupSources curdir)
++       file(GLOB children RELATIVE ${PROJECT_SOURCE_DIR}/${curdir} ${PROJECT_SOURCE_DIR}/${curdir}/*)
++       foreach(child ${children})
++              if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${curdir}/${child})
++                GroupSources(${curdir}/${child})
++              else()
++                string(REPLACE "/" "\\" groupname ${curdir})
++                source_group(${groupname} FILES ${PROJECT_SOURCE_DIR}/${curdir}/${child})
++              endif()
++       endforeach()
++    endmacro()
++
++    GroupSources(src)
++
++    target_sources(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            ${headers}
++    )
++endif()
++
++target_include_directories(${CMAKE_PROJECT_NAME}
++    PRIVATE
++        ${CMAKE_SOURCE_DIR}/src
++)
++
++set_target_properties(${CMAKE_PROJECT_NAME}
++    PROPERTIES
++        DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}"
++        # CXX_STANDARD 20 # most likely redundant, because CMAKE_CXX_STANDARD is already set
++)
++
++if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
++    set_target_properties(${CMAKE_PROJECT_NAME}
++        PROPERTIES
++        LINK_FLAGS "/ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS"
++    )
++endif()
++
++set(resource_files
++    resources/play.7
++    resources/GAMEOVER.7
++    resources/demo_a
++    resources/captions.7
++    resources/poster.7
++    resources/RULES.TXT
++)
++
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "-sUSE_SDL=2" "-msimd128"
++    )
++    target_link_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "-sASYNCIFY"
++            "-sUSE_SDL=2"
++            "-sINVOKE_RUN=0"
++            "-sEXIT_RUNTIME=1"
++            "-sMODULARIZE=1"
++            "-sEXPORT_NAME=\"createModule\""
++            "-sEXPORTED_RUNTIME_METHODS=[\"callMain\",\"addOnExit\",\"JSEvents\"]"
++            "-lidbfs.js"
++    )
++
++    file(GLOB resources LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/*)
++    file(GLOB extra LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/extra/*)
++    list(APPEND resources ${extra})
+ 
+     foreach(path ${resources})
+         get_filename_component(fname ${path} NAME)
+-        MESSAGE("Embed the file: ${path}")
+-        target_link_options(resl PRIVATE "--embed-file=${path}@${fname}")
++        message(STATUS "Embed the file: ${path}")
++        target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "--embed-file=${path}@${fname}")
+     endforeach()
+ else()
+-    find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+-    find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+-
+-    if(TARGET SDL2::SDL2main)
+-        target_link_libraries(resl PRIVATE SDL2::SDL2main)
+-    endif()
+-    target_link_libraries(resl PRIVATE SDL2::SDL2)
++    find_package(SDL2 CONFIG REQUIRED)
++    target_link_libraries(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            SDL2::SDL2
++            #SDL2::SDL2main
++    )
++endif()
+ 
+-    add_custom_command(
+-        TARGET resl
+-        POST_BUILD
+-        COMMAND ${CMAKE_COMMAND} -E copy
+-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/play.7
+-            $<TARGET_FILE_DIR:resl>/play.7
+-        COMMAND ${CMAKE_COMMAND} -E copy
+-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/GAMEOVER.7
+-            $<TARGET_FILE_DIR:resl>/GAMEOVER.7
+-        COMMAND ${CMAKE_COMMAND} -E copy
+-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/demo_a
+-            $<TARGET_FILE_DIR:resl>/demo_a
+-        COMMAND ${CMAKE_COMMAND} -E copy
+-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/captions.7
+-            $<TARGET_FILE_DIR:resl>/captions.7
+-        COMMAND ${CMAKE_COMMAND} -E copy
+-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/poster.7
+-            $<TARGET_FILE_DIR:resl>/poster.7
+-        COMMAND ${CMAKE_COMMAND} -E copy
+-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/RULES.TXT
+-            $<TARGET_FILE_DIR:resl>/RULES.TXT
++if(MSVC)
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "/D_CRT_SECURE_NO_WARNINGS"
++            "/GR-"
++            "/EHsc"
++            "/D_HAS_EXCEPTIONS=0"
+     )
++else()
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "-fno-exceptions"
++            "-fno-rtti"
++            "-Wextra"
++            "-Wall"
++    )
++endif()
+ 
+-    if (WIN32)
+-        add_custom_command(
+-            TARGET resl POST_BUILD
+-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL2::SDL2>" "$<TARGET_FILE_DIR:resl>"
+-            VERBATIM
++if(BUILD_FOR_DEVELOPMENT)
++    find_program(iwyu_path NAMES include-what-you-use iwyu)
++    if(NOT iwyu_path)
++        message(WARNING "The include-what-you-use tool was not found, will build without includes validation")
++    else()
++        set_target_properties(${CMAKE_PROJECT_NAME}
++            PROPERTIES
++                CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path};-Xiwyu;--no_fwd_decls;-Xiwyu;--cxx17ns"
+         )
+     endif()
+ endif()
+ 
+-if (MSVC)
+-    target_compile_options(resl PRIVATE "/D_CRT_SECURE_NO_WARNINGS" "/GR-" "/EHsc" "/D_HAS_EXCEPTIONS=0")
+-else()
+-    target_compile_options(resl PRIVATE "-fno-exceptions" "-fno-rtti" "-Wextra" "-Wall")
++include(GNUInstallDirs)
++
++# that's a sad crutch for installing dependencies DLLs on Windows
++set(EXECUTABLE_INSTALLATION_PATH ${CMAKE_INSTALL_BINDIR}/${CMAKE_PROJECT_NAME})
++if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # it doesn't exist before the very first installation yet
++    #install(DIRECTORY DESTINATION ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # still too late, because add_custom_command() will execute before that
++    file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # but at least this one will execute before add_custom_command()
+ endif()
+ 
+-target_include_directories(resl PRIVATE ${CMAKE_SOURCE_DIR}/src)
++install(TARGETS ${CMAKE_PROJECT_NAME}
++    RUNTIME DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
++)
+ 
+-find_program(iwyu_path NAMES include-what-you-use iwyu)
+-if (NOT iwyu_path)
+-    message("WARNING: include-what-you-use tool was not found - will build without include validation")
+-else()
+-    set_property(TARGET resl PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path};-Xiwyu;--no_fwd_decls;-Xiwyu;--cxx17ns)
++# WebAssembly variant embeds resources
++if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(FILES
++        ${resource_files}
++        DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
++    )
++endif()
++
++if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
++    #file(GENERATE OUTPUT debug/dlls.txt CONTENT $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}>)
++
++    # locate DLLs, if there are any (might also discover some redundant ones)
++    set(RUNTIME_DLL_SET $<BOOL:$<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}>>)
++    set(COPY_COMMAND
++        ${CMAKE_COMMAND} -E copy_if_different
++        $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}>
++        ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}
++    )
++    add_custom_command(
++        TARGET ${CMAKE_PROJECT_NAME}
++        POST_BUILD
++        COMMAND "$<${RUNTIME_DLL_SET}:${COPY_COMMAND}>"
++        COMMAND_EXPAND_LISTS
++        COMMENT "Copying runtime dependencies (DLLs)"
++    )
+ endif()
