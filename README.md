@@ -15,6 +15,7 @@ Although a good portion of the ports here are based on the ports from the [Micro
     - [check-versions-and-hashes](#check-versions-and-hashes)
     - [install-vcpkg-artifacts](#install-vcpkg-artifacts)
 - [Branches](#branches)
+- [Non-development ports](#non-development-ports)
 
 <!-- /MarkdownTOC -->
 
@@ -70,7 +71,6 @@ As described [in the article](https://decovar.dev/blog/2022/10/30/cpp-dependenci
 ``` json
 {
     "name": "some",
-    "version": "0",
     "dependencies":
     [
         {
@@ -140,7 +140,6 @@ A CMake project, as described [in the article](https://decovar.dev/blog/2022/10/
 ``` json
 {
     "name": "some",
-    "version": "0",
     "dependencies":
     [
         {
@@ -175,7 +174,7 @@ $ cmake --build .
 
 ### Custom triplets
 
-You can use custom triplets from `triplets` folder both with vcpkg tool:
+You can use custom triplets from the `triplets` folder both with vcpkg tool:
 
 ``` sh
 $ vcpkg install \
@@ -227,3 +226,34 @@ More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vc
 
 - `master` - ready to use, tested ports;
 - `experimental` - drafts, scraps and experiments, ports from this branch are not done and are unlikely to work.
+
+## Non-development ports
+
+Some ports in this registry aren't "normal" ports, meaning that they are not libraries or tools that are meant to be used in other projects. Instead they are rather build recipes for standalone things such as applications or games. That is probably not something vcpkg was designed to be used for, but who can stop me.
+
+The vcpkg manifest in all such ports states `native` as the supported platform, so if you'd like to build them with a non-default triplet, you'd need to specify it with `--host-triplet`. The building procedure is [the same](#installing-ports-in-a-dummy-project).
+
+One example of such a port is the [reSL](https://github.com/retifrav/vcpkg-registry/tree/master/ports/resl) game. Here's what you'd need to have in your `vcpkg.json` for installing it:
+
+``` json
+{
+    "dependencies":
+    [
+        "resl"
+    ]
+}
+```
+
+And then, with Mac OS as an example, you can build and install it either with statically linked dependencies:
+
+``` sh
+$ vcpkg install --host-triplet arm64-osx
+```
+
+or with dynamically linked dependencies:
+
+``` sh
+$ vcpkg install --host-triplet arm64-osx-dynamic
+```
+
+The game will be deployed to `/path/to/this/dummy/vcpkg_installed/HOST-TRIPLET-NAME-HERE/bin/reSL/`, which you can then copy anywhere you want and launch it from there.
