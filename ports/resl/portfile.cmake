@@ -10,7 +10,7 @@ set(VCPKG_POLICY_EMPTY_PACKAGE enabled) # does all of the above
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:konovalov-aleks/reSL.git
-    REF b76ebc5a3572376fda38172b1d7ccd85241b2fc8
+    REF 5713527ce17afa39bfa7e6b4ac34ec0f61c8837e
     PATCHES
         001-non-development-build-and-installation.patch
 )

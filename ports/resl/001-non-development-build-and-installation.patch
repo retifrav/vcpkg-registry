@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ad633a5..e0a3382 100644
+index ad633a5..8d9e448 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,10 +1,20 @@
@@ -8,8 +8,8 @@ index ad633a5..e0a3382 100644
  
 -project(reSL)
 +project("reSL"
-+    DESCRIPTION "Reverse-engineered DOS game Shortline"
-+    VERSION 2024.9.1
++    DESCRIPTION "Reverse-engineered game Shortline"
++    VERSION 2024.9.3
 +    LANGUAGES CXX
 +)
 +
@@ -225,7 +225,7 @@ index ad633a5..e0a3382 100644
 -    target_compile_options(resl PRIVATE "-fno-exceptions" "-fno-rtti" "-Wextra" "-Wall")
 +include(GNUInstallDirs)
 +
-+# that's a sad crutch for installing dependencies DLLs on Windows
++# that is a sad crutch for installing dependencies DLLs on Windows
 +set(EXECUTABLE_INSTALLATION_PATH ${CMAKE_INSTALL_BINDIR}/${CMAKE_PROJECT_NAME})
 +if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # it doesn't exist before the very first installation yet
 +    #install(DIRECTORY DESTINATION ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # still too late, because add_custom_command() will execute before that
@@ -250,7 +250,7 @@ index ad633a5..e0a3382 100644
 +    )
 +endif()
 +
-+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
++if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 +    #file(GENERATE OUTPUT debug/dlls.txt CONTENT $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}>)
 +
 +    # locate DLLs, if there are any (might also discover some redundant ones)

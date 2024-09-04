@@ -1,6 +1,6 @@
 {
     "name": "resl",
-    "version": "2024.9.1",
+    "version": "2024.9.3",
     "description": "Reverse-engineered DOS game Shortline",
     "homepage": "https://github.com/konovalov-aleks/reSL",
     "supports": "native",
