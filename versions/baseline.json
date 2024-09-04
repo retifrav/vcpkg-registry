@@ -289,7 +289,7 @@
         "tint":
         {
             "baseline": "2024.1.15",
-            "port-version": 0
+            "port-version": 1
         },
         "tinygltf":
         {

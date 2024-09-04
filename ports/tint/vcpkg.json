@@ -1,6 +1,7 @@
 {
     "name": "tint",
     "version": "2024.1.15",
+    "port-version": 1,
     "description": "A compiler for the WebGPU Shader Language",
     "homepage": "https://dawn.googlesource.com/tint",
     "dependencies":

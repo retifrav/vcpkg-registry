@@ -6,9 +6,9 @@ vcpkg_from_git(
     URL https://dawn.googlesource.com/tint
     REF d5ec9a7bdb8071a92d817206a666f480a0e23932
     PATCHES
-        dependencies-discovery-and-installation.patch # if only Google developers knew how to make proper CMake packages
-        no-testing-headers.patch # there are no such headers in the sources
-        disabled-warnings.patch # disabled some warning/errors, mostly to prevent build failing with Emscripten
+        001-dependencies-discovery-and-installation.patch # if only Google developers knew how to make proper CMake packages
+        002-no-testing-headers.patch # there are no such headers in the sources
+        003-disabled-warnings.patch # disabled some warning/errors, mostly to prevent the build failing with Emscripten
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
