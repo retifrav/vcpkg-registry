@@ -61,6 +61,11 @@
             "baseline": "2022-10-15",
             "port-version": 0
         },
+        "dos2unix":
+        {
+            "baseline": "7.5.2",
+            "port-version": 0
+        },
         "draco":
         {
             "baseline": "1.5.7",
