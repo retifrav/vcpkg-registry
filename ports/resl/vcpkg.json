@@ -1,6 +1,7 @@
 {
     "name": "resl",
     "version": "2024.9.3",
+    "port-version": 1,
     "description": "Reverse-engineered DOS game Shortline",
     "homepage": "https://github.com/konovalov-aleks/reSL",
     "supports": "native",
@@ -12,6 +13,10 @@
         },
         {
             "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "dos2unix",
             "host": true
         },
         "sdl"

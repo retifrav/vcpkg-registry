@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ad633a5..8d9e448 100644
+index ad633a5..2e920a0 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,10 +1,20 @@
+@@ -1,10 +1,21 @@
 -cmake_minimum_required(VERSION 3.20)
 +cmake_minimum_required(VERSION 3.22)
  
@@ -12,22 +12,23 @@ index ad633a5..8d9e448 100644
 +    VERSION 2024.9.3
 +    LANGUAGES CXX
 +)
++string(TIMESTAMP VERSION_DATE UTC)
 +
 +set(CMAKE_CXX_STANDARD 20)
 +
 +set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
- 
--file(GLOB_RECURSE HEADERS "*.h")
++
 +option(BUILD_FOR_DEVELOPMENT "Enable certain things for debugging the build" 0)
  
--set(SOURCES
+-file(GLOB_RECURSE HEADERS "*.h")
 +add_executable(${CMAKE_PROJECT_NAME})
-+
+ 
+-set(SOURCES
 +set(sources
      src/game/demo.cpp
      src/game/drawing.cpp
      src/game/entrance.cpp
-@@ -81,97 +91,162 @@ set(SOURCES
+@@ -81,97 +92,191 @@ set(SOURCES
      src/ui/manual.cpp
  )
  
@@ -64,6 +65,8 @@ index ad633a5..8d9e448 100644
 -    file (GLOB resources LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/*)
 -    file (GLOB extra LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/extra/*)
 -    list (APPEND resources ${extra})
+-
+-    foreach(path ${resources})
 +target_sources(${CMAKE_PROJECT_NAME}
 +    PRIVATE
 +        ${sources}
@@ -111,18 +114,20 @@ index ad633a5..8d9e448 100644
 +endif()
 +
 +set(resource_files
-+    resources/play.7
-+    resources/GAMEOVER.7
-+    resources/demo_a
-+    resources/captions.7
-+    resources/poster.7
-+    resources/RULES.TXT
++    ${CMAKE_CURRENT_SOURCE_DIR}/resources/play.7
++    ${CMAKE_CURRENT_SOURCE_DIR}/resources/GAMEOVER.7
++    ${CMAKE_CURRENT_SOURCE_DIR}/resources/demo_a
++    ${CMAKE_CURRENT_SOURCE_DIR}/resources/captions.7
++    ${CMAKE_CURRENT_SOURCE_DIR}/resources/poster.7
++    ${CMAKE_CURRENT_SOURCE_DIR}/resources/RULES.TXT
 +)
++set(resource_files_www "")
 +
 +if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 +    target_compile_options(${CMAKE_PROJECT_NAME}
 +        PRIVATE
-+            "-sUSE_SDL=2" "-msimd128"
++            "-sUSE_SDL=2"
++            "-msimd128"
 +    )
 +    target_link_options(${CMAKE_PROJECT_NAME}
 +        PRIVATE
@@ -131,35 +136,68 @@ index ad633a5..8d9e448 100644
 +            "-sINVOKE_RUN=0"
 +            "-sEXIT_RUNTIME=1"
 +            "-sMODULARIZE=1"
-+            "-sEXPORT_NAME=\"createModule\""
++            #"-sEXPORT_NAME=\"${CMAKE_PROJECT_NAME}\"" # reSL
 +            "-sEXPORTED_RUNTIME_METHODS=[\"callMain\",\"addOnExit\",\"JSEvents\"]"
 +            "-lidbfs.js"
 +    )
 +
-+    file(GLOB resources LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/*)
-+    file(GLOB extra LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/resources/extra/*)
-+    list(APPEND resources ${extra})
- 
-     foreach(path ${resources})
++    file(GLOB extra
++        LIST_DIRECTORIES false
++        ${CMAKE_CURRENT_SOURCE_DIR}/resources/extra/*
++    )
++    list(APPEND resource_files ${extra})
++
++    message(DEBUG "Embedding the resource files:")
++    foreach(path ${resource_files})
          get_filename_component(fname ${path} NAME)
 -        MESSAGE("Embed the file: ${path}")
 -        target_link_options(resl PRIVATE "--embed-file=${path}@${fname}")
-+        message(STATUS "Embed the file: ${path}")
++        message(DEBUG "- ${path}")
 +        target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "--embed-file=${path}@${fname}")
      endforeach()
++
++    file(GLOB resource_files_www
++        LIST_DIRECTORIES false
++        ${CMAKE_CURRENT_SOURCE_DIR}/www/*
++    )
++
++    configure_file(
++        ${CMAKE_CURRENT_SOURCE_DIR}/www/templates/index.html.in
++        ${CMAKE_CURRENT_BINARY_DIR}/index.html
++    )
++    list(APPEND resource_files_www
++        ${CMAKE_CURRENT_BINARY_DIR}/index.html
++    )
  else()
 -    find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 -    find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
--
--    if(TARGET SDL2::SDL2main)
--        target_link_libraries(resl PRIVATE SDL2::SDL2main)
--    endif()
--    target_link_libraries(resl PRIVATE SDL2::SDL2)
 +    find_package(SDL2 CONFIG REQUIRED)
 +    target_link_libraries(${CMAKE_PROJECT_NAME}
 +        PRIVATE
 +            SDL2::SDL2
 +            #SDL2::SDL2main
++    )
++endif()
+ 
+-    if(TARGET SDL2::SDL2main)
+-        target_link_libraries(resl PRIVATE SDL2::SDL2main)
+-    endif()
+-    target_link_libraries(resl PRIVATE SDL2::SDL2)
++if(MSVC)
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "/D_CRT_SECURE_NO_WARNINGS"
++            "/GR-"
++            "/EHsc"
++            "/D_HAS_EXCEPTIONS=0"
++    )
++else()
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "-fno-exceptions"
++            "-fno-rtti"
++            "-Wextra"
++            "-Wall"
 +    )
 +endif()
  
@@ -184,24 +222,8 @@ index ad633a5..8d9e448 100644
 -        COMMAND ${CMAKE_COMMAND} -E copy
 -            ${CMAKE_CURRENT_SOURCE_DIR}/resources/RULES.TXT
 -            $<TARGET_FILE_DIR:resl>/RULES.TXT
-+if(MSVC)
-+    target_compile_options(${CMAKE_PROJECT_NAME}
-+        PRIVATE
-+            "/D_CRT_SECURE_NO_WARNINGS"
-+            "/GR-"
-+            "/EHsc"
-+            "/D_HAS_EXCEPTIONS=0"
-     )
-+else()
-+    target_compile_options(${CMAKE_PROJECT_NAME}
-+        PRIVATE
-+            "-fno-exceptions"
-+            "-fno-rtti"
-+            "-Wextra"
-+            "-Wall"
-+    )
-+endif()
- 
+-    )
+-
 -    if (WIN32)
 -        add_custom_command(
 -            TARGET resl POST_BUILD
@@ -221,8 +243,6 @@ index ad633a5..8d9e448 100644
  
 -if (MSVC)
 -    target_compile_options(resl PRIVATE "/D_CRT_SECURE_NO_WARNINGS" "/GR-" "/EHsc" "/D_HAS_EXCEPTIONS=0")
--else()
--    target_compile_options(resl PRIVATE "-fno-exceptions" "-fno-rtti" "-Wextra" "-Wall")
 +include(GNUInstallDirs)
 +
 +# that is a sad crutch for installing dependencies DLLs on Windows
@@ -230,6 +250,26 @@ index ad633a5..8d9e448 100644
 +if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # it doesn't exist before the very first installation yet
 +    #install(DIRECTORY DESTINATION ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # still too late, because add_custom_command() will execute before that
 +    file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_INSTALLATION_PATH}) # but at least this one will execute before add_custom_command()
++endif()
++
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(FILES
++        ${CMAKE_BINARY_DIR}/$<TARGET_FILE_BASE_NAME:${CMAKE_PROJECT_NAME}>.wasm
++        DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
++    )
++    # the actual resource files are already embedded into WebAssembly,
++    # only need to install the web page itself and media assets
++    install(FILES
++        ${resource_files_www}
++        DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
++    )
++    # and the .js file will be taken care of by `install(TARGETS ...)` below
+ else()
+-    target_compile_options(resl PRIVATE "-fno-exceptions" "-fno-rtti" "-Wextra" "-Wall")
++    install(FILES
++        ${resource_files}
++        DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
++    )
  endif()
  
 -target_include_directories(resl PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -242,14 +282,6 @@ index ad633a5..8d9e448 100644
 -    message("WARNING: include-what-you-use tool was not found - will build without include validation")
 -else()
 -    set_property(TARGET resl PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path};-Xiwyu;--no_fwd_decls;-Xiwyu;--cxx17ns)
-+# WebAssembly variant embeds resources
-+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-+    install(FILES
-+        ${resource_files}
-+        DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
-+    )
-+endif()
-+
 +if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 +    #file(GENERATE OUTPUT debug/dlls.txt CONTENT $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}>)
 +

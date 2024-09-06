@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset=utf-8>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="./style.css">
+
+    <title>reSL - reverse-engineered game Shortline</title>
+</head>
+
+<body>
+    <div id="banner">
+        <a href="https://github.com/konovalov-aleks/reSL"><img src="./banner.png" class="banner-logo"></a>
+        <div><a href="https://github.com/konovalov-aleks/reSL">reSL</a> - reverse-engineered game <a href="https://ru.wikipedia.org/wiki/Shortline">Shortline</a></div>
+        <div>developed by <a href="https://github.com/konovalov-aleks">Aleksey Konovalov</a>, 2024</div>
+        <div>licensed under <a href="https://github.com/konovalov-aleks/reSL/blob/main/LICENSE">GPL v3.0</a></div>
+    </div>
+
+    <div id="main" style="margin-top:20px;">
+        <div id="manual-container">
+            <div id="manual-header-container" class="header-with-button">
+                <h1 id="manual-header" style="margin-top:0;">How to play?</h1>
+                <a id="hide-manual-button" class="manual-button" href="#">hide manual</a>
+            </div>
+            <div id="manual">
+                <blockquote>
+                    <p>
+                        A wide-spread railroad network starts embracing continents in the dawn
+                        of 19-th century. With the development of infrastructure manufacturing
+                        of locomotives and railroad cars grows, traffic gradually increases...
+                    </p>
+                    <p>
+                        You are in charge of railroad traffic controlling on a major section of sophisticated
+                        network with siding, switches, signals, crossings and other means of shunting. Your goal
+                        is to assure an uninterrupted collision-free passage of different trains to target points
+                        through this section.
+                    </p>
+                </blockquote>
+                <p>
+                    This game completely repeats the algorithms of the original game. Because of this, the controls
+                    are awkward and impossible to play on touch devices. In the future, the game will be improved
+                    and adapted for modern devices.
+                </p>
+                <p>
+                    There are two control modes in the game:
+                </p>
+                <ol>
+                    <li>
+                        <b>Construction</b> - you can choose a rail with the left mouse button
+                        and build it using the right mouse button;
+                    </li>
+                    <li>
+                        <b>Management</b> - you can toggle switches or switch traffic lights
+                        using the left mouse button to control the trains. You can also call
+                        a server train if you need to repair a road - just right-click to any city.
+                    </li>
+                </ol>
+                <p>
+                    To toggle control mode, you need to press <code>SPACEBAR</code> button or click left
+                    and right mouse buttons simultaneously.
+                </p>
+                <p>
+                    There is also a more detailed manual in the game.
+                </p>
+            </div>
+        </div>
+
+        <div id="game-container" style="margin-top:20px;">
+            <div class="header-with-button">
+                <h1 style="margin-top:0;">The game</h1>
+                <a id="show-manual-button" class="manual-button" href="#">show manual</a>
+            </div>
+            <div id="screen">
+                <div id="game-ui" style="display:none;">
+                    <canvas id="canvas"></canvas>
+                </div>
+                <img id="placeholder" src="./shortline.png">
+            </div>
+        </div>
+
+        <div id="footer">
+            <p>
+                version <code>${PROJECT_VERSION}</code>,
+                built from a <a href="https://github.com/retifrav/vcpkg-registry/tree/master/ports/resl">vcpkg port</a>
+                on <code>${VERSION_DATE}</code>
+            </p>
+        </div>
+    </div>
+
+    <script async src="./main.js"></script>
+    <script async src="./reSL.js"></script>
+</body>
+
+</html>

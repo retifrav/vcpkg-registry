@@ -13,6 +13,26 @@ vcpkg_from_git(
     REF 5713527ce17afa39bfa7e6b4ac34ec0f61c8837e
     PATCHES
         001-non-development-build-and-installation.patch
+        002-typos-in-manual.patch
+)
+
+# fix the line endings in the manual, because Git fucks them up on patching,
+# and the game can correctly render only the DOS/Windows variant of line endings
+find_program(UNIX2DOS_TOOL
+    NAMES "unix2dos"
+    PATHS "${CURRENT_HOST_INSTALLED_DIR}/tools/dos2unix"
+    NO_DEFAULT_PATH
+    REQUIRED
+)
+vcpkg_execute_required_process(
+    COMMAND ${UNIX2DOS_TOOL} RULES.TXT
+    WORKING_DIRECTORY "${SOURCE_PATH}/resources"
+    LOGNAME build-${PORT}-${TARGET_TRIPLET}-rel
+)
+
+file(COPY
+    "${CMAKE_CURRENT_LIST_DIR}/www"
+    DESTINATION "${SOURCE_PATH}"
 )
 
 vcpkg_cmake_configure(

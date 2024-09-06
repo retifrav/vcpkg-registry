@@ -3,10 +3,17 @@
     [
         {
             "version": "2024.9.3",
+            "port-version": 1,
+            "git-tree": "65d24d2944f5e64153c43928ac8ee96e2090ce8e"
+        },
+        {
+            "version": "2024.9.3",
+            "port-version": 0,
             "git-tree": "930e6afb6286bc8b8c657295400e7bac83136b18"
         },
         {
             "version": "2024.9.1",
+            "port-version": 0,
             "git-tree": "a02200a103c1f26ee6864754a22ce68df91ee93a"
         }
     ]

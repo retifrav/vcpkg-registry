@@ -1,0 +1,239 @@
+diff --git a/resources/RULES.TXT b/resources/RULES.TXT
+index 08e95b8..c145317 100644
+--- a/resources/RULES.TXT
++++ b/resources/RULES.TXT
+@@ -1,41 +1,38 @@
+-                        RULES
++# Rules
+ 
+-
+-                  1. Introduction
++## Introduction
+ 
+ A wide-spread railroad network starts embracing continents in the
+ dawn of 19-th century. With the development of infrastructure
+ manufacturing of locomotives and railroad cars grows, traffic
+-gradualy increases...
++gradually increases...
+ 
+ You are in charge of railroad traffic controlling on a major
+ section of sophisticated network with siding, switches, signals,
+ crossings and other means of shunting. You goal is to assure an
+-uninterrupted collision-free passage of differrent trains to
++uninterrupted collision-free passage of different trains to
+ target points through this section.
+ 
+-You success both in traffic dispatching and railroad managing and
++Your success both in traffic dispatching and railroad managing and
+ constructing determines your score.
+ 
++## History period
+ 
+-                    2. History period
+-
+-simulated is from 1800 to 2000. You will get the oppotunity to
++is simulated from 1800 to 2000. You will get the opportunity to
+ control the trains specific for every period over these two
+-centuries.  As you progress in the time scale the technical
++centuries. As you progress in the time scale the technical
+ characteristics of the trains are getting better. The power and
+ speed increase. You will see all kinds of locomotives from the
+ ancient steam locomotive, then electric traction and diesel ones
+ to the gas turbine machines.
+ 
+-
+-                     3. Railnet
++## Railnet
+ 
+ is to be constructed from elementary track parcels connecting
+ each other in several different ways, switches, signals,
+ crossing, dead-ends and other elements.
+ 
+-The railnet on the play screen has from 1 upto 6 entrances
++The railnet on the play screen has from 1 up to 6 entrances
+ (outlets).  These are the track parcels crossing left and right
+ boundary of the game screen. Each entrance parcel is surrounded
+ by several houses of the same bright color forming together
+@@ -48,14 +45,13 @@ and geometry of each railnet is under your control. Several
+ topology restrictions on it still exist: for instance, you'll
+ not be allowed to construct triple switches etc.
+ 
+-
+-                       4. Trains 
++## Trains
+ 
+ enter your railnet from occasional towns (entrances). The color
+ of the train determines the color of the town (entrance) where
+ this train should be routed to. For example, the yellow train
+ (come from Red or any other town) should be routed to Yellow
+-town. 
++town.
+ 
+ You can use switches and signals to control the train. The train
+ moving to either closed switch or closed (red) signal will stop
+@@ -90,15 +86,14 @@ dead-end.
+ MAD train. At the higher levels of the game you can see the
+ blinking train appear. This is the MAD train. The train without
+ the operator (as well as with dragged or overdrunk operator),
+-with fault control system,  with the hostages captured by
++with fault control system, with the hostages captured by
+ criminals etc. is the MAD train. Mad train does not obey your
+ control AT ALL: it will not reverse on red signal and will clash
+-at closed switch or dead-end.  However it still will disappear at
++at closed switch or dead-end. However it still will disappear at
+ any entrance. So the best you can do with mad trains - route them
+ to any entrance or at least force it to clash.
+ 
+-
+-                   5. Entrances (more)
++## Entrances
+ 
+ You start the game in 1800 and will have a couple of entrances
+ soon in the beginning. The land is still virgin over there and
+@@ -108,58 +103,56 @@ towns.  As the time passes you'll notice the houses appear once
+ in a few years. These are the future towns and every 40 years
+ you'll get the new entrance in the new town. So you'll manage 6
+ entrances railnet by the end of 20-th century.
+-  
++
+ Locking. The entrance formally is the track parcel crossing the
+-screen boundary.  Any time you should expect the new train coming
++screen boundary. Any time you should expect the new train coming
+ in you railnet from any entrance. There is the only exception and
+ it is reffered to as ENTRANCE LOCKING. Once the entrance is
+ occupied by at least one car of any train the entrance becomes
+-LOCKED.  Any new train(s) that is to come in your railnet from
++LOCKED. Any new train(s) that is to come in your railnet from
+ this LOCKED entrance has to wait till this entrance becomes
+ UNLOCK. Once there is such a train(s) you can see the entrance
+ man rise the hand with a flag on the display panel.
+ 
++## Constructing the railnet
+ 
+-                 6. Contructing the railnet
+-
+-you should know that 1) every parcel cost you 2) there is a few
+-topology restriction 3) you will be charged for any tree in the
+-forests you will cut down or any house destroyed.
++You should know that:
+ 
++1. Every parcel costs you;
++2. There is a few of topology restrictions;
++3. You will be charged for any tree in the forests you will cut down
++or any house destroyed.
+ 
+-                  7. Destruction 
++## Destruction
+ 
+ The rails get older and sometimes you railnet will have
+ destructions on it. You can see them as the small blinking
+ red-border white triangle with a bang in the center (traffic
+ danger sign). The destruction also appears at the location of the
+ accident. The train meeting the track damage on its way will have
+-an accident in turn so you need to repair the track.  The longer
++an accident in turn so you need to repair the track. The longer
+ is total railnet the more destructions occur on it.
+ 
+-
+-                      8. Repair
++## Repair
+ 
+ To repair the track you should use the special platform named
+-server.  Server is called from any entrance and may be routed to
+-any entrance then or kept in the railnet. You pay for its call, 
+-and for it's repairs.  The server meeting the destruction of the
+-track on its way makes a short stop and repairs the track.  Any
++server. Server is called from any entrance and may be routed to
++any entrance then or kept in the railnet. You pay for its call,
++and for it's repairs. The server meeting the destruction of the
++track on its way makes a short stop and repairs the track. Any
+ number of servers can operate simultaneously over you railnet.
+ 
+-
+-                     9. Levels
++## Levels
+ 
+ The game has potentially infinite number of levels. Any new
+ level introduces the higher flow of incoming trains, the higher
+ intensity of destruction and adds one or more new events.
+ 
+-When you succesfully reach 2000 year in the game you just have
++When you successfully reach 2000 year in the game you just have
+ the same initial situation in 1800 but your money and routed
+-trains counters are from previous level. 
++trains counters are from previous level.
+ 
+-
+-       10. Pausing, saving and restoring the game
++## Pausing, saving and restoring the game
+ 
+ Any time in the simulation you can just strike any keyboard
+ button and you'll get in PAUSE mode. The menu appearing on the
+@@ -167,32 +160,31 @@ screen offers either to go on or save or quit.
+ 
+ Save the game when you have to return to current point of
+ simulation later or keep it for somebody else or investigate
+-another 'realization' in the future. All the saved games reside
++another "realization" in the future. All the saved games reside
+ in the working directory on your disk and may be restored later.
+ Each save takes about 4K of disk space.
+ 
+-To restore the game you choose "LOAD GAME" option in the main
+-menu.  You can see ARCHIVE menu then. It provides the
++To restore the game you choose LOAD GAME option in the main
++menu. You can see ARCHIVE menu then. It provides the
+ opportunity to look through all the saved games showing you the
+ full saved game screen and current characteristics of that
+ session and the file. Here you can also delete the old games.
+ Having chosen the saved game you just use menu "GO" option to
+ start simulation.
+ 
+-Currently there is a 'pause toll' introduced in the game. When
++Currently there is a PAUSE TOLL introduced in the game. When
+ you go on playing either after pause or after the previously
+ saved game one extra train will immediately come into your
+ railnet from occasional entrance. This might prevent the
+-real-time game to become step-by-step game. 
+-
++real-time game to become step-by-step game.
+ 
+-                   11. Person profiling
++## Person profiling
+ 
+-All your achivements, records and saved games are profiled by
+-users (players) names.  Once you run SHORTLINE from DOS command
+-line using you name as the argument the system registrates you
+-and will keep track of your sessions later.  Now you name may be
+-shown in the record table.  Also you can identify the saved files
++All your achievements, records and saved games are profiled by
++users (players) names. Once you run SHORTLINE from DOS command
++line using you name as the argument the system registers you
++and will keep track of your sessions later. Now you name may be
++shown in the record table. Also you can identify the saved files
+ by your name. Finally, the system will follow your current play
+ level and if you start new game you'll be proposed to play at the
+ level you have already reached before.
+@@ -203,8 +195,7 @@ the name "Unknown".
+ You can load and play somebody's game with no restrictions but
+ all the best results will belong to the owner of the saved game.
+ 
+-
+-                      12. Controls
++## Controls
+ 
+ You use 2-button mouse to control the simulation and keyboard to
+ work with menus. There are only 5 mouse actions that control all
+@@ -219,12 +210,9 @@ left button  (BUILD mode)   - choose the track parcels to be build
+ right button (BUILD mode)   - build the track parcel shown
+ --------------------------------------------------------------------
+ 
+-
+-                   13. 'Inside SHORTLINE'
++## Inside SHORTLINE
+ 
+ This manual is to be supplied. It'll contain the detailed
+ description of the model geometry and topology, math formulas and
+ constant using in simulation, provides the better understanding
+ of different aspects of the game and give strategy tips.
+-
+-                         *   *   *
