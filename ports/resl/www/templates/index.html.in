@@ -39,22 +39,22 @@
                     </p>
                 </blockquote>
                 <p>
-                    This game completely repeats the algorithms of the original game. Because of this, the controls
-                    are awkward and impossible to play on touch devices. In the future, the game will be improved
-                    and adapted for modern devices.
+                    This game repeats the algorithms of the original game. Because of this, the controls
+                    are rather awkward or even impossible in case of touchscreens. Going forward, the game
+                    will be improved and adapted for modern devices.
                 </p>
                 <p>
                     There are two control modes in the game:
                 </p>
                 <ol>
                     <li>
-                        <b>Construction</b> - you can choose a rail with the left mouse button
+                        <b>Construction</b> - you choose a rail type with the left mouse button
                         and build it using the right mouse button;
                     </li>
                     <li>
-                        <b>Management</b> - you can toggle switches or switch traffic lights
-                        using the left mouse button to control the trains. You can also call
-                        a server train if you need to repair a road - just right-click to any city.
+                        <b>Management</b> - you control the trains movement by toggling railroad switches
+                        and switching traffic lights with the left mouse button. You can also call for
+                        a server train when you need to repair a railroad track - just right-click on any city.
                     </li>
                 </ol>
                 <p>

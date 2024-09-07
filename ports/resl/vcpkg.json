@@ -4,7 +4,6 @@
     "port-version": 1,
     "description": "Reverse-engineered DOS game Shortline",
     "homepage": "https://github.com/konovalov-aleks/reSL",
-    "supports": "native",
     "dependencies":
     [
         {

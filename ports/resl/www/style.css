@@ -55,7 +55,7 @@ body {
     max-width: 100%;
 }
 #placeholder:hover {
-    filter: brightness(85%);
+    filter: brightness(80%);
 }
 
 #screen > * {
