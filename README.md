@@ -231,7 +231,7 @@ More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vc
 
 Some ports in this registry aren't "normal" ports, meaning that they are not libraries or tools that are meant to be used in other projects. Instead they are rather build recipes for standalone things such as applications or games. That is probably not something vcpkg was designed to be used for, but who can stop me.
 
-The vcpkg manifest in all such ports states `native` as the supported platform, so if you'd like to build them with a non-default triplet, you'd need to specify it with `--host-triplet`. The building procedure is [the same](#installing-ports-in-a-dummy-project).
+The building procedure for those ports is [the same](#installing-ports-in-a-dummy-project).
 
 One example of such a port is the [reSL](https://github.com/retifrav/vcpkg-registry/tree/master/ports/resl) game. Here's what you'd need to have in your `vcpkg.json` for installing it:
 
@@ -247,13 +247,13 @@ One example of such a port is the [reSL](https://github.com/retifrav/vcpkg-regis
 And then, with Mac OS as an example, you can build and install it either with statically linked dependencies:
 
 ``` sh
-$ vcpkg install --host-triplet arm64-osx
+$ vcpkg install --triplet arm64-osx
 ```
 
 or with dynamically linked dependencies:
 
 ``` sh
-$ vcpkg install --host-triplet arm64-osx-dynamic
+$ vcpkg install --triplet arm64-osx-dynamic
 ```
 
-The game will be deployed to `/path/to/this/dummy/vcpkg_installed/HOST-TRIPLET-NAME-HERE/bin/reSL/`, which you can then copy anywhere you want and launch it from there.
+The game will be deployed to `/path/to/this/dummy/vcpkg_installed/TRIPLET-NAME-HERE/bin/reSL/`, which you can then copy anywhere you want and launch it from there.
