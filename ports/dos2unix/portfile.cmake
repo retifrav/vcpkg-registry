@@ -14,24 +14,23 @@ vcpkg_extract_source_archive(
     ARCHIVE "${ARCHIVE}"
 )
 
-# well, this is fucking retarded, isn't it
-# vcpkg_build_make(
-#     SUBPATH ../src/dos2unix-7-0d8d69daf2.clean
-#     OPTIONS
-#         ENABLE_NLS=
-# )
-# so instead it will be a direct command execution
-vcpkg_execute_build_process(
-    COMMAND make ENABLE_NLS=
-    WORKING_DIRECTORY ${SOURCE_PATH}
-    LOGNAME build-${PORT}-${TARGET_TRIPLET}-rel
+# how the fuck were people surviving in those ancient times with cursed Makefiles
+file(COPY
+    "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"
+    DESTINATION "${SOURCE_PATH}"
 )
+
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+)
+
+vcpkg_cmake_install()
 
 vcpkg_copy_tools(
     TOOL_NAMES
         dos2unix
         unix2dos
-    SEARCH_DIR ${SOURCE_PATH}
+    AUTO_CLEAN
 )
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING.txt")
