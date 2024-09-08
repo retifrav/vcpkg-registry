@@ -7,10 +7,11 @@ set(VCPKG_BUILD_TYPE release)
 # set(VCPKG_POLICY_MISMATCHED_NUMBER_OF_BINARIES enabled)
 set(VCPKG_POLICY_EMPTY_PACKAGE enabled) # does all of the above
 
+set(COMMIT_HASH "5713527ce17afa39bfa7e6b4ac34ec0f61c8837e")
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:konovalov-aleks/reSL.git
-    REF 5713527ce17afa39bfa7e6b4ac34ec0f61c8837e
+    REF ${COMMIT_HASH}
     PATCHES
         001-non-development-build-and-installation.patch
         002-typos-in-manual.patch
@@ -39,6 +40,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         -DBUILD_FOR_DEVELOPMENT=0
+        -DCOMMIT_HASH=${COMMIT_HASH}
 )
 
 vcpkg_cmake_install()

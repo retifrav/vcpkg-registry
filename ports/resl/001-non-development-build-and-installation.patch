@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ad633a5..2e920a0 100644
+index ad633a5..d7cc9aa 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,10 +1,21 @@
+@@ -1,10 +1,22 @@
 -cmake_minimum_required(VERSION 3.20)
 +cmake_minimum_required(VERSION 3.22)
  
@@ -19,6 +19,7 @@ index ad633a5..2e920a0 100644
 +set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 +
 +option(BUILD_FOR_DEVELOPMENT "Enable certain things for debugging the build" 0)
++set(COMMIT_HASH "0000000000000000000000000000000000000000" CACHE STRING "Git commit hash from the original repository")
  
 -file(GLOB_RECURSE HEADERS "*.h")
 +add_executable(${CMAKE_PROJECT_NAME})
@@ -28,7 +29,7 @@ index ad633a5..2e920a0 100644
      src/game/demo.cpp
      src/game/drawing.cpp
      src/game/entrance.cpp
-@@ -81,97 +92,191 @@ set(SOURCES
+@@ -81,97 +93,199 @@ set(SOURCES
      src/ui/manual.cpp
  )
  
@@ -177,27 +178,17 @@ index ad633a5..2e920a0 100644
 +            SDL2::SDL2
 +            #SDL2::SDL2main
 +    )
-+endif()
  
 -    if(TARGET SDL2::SDL2main)
 -        target_link_libraries(resl PRIVATE SDL2::SDL2main)
 -    endif()
 -    target_link_libraries(resl PRIVATE SDL2::SDL2)
-+if(MSVC)
-+    target_compile_options(${CMAKE_PROJECT_NAME}
-+        PRIVATE
-+            "/D_CRT_SECURE_NO_WARNINGS"
-+            "/GR-"
-+            "/EHsc"
-+            "/D_HAS_EXCEPTIONS=0"
++    configure_file(
++        ${CMAKE_CURRENT_SOURCE_DIR}/version.md.in
++        ${CMAKE_CURRENT_BINARY_DIR}/version.md
 +    )
-+else()
-+    target_compile_options(${CMAKE_PROJECT_NAME}
-+        PRIVATE
-+            "-fno-exceptions"
-+            "-fno-rtti"
-+            "-Wextra"
-+            "-Wall"
++    list(APPEND resource_files
++        ${CMAKE_CURRENT_BINARY_DIR}/version.md
 +    )
 +endif()
  
@@ -229,6 +220,24 @@ index ad633a5..2e920a0 100644
 -            TARGET resl POST_BUILD
 -            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL2::SDL2>" "$<TARGET_FILE_DIR:resl>"
 -            VERBATIM
++if(MSVC)
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "/D_CRT_SECURE_NO_WARNINGS"
++            "/GR-"
++            "/EHsc"
++            "/D_HAS_EXCEPTIONS=0"
++    )
++else()
++    target_compile_options(${CMAKE_PROJECT_NAME}
++        PRIVATE
++            "-fno-exceptions"
++            "-fno-rtti"
++            "-Wextra"
++            "-Wall"
++    )
++endif()
++
 +if(BUILD_FOR_DEVELOPMENT)
 +    find_program(iwyu_path NAMES include-what-you-use iwyu)
 +    if(NOT iwyu_path)
@@ -300,3 +309,16 @@ index ad633a5..2e920a0 100644
 +        COMMENT "Copying runtime dependencies (DLLs)"
 +    )
  endif()
+diff --git a/version.md.in b/version.md.in
+new file mode 100644
+index 0000000..b97f94b
+--- /dev/null
++++ b/version.md.in
+@@ -0,0 +1,7 @@
++# Version
++
++Built on `${VERSION_DATE}` from a vcpkg port at <https://github.com/retifrav/vcpkg-registry/tree/master/ports/resl>.
++
++- game port version: `${PROJECT_VERSION}`
++- original sources: <https://github.com/konovalov-aleks/reSL>
++- original commit hash: `${COMMIT_HASH}`
