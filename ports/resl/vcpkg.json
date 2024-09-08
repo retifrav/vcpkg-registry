@@ -18,6 +18,14 @@
             "name": "dos2unix",
             "host": true
         },
-        "sdl"
+        {
+            "name": "sdl",
+            "platform": "!linux"
+        },
+        {
+            "name": "sdl",
+            "features": ["alsa"],
+            "platform": "linux"
+        }
     ]
 }
