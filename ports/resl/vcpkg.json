@@ -2,7 +2,7 @@
     "name": "resl",
     "version": "2024.9.3",
     "port-version": 1,
-    "description": "Reverse-engineered DOS game Shortline",
+    "description": "Reverse-engineered game Shortline",
     "homepage": "https://github.com/konovalov-aleks/reSL",
     "dependencies":
     [
