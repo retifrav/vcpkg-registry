@@ -1,6 +1,6 @@
 {
     "name": "sdl",
-    "version": "2.30.3",
+    "version": "2.30.7",
     "description": "Simple Directmedia Layer",
     "homepage": "https://libsdl.org/",
     "dependencies":
@@ -13,5 +13,19 @@
             "name": "vcpkg-cmake-config",
             "host": true
         }
-    ]
+    ],
+    "features":
+    {
+        "alsa":
+        {
+            "description": "Support for ALSA audio",
+            "dependencies":
+            [
+                {
+                    "name": "alsa",
+                    "platform": "linux"
+                }
+            ]
+        }
+    }
 }
