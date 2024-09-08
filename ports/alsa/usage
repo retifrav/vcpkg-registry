@@ -1,0 +1,4 @@
+To use ALSA in your project:
+
+    find_package(ALSA REQUIRED)
+    target_link_libraries(main PRIVATE ALSA::ALSA) # since CMake 3.12
