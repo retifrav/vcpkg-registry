@@ -62,6 +62,4 @@ endforeach()
 
 include(GNUInstallDirs)
 
-foreach(TOOL_NAME "${TOOLS}")
-    install(TARGETS ${TOOL_NAME})
-endforeach()
+install(TARGETS ${TOOLS})
