@@ -14,7 +14,8 @@ vcpkg_from_git(
     REF ${COMMIT_HASH}
     PATCHES
         001-non-development-build-and-installation.patch
-        002-typos-in-manual.patch
+        002-filesystem-checks.patch
+        003-typos-in-manual.patch
 )
 
 # fix the line endings in the manual, because Git fucks them up on patching,

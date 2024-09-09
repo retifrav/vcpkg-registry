@@ -1,0 +1,176 @@
+diff --git a/src/main.cpp b/src/main.cpp
+index 35fc8f8..7365a94 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
+             return usage(argc, argv, i);
+     }
+ 
+-    initFS();
++    initFS(argv[0]);
+ 
+     if (debugGraphics)
+         Driver::instance().vga().setDebugMode(true);
+diff --git a/src/system/filesystem.cpp b/src/system/filesystem.cpp
+index ab1c169..a7fa4a9 100644
+--- a/src/system/filesystem.cpp
++++ b/src/system/filesystem.cpp
+@@ -7,12 +7,12 @@
+ #include <cstdint>
+ #include <cstdio>
+ #include <cstring>
++#include <filesystem>
+ 
+ #ifdef WIN32
+ #   include <windows.h>
+ #else
+ #   include <chrono>
+-#   include <filesystem>
+ #   include <glob.h>
+ #   include <system_error>
+ #endif
+@@ -28,9 +28,18 @@ namespace resl {
+ /* 262d:7378 - 14 bytes */
+ static char g_lastFileName[14];
+ 
+-void initFS()
++#ifndef __EMSCRIPTEN__
++    std::filesystem::path g_basePath = ".";
++#endif
++
++void initFS(char *programName)
+ {
+-#ifdef __EMSCRIPTEN__
++#ifndef __EMSCRIPTEN__
++    g_basePath = std::filesystem::canonical(
++        std::filesystem::path(programName)
++    ).parent_path();
++#else
++    (void)programName;
+     static_assert(
+         std::tuple(__EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__) >=
+             std::tuple(3, 1, 61),
+@@ -46,13 +55,43 @@ void initFS()
+         FS.syncfs(true, (err) => {
+             console.error(`FS.syncfs failed: ${err}`);
+         }); }, g_persistentFolder);
+-#endif // __EMSCRIPTEN__
++#endif
+ }
+ 
++#ifndef __EMSCRIPTEN__
++    std::string resourceFileExists(const char *fileName)
++    {
++        const std::filesystem::path filePath = g_basePath / fileName;
++        if (!std::filesystem::exists(filePath))
++        {
++            std::stringstream fileError;
++            fileError << "[ERROR] File [" << filePath.string() << "] does not exist\n";
++            //throw std::runtime_error(fileError.str());
++            std::fprintf(stderr, "%s", fileError.str().c_str());
++            return std::string();
++        }
++        return filePath.string();
++    }
++#endif
++
+ /* 1abc:0005 */
+ std::size_t readBinaryFile(const char* fileName, void* pagePtr)
+ {
+-    std::FILE* file = std::fopen(fileName, "rb");
++    #ifndef __EMSCRIPTEN__
++        //try { fileNameFull = resourceFileExists(fileName); }
++        //catch(std::exception &ex)
++        //{
++        //    std::fprintf(stderr, "%s", ex.what());
++        //    return 0;
++        //}
++        std::string fileNameString = resourceFileExists(fileName);
++        if (fileNameString.empty()) { return 0; }
++        const char *fileNameFull = fileNameString.c_str();
++    #else
++        const char *fileNameFull = fileName;
++    #endif
++
++    std::FILE* file = std::fopen(fileNameFull, "rb");
+     std::size_t nBytes = 0;
+     if (file) {
+         nBytes = std::fread(pagePtr, 1, 0xFFFA, file);
+@@ -65,12 +104,26 @@ std::size_t readBinaryFile(const char* fileName, void* pagePtr)
+ /* 1400:067f */
+ std::size_t readTextFile(const char* fileName)
+ {
++    #ifndef __EMSCRIPTEN__
++        //try { fileNameFull = resourceFileExists(fileName); }
++        //catch(std::exception &ex)
++        //{
++        //    std::fprintf(stderr, "%s", ex.what());
++        //    return 0;
++        //}
++        std::string fileNameString = resourceFileExists(fileName);
++        if (fileNameString.empty()) { return 0; }
++        const char *fileNameFull = fileNameString.c_str();
++    #else
++        const char *fileNameFull = fileName;
++    #endif
++
+     // The original game uses "text" mode here, which can perform
+     // system-dependent transformations.
+     // E.g: in this mode, DOS automatically replaces line endings with "\r\n".
+     // But reSL is portable, so we read files as is (in fact, this functions
+     // is only used to read RULES.TXT, which is already uses \r\n line endings)
+-    std::FILE* file = std::fopen(fileName, "rb");
++    std::FILE* file = std::fopen(fileNameFull, "rb");
+     std::size_t nBytes = 0;
+     if (file) {
+         nBytes = std::fread(g_pageBuffer, 1, 0xFFDC, file);
+diff --git a/src/system/filesystem.h b/src/system/filesystem.h
+index 792e9a4..df09950 100644
+--- a/src/system/filesystem.h
++++ b/src/system/filesystem.h
+@@ -2,14 +2,16 @@
+ 
+ #include <cstddef>
+ #include <cstdint>
++#include <string>
+ 
+ namespace resl {
+ 
+-#ifdef __EMSCRIPTEN__
+-
+-static constexpr const char* const g_persistentFolder = "/persistent";
++// probably should be declared here instead of .cpp?
++//std::filesystem::path g_basePath = ".";
+ 
+-#endif // __EMSCRIPTEN__
++#ifdef __EMSCRIPTEN__
++    static constexpr const char* const g_persistentFolder = "/persistent";
++#endif
+ 
+ // The original game uses a cumbersome structure DTA from DOS API with many
+ // useless fields:
+@@ -24,7 +26,11 @@ struct FileInfo {
+ 
+ //-----------------------------------------------------------------------------
+ 
+-void initFS();
++void initFS(char *programName);
++
++#ifndef __EMSCRIPTEN__
++    std::string resourceFileExists(const char *fileName);
++#endif
+ 
+ /* 1abc:0005 */
+ std::size_t readBinaryFile(const char* fileName, void* pagePtr);
+diff --git a/src/ui/manual.cpp b/src/ui/manual.cpp
+index bab079e..342da41 100644
+--- a/src/ui/manual.cpp
++++ b/src/ui/manual.cpp
+@@ -71,6 +71,7 @@ void showManual()
+     constexpr int maxPages = 20;
+ 
+     std::size_t nBytes = readTextFile("RULES.TXT");
++    if (!nBytes) { return; }
+ 
+     // split the text with pages 25 lines each
+     std::int16_t pageCnt = 0;
