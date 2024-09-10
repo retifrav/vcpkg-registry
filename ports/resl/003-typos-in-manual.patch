@@ -1,5 +1,5 @@
 diff --git a/resources/RULES.TXT b/resources/RULES.TXT
-index 08e95b8..c145317 100644
+index 08e95b8..83cf61f 100644
 --- a/resources/RULES.TXT
 +++ b/resources/RULES.TXT
 @@ -1,41 +1,38 @@
@@ -18,8 +18,9 @@ index 08e95b8..c145317 100644
  
  You are in charge of railroad traffic controlling on a major
  section of sophisticated network with siding, switches, signals,
- crossings and other means of shunting. You goal is to assure an
+-crossings and other means of shunting. You goal is to assure an
 -uninterrupted collision-free passage of differrent trains to
++crossings and other means of shunting. Your goal is to assure an
 +uninterrupted collision-free passage of different trains to
  target points through this section.
  
@@ -161,9 +162,9 @@ index 08e95b8..c145317 100644
 +When you successfully reach 2000 year in the game you just have
  the same initial situation in 1800 but your money and routed
 -trains counters are from previous level. 
+-
 +trains counters are from previous level.
  
--
 -       10. Pausing, saving and restoring the game
 +## Pausing, saving and restoring the game
  
@@ -194,12 +195,12 @@ index 08e95b8..c145317 100644
  saved game one extra train will immediately come into your
  railnet from occasional entrance. This might prevent the
 -real-time game to become step-by-step game. 
--
 +real-time game to become step-by-step game.
  
--                   11. Person profiling
 +## Person profiling
  
+-                   11. Person profiling
+-
 -All your achivements, records and saved games are profiled by
 -users (players) names.  Once you run SHORTLINE from DOS command
 -line using you name as the argument the system registrates you
@@ -223,11 +224,12 @@ index 08e95b8..c145317 100644
  
  You use 2-button mouse to control the simulation and keyboard to
  work with menus. There are only 5 mouse actions that control all
-@@ -219,12 +210,9 @@ left button  (BUILD mode)   - choose the track parcels to be build
+@@ -219,12 +210,11 @@ left button  (BUILD mode)   - choose the track parcels to be build
  right button (BUILD mode)   - build the track parcel shown
  --------------------------------------------------------------------
  
--
++The ROUTE/BUILD mode can also be toggled by SPACEBAR key.
+ 
 -                   13. 'Inside SHORTLINE'
 +## Inside SHORTLINE
  

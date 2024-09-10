@@ -3,7 +3,7 @@ body {
     padding: 20px 30px;
     max-width: 960px;
     font-family: Verdana, Geneva, sans-serif;
-    font-size: 0.9em;
+    font-size: 1em;
     line-height: 1.5;
 }
 
@@ -77,8 +77,8 @@ h1 {
     flex-direction: row;
     align-items: center;
 }
-.header-with-button > * {
-    padding: 5px;
+.header-with-button > .manual-button {
+    margin-left: 10px;
 }
 .header-with-button > h1 {
     margin-bottom: 0;
@@ -87,13 +87,6 @@ h1 {
 .manual-button {
     color: gray;
     font-style: italic;
-}
-
-blockquote {
-    margin: 0 40px;
-    padding-left: 10px;
-    font-style: italic;
-    border-left: 3px solid gray;
 }
 
 code {
@@ -110,9 +103,5 @@ code {
     body {
         max-width: unset;
         padding: 20px 10px;
-    }
-
-    blockquote {
-        margin: 0 20px;
     }
 }

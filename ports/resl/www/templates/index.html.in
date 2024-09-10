@@ -27,19 +27,6 @@
                 <a id="hide-manual-button" class="manual-button" href="#">hide manual</a>
             </div>
             <div id="manual">
-                <blockquote>
-                    <p>
-                        A wide-spread railroad network starts embracing continents in the dawn
-                        of 19-th century. With the development of infrastructure manufacturing
-                        of locomotives and railroad cars grows, traffic gradually increases...
-                    </p>
-                    <p>
-                        You are in charge of railroad traffic controlling on a major section of sophisticated
-                        network with siding, switches, signals, crossings and other means of shunting. Your goal
-                        is to assure an uninterrupted collision-free passage of different trains to target points
-                        through this section.
-                    </p>
-                </blockquote>
                 <p>
                     This game repeats the algorithms of the original game. Because of this, the controls
                     are rather awkward or even impossible in case of touchscreens. Going forward, the game
