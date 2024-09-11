@@ -14,7 +14,7 @@
 
 <body>
     <div id="banner">
-        <a href="https://github.com/konovalov-aleks/reSL"><img src="./banner.png" class="banner-logo"></a>
+        <img id="banner-logo" src="./banner.png">
         <div><a href="https://github.com/konovalov-aleks/reSL">reSL</a> - reverse-engineered game <a href="https://ru.wikipedia.org/wiki/Shortline">Shortline</a></div>
         <div>developed by <a href="https://github.com/konovalov-aleks">Aleksey Konovalov</a>, 2024</div>
         <div>licensed under <a href="https://github.com/konovalov-aleks/reSL/blob/main/LICENSE">GPL v3.0</a></div>

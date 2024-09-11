@@ -29,8 +29,8 @@ body {
     flex-wrap: wrap;
 }
 
-.banner-logo {
-    height: 64px;
+img {
+    max-width: 100%;
 }
 
 #main {
@@ -103,5 +103,9 @@ code {
     body {
         max-width: unset;
         padding: 20px 10px;
+    }
+
+    #banner-logo {
+        margin-bottom: 5px;
     }
 }
