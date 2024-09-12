@@ -1,8 +1,3 @@
-# does not export symbols for making a DLL
-if(VCPKG_TARGET_IS_WINDOWS)
-    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
-endif()
-
 vcpkg_download_distfile(ARCHIVE
     URLS "https://sourceware.org/pub/bzip2/bzip2-${VERSION}.tar.gz" # 1.0.8
     FILENAME "bzip2-${VERSION}.tar.gz" # 1.0.8
@@ -13,6 +8,8 @@ vcpkg_download_distfile(ARCHIVE
 vcpkg_extract_source_archive(
     SOURCE_PATH
     ARCHIVE ${ARCHIVE}
+    PATCHES
+        001-dll-import-export-macros.patch
 )
 
 file(COPY
@@ -49,8 +46,4 @@ file(REMOVE_RECURSE
     #"${CURRENT_PACKAGES_DIR}/debug/share"
 )
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

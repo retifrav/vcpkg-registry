@@ -7,18 +7,18 @@ project("bzip2"
 
 add_library(${PROJECT_NAME})
 
-if(WIN32 AND BUILD_SHARED_LIBS)
-    # you won't get .lib on Windows, as it doesn't export symbols out of the box,
-    # so this needs to be forced
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
-endif()
-
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
-    add_definitions(-DBZ_DEBUG) # enable extra assertions
+    target_compile_definitions(${PROJECT_NAME}
+        PRIVATE
+            BZ_DEBUG
+    )
 endif()
 
 if(BUILD_SHARED_LIBS)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE -DBZ_BUILD_DLL)
+    target_compile_definitions(${PROJECT_NAME}
+        PUBLIC
+            BZ_BUILD_DLL
+    )
 endif()
 
 if(MSVC)
