@@ -3,8 +3,7 @@ vcpkg_from_git(
     URL git@github.com:wolfpld/tracy.git
     REF 5d542dc09f3d9378d005092a4ad446bd405f819a
     PATCHES
-        001-threads-linking-headers-installation.patch
-        002-optional-building-tools.patch
+        001-dependencies-and-installation.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -16,14 +15,20 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         crash-handler TRACY_NO_CRASH_HANDLER
 )
 
+vcpkg_check_features(OUT_FEATURE_OPTIONS TOOLS_OPTIONS
+    FEATURES
+        cli-tools BUILD_CLI_TOOLS
+        gui-tools BUILD_GUI_TOOLS
+)
+
 vcpkg_cmake_configure(
     SOURCE_PATH ${SOURCE_PATH}
     OPTIONS
         ${FEATURE_OPTIONS}
-        -DDOWNLOAD_CAPSTONE=0
         -DLEGACY=1
+    OPTIONS_RELEASE # no point in building Debug variants of the tools and applications
+        ${TOOLS_OPTIONS}
     MAYBE_UNUSED_VARIABLES
-        DOWNLOAD_CAPSTONE
         LEGACY
 )
 
@@ -46,5 +51,25 @@ foreach(TRACY_HEADER IN ITEMS ${TRACY_HEADERS})
         IGNORE_UNCHANGED
     )
 endforeach()
+
+if("cli-tools" IN_LIST FEATURES)
+    vcpkg_copy_tools(
+        TOOL_NAMES
+            tracy-capture
+            tracy-csvexport
+            tracy-import-chrome
+            tracy-import-fuchsia
+            tracy-update
+        AUTO_CLEAN
+    )
+endif()
+
+if("gui-tools" IN_LIST FEATURES)
+    vcpkg_copy_tools(
+        TOOL_NAMES
+            tracy-profiler
+        AUTO_CLEAN
+    )
+endif()
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
