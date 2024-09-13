@@ -9,8 +9,8 @@ vcpkg_extract_source_archive(
     SOURCE_PATH
     ARCHIVE ${ARCHIVE}
     PATCHES
-        brotli-static.patch
-        disable-pkgconfig.patch
+        001-dependencies-and-installation.patch
+        002-disable-pkgconfig.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
