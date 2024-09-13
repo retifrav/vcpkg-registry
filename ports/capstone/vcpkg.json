@@ -1,0 +1,99 @@
+{
+    "name": "capstone",
+    "version": "5.0.3",
+    "description": "Multi-architecture disassembly framework",
+    "homepage": "https://github.com/capstone-engine/capstone",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ],
+    "default-features":
+    [
+        "arm",
+        "arm64",
+        "wasm",
+        "x86"
+    ],
+    "features":
+    {
+        "arm":
+        {
+            "description": "Enable ARM support"
+        },
+        "arm64":
+        {
+            "description": "Enable ARM64 support"
+        },
+        "bpf":
+        {
+            "description": "Enable BPF support"
+        },
+        "evm":
+        {
+            "description": "Enable EVM support"
+        },
+        "m680x":
+        {
+            "description": "Enable M680X support"
+        },
+        "m68k":
+        {
+            "description": "Enable M68k support"
+        },
+        "mips":
+        {
+            "description": "Enable MIPS support"
+        },
+        "mos65xx":
+        {
+            "description": "Enable MOS65XX support"
+        },
+        "ppc":
+        {
+            "description": "Enable PowerPC support"
+        },
+        "riscv":
+        {
+            "description": "Enable RISC-V support"
+        },
+        "sparc":
+        {
+            "description": "Enable SPARC support"
+        },
+        "sysz":
+        {
+            "description": "Enable SystemZ support"
+        },
+        "tms320c64x":
+        {
+            "description": "Enable TMS320C64X support"
+        },
+        "tricore":
+        {
+            "description": "Enable TriCore support"
+        },
+        "wasm":
+        {
+            "description": "Enable WebAssembly support"
+        },
+        "x86":
+        {
+            "description": "Enable x86 support"
+        },
+        "xcore":
+        {
+            "description": "Enable XCore support"
+        },
+        "diet":
+        {
+            "description": "Build Capstone in diet mode (reduced features for smaller size)"
+        }
+    }
+}
