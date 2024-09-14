@@ -21,6 +21,29 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS TOOLS_OPTIONS
         gui-tools BUILD_GUI_TOOLS
 )
 
+if(
+    (
+        "cli-tools" IN_LIST FEATURES
+        OR
+        "gui-tools" IN_LIST FEATURES
+    )
+    AND
+    VCPKG_TARGET_IS_LINUX
+)
+    message(
+"Tracy tools/applications require the following libraries to be installed in the system:
+
+- D-Bus
+- TBB
+
+To install them with a system package manager:
+
+- Debian and Ubuntu derivatives:
+    + `sudo apt install libdbus-1-dev libtbb-dev`
+"
+)
+endif()
+
 vcpkg_cmake_configure(
     SOURCE_PATH ${SOURCE_PATH}
     OPTIONS

@@ -1404,10 +1404,10 @@ index c12a3408..527e20d3 100644
  
  set(TRACY_COMMON_SOURCES
 diff --git a/cmake/vendor.cmake b/cmake/vendor.cmake
-index 29f12cfa..e3c68b2a 100644
+index 29f12cfa..ee2a5577 100644
 --- a/cmake/vendor.cmake
 +++ b/cmake/vendor.cmake
-@@ -1,55 +1,27 @@
+@@ -1,55 +1,31 @@
 +include_guard(GLOBAL)
 +
  # Vendor Specific CMake
@@ -1419,7 +1419,10 @@ index 29f12cfa..e3c68b2a 100644
 -
 -include(FindPkgConfig)
 -include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
--
++if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
++    include(FindPkgConfig)
++endif()
+ 
 -option(DOWNLOAD_CAPSTONE "Force download capstone" ON)
 -option(DOWNLOAD_GLFW "Force download glfw" OFF)
 -option(DOWNLOAD_FREETYPE "Force download freetype" OFF)
@@ -1474,7 +1477,7 @@ index 29f12cfa..e3c68b2a 100644
          add_library(TracyGlfw3 INTERFACE)
          target_link_libraries(TracyGlfw3 INTERFACE glfw)
      endif()
-@@ -57,25 +29,13 @@ endif()
+@@ -57,25 +33,13 @@ endif()
  
  # freetype
  
@@ -1503,7 +1506,7 @@ index 29f12cfa..e3c68b2a 100644
  
  set(ZSTD_DIR "${ROOT_DIR}/zstd")
  
-@@ -138,26 +98,28 @@ add_library(TracyGetOpt STATIC ${GETOPT_SOURCES} ${GETOPT_HEADERS})
+@@ -138,26 +102,28 @@ add_library(TracyGetOpt STATIC ${GETOPT_SOURCES} ${GETOPT_HEADERS})
  target_include_directories(TracyGetOpt PUBLIC ${GETOPT_DIR})
  
  
@@ -1547,11 +1550,25 @@ index 29f12cfa..e3c68b2a 100644
  
  # NFD
  
-@@ -224,15 +186,6 @@ else()
+@@ -197,7 +163,7 @@ if (NOT NO_FILESELECTOR AND NOT EMSCRIPTEN)
+         else()
+             pkg_check_modules(DBUS dbus-1)
+             if (NOT DBUS_FOUND)
+-                message(FATAL_ERROR "D-Bus not found. Please install it or set TRACY_GTK_FILESELECTOR to ON.")
++                message(FATAL_ERROR "Could not find D-Bus, you need to install it using your system package manager or set TRACY_GTK_FILESELECTOR to ON")
+             endif()
+             add_library(TracyDbus INTERFACE)
+             target_include_directories(TracyDbus INTERFACE ${DBUS_INCLUDE_DIRS})
+@@ -220,19 +186,12 @@ else()
+         # Some distributions have pgk-config files for TBB, others don't.
+ 
+         pkg_check_modules(TBB tbb)
+-        if (TBB_FOUND)
++        if(TBB_FOUND)
              add_library(TracyTbb INTERFACE)
              target_include_directories(TracyTbb INTERFACE ${TBB_INCLUDE_DIRS})
              target_link_libraries(TracyTbb INTERFACE ${TBB_LINK_LIBRARIES})
--        else()
+         else()
 -            CPMAddPackage(
 -                NAME tbb
 -                GITHUB_REPOSITORY oneapi-src/oneTBB
@@ -1560,6 +1577,7 @@ index 29f12cfa..e3c68b2a 100644
 -            )
 -            add_library(TracyTbb INTERFACE)
 -            target_link_libraries(TracyTbb INTERFACE tbb)
++            message(FATAL_ERROR "Couldn't find TBB, you need to install it using your system package manager")
          endif()
      endif()
  endif()
