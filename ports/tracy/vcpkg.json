@@ -52,7 +52,10 @@
             [
                 "capstone",
                 "freetype",
-                "glfw"
+                {
+                    "name": "glfw",
+                    "platform": "!emscripten"
+                }
             ]
         }
     }

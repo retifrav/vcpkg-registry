@@ -100,7 +100,7 @@ index fc913ab3..f3a07a47 100644
 +
 +check_required_components(@PROJECT_NAME@)
 diff --git a/capture/CMakeLists.txt b/capture/CMakeLists.txt
-index 2417c781..286c4d5c 100644
+index 2417c781..617c1350 100644
 --- a/capture/CMakeLists.txt
 +++ b/capture/CMakeLists.txt
 @@ -1,4 +1,4 @@
@@ -109,7 +109,7 @@ index 2417c781..286c4d5c 100644
  
  option(NO_ISA_EXTENSIONS "Disable ISA extensions (don't pass -march=native or -mcpu=native to the compiler)" OFF)
  option(NO_STATISTICS "Disable calculation of statistics" ON)
-@@ -25,3 +25,8 @@ set(PROGRAM_FILES
+@@ -25,3 +25,16 @@ set(PROGRAM_FILES
  add_executable(${PROJECT_NAME} ${PROGRAM_FILES} ${COMMON_FILES} ${SERVER_FILES})
  target_link_libraries(${PROJECT_NAME} PRIVATE TracyServer TracyGetOpt)
  set_property(DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
@@ -118,6 +118,14 @@ index 2417c781..286c4d5c 100644
 +    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +    CONFIGURATIONS Release
 +)
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(
++        FILES
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.worker.js
++        DESTINATION ${CMAKE_INSTALL_BINDIR}
++    )
++endif()
 diff --git a/cmake/CPM.cmake b/cmake/CPM.cmake
 deleted file mode 100644
 index 8269a8bf..00000000
@@ -1592,7 +1600,7 @@ index 03813b44..37cdb840 100644
  message("Parsing public/common/TracyVersion.hpp file")
  
 diff --git a/csvexport/CMakeLists.txt b/csvexport/CMakeLists.txt
-index a69c03a8..5899b8d1 100644
+index a69c03a8..a9439927 100644
 --- a/csvexport/CMakeLists.txt
 +++ b/csvexport/CMakeLists.txt
 @@ -1,4 +1,4 @@
@@ -1601,7 +1609,7 @@ index a69c03a8..5899b8d1 100644
  
  option(NO_ISA_EXTENSIONS "Disable ISA extensions (don't pass -march=native or -mcpu=native to the compiler)" OFF)
  option(NO_PARALLEL_STL "Disable parallel STL" OFF)
-@@ -26,3 +26,8 @@ set(PROGRAM_FILES
+@@ -26,3 +26,16 @@ set(PROGRAM_FILES
  add_executable(${PROJECT_NAME} ${PROGRAM_FILES} ${COMMON_FILES} ${SERVER_FILES})
  target_link_libraries(${PROJECT_NAME} PRIVATE TracyServer TracyGetOpt)
  set_property(DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
@@ -1610,8 +1618,16 @@ index a69c03a8..5899b8d1 100644
 +    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +    CONFIGURATIONS Release
 +)
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(
++        FILES
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.worker.js
++        DESTINATION ${CMAKE_INSTALL_BINDIR}
++    )
++endif()
 diff --git a/import/CMakeLists.txt b/import/CMakeLists.txt
-index fec2c7d0..a6d06523 100644
+index fec2c7d0..22466fd3 100644
 --- a/import/CMakeLists.txt
 +++ b/import/CMakeLists.txt
 @@ -1,4 +1,4 @@
@@ -1620,7 +1636,7 @@ index fec2c7d0..a6d06523 100644
  
  option(NO_ISA_EXTENSIONS "Disable ISA extensions (don't pass -march=native or -mcpu=native to the compiler)" OFF)
  option(NO_STATISTICS "Disable calculation of statistics" ON)
-@@ -29,3 +29,8 @@ add_executable(tracy-import-fuchsia
+@@ -29,3 +29,18 @@ add_executable(tracy-import-fuchsia
  target_link_libraries(tracy-import-fuchsia PRIVATE TracyServer)
  
  set_property(DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
@@ -1629,8 +1645,18 @@ index fec2c7d0..a6d06523 100644
 +    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +    CONFIGURATIONS Release
 +)
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(
++        FILES
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-chrome.wasm
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-chrome.worker.js
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-fuchsia.wasm
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-fuchsia.worker.js
++        DESTINATION ${CMAKE_INSTALL_BINDIR}
++    )
++endif()
 diff --git a/profiler/CMakeLists.txt b/profiler/CMakeLists.txt
-index 928aec3f..2d0d8c50 100644
+index 928aec3f..1df1faf4 100644
 --- a/profiler/CMakeLists.txt
 +++ b/profiler/CMakeLists.txt
 @@ -1,4 +1,4 @@
@@ -1639,16 +1665,26 @@ index 928aec3f..2d0d8c50 100644
  
  option(NO_FILESELECTOR "Disable the file selector" OFF)
  option(GTK_FILESELECTOR "Use the GTK file selector on Linux instead of the xdg-portal one" OFF)
-@@ -184,7 +184,17 @@ if(EMSCRIPTEN)
-     set_property(TARGET ${PROJECT_NAME} PROPERTY COMPILE_FLAGS "-sUSE_FREETYPE=1 -pthread -DIMGUI_IMPL_OPENGL_ES2")
-     set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_FLAGS "-sASSERTIONS=0 -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker --preload-file embed.tracy")
+@@ -180,11 +180,33 @@ if(NOT EMSCRIPTEN)
+     endif()
+ endif()
  
+-if(EMSCRIPTEN)
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+     set_property(TARGET ${PROJECT_NAME} PROPERTY COMPILE_FLAGS "-sUSE_FREETYPE=1 -pthread -DIMGUI_IMPL_OPENGL_ES2")
+-    set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_FLAGS "-sASSERTIONS=0 -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker --preload-file embed.tracy")
+-
 -    file(DOWNLOAD https://share.nereid.pl/i/embed.tracy ${CMAKE_CURRENT_BINARY_DIR}/embed.tracy EXPECTED_MD5 ca0fa4f01e7b8ca5581daa16b16c768d)
++    set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_FLAGS "-sASSERTIONS=0 -sUSE_GLFW=3 -sINITIAL_MEMORY=384mb -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=4gb -sWASM_BIGINT=1 -sPTHREAD_POOL_SIZE=4 -sEXPORTED_FUNCTIONS=_main,_nativeResize,_nativeOpenFile -sEXPORTED_RUNTIME_METHODS=ccall -sENVIRONMENT=web,worker")
++
 +    if(NOT EXAMPLE_TRACE_FILE STREQUAL "")
++        set(FILE_TO_PRELOAD "${CMAKE_CURRENT_BINARY_DIR}/embed.tracy")
 +        file(DOWNLOAD ${EXAMPLE_TRACE_FILE}
-+            ${CMAKE_CURRENT_BINARY_DIR}/embed.tracy
++            ${FILE_TO_PRELOAD}
 +            EXPECTED_MD5 ca0fa4f01e7b8ca5581daa16b16c768d
 +        )
++        set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS " --preload-file ${FILE_TO_PRELOAD}")
++        install(FILES ${FILE_TO_PRELOAD} DESTINATION ${CMAKE_INSTALL_BINDIR})
 +    endif()
      file(COPY ${CMAKE_CURRENT_LIST_DIR}/wasm/index.html DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
      file(COPY ${CMAKE_CURRENT_LIST_DIR}/wasm/httpd.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -1658,6 +1694,15 @@ index 928aec3f..2d0d8c50 100644
 +    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +    CONFIGURATIONS Release
 +)
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(
++        FILES
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.worker.js
++            ${CMAKE_CURRENT_BINARY_DIR}/index.html
++        DESTINATION ${CMAKE_INSTALL_BINDIR}
++    )
++endif()
 diff --git a/profiler/src/profiler/TracySourceView.cpp b/profiler/src/profiler/TracySourceView.cpp
 index 5f3bc318..ebf0f8dd 100644
 --- a/profiler/src/profiler/TracySourceView.cpp
@@ -1685,7 +1730,7 @@ index 5c297291..0ba35149 100644
  #define ZDICT_STATIC_LINKING_ONLY
  #include "../zstd/zdict.h"
 diff --git a/update/CMakeLists.txt b/update/CMakeLists.txt
-index 6c347e39..64892412 100644
+index 6c347e39..a7de22e2 100644
 --- a/update/CMakeLists.txt
 +++ b/update/CMakeLists.txt
 @@ -1,4 +1,4 @@
@@ -1694,7 +1739,7 @@ index 6c347e39..64892412 100644
  
  option(NO_ISA_EXTENSIONS "Disable ISA extensions (don't pass -march=native or -mcpu=native to the compiler)" OFF)
  option(NO_STATISTICS "Disable calculation of statistics" ON)
-@@ -27,4 +27,9 @@ set(PROGRAM_FILES
+@@ -27,4 +27,17 @@ set(PROGRAM_FILES
  
  add_executable(${PROJECT_NAME} ${PROGRAM_FILES} ${COMMON_FILES} ${SERVER_FILES})
  target_link_libraries(${PROJECT_NAME} PRIVATE TracyServer TracyGetOpt)
@@ -1706,3 +1751,11 @@ index 6c347e39..64892412 100644
 +    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +    CONFIGURATIONS Release
 +)
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    install(
++        FILES
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm
++            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.worker.js
++        DESTINATION ${CMAKE_INSTALL_BINDIR}
++    )
++endif()

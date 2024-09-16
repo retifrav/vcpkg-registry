@@ -75,7 +75,7 @@ foreach(TRACY_HEADER IN ITEMS ${TRACY_HEADERS})
     )
 endforeach()
 
-if("cli-tools" IN_LIST FEATURES)
+if("cli-tools" IN_LIST FEATURES AND NOT VCPKG_TARGET_IS_EMSCRIPTEN)
     vcpkg_copy_tools(
         TOOL_NAMES
             tracy-capture
@@ -87,7 +87,7 @@ if("cli-tools" IN_LIST FEATURES)
     )
 endif()
 
-if("gui-tools" IN_LIST FEATURES)
+if("gui-tools" IN_LIST FEATURES AND NOT VCPKG_TARGET_IS_EMSCRIPTEN)
     vcpkg_copy_tools(
         TOOL_NAMES
             tracy-profiler
