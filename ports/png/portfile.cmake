@@ -11,7 +11,7 @@ vcpkg_extract_source_archive(
     SOURCE_PATH
     ARCHIVE ${ARCHIVE}
     PATCHES
-        single-unsuffixed-target-and-installation.patch
+        001-single-unsuffixed-target-dependencies-installation.patch
 )
 
 file(COPY

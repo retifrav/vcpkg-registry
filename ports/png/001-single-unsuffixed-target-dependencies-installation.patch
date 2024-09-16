@@ -1,7 +1,16 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ad3f242..edc8f79 100644
+index ad3f242..70b51e9 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -15,7 +15,7 @@
+ #
+ # SPDX-License-Identifier: libpng-2.0
+ 
+-cmake_minimum_required(VERSION 3.6)
++cmake_minimum_required(VERSION 3.22)
+ 
+ set(PNGLIB_MAJOR 1)
+ set(PNGLIB_MINOR 6)
 @@ -26,15 +26,10 @@ set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_REVISION})
  set(PNGLIB_ABI_VERSION ${PNGLIB_MAJOR}${PNGLIB_MINOR})
  set(PNGLIB_SHARED_VERSION ${PNGLIB_ABI_VERSION}.${PNGLIB_REVISION}.${PNGLIB_SUBREVISION})
@@ -19,7 +28,7 @@ index ad3f242..edc8f79 100644
  include(CheckCSourceCompiles)
  include(GNUInstallDirs)
  
-@@ -55,25 +50,25 @@ set(DFA_XTRA ""
+@@ -55,10 +50,14 @@ set(DFA_XTRA ""
      CACHE FILEPATH "File containing extra configuration settings")
  
  # Allow the users to switch on/off various library build types.
@@ -37,24 +46,7 @@ index ad3f242..edc8f79 100644
  endif()
  
  # Allow the users to switch on/off the auxiliary build and test artifacts.
- # These artifacts are NOT part of libpng proper, and are subject to change
- # at any time.
--option(PNG_TESTS "Build the libpng tests" ON)
-+option(PNG_TESTS "Build the libpng tests" 0)
- 
- # Same as above, but for the third-party tools.
- # Although these tools are targetted at development environments only,
- # the users are allowed to override the option to build by default.
--if (ANDROID OR IOS)
--  option(PNG_TOOLS "Build the libpng tools" OFF)
--else()
--  option(PNG_TOOLS "Build the libpng tools" ON)
--endif()
-+option(PNG_TOOLS "Build the libpng tools" 0)
- 
- # Maintain backwards compatibility with the deprecated option PNG_EXECUTABLES.
- option(PNG_EXECUTABLES "[Deprecated; please use PNG_TOOLS]" ON)
-@@ -90,23 +85,7 @@ endif()
+@@ -90,23 +89,7 @@ endif()
  option(PNG_DEBUG "Enable debug output" OFF)
  option(PNG_HARDWARE_OPTIMIZATIONS "Enable hardware optimizations" ON)
  
@@ -79,12 +71,11 @@ index ad3f242..edc8f79 100644
  
  if(UNIX AND NOT APPLE AND NOT BEOS AND NOT HAIKU AND NOT EMSCRIPTEN)
    find_library(M_LIBRARY m)
-@@ -364,12 +343,13 @@ endif()
+@@ -364,12 +347,12 @@ endif()
  
  include_directories(${CMAKE_CURRENT_BINARY_DIR})
  
 -if(NOT AWK OR ANDROID OR IOS)
-+#if(NOT AWK OR ANDROID OR IOS)
 +if(TRUE)
    # No awk available to generate sources; use pre-built pnglibconf.h
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt
@@ -95,7 +86,7 @@ index ad3f242..edc8f79 100644
    # Copy the awk scripts, converting their line endings to Unix (LF)
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/checksym.awk
                   ${CMAKE_CURRENT_BINARY_DIR}/scripts/checksym.awk
-@@ -592,7 +572,7 @@ else()
+@@ -592,7 +575,7 @@ else()
                              "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk" png_scripts_symbols_chk
                              "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out" png_scripts_symbols_out
                              "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out" png_scripts_vers_out)
@@ -104,17 +95,16 @@ index ad3f242..edc8f79 100644
  
  # List the source code files.
  set(libpng_public_hdrs
-@@ -606,7 +586,8 @@ set(libpng_private_hdrs
+@@ -606,7 +589,7 @@ set(libpng_private_hdrs
      pnginfo.h
      pngstruct.h
  )
 -if(AWK AND NOT ANDROID AND NOT IOS)
-+#if(AWK AND NOT ANDROID AND NOT IOS)
 +if(FALSE)
    list(APPEND libpng_private_hdrs "${CMAKE_CURRENT_BINARY_DIR}/pngprefix.h")
  endif()
  set(libpng_sources
-@@ -669,68 +650,52 @@ endif()
+@@ -669,68 +652,52 @@ endif()
  # Initialize the list of libpng library targets.
  set(PNG_LIBRARY_TARGETS "")
  
@@ -204,7 +194,7 @@ index ad3f242..edc8f79 100644
  endif()
  
  if(PNG_FRAMEWORK AND NOT APPLE)
-@@ -740,26 +705,25 @@ if(PNG_FRAMEWORK AND NOT APPLE)
+@@ -740,26 +707,25 @@ if(PNG_FRAMEWORK AND NOT APPLE)
  endif()
  
  if(PNG_FRAMEWORK)
@@ -240,7 +230,7 @@ index ad3f242..edc8f79 100644
  endif()
  
  if(NOT PNG_LIBRARY_TARGETS)
-@@ -791,7 +755,7 @@ if(PNG_TESTS AND PNG_SHARED)
+@@ -791,7 +757,7 @@ if(PNG_TESTS AND PNG_SHARED)
                     @ONLY)
      add_test(NAME "${_PAT_NAME}"
               COMMAND "${CMAKE_COMMAND}"
@@ -249,7 +239,7 @@ index ad3f242..edc8f79 100644
                       "-DTEST_COMMAND=$<TARGET_FILE:${_PAT_COMMAND}>"
                       -P "${CMAKE_CURRENT_BINARY_DIR}/tests/${_PAT_NAME}.cmake")
    endfunction()
-@@ -806,14 +770,14 @@ if(PNG_TESTS AND PNG_SHARED)
+@@ -806,14 +772,14 @@ if(PNG_TESTS AND PNG_SHARED)
    set(PNGTEST_PNG "${CMAKE_CURRENT_SOURCE_DIR}/pngtest.png")
  
    add_executable(pngtest ${pngtest_sources})
@@ -266,7 +256,7 @@ index ad3f242..edc8f79 100644
  
    png_add_test(NAME pngvalid-gamma-16-to-8
                 COMMAND pngvalid
-@@ -859,7 +823,7 @@ if(PNG_TESTS AND PNG_SHARED)
+@@ -859,7 +825,7 @@ if(PNG_TESTS AND PNG_SHARED)
                 OPTIONS --transform)
  
    add_executable(pngstest ${pngstest_sources})
@@ -275,7 +265,7 @@ index ad3f242..edc8f79 100644
  
    foreach(gamma_type 1.8 linear none sRGB)
      foreach(alpha_type none alpha)
-@@ -914,7 +878,7 @@ if(PNG_TESTS AND PNG_SHARED)
+@@ -914,7 +880,7 @@ if(PNG_TESTS AND PNG_SHARED)
    endforeach()
  
    add_executable(pngunknown ${pngunknown_sources})
@@ -284,7 +274,7 @@ index ad3f242..edc8f79 100644
  
    png_add_test(NAME pngunknown-discard
                 COMMAND pngunknown
-@@ -946,7 +910,7 @@ if(PNG_TESTS AND PNG_SHARED)
+@@ -946,7 +912,7 @@ if(PNG_TESTS AND PNG_SHARED)
                 FILES "${PNGTEST_PNG}")
  
    add_executable(pngimage ${pngimage_sources})
@@ -293,7 +283,7 @@ index ad3f242..edc8f79 100644
  
    png_add_test(NAME pngimage-quick
                 COMMAND pngimage
-@@ -960,11 +924,11 @@ endif()
+@@ -960,11 +926,11 @@ endif()
  
  if(PNG_SHARED AND PNG_TOOLS)
    add_executable(pngfix ${pngfix_sources})
@@ -307,7 +297,7 @@ index ad3f242..edc8f79 100644
    list(APPEND PNG_BIN_TARGETS png-fix-itxt)
  endif()
  
-@@ -1046,87 +1010,18 @@ if(NOT WIN32 OR CYGWIN OR MINGW)
+@@ -1046,87 +1012,20 @@ if(NOT WIN32 OR CYGWIN OR MINGW)
    set(includedir  ${CMAKE_INSTALL_FULL_INCLUDEDIR})
    set(LIBS        "-lz -lm")
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libpng.pc.in
@@ -321,9 +311,8 @@ index ad3f242..edc8f79 100644
 +                 ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config
                   @ONLY)
 -  create_symlink(libpng-config FILE libpng${PNGLIB_ABI_VERSION}-config)
-+  create_symlink(libpng-config FILE ${PROJECT_NAME}-config)
- endif()
- 
+-endif()
+-
 -# Install.
 -if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
 -  install(TARGETS ${PNG_LIBRARY_TARGETS}
@@ -341,8 +330,7 @@ index ad3f242..edc8f79 100644
 -              DESTINATION ${CMAKE_INSTALL_LIBDIR})
 -    endif()
 -  endif()
-+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${libpng_public_hdrs}")
- 
+-
 -  if(PNG_STATIC)
 -    if(NOT WIN32 OR CYGWIN OR MINGW)
 -      create_symlink(libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
@@ -350,8 +338,9 @@ index ad3f242..edc8f79 100644
 -              DESTINATION ${CMAKE_INSTALL_LIBDIR})
 -    endif()
 -  endif()
--endif()
--
++  create_symlink(libpng-config FILE ${PROJECT_NAME}-config)
+ endif()
+ 
 -if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
 -  install(FILES ${libpng_public_hdrs}
 -          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -371,7 +360,8 @@ index ad3f242..edc8f79 100644
 -  install(TARGETS ${PNG_BIN_TARGETS}
 -          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 -endif()
--
++# --- installation
+ 
 -if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
 -  # Install the man pages.
 -  install(FILES libpng.3 libpngpf.3
@@ -390,7 +380,8 @@ index ad3f242..edc8f79 100644
 -            DESTINATION ${CMAKE_INSTALL_BINDIR})
 -  endif()
 -endif()
--
++set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${libpng_public_hdrs}")
+ 
 -# Create an export file that CMake users can include() to import our targets.
 -if(NOT SKIP_INSTALL_EXPORT AND NOT SKIP_INSTALL_ALL)
 -  install(EXPORT libpng
@@ -401,3 +392,29 @@ index ad3f242..edc8f79 100644
  
  # TODO: Create MSVC import lib for MinGW-compiled shared lib.
  # pexports libpng.dll > libpng.def
+diff --git a/pngstruct.h b/pngstruct.h
+index e591d94..a4f2b0f 100644
+--- a/pngstruct.h
++++ b/pngstruct.h
+@@ -27,7 +27,7 @@
+    /* We must ensure that zlib uses 'const' in declarations. */
+ #  define ZLIB_CONST
+ #endif
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #ifdef const
+    /* zlib.h sometimes #defines const to nothing, undo this. */
+ #  undef const
+diff --git a/pngtest.c b/pngtest.c
+index 45ef66a..0e79fdd 100644
+--- a/pngtest.c
++++ b/pngtest.c
+@@ -40,7 +40,7 @@
+ #ifdef PNG_ZLIB_HEADER
+ #  include PNG_ZLIB_HEADER /* defined by pnglibconf.h from 1.7 */
+ #else
+-#  include <zlib.h>
++#  include <zlib/zlib.h>
+ #endif
+ 
+ #include "png.h"
