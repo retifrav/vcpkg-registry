@@ -63,7 +63,7 @@
         },
         "dearimgui":
         {
-            "baseline": "1.91.1",
+            "baseline": "1.91.2",
             "port-version": 0
         },
         "decovar-vcpkg-cmake":
