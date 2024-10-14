@@ -1,0 +1,64 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d6e3e3bc6..fff063efe 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -30,7 +30,6 @@ if (LEGACY_BUILD)
+ 
+     option(ENABLE_UNITY_BUILD "If enabled, the SDK will be built using a single unified .cpp file for each service library.  Reduces the size of static library binaries on Windows and Linux" ON)
+     option(MINIMIZE_SIZE "If enabled, the SDK will be built via a unity aggregation process that results in smaller static libraries; additionally, release binaries will favor size optimizations over speed" OFF)
+-    option(BUILD_SHARED_LIBS "If enabled, all aws sdk libraries will be build as shared objects; otherwise all Aws libraries will be built as static objects" ON)
+     option(FORCE_SHARED_CRT "If enabled, will unconditionally link the standard libraries in dynamically, otherwise the standard library will be linked in based on the BUILD_SHARED_LIBS setting" ON)
+     option(SIMPLE_INSTALL "If enabled, removes all the additional indirection (platform/cpu/config) in the bin and lib directories on the install step" ON)
+     option(USE_CRT_HTTP_CLIENT "If enabled, the common runtime HTTP client will be used, and the legacy systems such as WinHttp and libcurl will not be built or included" OFF)
+@@ -108,11 +107,6 @@ if (LEGACY_BUILD)
+         set(BoldWhite "${Esc}[1;37m")
+     endif ()
+ 
+-    # backwards compatibility with old command line params
+-    if ("${STATIC_LINKING}" STREQUAL "1")
+-        set(BUILD_SHARED_LIBS OFF)
+-    endif ()
+-
+     if (MINIMIZE_SIZE)
+         message(STATUS "MINIMIZE_SIZE enabled")
+         set(ENABLE_UNITY_BUILD ON) # MINIMIZE_SIZE always implies UNITY_BUILD
+@@ -151,8 +145,16 @@ if (LEGACY_BUILD)
+ 
+     if (BUILD_SHARED_LIBS OR FORCE_SHARED_CRT)
+         set(STATIC_CRT OFF)
++        set(AWS_STATIC_MSVC_RUNTIME_LIBRARY OFF)
+     else ()
+         set(STATIC_CRT ON)
++        set(AWS_STATIC_MSVC_RUNTIME_LIBRARY ON)
++        if(WIN32)
++            if(POLICY CMP0091)
++                cmake_policy(SET CMP0091 NEW)
++            endif()
++            set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
++        endif()
+     endif ()
+ 
+     # build the sdk targets
+diff --git a/cmake/compiler_settings.cmake b/cmake/compiler_settings.cmake
+index c0c19e5b8..d4cdd0a0c 100644
+--- a/cmake/compiler_settings.cmake
++++ b/cmake/compiler_settings.cmake
+@@ -78,18 +78,6 @@ endmacro()
+ 
+ macro(set_msvc_flags)
+     if(MSVC)
+-        # Based on the FORCE_SHARED_CRT and BUILD_SHARED_LIBS options, make sure our compile/link flags bring in the right CRT library
+-        # modified from gtest's version; while only the else clause is actually necessary, do both for completeness/future-proofing
+-        foreach (var
+-                CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+-                CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+-            if(BUILD_SHARED_LIBS OR FORCE_SHARED_CRT)
+-                string(REPLACE "/MT" "/MD" ${var} "${${var}}")
+-            else()
+-                string(REPLACE "/MD" "/MT" ${var} "${${var}}")
+-            endif()
+-        endforeach()
+-
+         # enable parallel builds
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+         # some of the clients are exceeding the 16-bit code section limit when building x64 debug, so use /bigobj when we build

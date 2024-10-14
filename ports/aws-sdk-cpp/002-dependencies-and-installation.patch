@@ -1,0 +1,212 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d6e3e3bc6..3b5437f7d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -118,8 +118,10 @@ if (LEGACY_BUILD)
+         set(ENABLE_UNITY_BUILD ON) # MINIMIZE_SIZE always implies UNITY_BUILD
+     endif ()
+ 
+-    set(PYTHON_CMD "python")
++    set(PYTHON_CMD "python") # wut
+ 
++    # what the hell is even that
++    #
+     # CMAKE_MODULE_PATH is a CMAKE variable. It contains a list of paths
+     # which could be used to search CMAKE modules by "include()" or "find_package()", but the default value is empty.
+     # Add ${CMAKE_INSTALL_LIBDIR}/cmake and ${CMAKE_PREFIX_PATH}/lib/cmake to search list
+@@ -163,24 +165,12 @@ if (LEGACY_BUILD)
+ 
+     # ENABLE_ZLIB_REQUEST_COMPRESSION should be ON by default if ZLIB is available
+     if(ENABLE_ZLIB_REQUEST_COMPRESSION)
+-        find_package(ZLIB QUIET)
+-        if ( NOT ZLIB_FOUND)
+-            set(ENABLE_ZLIB_REQUEST_COMPRESSION
+-                    OFF CACHE BOOL
+-                    "For services that support it, request content will be compressed. On by default if dependency available"
+-                    FORCE)
+-            message(WARNING "ZLIB is not available, it will not be used to compress requests")
+-        else()
+-            #Passing the information that we want zlib request compression support to C++
+-            add_definitions("-DENABLED_ZLIB_REQUEST_COMPRESSION" "-DENABLED_REQUEST_COMPRESSION")
+-        endif()
++        find_package(zlib CONFIG REQUIRED)
++        #Passing the information that we want zlib request compression support to C++
++        add_definitions("-DENABLED_ZLIB_REQUEST_COMPRESSION" "-DENABLED_REQUEST_COMPRESSION")
+     endif()
+ 
+-    if (UNIX AND NOT APPLE)
+-        include(GNUInstallDirs)
+-    elseif (NOT DEFINED CMAKE_INSTALL_LIBDIR)
+-        set(CMAKE_INSTALL_LIBDIR "lib")
+-    endif ()
++    include(GNUInstallDirs)
+ 
+     if (DEFINED CMAKE_PREFIX_PATH)
+         file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}" CMAKE_PREFIX_PATH)
+@@ -195,9 +185,11 @@ if (LEGACY_BUILD)
+         file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
+     endif ()
+ 
++    # all of that should be resolved with proper `find_package(stuff COFIG REQUIRED)`, stop inventing crazy procedures
++    #
+     # http client, encryption, zlib
+-    include(external_dependencies)
+-    include(build_external)
++    #include(external_dependencies)
++    #include(build_external)
+ 
+     if (COMMAND apply_post_project_platform_settings)
+         apply_post_project_platform_settings()
+@@ -232,6 +224,8 @@ if (LEGACY_BUILD)
+             set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV})
+         endif ()
+     else ()
++        # what the hell is even that
++        #
+         # This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH
+         set(AWS_MODULE_DIR "/${CMAKE_INSTALL_LIBDIR}/cmake")
+         string(REPLACE ";" "${AWS_MODULE_DIR};" AWS_MODULE_PATH "${CMAKE_PREFIX_PATH}${AWS_MODULE_DIR}")
+@@ -264,7 +258,7 @@ if (LEGACY_BUILD)
+     include(utilities)
+ 
+     if (ENABLE_OPENSSL_ENCRYPTION)
+-        set(CRYPTO_LIBS ${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES})
++        set(CRYPTO_LIBS ${OPENSSL_LIBRARIES} zlib)
+         set(CRYPTO_LIBS_ABSTRACT_NAME crypto ssl z)
+     endif ()
+ 
+@@ -298,11 +292,12 @@ if (LEGACY_BUILD)
+         set(INCLUDE_DIRECTORY "${CMAKE_INSTALL_INCLUDEDIR}")
+     endif ()
+ 
+-    if (BUILD_SHARED_LIBS)
+-        set(ARCHIVE_DIRECTORY "${BINARY_DIRECTORY}")
+-    else ()
+-        set(ARCHIVE_DIRECTORY "${LIBRARY_DIRECTORY}")
+-    endif ()
++    # stop manipulating default installation prefix layout
++    # if (BUILD_SHARED_LIBS)
++    #     set(ARCHIVE_DIRECTORY "${BINARY_DIRECTORY}")
++    # else ()
++    #     set(ARCHIVE_DIRECTORY "${LIBRARY_DIRECTORY}")
++    # endif ()
+ 
+     if (ENABLE_ADDRESS_SANITIZER)
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -fno-omit-frame-pointer")
+diff --git a/cmake/setup_cmake_find_module.cmake b/cmake/setup_cmake_find_module.cmake
+index cf3221019..7745589a5 100644
+--- a/cmake/setup_cmake_find_module.cmake
++++ b/cmake/setup_cmake_find_module.cmake
+@@ -50,16 +50,25 @@ endif()
+ # copy version file to destination
+ install(
+     FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${PROJECT_NAME}ConfigVersion.cmake"
+-    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}")
++    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}")
+ 
+ # platform external dependencies
+ install(
+     FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/platformDeps.cmake"
+-    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}/")
++    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}")
+ 
+ # copy all cmake files to destination, these files include useful macros, functions and variables for users.
+ # useful macros and variables will be included in this cmake file for user to use
+-install(DIRECTORY "${AWS_NATIVE_SDK_ROOT}/cmake/" DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}")
++install(DIRECTORY "${AWS_NATIVE_SDK_ROOT}/cmake/platform" DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}")
++#
++file(GLOB CMAKE_STUFF
++    LIST_DIRECTORIES NO
++    "${AWS_NATIVE_SDK_ROOT}/cmake/*"
++)
++install(
++    FILES ${CMAKE_STUFF}
++    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}"
++)
+ 
+ # following two files are vital for cmake to find correct package, but since we copied all files from above
+ # we left the code here to give you bettern understanding
+diff --git a/cmake/utilities.cmake b/cmake/utilities.cmake
+index c366af92a..fff145d9d 100644
+--- a/cmake/utilities.cmake
++++ b/cmake/utilities.cmake
+@@ -84,11 +84,14 @@ macro(setup_install)
+     if(SIMPLE_INSTALL)
+         configure_file("${AWS_NATIVE_SDK_ROOT}/toolchains/pkg-config.pc.in" "${PROJECT_NAME}.pc" @ONLY)
+ 
+-        install( TARGETS ${PROJECT_NAME}
+-                EXPORT "${PROJECT_NAME}-targets"
+-                ARCHIVE DESTINATION ${ARCHIVE_DIRECTORY}
+-                LIBRARY DESTINATION ${LIBRARY_DIRECTORY}
+-                RUNTIME DESTINATION ${BINARY_DIRECTORY} )
++        install(TARGETS ${PROJECT_NAME}
++            EXPORT "${PROJECT_NAME}-targets"
++            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
++            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
++            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
++            PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}" # include/SomeLibrary
++            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
++        )
+ 
+         if (BUILD_SHARED_LIBS)
+             install(
+@@ -132,10 +135,10 @@ macro(do_packaging)
+             @ONLY)
+     endif()
+ 
+-        set(ConfigPackageLocation "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}")
++        # generate and install export file
+         install(EXPORT "${PROJECT_NAME}-targets"
+             FILE "${PROJECT_NAME}-targets.cmake"
+-            DESTINATION ${ConfigPackageLocation}
++            DESTINATION "share/${PROJECT_NAME}"
+         )
+ 
+         install(
+@@ -143,7 +146,7 @@ macro(do_packaging)
+             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+             DESTINATION
+-            ${ConfigPackageLocation}
++            "share/${PROJECT_NAME}"
+             COMPONENT
+             Devel)
+     endif()
+diff --git a/src/aws-cpp-sdk-core/CMakeLists.txt b/src/aws-cpp-sdk-core/CMakeLists.txt
+index 29a526902..98d2942ca 100644
+--- a/src/aws-cpp-sdk-core/CMakeLists.txt
++++ b/src/aws-cpp-sdk-core/CMakeLists.txt
+@@ -665,7 +665,7 @@ aws_use_package(aws-crt-cpp)
+ target_link_libraries(${PROJECT_NAME} PUBLIC ${DEP_AWS_LIBS})
+ 
+ if (ENABLE_ZLIB_REQUEST_COMPRESSION)
+-    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
++    target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
+ endif()
+ 
+ if (BUILD_OPTEL)
+diff --git a/toolchains/core-config.cmake b/toolchains/core-config.cmake
+index d90bfaf74..bd9ec273e 100644
+--- a/toolchains/core-config.cmake
++++ b/toolchains/core-config.cmake
+@@ -1,6 +1,12 @@
+ include(CMakeFindDependencyMacro)
++
+ # Auto resolve BUILD_SHARED_LIBS for dependencies, could be overrided by CRT_BUILD_SHARED_LIBS
+ set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
++#
++if(NOT BUILD_SHARED_LIBS_PREV)
++    find_dependency(zlib CONFIG REQUIRED)
++endif()
++
+ if (DEFINED CRT_BUILD_SHARED_LIBS)
+     set(BUILD_SHARED_LIBS ${CRT_BUILD_SHARED_LIBS})
+ else()
+@@ -15,5 +21,7 @@ if (AWSSDK_CRYPTO_IN_SOURCE_BUILD)
+     find_dependency(crypto)
+     find_dependency(ssl)
+ endif()
++#
+ set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV})
++
+ include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")

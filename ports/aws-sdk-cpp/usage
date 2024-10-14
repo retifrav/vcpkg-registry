@@ -1,0 +1,5 @@
+To use ASW SDK in your project:
+
+    find_package(aws-cpp-sdk-core CONFIG REQUIRED)
+    find_package(aws-COMPONENT_NAME_HERE CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE aws-COMPONENT_NAME_HERE)

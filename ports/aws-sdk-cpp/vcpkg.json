@@ -1,0 +1,31 @@
+{
+    "name": "aws-sdk-cpp",
+    "version": "1.11.416",
+    "description": "AWS SDK",
+    "homepage": "https://github.com/aws/aws-sdk-cpp",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "openssl",
+        "zlib"
+    ],
+    "default-features": [],
+    "features":
+    {
+        "everything":
+        {
+            "description": "Build absolutely everything from the AWS SDK"
+        },
+        "aws-cpp-sdk-s3":
+        {
+            "description": "Build aws-cpp-sdk-s3"
+        }
+    }
+}
