@@ -14,6 +14,7 @@ Although a good portion of the ports here are based on the ports from the [Micro
 - [Scripts](#scripts)
     - [check-versions-and-hashes](#check-versions-and-hashes)
     - [install-vcpkg-artifacts](#install-vcpkg-artifacts)
+    - [vcpkg-assets-caching](#vcpkg-assets-caching)
 - [Branches](#branches)
 - [Non-development ports](#non-development-ports)
 
@@ -221,6 +222,12 @@ $ python /path/to/vcpkg-registry/scripts/install-vcpkg-artifacts.py \
 ```
 
 More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#distributing-your-project).
+
+### vcpkg-assets-caching
+
+Downloading/uploading vcpkg assets (*required build tools*) from/to a remote cache of HTTP type (*such as JFrog Artifactory*).
+
+More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#asset-caching).
 
 ## Branches
 
