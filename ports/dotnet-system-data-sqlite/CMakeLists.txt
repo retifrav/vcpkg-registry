@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("SQLite.Interop"
-    VERSION 1.0.111
+    VERSION 1.0.119
     LANGUAGES C
 )
 
@@ -30,6 +30,12 @@ target_sources(${PROJECT_NAME}
 #     #     # where external projects will look for the library's public headers
 #     #     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 # )
+
+find_package(zlib CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        zlib
+)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     find_package(Threads REQUIRED)
@@ -80,15 +86,19 @@ target_compile_definitions(${PROJECT_NAME}
             SQLITE_ENABLE_API_ARMOR=1
             SQLITE_ENABLE_DBSTAT_VTAB=1
             SQLITE_ENABLE_STMTVTAB=1
+            SQLITE_ENABLE_UPDATE_DELETE_LIMIT=1
             INTEROP_TEST_EXTENSION=1
             INTEROP_EXTENSION_FUNCTIONS=1
             INTEROP_VIRTUAL_TABLE=1
+            INTEROP_COMPRESS_EXTENSION=1
+            INTEROP_ZIPFILE_EXTENSION=1
             INTEROP_FTS5_EXTENSION=1
             INTEROP_PERCENTILE_EXTENSION=1
             INTEROP_TOTYPE_EXTENSION=1
             INTEROP_REGEXP_EXTENSION=1
             INTEROP_JSON1_EXTENSION=1
             INTEROP_SHA1_EXTENSION=1
+            INTEROP_SHA3_EXTENSION=1
             INTEROP_SESSION_EXTENSION=1
         >
 )

@@ -1,6 +1,6 @@
 {
     "name": "dotnet-system-data-sqlite",
-    "version": "1.0.111",
+    "version": "1.0.119",
     "description": "ADO.NET provider for SQLite",
     "homepage": "https://system.data.sqlite.org/index.html",
     "dependencies":
@@ -16,7 +16,8 @@
         {
             "name": "decovar-vcpkg-cmake",
             "host": true
-        }
+        },
+        "zlib"
     ],
     "default-features":
     [

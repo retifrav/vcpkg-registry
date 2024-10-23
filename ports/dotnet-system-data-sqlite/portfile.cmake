@@ -4,7 +4,7 @@ vcpkg_download_distfile(
     ARCHIVE
     URLS "https://system.data.sqlite.org/blobs/${VERSION}.0/sqlite-netFx-source-${VERSION}.0.zip"
     FILENAME "sqlite-netFx-source-${VERSION}.0.zip"
-    SHA512 fdf326b1b26d7332c24995c017856c46adfe5122df105bd5d47cd426f3fd797dff740a54fa2e44b8eec9f3d19ef212e1724f3a8ee7f9039745ccaeba71b9a273
+    SHA512 b8837395e6b3e2e11e8a26cbad1f00790af4cf8c22375ad0d1a4cb4a694abf18da47738f08beafce4ac86af12df8ab0612cf7a49c73fe8534188b6432642d44d
 )
 
 vcpkg_extract_source_archive(
@@ -40,9 +40,9 @@ vcpkg_cmake_config_fixup(
 # otherwise you can get a stack overflow crash at some point
 if(NOT "interop-only" IN_LIST FEATURES)
     find_program(DOTNET dotnet REQUIRED)
-    set(DOTNET_RUNTIME "NetStandard20") # should be 2.0 and lower-cased, to conform with the .NET schema
+    set(DOTNET_RUNTIME "NetStandard21") # should be 2.1 and lower-cased, to conform with the .NET schema
     #string(TOLOWER ${DOTNET_RUNTIME} DOTNET_RUNTIME_LOWER)
-    set(DOTNET_RUNTIME_LOWER "netstandard2.0")
+    set(DOTNET_RUNTIME_LOWER "netstandard2.1")
     #
     vcpkg_execute_required_process(
         COMMAND ${DOTNET} build -c Debug ./System.Data.SQLite/System.Data.SQLite.${DOTNET_RUNTIME}.csproj
