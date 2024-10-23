@@ -81,6 +81,11 @@
             "baseline": "7.5.2",
             "port-version": 0
         },
+        "dotnet-system-data-sqlite":
+        {
+            "baseline": "1.0.111",
+            "port-version": 0
+        },
         "draco":
         {
             "baseline": "1.5.7",

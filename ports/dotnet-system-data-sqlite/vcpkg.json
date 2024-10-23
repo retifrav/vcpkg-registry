@@ -1,0 +1,32 @@
+{
+    "name": "dotnet-system-data-sqlite",
+    "version": "1.0.111",
+    "description": "ADO.NET provider for SQLite",
+    "homepage": "https://system.data.sqlite.org/index.html",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ],
+    "default-features":
+    [
+        "interop-only"
+    ],
+    "features":
+    {
+        "interop-only":
+        {
+            "description": "Build only the SQLite.Interop, don't build the System.Data.SQLite"
+        }
+    }
+}
