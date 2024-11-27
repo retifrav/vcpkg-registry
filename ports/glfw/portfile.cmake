@@ -1,3 +1,5 @@
+message(STATUS "Just an example of using branches in the registry")
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:glfw/glfw.git
