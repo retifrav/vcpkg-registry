@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/Vulkan-Headers.git
-    REF 217e93c664ec6704ec2d8c36fa116c1a4a1e2d40
+    REF 05fe2cc910a68c9ba5dac07db46ef78573acee72
 )
 
 vcpkg_cmake_configure(
