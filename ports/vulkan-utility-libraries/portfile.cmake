@@ -1,9 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/Vulkan-Utility-Libraries.git
-    REF 4cfc176e3242b4dbdfd3f6c5680c5d8f2cb7db45
+    REF 1b07de9a3a174b853833f7f87a824f20604266b9
     PATCHES
-        dependencies-discovery.patch
+        001-dependencies-discovery.patch
 )
 
 vcpkg_cmake_configure(

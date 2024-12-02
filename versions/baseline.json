@@ -363,7 +363,7 @@
         },
         "vulkan-utility-libraries":
         {
-            "baseline": "2024.1.5",
+            "baseline": "2024.6.14",
             "port-version": 0
         },
         "wtl":
