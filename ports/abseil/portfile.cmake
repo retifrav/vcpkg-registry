@@ -8,7 +8,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:abseil/abseil-cpp.git
-    REF 4a2c63365eff8823a5221db86ef490e828306f9d
+    REF 4447c7562e3bc702ade25105912dce503f0c4010
 )
 
 vcpkg_cmake_configure(
@@ -26,8 +26,6 @@ vcpkg_cmake_config_fixup(
 )
 
 vcpkg_fixup_pkgconfig()
-
-#vcpkg_copy_pdbs()
 
 file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/include"

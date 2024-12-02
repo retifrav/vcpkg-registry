@@ -1,6 +1,6 @@
 {
     "name": "abseil",
-    "version": "2024.1.16",
+    "version": "2024.8.1",
     "description": "Abseil common libraries",
     "homepage": "https://abseil.io/",
     "dependencies":
