@@ -1,6 +1,6 @@
 {
     "name": "spirv-headers",
-    "version": "2023.3.8",
+    "version": "2024.6.12",
     "description": "Machine-readable files for the SPIR-V Registry",
     "homepage": "https://github.com/KhronosGroup/SPIRV-Headers",
     "dependencies":

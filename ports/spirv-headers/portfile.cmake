@@ -1,15 +1,19 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Headers.git
-    REF 1feaf4414eb2b353764d01d88f8aa4bcc67b60db
+    REF 2acb319af38d43be3ea76bfabf3998e5281d8d12
     PATCHES
-        cmake-version.patch
+        001-versions.patch
 )
+
+# vcpkg_find_acquire_program(PYTHON3)
+# get_filename_component(PYTHON3_DIR "${PYTHON3}" DIRECTORY)
+# vcpkg_add_to_path("${PYTHON3_DIR}")
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
-        -DSPIRV_HEADERS_SKIP_EXAMPLES=1
+        -DSPIRV_HEADERS_ENABLE_TESTS=0
 )
 
 vcpkg_cmake_install()
