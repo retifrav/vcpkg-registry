@@ -283,7 +283,7 @@
         },
         "spirv-tools":
         {
-            "baseline": "2023.3.13",
+            "baseline": "2024.6.20",
             "port-version": 0
         },
         "sqlite":

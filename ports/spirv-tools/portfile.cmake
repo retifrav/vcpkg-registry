@@ -1,11 +1,11 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Tools.git
-    REF 44d72a9b36702f093dd20815561a56778b2d181e
+    REF 0cfe9e7219148716dfd30b37f4d21753f098707a
     PATCHES
-        python-discovery.patch
-        dependencies-discovery.patch
-        installation.patch
+        001-python-discovery.patch
+        002-dependencies-discovery.patch
+        003-installation.patch
 )
 
 vcpkg_find_acquire_program(PYTHON3)

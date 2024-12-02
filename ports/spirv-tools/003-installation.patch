@@ -1,8 +1,17 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 75830b44..03706988 100644
+index 0ba173f1..68f79436 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -270,19 +270,24 @@ else()
+@@ -14,7 +14,7 @@
+ 
+ cmake_minimum_required(VERSION 3.17.2)
+ 
+-project(spirv-tools)
++project(spirv-tools VERSION 2024.6.20)
+ 
+ # Avoid a bug in CMake 3.22.1. By default it will set -std=c++11 for
+ # targets in test/*, when those tests need -std=c++17.
+@@ -284,19 +284,24 @@ else()
  endif()
  
  if(ENABLE_SPIRV_TOOLS_INSTALL)
@@ -33,7 +42,7 @@ index 75830b44..03706988 100644
        "find_dependency(${SPIRV_TOOLS})\n"
        "include(\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake)\n"
        "set(${TARGET}_LIBRARIES ${TARGET})\n"
-@@ -342,6 +347,8 @@ add_subdirectory(tools)
+@@ -364,6 +369,8 @@ add_subdirectory(tools)
  add_subdirectory(test)
  add_subdirectory(examples)
  
@@ -42,7 +51,7 @@ index 75830b44..03706988 100644
  if(ENABLE_SPIRV_TOOLS_INSTALL)
    install(
      FILES
-@@ -351,7 +358,31 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+@@ -373,7 +380,31 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
        ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/linker.hpp
        ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/instrument.hpp
      DESTINATION
@@ -75,7 +84,7 @@ index 75830b44..03706988 100644
  endif(ENABLE_SPIRV_TOOLS_INSTALL)
  
  if (NOT "${SPIRV_SKIP_TESTS}")
-@@ -390,10 +421,14 @@ add_custom_target(spirv-tools-shared-pkg-config ALL
+@@ -417,10 +448,14 @@ add_custom_target(spirv-tools-pkg-config
  
  # Install pkg-config file
  if (ENABLE_SPIRV_TOOLS_INSTALL)
@@ -92,10 +101,10 @@ index 75830b44..03706988 100644
        ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
  endif()
 diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
-index acfa0c12..b51da53e 100644
+index d0454c6c..c2e29635 100644
 --- a/source/CMakeLists.txt
 +++ b/source/CMakeLists.txt
-@@ -425,7 +425,24 @@ if (ANDROID)
+@@ -420,7 +420,24 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
  endif()
  
  if(ENABLE_SPIRV_TOOLS_INSTALL)
