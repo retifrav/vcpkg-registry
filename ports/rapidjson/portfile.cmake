@@ -4,9 +4,9 @@ set(VCPKG_BUILD_TYPE release)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:Tencent/rapidjson.git
-    REF 7c73dd7de7c4f14379b781418c6e947ad464c818
+    REF 858451e5b7d1c56cf8f6d58f88cf958351837e53
     PATCHES
-        installation.patch
+        001-installation.patch
 )
 
 file(COPY
@@ -29,7 +29,7 @@ vcpkg_cmake_configure(
         -DRAPIDJSON_BUILD_TESTS=0
         -DRAPIDJSON_BUILD_THIRDPARTY_GTEST=0
         -DRAPIDJSON_ENABLE_INSTRUMENTATION_OPT=1
-        -DRAPIDJSON_HAS_STDSTRING=0
+        -DRAPIDJSON_HAS_STDSTRING=1
         -DRAPIDJSON_USE_MEMBERSMAP=0
 )
 
