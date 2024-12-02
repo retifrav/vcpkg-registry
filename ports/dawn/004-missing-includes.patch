@@ -1,0 +1,12 @@
+diff --git a/src/tint/lang/spirv/reader/reader.h b/src/tint/lang/spirv/reader/reader.h
+index e67f6a73b8..fc813a5efe 100644
+--- a/src/tint/lang/spirv/reader/reader.h
++++ b/src/tint/lang/spirv/reader/reader.h
+@@ -32,6 +32,7 @@
+ 
+ #include "src/tint/lang/spirv/reader/common/options.h"
+ #include "src/tint/lang/wgsl/program/program.h"
++#include "src/tint/lang/core/ir/module.h"
+ 
+ // Forward declarations
+ namespace tint::core::ir {

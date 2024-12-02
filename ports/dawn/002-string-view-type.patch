@@ -1,0 +1,31 @@
+diff --git a/src/dawn/native/Pipeline.cpp b/src/dawn/native/Pipeline.cpp
+index 25a94dde17..a9549338f3 100644
+--- a/src/dawn/native/Pipeline.cpp
++++ b/src/dawn/native/Pipeline.cpp
+@@ -152,11 +152,11 @@ ResultOrError<ShaderModuleEntryPoint> ValidateProgrammableStage(DeviceBase* devi
+                 DAWN_UNREACHABLE();
+         }
+ 
+-        if (!stageInitializedConstantIdentifiers.contains(key)) {
++        if (!stageInitializedConstantIdentifiers.contains(std::string{key})) {
+             if (metadata.uninitializedOverrides.contains(key)) {
+                 numUninitializedConstants--;
+             }
+-            stageInitializedConstantIdentifiers.insert(key);
++            stageInitializedConstantIdentifiers.insert(std::string{key});
+         } else {
+             // There are duplicate initializations
+             return DAWN_VALIDATION_ERROR(
+diff --git a/src/dawn/utils/CommandLineParser.cpp b/src/dawn/utils/CommandLineParser.cpp
+index b8918755f0..d2698c2b0f 100644
+--- a/src/dawn/utils/CommandLineParser.cpp
++++ b/src/dawn/utils/CommandLineParser.cpp
+@@ -140,7 +140,7 @@ CommandLineParser::OptionBase::ParseResult CommandLineParser::StringOption::Pars
+         return {false, args, "expected a value"};
+     }
+ 
+-    mValue = args.front();
++    mValue = std::string{args.front()};
+     return {true, args.subspan(1)};
+ }
+ 

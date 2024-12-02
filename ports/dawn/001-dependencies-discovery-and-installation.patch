@@ -1,0 +1,1059 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1ef7a60cc6..6a0c75f8d9 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -26,7 +26,7 @@
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ # As per https://github.com/google/oss-policies-info/blob/main/foundational-cxx-support-matrix.md
+-cmake_minimum_required(VERSION 3.13)
++cmake_minimum_required(VERSION 3.22)
+ 
+ # - Since we are past CMake 3.12 we can add CONFIGURE_DEPENDS to DawnGenerator to rerun CMake
+ #   in case any of the generator files changes. We should also remove the CACHE "" FORCE stuff to
+@@ -36,12 +36,12 @@ cmake_minimum_required(VERSION 3.13)
+ 
+ project(
+     Dawn
+-    DESCRIPTION "Dawn, a WebGPU implementation"
++    DESCRIPTION "WebGPU implementation"
+     LANGUAGES C CXX
+     HOMEPAGE_URL "https://dawn.googlesource.com/dawn"
+-    VERSION 0.0.0
++    VERSION 2024.11.21
+ )
+-enable_testing()
++#enable_testing()
+ 
+ list(INSERT CMAKE_MODULE_PATH 0 "${Dawn_SOURCE_DIR}/src/cmake")
+ 
+@@ -49,7 +49,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+ 
+ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+-set(CMAKE_DEBUG_POSTFIX "")
++#set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
+ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+ 
+ include(DawnSetIfNotDefined)
+@@ -125,7 +126,7 @@ if (DAWN_SUPPORTS_GLFW_FOR_WINDOWING)
+ endif()
+ 
+ option(DAWN_ENABLE_ASAN "Enable address sanitizer" OFF)
+-option(DAWN_ENABLE_INSTALL "Enable install step for Dawn libraries" OFF)
++#option(DAWN_ENABLE_INSTALL "Enable install step for Dawn libraries" OFF)
+ option(DAWN_ENABLE_TSAN "Enable thread sanitizer" OFF)
+ option(DAWN_ENABLE_MSAN "Enable memory sanitizer" OFF)
+ option(DAWN_ENABLE_UBSAN "Enable undefined behaviour sanitizer" OFF)
+@@ -139,13 +140,31 @@ option(DAWN_ENABLE_OPENGLES "Enable compilation of the OpenGL ES backend" ${ENAB
+ option(DAWN_ENABLE_VULKAN "Enable compilation of the Vulkan backend" ${ENABLE_VULKAN})
+ option(DAWN_ENABLE_SPIRV_VALIDATION "Enable validation of SPIR-V" ${ENABLE_SPIRV_VALIDATION})
+ 
+-# Optional path to Emscripten toolchain to allow for building WASM.
+-option(DAWN_EMSCRIPTEN_TOOLCHAIN "Directory in which to find Emscripten toolchain" "")
+-set(DAWN_ENABLE_EMSCRIPTEN OFF)
+-if (NOT ${DAWN_EMSCRIPTEN_TOOLCHAIN} STREQUAL "" AND ENABLE_EMSCRIPTEN)
+-    set(DAWN_ENABLE_EMSCRIPTEN ON)
++set(DAWN_EMSCRIPTEN_PATH "")
++if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
++    if(NOT DEFINED ENV{EMSDK})
++        message(FATAL_ERROR "[ERROR] The `EMSDK` environment variable isn't set, you probably haven't sourced emsdk_env.sh")
++    endif()
++    set(DAWN_EMSCRIPTEN_PATH "$ENV{EMSDK}/upstream/emscripten")
++    if(NOT EXISTS "${DAWN_EMSCRIPTEN_PATH}/tools/maint/gen_struct_info.py")
++        message(FATAL_ERROR
++            "[ERROR] The ${DAWN_EMSCRIPTEN_PATH}/tools/maint/gen_struct_info.py "
++            "does not seem to exist, so generating certain files (such as with `webgpu_gen_struct_info()`) "
++            "will fail; note that these tools aren't installed with the regular Emscripten installation procedure."
++        )
++    endif()
++    if(NOT EXISTS "${DAWN_EMSCRIPTEN_PATH}/src/closure-externs/webgpu-externs.js")
++        message(FATAL_ERROR
++            "[ERROR] The ${DAWN_EMSCRIPTEN_PATH}/src/closure-externs/webgpu-externs.js "
++            "does not seem to exist, but it is needed for linking to emdawnwebgpu_config target"
++        )
++    endif()
++    message(STATUS "Dawn Emscripten path: ${DAWN_EMSCRIPTEN_PATH}")
+ endif()
+ 
++# why the hell there is another variable for this
++set(DAWN_ENABLE_EMSCRIPTEN ${ENABLE_EMSCRIPTEN})
++
+ message(STATUS "Dawn build D3D11 backend: ${DAWN_ENABLE_D3D11}")
+ message(STATUS "Dawn build D3D12 backend: ${DAWN_ENABLE_D3D12}")
+ message(STATUS "Dawn build Metal backend: ${DAWN_ENABLE_METAL}")
+@@ -161,7 +180,7 @@ message(STATUS "Dawn build with ASAN: ${DAWN_ENABLE_ASAN}")
+ message(STATUS "Dawn build with TSAN: ${DAWN_ENABLE_TSAN}")
+ message(STATUS "Dawn build with MSAN: ${DAWN_ENABLE_MSAN}")
+ message(STATUS "Dawn build with UBSAN: ${DAWN_ENABLE_UBSAN}")
+-message(STATUS "Dawn enable install: ${DAWN_ENABLE_INSTALL}")
++#message(STATUS "Dawn enable install: ${DAWN_ENABLE_INSTALL}")
+ message(STATUS "")
+ 
+ option(DAWN_ALWAYS_ASSERT "Enable assertions on all build types" OFF)
+@@ -279,43 +298,43 @@ message(STATUS "")
+ endif()
+ 
+ set_if_not_defined(DAWN_THIRD_PARTY_DIR "${Dawn_SOURCE_DIR}/third_party" "Directory in which to find third-party dependencies.")
+-
+-set_if_not_defined(DAWN_ABSEIL_DIR "${DAWN_THIRD_PARTY_DIR}/abseil-cpp" "Directory in which to find Abseil")
+-set_if_not_defined(DAWN_GLFW_DIR "${DAWN_THIRD_PARTY_DIR}/glfw" "Directory in which to find GLFW")
+-set_if_not_defined(DAWN_JINJA2_DIR "${DAWN_THIRD_PARTY_DIR}/jinja2" "Directory in which to find Jinja2")
+-set_if_not_defined(DAWN_MARKUPSAFE_DIR "${DAWN_THIRD_PARTY_DIR}/markupsafe" "Directory in which to find MarkupSafe")
+-set_if_not_defined(DAWN_KHRONOS_DIR "${DAWN_THIRD_PARTY_DIR}/khronos" "Directory in which to find Khronos GL headers")
+-set_if_not_defined(DAWN_SWIFTSHADER_DIR "${DAWN_THIRD_PARTY_DIR}/swiftshader" "Directory in which to find swiftshader")
+-set_if_not_defined(DAWN_PROTOBUF_DIR "${DAWN_THIRD_PARTY_DIR}/protobuf" "Directory in which to find protobuf")
+-set_if_not_defined(DAWN_LPM_DIR "${DAWN_THIRD_PARTY_DIR}/libprotobuf-mutator/src" "Directory in which to find libprotobuf")
++#
++# set_if_not_defined(DAWN_ABSEIL_DIR "${DAWN_THIRD_PARTY_DIR}/abseil-cpp" "Directory in which to find Abseil")
++# set_if_not_defined(DAWN_GLFW_DIR "${DAWN_THIRD_PARTY_DIR}/glfw" "Directory in which to find GLFW")
++# set_if_not_defined(DAWN_JINJA2_DIR "${DAWN_THIRD_PARTY_DIR}/jinja2" "Directory in which to find Jinja2")
++# set_if_not_defined(DAWN_MARKUPSAFE_DIR "${DAWN_THIRD_PARTY_DIR}/markupsafe" "Directory in which to find MarkupSafe")
++# set_if_not_defined(DAWN_KHRONOS_DIR "${DAWN_THIRD_PARTY_DIR}/khronos" "Directory in which to find Khronos GL headers")
++# set_if_not_defined(DAWN_SWIFTSHADER_DIR "${DAWN_THIRD_PARTY_DIR}/swiftshader" "Directory in which to find swiftshader")
++# set_if_not_defined(DAWN_PROTOBUF_DIR "${DAWN_THIRD_PARTY_DIR}/protobuf" "Directory in which to find protobuf")
++# set_if_not_defined(DAWN_LPM_DIR "${DAWN_THIRD_PARTY_DIR}/libprotobuf-mutator/src" "Directory in which to find libprotobuf")
+ set_if_not_defined(DAWN_EMDAWNWEBGPU_DIR "${DAWN_THIRD_PARTY_DIR}/emdawnwebgpu" "Directory in which to find Dawn specific Emscripten bindings")
+-
+-set_if_not_defined(DAWN_SPIRV_TOOLS_DIR "${DAWN_THIRD_PARTY_DIR}/spirv-tools/src" "Directory in which to find SPIRV-Tools")
+-set_if_not_defined(DAWN_SPIRV_HEADERS_DIR "${DAWN_THIRD_PARTY_DIR}/spirv-headers/src" "Directory in which to find SPIRV-Headers")
+-set_if_not_defined(DAWN_GLSLANG_DIR "${DAWN_THIRD_PARTY_DIR}/glslang/src" "Directory in which to find GLSLang")
+-set_if_not_defined(DAWN_VULKAN_HEADERS_DIR "${DAWN_THIRD_PARTY_DIR}/vulkan-headers/src" "Directory in which to find Vulkan-Headers")
+-set_if_not_defined(DAWN_VULKAN_UTILITY_LIBRARIES_DIR "${DAWN_THIRD_PARTY_DIR}/vulkan-utility-libraries/src" "Directory in which to find Vulkan-Utility-Libraries")
+-
+-message(STATUS "Dawn third_party dir: ${DAWN_THIRD_PARTY_DIR}")
+-message(STATUS "Dawn GLFW dir: ${DAWN_GLFW_DIR}")
+-message(STATUS "Dawn Jinja2 dir: ${DAWN_JINJA2_DIR}")
+-message(STATUS "Dawn MarkupSafe dir: ${DAWN_MARKUPSAFE_DIR}")
+-message(STATUS "Dawn Khronos dir: ${DAWN_KHRONOS_DIR}")
+-message(STATUS "Dawn Swiftshader dir: ${DAWN_SWIFTSHADER_DIR}")
+-message(STATUS "Dawn Protobuf dir: ${DAWN_PROTOBUF_DIR}")
+-message(STATUS "Dawn LPM dir: ${DAWN_LPM_DIR}")
+-message(STATUS "Dawn Emdawnwebgpu dir: ${DAWN_EMDAWNWEBGPU_DIR}")
+-message(STATUS "Dawn Spir-Tools dir: ${DAWN_SPIRV_TOOLS_DIR}")
+-message(STATUS "Dawn Spirv-Headers dir: ${DAWN_SPIRV_HEADERS_DIR}")
+-message(STATUS "Dawn Glslang dir: ${DAWN_GLSLANG_DIR}")
+-message(STATUS "Dawn Vulkan Headers dir: ${DAWN_VULKAN_HEADERS_DIR}")
+-message(STATUS "Dawn Vulkan Utility Libraries dir: ${DAWN_VULKAN_UTILITY_LIBRARIES_DIR}")
+-message(STATUS "")
++#
++# set_if_not_defined(DAWN_SPIRV_TOOLS_DIR "${DAWN_THIRD_PARTY_DIR}/spirv-tools/src" "Directory in which to find SPIRV-Tools")
++# set_if_not_defined(DAWN_SPIRV_HEADERS_DIR "${DAWN_THIRD_PARTY_DIR}/spirv-headers/src" "Directory in which to find SPIRV-Headers")
++# set_if_not_defined(DAWN_GLSLANG_DIR "${DAWN_THIRD_PARTY_DIR}/glslang/src" "Directory in which to find GLSLang")
++# set_if_not_defined(DAWN_VULKAN_HEADERS_DIR "${DAWN_THIRD_PARTY_DIR}/vulkan-headers/src" "Directory in which to find Vulkan-Headers")
++# set_if_not_defined(DAWN_VULKAN_UTILITY_LIBRARIES_DIR "${DAWN_THIRD_PARTY_DIR}/vulkan-utility-libraries/src" "Directory in which to find Vulkan-Utility-Libraries")
++#
++# message(STATUS "Dawn third_party dir: ${DAWN_THIRD_PARTY_DIR}")
++# message(STATUS "Dawn GLFW dir: ${DAWN_GLFW_DIR}")
++# message(STATUS "Dawn Jinja2 dir: ${DAWN_JINJA2_DIR}")
++# message(STATUS "Dawn MarkupSafe dir: ${DAWN_MARKUPSAFE_DIR}")
++# message(STATUS "Dawn Khronos dir: ${DAWN_KHRONOS_DIR}")
++# message(STATUS "Dawn Swiftshader dir: ${DAWN_SWIFTSHADER_DIR}")
++# message(STATUS "Dawn Protobuf dir: ${DAWN_PROTOBUF_DIR}")
++# message(STATUS "Dawn LPM dir: ${DAWN_LPM_DIR}")
++# message(STATUS "Dawn Emdawnwebgpu dir: ${DAWN_EMDAWNWEBGPU_DIR}")
++# message(STATUS "Dawn Spir-Tools dir: ${DAWN_SPIRV_TOOLS_DIR}")
++# message(STATUS "Dawn Spirv-Headers dir: ${DAWN_SPIRV_HEADERS_DIR}")
++# message(STATUS "Dawn Glslang dir: ${DAWN_GLSLANG_DIR}")
++# message(STATUS "Dawn Vulkan Headers dir: ${DAWN_VULKAN_HEADERS_DIR}")
++# message(STATUS "Dawn Vulkan Utility Libraries dir: ${DAWN_VULKAN_UTILITY_LIBRARIES_DIR}")
++# message(STATUS "")
+ 
+ # Dependencies for DAWN_BUILD_NODE_BINDINGS
+-set_if_not_defined(NODE_ADDON_API_DIR "${DAWN_THIRD_PARTY_DIR}/node-addon-api" "Directory in which to find node-addon-api")
+-set_if_not_defined(NODE_API_HEADERS_DIR "${DAWN_THIRD_PARTY_DIR}/node-api-headers" "Directory in which to find node-api-headers")
+-set_if_not_defined(WEBGPU_IDL_PATH "${DAWN_THIRD_PARTY_DIR}/gpuweb/webgpu.idl" "Path to the webgpu.idl definition file")
++# set_if_not_defined(NODE_ADDON_API_DIR "${DAWN_THIRD_PARTY_DIR}/node-addon-api" "Directory in which to find node-addon-api")
++# set_if_not_defined(NODE_API_HEADERS_DIR "${DAWN_THIRD_PARTY_DIR}/node-api-headers" "Directory in which to find node-api-headers")
++# set_if_not_defined(WEBGPU_IDL_PATH "${DAWN_THIRD_PARTY_DIR}/gpuweb/webgpu.idl" "Path to the webgpu.idl definition file")
+ set_if_not_defined(GO_EXECUTABLE "go" "Golang executable for running the IDL generator")
+ 
+ message(STATUS "Node Addon API dir: ${NODE_ADDON_API_DIR}")
+@@ -331,16 +350,6 @@ message(STATUS "Dawn fetch dependencies: ${DAWN_FETCH_DEPENDENCIES}")
+ message(STATUS "Dawn build monolithic library: ${DAWN_BUILD_MONOLITHIC_LIBRARY}")
+ message(STATUS "")
+ 
+-# Optional path to Emscripten toolchain to allow for building WASM.
+-set_if_not_defined(DAWN_EMSCRIPTEN_TOOLCHAIN "" "Directory in which to find Emscripten toolchain")
+-set(DAWN_ENABLE_EMSCRIPTEN OFF)
+-if (NOT ${DAWN_EMSCRIPTEN_TOOLCHAIN} STREQUAL "" AND ENABLE_EMSCRIPTEN)
+-    set(DAWN_ENABLE_EMSCRIPTEN ON)
+-endif()
+-
+-message(STATUS "Dawn Emscripten toolchain: ${DAWN_EMSCRIPTEN_TOOLCHAIN}")
+-message(STATUS "")
+-
+ # Much of the backend code is shared among desktop OpenGL and OpenGL ES
+ if (${DAWN_ENABLE_DESKTOP_GL} OR ${DAWN_ENABLE_OPENGLES})
+     set(DAWN_ENABLE_OPENGL ON)
+@@ -363,9 +372,9 @@ target_include_directories(dawn_public_config INTERFACE
+ # The internal config contains additional path but includes the dawn_public_config include paths
+ add_library(dawn_internal_config INTERFACE)
+ target_include_directories(dawn_internal_config INTERFACE
+-    "${PROJECT_SOURCE_DIR}"
+-    "${DAWN_SRC_DIR}"
+-    "${DAWN_BUILD_GEN_DIR}/src"
++    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
++    "$<BUILD_INTERFACE:${DAWN_SRC_DIR}>"
++    "$<BUILD_INTERFACE:${DAWN_BUILD_GEN_DIR}/src>"
+ )
+ target_link_libraries(dawn_internal_config INTERFACE dawn_public_config)
+ 
+@@ -442,9 +451,10 @@ endif()
+ set(TINT_LIB_FUZZING_ENGINE_LINK_OPTIONS "" CACHE STRING "Used by OSS-Fuzz to control, via link options, which fuzzing engine should be used")
+ 
+ set(TINT_ROOT_SOURCE_DIR   ${PROJECT_SOURCE_DIR})
+-set(TINT_SPIRV_HEADERS_DIR ${DAWN_SPIRV_HEADERS_DIR})
+-set(TINT_SPIRV_TOOLS_DIR   ${DAWN_SPIRV_TOOLS_DIR})
++# set(TINT_SPIRV_HEADERS_DIR ${DAWN_SPIRV_HEADERS_DIR})
++# set(TINT_SPIRV_TOOLS_DIR   ${DAWN_SPIRV_TOOLS_DIR})
+ 
++find_package(absl CONFIG REQUIRED)
+ 
+ ################################################################################
+ # Run on all subdirectories
+@@ -455,23 +465,41 @@ if (DAWN_BUILD_PROTOBUF AND EXISTS "${DAWN_PROTOBUF_DIR}/cmake")
+   endif()
+ 
+   # Needs to come before SPIR-V Tools
+-  include("third_party/protobuf.cmake")
++  #include("third_party/protobuf.cmake")
+ endif()
+ 
+-add_subdirectory(third_party)
++# don't vendor dependencies
++#add_subdirectory(third_party)
++
++function(add_includes_list HEADERS ROOT_DIR)
++    foreach(header ${HEADERS})
++        file(TO_CMAKE_PATH "${header}" FIXED_HEADER)
++        file(RELATIVE_PATH header_file_path "${ROOT_DIR}" "${FIXED_HEADER}")
++        get_filename_component(header_directory_path "${header_file_path}" DIRECTORY)
++        install(
++            FILES ${FIXED_HEADER}
++            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${header_directory_path}"
++        )
++    endforeach()
++endfunction()
++
++function(add_includes_glob GLOB ROOT_DIR)
++    file(GLOB_RECURSE public_headers ${GLOB})
++    add_includes_list("${public_headers}" "${ROOT_DIR}")
++endfunction()
+ 
+ # TODO(crbug.com/tint/455): Tint does not currently build with CMake when
+ # BUILD_SHARED_LIBS=1, so always build it as static for now.
+-set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
+-set(BUILD_SHARED_LIBS 0)
++#set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
++#set(BUILD_SHARED_LIBS 0)
+ 
+ add_subdirectory(src/utils)
+ 
+-# Only build Tint when we are not building under Emscripten.
+-if (NOT ${DAWN_ENABLE_EMSCRIPTEN})
++# what the heck is this, it has to be built with Emscripten too
++#if (NOT ${DAWN_ENABLE_EMSCRIPTEN})
+   add_subdirectory(src/tint)
+-endif()
+-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
++#endif()
++#set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
+ 
+ if (DAWN_ENABLE_D3D11 OR DAWN_ENABLE_D3D12 OR DAWN_ENABLE_METAL OR DAWN_ENABLE_NULL OR DAWN_ENABLE_DESKTOP_GL OR DAWN_ENABLE_OPENGLES OR DAWN_ENABLE_VULKAN OR DAWN_ENABLE_EMSCRIPTEN)
+     add_subdirectory(generator)
+@@ -513,7 +541,7 @@ if (DAWN_EMIT_COVERAGE)
+     VERBATIM)
+ endif()
+ 
+-if (DAWN_BUILD_MONOLITHIC_LIBRARY AND DAWN_ENABLE_INSTALL)
++if(DAWN_BUILD_MONOLITHIC_LIBRARY) # AND DAWN_ENABLE_INSTALL
+   # This series of functions add the necessary information so that other CMake projects
+   # can use Dawn, be it from a build directory, a local install or when packaged.
+   install(EXPORT DawnTargets
+@@ -540,4 +568,260 @@ if (DAWN_BUILD_MONOLITHIC_LIBRARY AND DAWN_ENABLE_INSTALL)
+     "${CMAKE_CURRENT_BINARY_DIR}/DawnConfigVersion.cmake"
+     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Dawn"
+   )
+-endif ()
++else()
++  # trying to figure out which targets are supposed to be installed
++  #
++  set(TINT_COMMON_TARGETS "")
++  if(TINT_BUILD_MSL_WRITER
++      OR (TINT_BUILD_SPV_READER OR TINT_BUILD_SPV_WRITER)
++      # OR (TINT_BUILD_WGSL_READER OR TINT_BUILD_WGSL_WRITER)
++      # OR SOME_OTHER?
++  )
++      list(APPEND TINT_COMMON_TARGETS
++          tint_lang_core_ir_transform
++      )
++  endif()
++  #
++  set(TINT_GLSL_TARGETS "")
++  if(TINT_BUILD_GLSL_WRITER)
++      list(APPEND TINT_GLSL_TARGETS
++          tint_lang_glsl
++          tint_lang_glsl_ir
++          tint_lang_glsl_intrinsic
++          tint_lang_glsl_writer
++          tint_lang_glsl_writer_ast_printer
++          tint_lang_glsl_writer_ast_raise
++          tint_lang_glsl_writer_common
++          tint_lang_glsl_writer_printer
++          tint_lang_glsl_writer_raise
++      )
++  endif()
++  #
++  set(TINT_HLSL_TARGETS "")
++  if(TINT_BUILD_HLSL_WRITER)
++      list(APPEND TINT_HLSL_TARGETS
++          tint_lang_hlsl
++          tint_lang_hlsl_intrinsic
++          tint_lang_hlsl_ir
++          tint_lang_hlsl_type
++          tint_lang_hlsl_writer
++          tint_lang_hlsl_writer_printer
++          tint_lang_hlsl_writer_raise
++          tint_lang_hlsl_writer_ast_printer
++          tint_lang_hlsl_writer_ast_raise
++      )
++  endif()
++  #
++  set(TINT_MSL_TARGETS "")
++  if(TINT_BUILD_MSL_WRITER)
++      list(APPEND TINT_MSL_TARGETS
++          tint_lang_msl
++          tint_lang_msl_intrinsic
++          tint_lang_msl_ir
++          tint_lang_msl_type
++          tint_lang_msl_writer
++          tint_lang_msl_writer_ast_printer
++          tint_lang_msl_writer_ast_raise
++          tint_lang_msl_writer_common
++          tint_lang_msl_writer_printer
++          tint_lang_msl_writer_raise
++      )
++  endif()
++  #
++  set(TINT_SPIRV_TARGETS "")
++  if(TINT_BUILD_SPV_READER OR TINT_BUILD_SPV_WRITER)
++      list(APPEND TINT_SPIRV_TARGETS
++          tint_lang_spirv
++          tint_lang_spirv_intrinsic
++          tint_lang_spirv_ir
++          tint_lang_spirv_type
++          tint_lang_spirv_validate
++      )
++  endif()
++  if(TINT_BUILD_SPV_READER)
++      list(APPEND TINT_SPIRV_TARGETS
++          tint_lang_spirv_reader
++          tint_lang_spirv_reader_ast_lower
++          tint_lang_spirv_reader_ast_parser
++          tint_lang_spirv_reader_parser
++      )
++  endif()
++  if(TINT_BUILD_SPV_WRITER)
++      list(APPEND TINT_SPIRV_TARGETS
++          tint_lang_spirv_writer
++          #tint_lang_spirv_writer_ast_printer
++          #tint_lang_spirv_writer_ast_raise
++          tint_lang_spirv_writer_common
++          tint_lang_spirv_writer_printer
++          tint_lang_spirv_writer_raise
++      )
++  endif()
++  #
++  set(TINT_WGSL_TARGETS "")
++  if(TINT_BUILD_WGSL_READER OR TINT_BUILD_WGSL_WRITER)
++      list(APPEND TINT_WGSL_TARGETS
++          tint_lang_wgsl_ast_transform
++          tint_lang_wgsl_helpers
++          tint_lang_wgsl_inspector
++      )
++  endif()
++  if(TINT_BUILD_WGSL_READER)
++      list(APPEND TINT_WGSL_TARGETS
++          tint_lang_wgsl_reader
++          tint_lang_wgsl_reader_lower
++          tint_lang_wgsl_reader_parser
++          tint_lang_wgsl_reader_program_to_ir
++      )
++  endif()
++  if(TINT_BUILD_WGSL_WRITER)
++      list(APPEND TINT_WGSL_TARGETS
++          tint_lang_wgsl_writer
++          tint_lang_wgsl_writer_ast_printer
++          tint_lang_wgsl_writer_raise
++          tint_lang_wgsl_writer_syntax_tree_printer
++      )
++  endif()
++  #
++  set(DAWN_NON_EMSCRIPTEN_TARGETS "")
++  set(DAWN_EMSCRIPTEN_TARGETS "")
++  if(NOT DAWN_ENABLE_EMSCRIPTEN) # non-Emscripten targets
++      list(APPEND DAWN_NON_EMSCRIPTEN_TARGETS
++          dawn_headers
++          dawn_native
++          dawn_native_objects
++          dawn_platform
++          dawn_proc
++          dawn_wire
++          dawncpp_headers
++      )
++  else() # Emscripten targets
++      list(APPEND DAWN_EMSCRIPTEN_TARGETS
++          emdawnwebgpu_c
++          emdawnwebgpu_config
++          emdawnwebgpu_cpp
++      )
++  endif()
++  #
++  install( # a lot of these are internal targets, which actually shouldn't be exposed
++      TARGETS
++          ${DAWN_NON_EMSCRIPTEN_TARGETS}
++          ${DAWN_EMSCRIPTEN_TARGETS}
++          dawn_common
++          dawn_internal_config
++          dawn_public_config
++          dawn_shared_utils
++          partition_alloc
++          tint_api
++          tint_api_common
++          #tint_api_options
++          ${TINT_COMMON_TARGETS}
++          tint_lang_core
++          tint_lang_core_common
++          tint_lang_core_constant
++          tint_lang_core_intrinsic
++          tint_lang_core_ir
++          tint_lang_core_type
++          ${TINT_GLSL_TARGETS}
++          ${TINT_HLSL_TARGETS}
++          tint_lang_hlsl_writer_common
++          ${TINT_MSL_TARGETS}
++          ${TINT_SPIRV_TARGETS}
++          tint_lang_spirv_reader_lower
++          tint_lang_spirv_reader_common
++          ${TINT_WGSL_TARGETS}
++          tint_lang_wgsl
++          tint_lang_wgsl_ast
++          tint_lang_wgsl_common
++          tint_lang_wgsl_features
++          tint_lang_wgsl_intrinsic
++          tint_lang_wgsl_ir
++          tint_lang_wgsl_program
++          tint_lang_wgsl_resolver
++          tint_lang_wgsl_sem
++          tint_lang_wgsl_writer_ir_to_program
++          tint_utils_containers
++          tint_utils_debug
++          tint_utils_diagnostic
++          tint_utils_generator
++          tint_utils_ice
++          tint_utils_id
++          tint_utils_macros
++          tint_utils_math
++          tint_utils_memory
++          tint_utils_reflection
++          tint_utils_result
++          tint_utils_rtti
++          tint_utils_strconv
++          tint_utils_symbol
++          tint_utils_system
++          tint_utils_text
++          tint_utils_traits
++      EXPORT "${PROJECT_NAME}Targets"
++      PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/$<LOWER_CASE:${PROJECT_NAME}>"
++      INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++  )
++
++  if(DAWN_USE_GLFW)
++      install(TARGETS dawn_glfw
++          EXPORT "${PROJECT_NAME}Targets"
++          PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/$<LOWER_CASE:${PROJECT_NAME}>"
++          INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++      )
++  endif()
++
++  # generate and install export file
++  install(EXPORT "${PROJECT_NAME}Targets"
++      FILE "${PROJECT_NAME}Targets.cmake"
++      NAMESPACE "dawn::"
++      DESTINATION "share/${PROJECT_NAME}"
++  )
++
++  add_includes_glob(
++      "${PROJECT_SOURCE_DIR}/include/*.h"
++      "${CMAKE_CURRENT_SOURCE_DIR}/include"
++  )
++  add_includes_glob(
++      "${PROJECT_BINARY_DIR}/gen/include/*.h"
++      "${CMAKE_CURRENT_BINARY_DIR}/gen/include"
++  )
++  # add_includes_glob(
++  #     "${PROJECT_SOURCE_DIR}/src/utils/*.h"
++  #     "${CMAKE_CURRENT_SOURCE_DIR}/src"
++  # )
++  install(FILES
++      "${PROJECT_SOURCE_DIR}/src/utils/compiler.h"
++      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/$<LOWER_CASE:${PROJECT_NAME}/utils>"
++  )
++  add_includes_glob(
++      "${PROJECT_SOURCE_DIR}/src/tint/*.h"
++      "${CMAKE_CURRENT_SOURCE_DIR}/src"
++  )
++
++  include(CMakePackageConfigHelpers)
++
++  configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
++      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++      INSTALL_DESTINATION "share/${PROJECT_NAME}"
++  )
++
++  install(FILES
++      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++      DESTINATION "share/${PROJECT_NAME}"
++  )
++
++  # all of these are surprisingly required to be delivered to consuming projects too,
++  # because they are referenced in the resulting DawnTargets.cmake in target_link_options()
++  # with absolute paths
++  if(DAWN_ENABLE_EMSCRIPTEN)
++      install(
++          FILES
++              "${CMAKE_CURRENT_BINARY_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js"
++              "${CMAKE_CURRENT_BINARY_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js"
++              "${CMAKE_CURRENT_BINARY_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js"
++              "${PROJECT_SOURCE_DIR}/third_party/emdawnwebgpu/library_html5_webgpu.js"
++              "${PROJECT_SOURCE_DIR}/third_party/emdawnwebgpu/library_webgpu.js"
++              "$ENV{EMSDK}/upstream/emscripten/src/closure-externs/webgpu-externs.js"
++          DESTINATION "share/${PROJECT_NAME}/js"
++      )
++  endif()
++endif()
+diff --git a/src/cmake/BundleLibraries.cmake b/src/cmake/BundleLibraries.cmake
+index 046a6af10d..72978a33b4 100644
+--- a/src/cmake/BundleLibraries.cmake
++++ b/src/cmake/BundleLibraries.cmake
+@@ -66,7 +66,7 @@ function(bundle_libraries output_target)
+     endif()
+   endforeach()
+ 
+-  add_library(${output_target} SHARED ${all_objects})
++  add_library(${output_target} ${all_objects})
+ 
+   add_dependencies(${output_target} ${ARGN})
+ 
+diff --git a/src/dawn/CMakeLists.txt b/src/dawn/CMakeLists.txt
+index 38ec75e00e..7029bdcdb7 100644
+--- a/src/dawn/CMakeLists.txt
++++ b/src/dawn/CMakeLists.txt
+@@ -40,8 +40,8 @@ dawn_add_library(
+     HEADER_ONLY
+     UTILITY_TARGET dawn_internal_config
+     HEADERS
+-        "${DAWN_INCLUDE_DIR}/webgpu/webgpu.h"
+-        ${DAWN_HEADERS_GEN_HEADERS}
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/webgpu/webgpu.h>"
++        "$<BUILD_INTERFACE:${DAWN_HEADERS_GEN_HEADERS}>"
+     DEPENDS
+         dawn_public_config
+ )
+@@ -66,9 +66,9 @@ dawn_add_library(
+     HEADER_ONLY
+     UTILITY_TARGET dawn_internal_config
+     HEADERS
+-        "${DAWN_INCLUDE_DIR}/webgpu/webgpu_cpp.h"
+-        "${DAWN_INCLUDE_DIR}/webgpu/webgpu_enum_class_bitmasks.h"
+-        ${DAWNCPP_HEADERS_GEN_HEADERS}
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/webgpu/webgpu_cpp.h>"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/webgpu/webgpu_enum_class_bitmasks.h>"
++        "$<BUILD_INTERFACE:${DAWNCPP_HEADERS_GEN_HEADERS}>"
+     DEPENDS
+         dawn::dawn_headers
+ )
+@@ -123,8 +123,8 @@ if (NOT ${DAWN_ENABLE_EMSCRIPTEN})
+     dawn_proc
+     UTILITY_TARGET dawn_internal_config
+     HEADERS
+-      "${DAWN_INCLUDE_DIR}/dawn/dawn_thread_dispatch_proc.h"
+-      "${DAWN_INCLUDE_DIR}/dawn/dawn_proc.h"
++      "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/dawn_thread_dispatch_proc.h>"
++      "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/dawn_proc.h>"
+     SOURCES
+       "${DAWNPROC_GEN_SOURCES}"
+     DEPENDS
+diff --git a/src/dawn/common/CMakeLists.txt b/src/dawn/common/CMakeLists.txt
+index 8fe3b95421..d763853205 100644
+--- a/src/dawn/common/CMakeLists.txt
++++ b/src/dawn/common/CMakeLists.txt
+@@ -153,8 +153,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+ endif ()
+ 
+ if (DAWN_ENABLE_VULKAN)
++    find_package(VulkanHeaders CONFIG REQUIRED)
+     list(APPEND conditional_private_depends
+-        Vulkan-Headers)
++        Vulkan::Headers)
+ endif ()
+ 
+ list(APPEND conditional_private_depends
+diff --git a/src/dawn/glfw/CMakeLists.txt b/src/dawn/glfw/CMakeLists.txt
+index dc3f3ade03..7ca4c636dd 100644
+--- a/src/dawn/glfw/CMakeLists.txt
++++ b/src/dawn/glfw/CMakeLists.txt
+@@ -26,7 +26,7 @@
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ set(headers
+-    "${DAWN_INCLUDE_DIR}/webgpu/webgpu_glfw.h"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/webgpu/webgpu_glfw.h>"
+ )
+ set(sources
+     "utils.cpp"
+@@ -38,6 +38,8 @@ if (DAWN_ENABLE_METAL)
+     list(APPEND conditional_public_depends "-framework QuartzCore")
+ endif ()
+ 
++find_package(glfw3 CONFIG REQUIRED)
++
+ dawn_add_library(
+   dawn_glfw
+   UTILITY_TARGET dawn_internal_config
+diff --git a/src/dawn/native/CMakeLists.txt b/src/dawn/native/CMakeLists.txt
+index 051ca77b01..026a8dbfca 100644
+--- a/src/dawn/native/CMakeLists.txt
++++ b/src/dawn/native/CMakeLists.txt
+@@ -33,8 +33,8 @@ DawnJSONGenerator(
+ )
+ 
+ set(headers
+-    "${DAWN_INCLUDE_DIR}/dawn/native/DawnNative.h"
+-    "${DAWN_INCLUDE_DIR}/dawn/native/dawn_native_export.h"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/DawnNative.h>"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/dawn_native_export.h>"
+ )
+ 
+ set(private_headers
+@@ -298,7 +298,7 @@ endif()
+ 
+ if (DAWN_ENABLE_D3D11 OR DAWN_ENABLE_D3D12)
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/D3DBackend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/D3DBackend.h>"
+     )
+     list(APPEND private_headers
+         "d3d/BackendD3D.h"
+@@ -340,7 +340,7 @@ endif()
+ 
+ if (DAWN_ENABLE_D3D11)
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/D3D11Backend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/D3D11Backend.h>"
+     )
+     list(APPEND private_headers
+         "d3d11/BackendD3D11.h"
+@@ -397,7 +397,7 @@ endif()
+ 
+ if (DAWN_ENABLE_D3D12)
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/D3D12Backend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/D3D12Backend.h>"
+     )
+     list(APPEND private_headers
+         "d3d12/BackendD3D12.h"
+@@ -483,7 +483,7 @@ endif()
+ 
+ if (DAWN_ENABLE_METAL)
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/MetalBackend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/MetalBackend.h>"
+     )
+     list(APPEND private_headers
+         "metal/BackendMTL.h"
+@@ -547,7 +547,7 @@ endif()
+ 
+ if (DAWN_ENABLE_NULL)
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/NullBackend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/NullBackend.h>"
+     )
+     list(APPEND private_headers
+         "null/DeviceNull.h"
+@@ -564,6 +564,7 @@ if ((DAWN_ENABLE_OPENGL OR DAWN_ENABLE_VULKAN) AND DAWN_ENABLE_SPIRV_VALIDATION)
+     list(APPEND sources
+         "SpirvValidation.cpp"
+     )
++    find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+     list(APPEND conditional_private_depends
+         SPIRV-Tools-opt
+     )
+@@ -574,7 +575,7 @@ if (DAWN_ENABLE_OPENGL)
+         SCRIPT "${Dawn_SOURCE_DIR}/generator/opengl_loader_generator.py"
+         PRINT_NAME "OpenGL function loader"
+         EXTRA_PARAMETERS "--gl-xml"
+-             "${Dawn_SOURCE_DIR}/third_party/khronos/OpenGL-Registry/xml/gl.xml"
++             "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/opengl/gl.xml"
+              "--supported-extensions"
+              "${Dawn_SOURCE_DIR}/src/dawn/native/opengl/supported_extensions.json"
+         OUTPUT_HEADERS DAWN_NATIVE_OPENGL_AUTOGEN_HEADERS
+@@ -582,7 +583,7 @@ if (DAWN_ENABLE_OPENGL)
+     )
+ 
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/OpenGLBackend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/OpenGLBackend.h>"
+     )
+     list(APPEND private_headers
+         ${DAWN_NATIVE_OPENGL_AUTOGEN_HEADERS}
+@@ -646,12 +647,13 @@ if (DAWN_ENABLE_OPENGL)
+         "opengl/UtilsGL.cpp"
+     )
+ 
+-    list(APPEND conditional_private_depends dawn_khronos_platform)
++    # probably redundant
++    list(APPEND conditional_private_depends "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include") # dawn_khronos_platform
+ endif()
+ 
+ if (DAWN_ENABLE_VULKAN)
+     list(APPEND headers
+-        "${DAWN_INCLUDE_DIR}/dawn/native/VulkanBackend.h"
++        "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/native/VulkanBackend.h>"
+     )
+     list(APPEND private_headers
+         "vulkan/BackendVk.h"
+@@ -734,9 +736,14 @@ if (DAWN_ENABLE_VULKAN)
+         "vulkan/external_semaphore/SemaphoreServiceImplementation.cpp"
+     )
+ 
++    find_package(VulkanHeaders CONFIG REQUIRED)
++    find_package(VulkanUtilityLibraries CONFIG REQUIRED)
+     list(APPEND conditional_public_depends
+-        Vulkan-Headers
+-        VulkanUtilityHeaders
++        Vulkan::Headers
++        #
++        Vulkan::UtilityHeaders
++        #Vulkan::CompilerConfiguration
++        #Vulkan::LayerSettings
+     )
+ 
+     if (ANDROID)
+@@ -908,11 +915,11 @@ if (DAWN_BUILD_MONOLITHIC_LIBRARY)
+         get_target_property(headers "${dawn_target_name}" INTERFACE_SOURCES)
+         list(INSERT webgpu_dawn_public_headers 0 "${headers}")
+     endforeach()
+-    if (DAWN_ENABLE_INSTALL)
++    #if (DAWN_ENABLE_INSTALL)
+         dawn_install_target(dawn_public_config)
+         dawn_install_target(webgpu_dawn
+             HEADERS ${webgpu_dawn_public_headers})
+-    endif ()
++    #endif ()
+ endif ()
+ 
+ # Linking with dxcompiler after bundling so that the bundling process
+diff --git a/src/dawn/node/CMakeLists.txt b/src/dawn/node/CMakeLists.txt
+index d8860f618d..159e7d9332 100644
+--- a/src/dawn/node/CMakeLists.txt
++++ b/src/dawn/node/CMakeLists.txt
+@@ -89,7 +89,7 @@ endfunction()
+ add_subdirectory(binding)
+ add_subdirectory(interop)
+ 
+-add_library(dawn_node SHARED
++add_library(dawn_node
+     "Module.cpp"
+ )
+ common_compile_options(dawn_node)
+diff --git a/src/dawn/partition_alloc/CMakeLists.txt b/src/dawn/partition_alloc/CMakeLists.txt
+index bb0561394f..54f66cf98c 100644
+--- a/src/dawn/partition_alloc/CMakeLists.txt
++++ b/src/dawn/partition_alloc/CMakeLists.txt
+@@ -31,9 +31,9 @@ dawn_add_library(
+   ENABLE_EMSCRIPTEN
+   UTILITY_TARGET dawn_internal_config
+   HEADERS
+-    "partition_alloc/pointers/raw_ptr_exclusion.h"
+-    "partition_alloc/pointers/raw_ptr.h"
+-    "partition_alloc/pointers/raw_ref.h"
++    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/partition_alloc/pointers/raw_ptr_exclusion.h>"
++    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/partition_alloc/pointers/raw_ptr.h>"
++    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/partition_alloc/pointers/raw_ref.h>"
+ )
+ 
+-target_include_directories(partition_alloc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
++target_include_directories(partition_alloc INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
+diff --git a/src/dawn/platform/CMakeLists.txt b/src/dawn/platform/CMakeLists.txt
+index 34648c9715..6103a922c2 100644
+--- a/src/dawn/platform/CMakeLists.txt
++++ b/src/dawn/platform/CMakeLists.txt
+@@ -29,8 +29,8 @@ dawn_add_library(
+   dawn_platform
+   UTILITY_TARGET dawn_internal_config
+   HEADERS
+-    "${DAWN_INCLUDE_DIR}/dawn/platform/DawnPlatform.h"
+-    "${DAWN_INCLUDE_DIR}/dawn/platform/dawn_platform_export.h"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/platform/DawnPlatform.h>"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/platform/dawn_platform_export.h>"
+   PRIVATE_HEADERS
+     "WorkerThread.h"
+     "metrics/HistogramMacros.h"
+diff --git a/src/dawn/utils/CMakeLists.txt b/src/dawn/utils/CMakeLists.txt
+index 5eb7120d99..4d09feddb0 100644
+--- a/src/dawn/utils/CMakeLists.txt
++++ b/src/dawn/utils/CMakeLists.txt
+@@ -34,6 +34,8 @@ if (TINT_BUILD_SPV_READER)
+       list(APPEND private_wgpu_depends SPIRV-Tools-opt)
+ endif()
+ 
++find_package(SPIRV-Tools CONFIG REQUIRED)
++
+ dawn_add_library(
+   dawn_wgpu_utils
+   ENABLE_EMSCRIPTEN
+@@ -49,6 +51,7 @@ dawn_add_library(
+     "TextureUtils.cpp"
+     "WGPUHelpers.cpp"
+   DEPENDS
++    SPIRV-Tools-static
+     webgpu_cpp
+     dawn::dawn_common
+   PRIVATE_DEPENDS
+diff --git a/src/dawn/wire/CMakeLists.txt b/src/dawn/wire/CMakeLists.txt
+index a5c17bc45c..e78b944098 100644
+--- a/src/dawn/wire/CMakeLists.txt
++++ b/src/dawn/wire/CMakeLists.txt
+@@ -33,10 +33,10 @@ DawnJSONGenerator(
+ )
+ 
+ set(headers
+-    "${DAWN_INCLUDE_DIR}/dawn/wire/Wire.h"
+-    "${DAWN_INCLUDE_DIR}/dawn/wire/WireClient.h"
+-    "${DAWN_INCLUDE_DIR}/dawn/wire/WireServer.h"
+-    "${DAWN_INCLUDE_DIR}/dawn/wire/dawn_wire_export.h"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/wire/Wire.h>"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/wire/WireClient.h>"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/wire/WireServer.h>"
++    "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/dawn/wire/dawn_wire_export.h>"
+ )
+ 
+ set(private_headers
+diff --git a/src/emdawnwebgpu/CMakeLists.txt b/src/emdawnwebgpu/CMakeLists.txt
+index d5454328f7..eabc8c7410 100644
+--- a/src/emdawnwebgpu/CMakeLists.txt
++++ b/src/emdawnwebgpu/CMakeLists.txt
+@@ -78,7 +78,8 @@ if (${DAWN_ENABLE_EMSCRIPTEN})
+         endif()
+ 
+         set(ARGS
+-            "${DAWN_EMSCRIPTEN_TOOLCHAIN}/tools/maint/gen_struct_info.py"
++            "${Python3_EXECUTABLE}"
++            "${DAWN_EMSCRIPTEN_PATH}/tools/maint/gen_struct_info.py"
+             -q
+             "${EM_BUILD_GEN_DIR}/struct_info_webgpu.json"
+             "-I=${EM_BUILD_GEN_DIR}/include"
+@@ -149,7 +150,7 @@ if (${DAWN_ENABLE_EMSCRIPTEN})
+         set(PRINT_NAME library_webgpu_generated_struct_info.js)
+         set(OUTPUT "${EM_BUILD_GEN_DIR}/${PRINT_NAME}")
+         set(ARGS
+-            ${Python3_EXECUTABLE}
++            "${Python3_EXECUTABLE}"
+             "${EM_SRC_DIR}/concat.py"
+             "${OUTPUT}"
+             "${EM_SRC_DIR}/snippets/library_webgpu_struct_info_part1.txt"
+@@ -189,7 +190,7 @@ if (${DAWN_ENABLE_EMSCRIPTEN})
+ 
+     add_library(emdawnwebgpu_config INTERFACE)
+     target_include_directories(emdawnwebgpu_config BEFORE INTERFACE
+-        "${EM_BUILD_GEN_DIR}/include"
++        "$<BUILD_INTERFACE:${EM_BUILD_GEN_DIR}/include>"
+     )
+     target_link_options(emdawnwebgpu_config INTERFACE
+         # We are using Dawn-generated bindings, not built-in ones
+@@ -197,19 +198,23 @@ if (${DAWN_ENABLE_EMSCRIPTEN})
+         # We need Asyncify for Future implementation.
+         "-sASYNCIFY=1"
+         # The JS libraries needed for bindings
+-        "--js-library=${EM_BUILD_GEN_DIR}/library_webgpu_enum_tables.js"
+-        "--js-library=${EM_BUILD_GEN_DIR}/library_webgpu_generated_struct_info.js"
+-        "--js-library=${EM_BUILD_GEN_DIR}/library_webgpu_generated_sig_info.js"
+-        "--js-library=${DAWN_EMDAWNWEBGPU_DIR}/library_webgpu.js"
+-        "--js-library=${DAWN_EMDAWNWEBGPU_DIR}/library_html5_webgpu.js"
+-        "--closure-args=--externs=${DAWN_EMSCRIPTEN_TOOLCHAIN}/src/closure-externs/webgpu-externs.js"
++        #
++        # fixing absolute paths in target_link_options() by bundling those JS files into the package
++        # and replacing paths, which should work since it is INTERFACE scope here, so they are not needed
++        # for the build
++        [=[--js-library=${_IMPORT_PREFIX}/share/Dawn/js/library_webgpu_enum_tables.js]=]
++        [=[--js-library=${_IMPORT_PREFIX}/share/Dawn/js/library_webgpu_generated_struct_info.js]=]
++        [=[--js-library=${_IMPORT_PREFIX}/share/Dawn/js/library_webgpu_generated_sig_info.js]=]
++        [=[--js-library=${_IMPORT_PREFIX}/share/Dawn/js/library_webgpu.js]=]
++        [=[--js-library=${_IMPORT_PREFIX}/share/Dawn/js/library_html5_webgpu.js]=]
++        [=[--closure-args=--externs=${_IMPORT_PREFIX}/share/Dawn/js/webgpu-externs.js]=]
+     )
+ 
+     dawn_add_library(
+         emdawnwebgpu_c
+         ENABLE_EMSCRIPTEN
+         HEADERS
+-            "${EM_BUILD_GEN_DIR}/include/webgpu/webgpu.h"
++            "$<BUILD_INTERFACE:${EM_BUILD_GEN_DIR}/include/webgpu/webgpu.h>"
+         SOURCES
+             "${DAWN_EMDAWNWEBGPU_DIR}/webgpu.cpp"
+         DEPENDS
+@@ -221,9 +226,9 @@ if (${DAWN_ENABLE_EMSCRIPTEN})
+         ENABLE_EMSCRIPTEN
+         HEADER_ONLY
+         HEADERS
+-            "${EM_BUILD_GEN_DIR}/include/webgpu/webgpu_cpp.h"
+-            "${EM_BUILD_GEN_DIR}/include/webgpu/webgpu_cpp_chained_struct.h"
+-            "${DAWN_INCLUDE_DIR}/webgpu/webgpu_enum_class_bitmasks.h"
++            "$<BUILD_INTERFACE:${EM_BUILD_GEN_DIR}/include/webgpu/webgpu_cpp.h>"
++            "$<BUILD_INTERFACE:${EM_BUILD_GEN_DIR}/include/webgpu/webgpu_cpp_chained_struct.h>"
++            "$<BUILD_INTERFACE:${DAWN_INCLUDE_DIR}/webgpu/webgpu_enum_class_bitmasks.h>"
+         DEPENDS
+             emdawnwebgpu_c
+     )
+diff --git a/src/tint/CMakeLists.txt b/src/tint/CMakeLists.txt
+index 61f4f4d2d4..261ad72d7c 100644
+--- a/src/tint/CMakeLists.txt
++++ b/src/tint/CMakeLists.txt
+@@ -68,8 +68,8 @@ endif()
+ # Helper functions
+ ################################################################################
+ function(tint_core_compile_options TARGET)
+-  target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}")
+-  target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}/include")
++  target_include_directories(${TARGET} PUBLIC "$<BUILD_INTERFACE:${TINT_ROOT_SOURCE_DIR}>")
++  #target_include_directories(${TARGET} PUBLIC "${TINT_ROOT_SOURCE_DIR}/include")
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_GLSL_VALIDATOR=$<BOOL:${TINT_BUILD_GLSL_VALIDATOR}>)
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_GLSL_WRITER=$<BOOL:${TINT_BUILD_GLSL_WRITER}>)
+   target_compile_definitions(${TARGET} PUBLIC -DTINT_BUILD_HLSL_WRITER=$<BOOL:${TINT_BUILD_HLSL_WRITER}>)
+@@ -216,13 +216,13 @@ function(tint_default_compile_options TARGET)
+ endfunction()
+ 
+ function(tint_spvheaders_compile_options TARGET)
+-  target_link_libraries(${TARGET} PRIVATE SPIRV-Headers)
+-  target_include_directories(${TARGET} PRIVATE "${TINT_SPIRV_HEADERS_DIR}/include")
++  find_package(SPIRV-Headers CONFIG REQUIRED)
++  target_link_libraries(${TARGET} PRIVATE SPIRV-Headers::SPIRV-Headers)
+ endfunction()
+ 
+ function(tint_spvtools_compile_options TARGET)
+-  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools)
+-  target_include_directories(${TARGET} PRIVATE "${TINT_SPIRV_TOOLS_DIR}/include")
++  find_package(SPIRV-Tools CONFIG REQUIRED)
++  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools-static)
+ endfunction()
+ 
+ function(tint_lib_compile_options TARGET)
+@@ -406,7 +406,7 @@ function(tint_add_target TARGET KIND)
+   endif()
+ 
+   if(${KIND} STREQUAL lib)
+-    add_library(${TARGET} STATIC EXCLUDE_FROM_ALL)
++    add_library(${TARGET} STATIC)
+     tint_lib_compile_options(${TARGET})
+   elseif(${KIND} STREQUAL proto)
+     add_library(${TARGET} STATIC EXCLUDE_FROM_ALL)
+@@ -516,7 +516,8 @@ function(tint_target_add_external_dependencies TARGET KIND)
+     elseif(${DEPENDENCY} STREQUAL "dl")
+       target_link_libraries(${TARGET} PRIVATE ${CMAKE_DL_LIBS})
+     elseif(${DEPENDENCY} STREQUAL "dxc-include")
+-      target_include_directories(${TARGET} PRIVATE "${DAWN_THIRD_PARTY_DIR}/dxc/include")
++      find_package(D3D12 REQUIRED)
++      target_include_directories(${TARGET} PRIVATE ${D3D12_INCLUDE_DIR}) # ${D3D12_INCLUDE_DIRS} for the full list
+     elseif(${DEPENDENCY} STREQUAL "dxcompiler-for-fuzzer")
+       if(TINT_BUILD_FUZZERS) # TODO: and target arch is not x86
+         target_link_libraries(${TARGET} PRIVATE dxcompiler)
+@@ -561,15 +562,16 @@ function(tint_target_add_external_dependencies TARGET KIND)
+     elseif(${DEPENDENCY} STREQUAL "spirv-tools")
+       tint_spvtools_compile_options(${TARGET})
+     elseif(${DEPENDENCY} STREQUAL "spirv-opt-internal")
++      find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+       target_link_libraries(${TARGET} PRIVATE
+         SPIRV-Tools-opt
+       )
+-      target_include_directories(${TARGET} PRIVATE
+-        "${TINT_SPIRV_TOOLS_DIR}"
+-        "${TINT_SPIRV_TOOLS_DIR}/include"
+-        "${TINT_SPIRV_TOOLS_DIR}/source"
+-        "${spirv-tools_BINARY_DIR}"
+-      )
++      # target_include_directories(${TARGET} PRIVATE
++      #   "${TINT_SPIRV_TOOLS_DIR}"
++      #   "${TINT_SPIRV_TOOLS_DIR}/include"
++      #   "${TINT_SPIRV_TOOLS_DIR}/source"
++      #   "${spirv-tools_BINARY_DIR}"
++      # )
+     elseif(${DEPENDENCY} STREQUAL "thread")
+       find_package(Threads REQUIRED)
+       target_link_libraries(${TARGET} PRIVATE Threads::Threads)
+@@ -662,6 +664,11 @@ else()
+   include("BUILD.cmake")
+ endif(TINT_BUILD_FUZZERS)
+ 
++target_include_directories(tint_utils_macros
++    PUBLIC
++        "$<BUILD_INTERFACE:${Dawn_SOURCE_DIR}/src>"
++        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
++)
+ 
+ ################################################################################
+ # Generate protobuf sources
+diff --git a/src/tint/lang/hlsl/validate/validate.cc b/src/tint/lang/hlsl/validate/validate.cc
+index 4005c82508..011b2b4c0c 100644
+--- a/src/tint/lang/hlsl/validate/validate.cc
++++ b/src/tint/lang/hlsl/validate/validate.cc
+@@ -50,7 +50,7 @@ TINT_BEGIN_DISABLE_ALL_WARNINGS();
+ // # Use UUID emulation with clang to avoid compiling with ms-extensions
+ #define __EMULATE_UUID
+ #endif
+-#include "dxc/dxcapi.h"
++#include <dxcapi.h>
+ TINT_END_DISABLE_ALL_WARNINGS();
+ 
+ // Disable warnings about old-style casts which result from using
+diff --git a/src/tint/utils/macros/compiler.h b/src/tint/utils/macros/compiler.h
+index 15ecd6df9e..6344b5c8e3 100644
+--- a/src/tint/utils/macros/compiler.h
++++ b/src/tint/utils/macros/compiler.h
+@@ -26,7 +26,7 @@
+ // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ #include "src/tint/utils/macros/concat.h"
+-#include "src/utils/compiler.h"
++#include "utils/compiler.h"
+ 
+ #ifndef SRC_TINT_UTILS_MACROS_COMPILER_H_
+ #define SRC_TINT_UTILS_MACROS_COMPILER_H_
+diff --git a/src/utils/CMakeLists.txt b/src/utils/CMakeLists.txt
+index 5e177b4617..74d4a00db6 100644
+--- a/src/utils/CMakeLists.txt
++++ b/src/utils/CMakeLists.txt
+@@ -26,7 +26,7 @@
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ set(private_headers
+-    "compiler.h"
++    "$<INSTALL_INTERFACE:compiler.h>"
+ )
+ 
+ set(sources
+diff --git a/tools/android/webgpu/src/main/cpp/CMakeLists.txt b/tools/android/webgpu/src/main/cpp/CMakeLists.txt
+index 8c875e4524..0731b01ba7 100644
+--- a/tools/android/webgpu/src/main/cpp/CMakeLists.txt
++++ b/tools/android/webgpu/src/main/cpp/CMakeLists.txt
+@@ -47,7 +47,7 @@ DawnJSONGenerator(
+     OUTPUT_HEADERS WEBGPU_JNI_HEADERS
+ )
+ 
+-add_library(webgpu_c_bundled SHARED)
++add_library(webgpu_c_bundled)
+ target_sources(webgpu_c_bundled PRIVATE
+     ${WEBGPU_JNI_SOURCES}
+     ${WEBGPU_JNI_HEADERS}

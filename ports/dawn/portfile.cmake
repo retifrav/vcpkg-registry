@@ -1,17 +1,106 @@
-# it's a miracle that it builds at least as STATIC
+# it might actually build as a SHARED library in newer versions
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL https://dawn.googlesource.com/dawn
-    REF ad853f80af9b236fa3aa6be6dcd2facb26430565
+    REF 740d2502dbbd719a76c5a8d3fb4dac1b5363f42e
     PATCHES
-        dependencies-discovery-and-installation.patch # if only Google developers knew how to make proper CMake packages
-        missing-includes.patch                        # and had all the includes correct
-        typos.patch                                   # or least were careful
+        001-dependencies-discovery-and-installation.patch # if only Google developers knew how to make proper CMake packages
+        002-string-view-type.patch                        # and were careful about types
+        003-shader-spirv-wrong-type.patch                 # and followed their own deprecations (actually, not sure, if this is a correct fix)
+        004-missing-includes.patch                        # and were not forgetting includes
 )
 
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/FindD3D12.cmake" DESTINATION "${SOURCE_PATH}/src/cmake")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
+
+if(VCPKG_TARGET_IS_EMSCRIPTEN)
+    # get Emscripten tools, as they are not installed with regular Emscripten installation procedure
+    # (https://github.com/emscripten-core/emscripten/blob/ac676d5e437525d15df5fd46bc2c208ec6d376a3/tools/install.py#L20-L30),
+    # but Dawn does require some of those for generating stuff
+    #
+    # the version should probably match the one used in your project, but also both the Emscripten and the tools should be
+    # of the same version, otherwise for instance using Emscripten 3.1.73 and scripts from 3.1.54 version will fail
+    # with an error of undefined symbol `$stackRestore` or something
+    set(EMSCRIPTEN_TOOLS_VERSION "3.1.54")
+    if(NOT EXISTS "$ENV{EMSDK}/upstream/emscripten/tools/maint")
+        message(STATUS
+            "Emscripten installation is missing required `maint` tools, "
+            "will fetch those from the original repository"
+        )
+
+        set(EMSCRIPTEN_VERSION_FILE "$ENV{EMSDK}/upstream/emscripten/emscripten-version.txt")
+        if(NOT EXISTS "${EMSCRIPTEN_VERSION_FILE}")
+            message(WARNING
+                "[ERROR] The Emscripten version file [${EMSCRIPTEN_VERSION_FILE}] "
+                "does not seem to exist, cannot determine the Emscripten version, "
+                "will fallback to ${EMSCRIPTEN_TOOLS_VERSION}"
+            )
+        else()
+            file(READ "${EMSCRIPTEN_VERSION_FILE}" EMSCRIPTEN_VERSION_FILE_CONTENT)
+            # the file might (should) contain a empty line in the end of it
+            string(STRIP "${EMSCRIPTEN_VERSION_FILE_CONTENT}" EMSCRIPTEN_VERSION_FILE_CONTENT)
+            # the version value is quoted in that file (why the f)
+            string(REPLACE "\"" "" EMSCRIPTEN_VERSION_FILE_CONTENT "${EMSCRIPTEN_VERSION_FILE_CONTENT}")
+            set(EMSCRIPTEN_TOOLS_VERSION "${EMSCRIPTEN_VERSION_FILE_CONTENT}")
+            message(STATUS "Emscripten version from ${EMSCRIPTEN_VERSION_FILE}: ${EMSCRIPTEN_TOOLS_VERSION}")
+        endif()
+
+        find_program(GIT git REQUIRED) # at least on (some) Windows hosts it will fail with a bare `git`
+        message(STATUS "Got this Git: ${GIT}")
+        execute_process(
+            COMMAND ${GIT} --version
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            OUTPUT_VARIABLE GIT_VERSION_VALUE
+            RESULT_VARIABLE GIT_VERSION_RETURN
+        )
+        string(REGEX MATCH "^git version ([0-9]+\.[0-9]+).*$" GIT_VERSION_VALUE_PARSED ${GIT_VERSION_VALUE})
+        set(GIT_VERSION_VALUE_PARSED ${CMAKE_MATCH_1})
+        message(STATUS "Git version: ${GIT_VERSION_VALUE_PARSED}")
+
+        set(EMSCRIPTEN_TOOLS ${SOURCE_PATH}/emscripten-tools)
+        #
+        # should be redundant, because it is always a new "clean" sources directory of the port
+        #if(EXISTS ${EMSCRIPTEN_TOOLS})
+        #    # remove the folder first before cloning
+        #endif()
+        #
+        if(GIT_VERSION_VALUE_PARSED VERSION_GREATER_EQUAL "2.38")
+            message(STATUS "+ sparsely cloning the Emscripten repository...")
+            vcpkg_execute_required_process(
+                COMMAND ${GIT} clone --depth=1 --filter=blob:none --sparse --branch ${EMSCRIPTEN_TOOLS_VERSION} git@github.com:emscripten-core/emscripten.git ${EMSCRIPTEN_TOOLS}
+                WORKING_DIRECTORY ${CURRENT_BUILDTREES_DIR}
+                LOGNAME git-emscripten-tools-cloning
+            )
+            message(STATUS "+ checking out the tools...")
+            vcpkg_execute_required_process(
+                COMMAND ${GIT} sparse-checkout set --no-cone /tools/maint #/src/closure-externs
+                WORKING_DIRECTORY ${EMSCRIPTEN_TOOLS}
+                LOGNAME git-emscripten-tools-checkout
+            )
+        else()
+            message(STATUS "+ Git version is too old for a sparse clone/checkout, cloning the entire Emscripten repository...")
+            vcpkg_execute_required_process(
+                COMMAND ${GIT} clone --depth=1 --branch ${EMSCRIPTEN_TOOLS_VERSION} git@github.com:emscripten-core/emscripten.git ${EMSCRIPTEN_TOOLS}
+                WORKING_DIRECTORY ${CURRENT_BUILDTREES_DIR}
+                LOGNAME git-emscripten-tools-cloning
+            )
+        endif()
+        message(STATUS "+ deploying the tools to Emscripten installation...")
+        file(
+            INSTALL "${EMSCRIPTEN_TOOLS}/tools/maint"
+            DESTINATION "$ENV{EMSDK}/upstream/emscripten/tools"
+        )
+    else()
+        message(STATUS
+            "Emscripten installation seems to already contain required `maint` tools, "
+            "won't fetch them again, however you should make sure that your current Emscripten version "
+            "and the tools are both of the ${EMSCRIPTEN_TOOLS_VERSION} version; if you are not sure, "
+            "then delete the `$ENV{EMSDK}/upstream/emscripten/tools/maint/` folder and restart the build"
+        )
+    endif()
+endif()
 
 vcpkg_find_acquire_program(PYTHON3)
 #message(STATUS "PYTHON3: ${PYTHON3}")
@@ -51,17 +140,21 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         fuzzers     TINT_BUILD_FUZZERS
 )
 
+set(MONOLITHIC_LIBRARY 0)
+if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+    set(MONOLITHIC_LIBRARY 1)
+endif()
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
         -DDAWN_FETCH_DEPENDENCIES=0
         -DTINT_BUILD_TESTS=0
-        -DTINT_BUILD_DOCS=0
         -DTINT_BUILD_CMD_TOOLS=0
         -DTINT_BUILD_GLSL_VALIDATOR=0 # might need to be a feature
         -DDAWN_BUILD_SAMPLES=0
-        -DDAWN_ENABLE_INSTALL=1
+        -DDAWN_BUILD_MONOLITHIC_LIBRARY=${MONOLITHIC_LIBRARY}
     MAYBE_UNUSED_VARIABLES
         DAWN_FETCH_DEPENDENCIES
 )
@@ -75,7 +168,16 @@ vcpkg_cmake_config_fixup(
 
 file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/include"
+    "${CURRENT_PACKAGES_DIR}/debug/share"
 )
+
+if(VCPKG_TARGET_IS_EMSCRIPTEN)
+    # Emscripten already contains the `webgpu` folder with the same public headers,
+    # and so if we keep this one from Dawn too, it will cause a conflict
+    file(REMOVE_RECURSE
+        "${CURRENT_PACKAGES_DIR}/include/webgpu"
+    )
+endif()
 
 # fixing retarded include paths in tint headers
 file(GLOB_RECURSE TINT_HEADERS
@@ -86,8 +188,15 @@ foreach(TINT_HEADER IN ITEMS ${TINT_HEADERS})
         ${TINT_HEADER}
             [=[#include "src/tint/]=]
             [=[#include "tint/]=]
+        IGNORE_UNCHANGED
     )
 endforeach()
+# this one is especially retarded
+vcpkg_replace_string(
+    "${CURRENT_PACKAGES_DIR}/include/tint/utils/macros/compiler.h"
+        [=[#include "utils/compiler.h"]=]
+        [=[#include "dawn/utils/compiler.h"]=]
+)
 
 file(
     INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage"

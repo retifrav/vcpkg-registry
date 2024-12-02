@@ -1,0 +1,28 @@
+diff --git a/src/dawn/utils/WGPUHelpers.cpp b/src/dawn/utils/WGPUHelpers.cpp
+index 4c4341afa7..c32de13743 100644
+--- a/src/dawn/utils/WGPUHelpers.cpp
++++ b/src/dawn/utils/WGPUHelpers.cpp
+@@ -46,7 +46,8 @@ namespace dawn::utils {
+ wgpu::ShaderModule CreateShaderModuleFromASM(
+     const wgpu::Device& device,
+     const char* source,
+-    wgpu::DawnShaderModuleSPIRVOptionsDescriptor* spirv_options) {
++    //wgpu::DawnShaderModuleSPIRVOptionsDescriptor* spirv_options) {
++    wgpu::ShaderSourceSPIRV* spirv_options) { // is that the right replacement?
+     // Use SPIRV-Tools's C API to assemble the SPIR-V assembly text to binary. Because the types
+     // aren't RAII, we don't return directly on success and instead always go through the code
+     // path that destroys the SPIRV-Tools objects.
+diff --git a/src/dawn/utils/WGPUHelpers.h b/src/dawn/utils/WGPUHelpers.h
+index 1208825cbb..9f56ae5fb7 100644
+--- a/src/dawn/utils/WGPUHelpers.h
++++ b/src/dawn/utils/WGPUHelpers.h
+@@ -46,7 +46,8 @@ enum Expectation { Success, Failure };
+ wgpu::ShaderModule CreateShaderModuleFromASM(
+     const wgpu::Device& device,
+     const char* source,
+-    wgpu::DawnShaderModuleSPIRVOptionsDescriptor* spirv_options = nullptr);
++    //wgpu::DawnShaderModuleSPIRVOptionsDescriptor* spirv_options = nullptr);
++    wgpu::ShaderSourceSPIRV* spirv_options = nullptr); // is that the right replacement
+ #endif
+ wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const char* source);
+ wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const std::string& source);

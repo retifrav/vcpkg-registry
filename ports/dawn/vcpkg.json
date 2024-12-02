@@ -1,9 +1,8 @@
 {
     "name": "dawn",
-    "version": "2024.1.13",
+    "version": "2024.11.21",
     "description": "An implementation of the WebGPU standard",
     "homepage": "https://dawn.googlesource.com/dawn",
-    "supports": "!emscripten",
     "dependencies":
     [
         {

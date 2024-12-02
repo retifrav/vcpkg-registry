@@ -2,6 +2,10 @@
     "versions":
     [
         {
+            "version": "2024.11.21",
+            "git-tree": "b62a6d2dc9d88c41023decad94ccdf3fb334b8c6"
+        },
+        {
             "version": "2024.1.13",
             "git-tree": "384d775af89b5451c84a29ef4f391ec36c0b07f8"
         }
