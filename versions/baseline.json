@@ -108,7 +108,7 @@
         },
         "fmt":
         {
-            "baseline": "10.2.1",
+            "baseline": "11.0.2",
             "port-version": 0
         },
         "freetype":

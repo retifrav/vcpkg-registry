@@ -1,6 +1,6 @@
 {
     "name": "fmt",
-    "version": "10.2.1",
+    "version": "11.0.2",
     "description": "A modern formatting library",
     "homepage": "https://fmt.dev/",
     "dependencies":
