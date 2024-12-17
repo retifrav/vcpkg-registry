@@ -1,0 +1,21 @@
+{
+    "name": "yoctopuce",
+    "version": "2.0.62875",
+    "description": "Yoctopuce library",
+    "homepage": "https://www.yoctopuce.com/EN/article/how-to-start-in-c-with-yoctopuce-modules",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ]
+}
