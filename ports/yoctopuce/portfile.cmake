@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:yoctopuce/yoctolib_cpp.git
-    REF 233b5bbcbf9b97e6a4320b376a3a2b2f1ab7f48c
+    REF 2f6d067ce757db86779cf435aa3172859529982e
     PATCHES
         001-installation.patch
 )
