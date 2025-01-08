@@ -1,6 +1,6 @@
 {
     "name": "tiff",
-    "version": "4.6.0",
+    "version": "4.7.0",
     "description": "Tag Image File Format (TIFF), a widely used format for storing image data",
     "homepage": "http://libtiff.org/",
     "dependencies":
