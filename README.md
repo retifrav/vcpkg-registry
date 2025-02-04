@@ -15,6 +15,7 @@ Although a good portion of the ports here are based on the ports from the [Micro
     - [check-versions-and-hashes](#check-versions-and-hashes)
     - [install-vcpkg-artifacts](#install-vcpkg-artifacts)
     - [vcpkg-assets-caching](#vcpkg-assets-caching)
+    - [license-based-todos](#license-based-todos)
 - [Branches](#branches)
 - [Non-development ports](#non-development-ports)
 
@@ -228,6 +229,17 @@ More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vc
 Downloading/uploading vcpkg assets (*required build tools*) from/to a remote cache of HTTP type (*such as JFrog Artifactory*).
 
 More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#asset-caching).
+
+### license-based-todos
+
+To print a list of license-based ToDos:
+
+``` sh
+$ cd /path/to/vcpkg-registry
+$ python ./scripts/license-based-todos.py
+...
+[INFO] Ports that require publishing patches (total 1): datachannel
+```
 
 ## Branches
 
