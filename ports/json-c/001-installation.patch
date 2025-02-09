@@ -1,0 +1,94 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 631accf..33023ab 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,9 +1,4 @@
+-# CMake 3.9 was released in 2017/07
+-#  As of 2023, many versions of Linux, NetBSD and FreeBSD provide,
+-#   and many OpenWRT packages require, much newer CMake packages.
+-#  We're stopping before 3.10 because that version starts requiring
+-#   c++11, which isn't available on e.g HPUX.
+-cmake_minimum_required(VERSION 3.9...3.12)
++cmake_minimum_required(VERSION 3.22)
+ 
+ # JSON-C library is C only project.
+ # PROJECT_VERSION{,_MAJOR,_MINOR,_PATCH} set by project():
+@@ -11,7 +6,7 @@ project(json-c LANGUAGES C VERSION 0.18)
+ 
+ # set default build type if not specified by user
+ if(NOT CMAKE_BUILD_TYPE)
+-	set(CMAKE_BUILD_TYPE debug)
++	set(CMAKE_BUILD_TYPE Debug)
+ endif()
+ 
+ set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -O2")
+@@ -42,8 +37,8 @@ include(CPack)
+ include(GNUInstallDirs)
+ include(CMakePackageConfigHelpers)
+ 
+-option(BUILD_SHARED_LIBS  "Default to building shared libraries" ON)
+-option(BUILD_STATIC_LIBS  "Default to building static libraries" ON)
++option(BUILD_SHARED_LIBS  "Default to building shared libraries" 0)
++option(BUILD_STATIC_LIBS  "Default to building static libraries" 1)
+ 
+ if (BUILD_SHARED_LIBS)
+     add_definitions(-D JSON_C_DLL)
+@@ -449,7 +444,7 @@ configure_file(json.h.cmakein ${PROJECT_BINARY_DIR}/json.h @ONLY)
+ include_directories(${PROJECT_SOURCE_DIR})
+ include_directories(${PROJECT_BINARY_DIR})
+ 
+-add_subdirectory(doc)
++#add_subdirectory(doc)
+ 
+ # "uninstall" custom target for make generators in unix like operating systems
+ # and if that target is not present
+@@ -483,30 +478,6 @@ target_include_directories(${PROJECT_NAME}
+ 
+ target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_REQUIRED_LIBRARIES})
+ 
+-# Allow to build static and shared libraries at the same time
+-if (BUILD_STATIC_LIBS AND BUILD_SHARED_LIBS)
+-    set(STATIC_LIB ${PROJECT_NAME}-static)
+-    add_library(${STATIC_LIB} STATIC
+-        ${JSON_C_SOURCES}
+-        ${JSON_C_HEADERS}
+-    )
+-    target_include_directories(${PROJECT_NAME}-static
+-        PUBLIC
+-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+-            $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+-    )
+-
+-	target_link_libraries(${PROJECT_NAME}-static PUBLIC ${CMAKE_REQUIRED_LIBRARIES})
+-
+-    # rename the static library
+-    if (NOT MSVC)
+-    set_target_properties(${STATIC_LIB} PROPERTIES
+-        OUTPUT_NAME ${PROJECT_NAME}
+-    )
+-    endif()
+-    list(APPEND CMAKE_TARGETS ${STATIC_LIB})
+-endif ()
+-
+ # Always create new install dirs with 0755 permissions, regardless of umask
+ set(CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
+ 	OWNER_READ
+@@ -523,7 +494,7 @@ install(TARGETS ${CMAKE_TARGETS}
+     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/json-c
++    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+ )
+ 
+ install(EXPORT ${PROJECT_NAME}-targets
+diff --git a/json-c.pc.in b/json-c.pc.in
+index 79d9a5e..4876377 100644
+--- a/json-c.pc.in
++++ b/json-c.pc.in
+@@ -9,4 +9,4 @@ Version: @VERSION@
+ Requires:
+ Libs.private: @LIBS@
+ Libs: -L${libdir} -ljson-c
+-Cflags: -I${includedir} -I${includedir}/json-c
++Cflags: -I${includedir}

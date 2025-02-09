@@ -166,6 +166,11 @@
             "baseline": "3.0.3",
             "port-version": 0
         },
+        "json-c":
+        {
+            "baseline": "0.18.0",
+            "port-version": 0
+        },
         "json-nlohmann":
         {
             "baseline": "3.11.3",
