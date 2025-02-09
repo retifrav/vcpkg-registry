@@ -1,0 +1,43 @@
+{
+    "name": "geotiff",
+    "version": "1.7.3",
+    "description": "TIFF-based interchange format for georeferenced raster imagery",
+    "homepage": "https://github.com/OSGeo/libgeotiff",
+    "license": "MIT",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "proj",
+        "tiff"
+    ],
+    "features":
+    {
+        "with-jpeg":
+        {
+            "description": "Enable JPEG capabilities",
+            "dependencies":
+            [
+                "jpeg-turbo"
+            ]
+        },
+        "with-zlib":
+        {
+            "description": "Enable zlib capabilities",
+            "dependencies":
+            [
+                "zlib"
+            ]
+        },
+        "tools":
+        {
+            "description": "Build CLI tools"
+        }
+    }
+}
