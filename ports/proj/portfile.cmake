@@ -3,8 +3,8 @@ vcpkg_from_git(
     URL git@github.com:OSGeo/PROJ.git
     REF 7cd00d0b2ca594315acd6c76912df39be4607094
     PATCHES
-        dependencies-discovery.patch
-        installation.patch
+        001-dependencies-discovery.patch
+        002-installation.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -38,7 +38,7 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "lib/cmake/${PORT}"
 )
 
-# don't enable it back, it will fail to find SQLite and TIFF, need to fix that first,\
+# don't enable it back, it will fail to find SQLite and TIFF, need to fix that first,
 # but no one uses pkg-config, so
 #vcpkg_fixup_pkgconfig()
 

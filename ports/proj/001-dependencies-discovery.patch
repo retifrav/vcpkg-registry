@@ -158,7 +158,7 @@ index 8e3b88a6..fc11fc4e 100644
  endif()
  
 -target_link_libraries(proj PRIVATE SQLite::SQLite3)
-+target_link_libraries(proj PRIVATE SQLite3)
++target_link_libraries(proj PRIVATE sqlite3)
  
  if(NLOHMANN_JSON STREQUAL "external")
    target_compile_definitions(proj PRIVATE EXTERNAL_NLOHMANN_JSON)
