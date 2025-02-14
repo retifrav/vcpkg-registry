@@ -1,0 +1,100 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 15b542b..8ee59c1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,9 @@
+-cmake_minimum_required(VERSION 3.4)
+-project(ryu VERSION 2.0 LANGUAGES C)
++cmake_minimum_required(VERSION 3.22)
++
++project(ryu VERSION 2024.2.19 LANGUAGES C)
++
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
+ include(GNUInstallDirs)
+ 
+ # ryu library
+@@ -18,15 +22,21 @@ add_library(ryu
+         ryu/ryu.h)
+ 
+ # This directory is the include root because the headers are in ryu/ and are included as "ryu/*.h"
+-target_include_directories(ryu PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
++target_include_directories(ryu
++    PUBLIC
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++)
++
++set_target_properties(ryu
++    PROPERTIES
++        PUBLIC_HEADER "ryu/ryu.h"
++)
+ 
+ # add alias so the project can be used with add_subdirectory
+ add_library(ryu::ryu ALIAS ryu)
+ 
+-# Specify what to install if using CMake to install ryu.
+-install(TARGETS ryu LIBRARY)
+-install(FILES ryu/ryu.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ryu)
+-
++set(targets_to_install ryu)
+ 
+ # generic_128
+ # Only builds on GCC/Clang/Intel due to __uint128_t. No MSVC.
+@@ -39,14 +49,51 @@ if ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang"
+             ryu/generic_128.h
+             ryu/ryu_generic_128.h)
+ 
+-    target_include_directories(generic_128 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
++    target_include_directories(generic_128
++        PUBLIC
++            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++    )
+ 
+     add_library(ryu::generic_128 ALIAS generic_128)
+ 
+-    install(TARGETS generic_128 LIBRARY)
+-    install(FILES ryu/ryu_generic_128.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ryu)
++    set_target_properties(generic_128
++        PROPERTIES
++            PUBLIC_HEADER "ryu/ryu_generic_128.h"
++    )
++
++    list(APPEND targets_to_install
++        generic_128
++    )
+ 
+     set(RYU_GENERIC_128_AVAILABLE ON CACHE BOOL "generic_128 available." FORCE)
+ else()
+     set(RYU_GENERIC_128_AVAILABLE OFF CACHE BOOL "generic_128 not available on this platform." FORCE)
+-endif()
+\ No newline at end of file
++endif()
++
++# --- installation
++
++include(CMakePackageConfigHelpers)
++
++# install the target and create export-set
++install(TARGETS ${targets_to_install}
++    EXPORT ${PROJECT_NAME}Targets
++    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
++)
++# generate and install export file
++install(EXPORT "${PROJECT_NAME}Targets"
++    FILE "${PROJECT_NAME}Targets.cmake"
++    NAMESPACE ${PROJECT_NAME}::
++    DESTINATION "share/${PROJECT_NAME}"
++)
++# create config file
++configure_package_config_file(
++    "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++    INSTALL_DESTINATION "share/${PROJECT_NAME}"
++)
++# install config files
++install(FILES
++    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++    DESTINATION "share/${PROJECT_NAME}"
++)

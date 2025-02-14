@@ -271,6 +271,11 @@
             "baseline": "2024.9.3",
             "port-version": 1
         },
+        "ryu":
+        {
+            "baseline": "2024.2.19",
+            "port-version": 0
+        },
         "sdl":
         {
             "baseline": "2.30.7",
