@@ -1,0 +1,1600 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 367cda089d..b507489bd5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,6 +1,4 @@
+-# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
+-include(cmake/helpers/GdalCMakeMinimumRequired.cmake)
+-cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
++cmake_minimum_required(VERSION 3.22)
+ 
+ project(gdal LANGUAGES C CXX)
+ include(CTest)
+diff --git a/alg/gdalapplyverticalshiftgrid.cpp b/alg/gdalapplyverticalshiftgrid.cpp
+index a7d044cb2a..bda7759232 100644
+--- a/alg/gdalapplyverticalshiftgrid.cpp
++++ b/alg/gdalapplyverticalshiftgrid.cpp
+@@ -20,7 +20,7 @@
+ #include "vrtdataset.h"
+ #include "ogr_spatialref.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ #include <cmath>
+ #include <limits>
+diff --git a/apps/gdalsrsinfo.cpp b/apps/gdalsrsinfo.cpp
+index 4b9afdc4d8..281ef27851 100644
+--- a/apps/gdalsrsinfo.cpp
++++ b/apps/gdalsrsinfo.cpp
+@@ -21,7 +21,7 @@
+ #include "ogrsf_frmts.h"
+ #include "commonutils.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ bool FindSRS(const char *pszInput, OGRSpatialReference &oSRS);
+ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
+diff --git a/cmake/helpers/CheckDependentLibraries.cmake b/cmake/helpers/CheckDependentLibraries.cmake
+index 830ecef9a4..e696d82e64 100644
+--- a/cmake/helpers/CheckDependentLibraries.cmake
++++ b/cmake/helpers/CheckDependentLibraries.cmake
+@@ -115,7 +115,7 @@ set_property(CACHE GDAL_FIND_PACKAGE_PROJ_MODE PROPERTY STRINGS "CUSTOM" "CONFIG
+ if(NOT GDAL_FIND_PACKAGE_PROJ_MODE STREQUAL "CUSTOM")
+     find_package(PROJ ${GDAL_FIND_PACKAGE_PROJ_MODE} REQUIRED)
+     if (NOT BUILD_SHARED_LIBS)
+-        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${GDAL_FIND_PACKAGE_PROJ_MODE})\n")
++        string(APPEND GDAL_IMPORT_DEPENDENCIES "#find_dependency(PROJ ${GDAL_FIND_PACKAGE_PROJ_MODE})\n")
+     endif()
+ else()
+     # First check with CMake config files, and then fallback to the FindPROJ module.
+@@ -125,12 +125,12 @@ else()
+     endif()
+     if (PROJ_FOUND)
+       if (NOT BUILD_SHARED_LIBS)
+-        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ CONFIG)\n")
++        string(APPEND GDAL_IMPORT_DEPENDENCIES "#find_dependency(PROJ CONFIG)\n")
+       endif()
+     else()
+       find_package(PROJ REQUIRED)
+       if (NOT BUILD_SHARED_LIBS)
+-        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ)\n")
++        string(APPEND GDAL_IMPORT_DEPENDENCIES "#find_dependency(PROJ)\n")
+       endif()
+     endif ()
+ endif()
+@@ -247,12 +247,21 @@ gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, G
+                    CAN_DISABLE RECOMMENDED
+                    VERSION 3.31)
+ if (SQLite3_FOUND)
+-  if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
+-    message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
+-  endif ()
+-  if (NOT DEFINED SQLite3_HAS_MUTEX_ALLOC)
+-    message(FATAL_ERROR "missing SQLite3_HAS_MUTEX_ALLOC")
+-  endif ()
++  message(STATUS "Found SQLite3: ${SQLite3_DIR}")
++
++  # for some reasons, check_symbol_exists() from cmake/modules/packages/FindSQLite3.cmake
++  # don't even get to run, so we'll have to do a little bit of risky hardcoding here,
++  # based on what we have in our sqlite3.h
++  #
++  # if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
++  #   message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
++  # endif ()
++  set(SQLite3_HAS_COLUMN_METADATA 0)
++  # if (NOT DEFINED SQLite3_HAS_MUTEX_ALLOC)
++  #   message(FATAL_ERROR "missing SQLite3_HAS_MUTEX_ALLOC")
++  # endif ()
++  set(SQLite3_HAS_MUTEX_ALLOC 1)
++  #
+   if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_MUTEX_ALLOC)
+     if (NOT ACCEPT_MISSING_SQLITE3_MUTEX_ALLOC)
+       message(
+diff --git a/cmake/helpers/CheckDependentLibrariesCommon.cmake b/cmake/helpers/CheckDependentLibrariesCommon.cmake
+index ebb353829f..f24bcc72fa 100644
+--- a/cmake/helpers/CheckDependentLibrariesCommon.cmake
++++ b/cmake/helpers/CheckDependentLibrariesCommon.cmake
+@@ -28,13 +28,9 @@ if(NOT GDAL_USE_INTERNAL_LIBS IN_LIST GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES)
+     message(FATAL_ERROR "GDAL_USE_INTERNAL_LIBS must be one of ${GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES}")
+ endif()
+ 
+-set(GDAL_IMPORT_DEPENDENCIES [[
+-include(CMakeFindDependencyMacro)
+-include("${CMAKE_CURRENT_LIST_DIR}/DefineFindPackage2.cmake")
+-include("${CMAKE_CURRENT_LIST_DIR}/GdalFindModulePath.cmake")
+-]])
++set(GDAL_IMPORT_DEPENDENCIES)
+ if(TARGET Threads::Threads)
+-  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(Threads)\n")
++  string(APPEND GDAL_IMPORT_DEPENDENCIES "#find_dependency(Threads)\n")
+ endif()
+ 
+ # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
+@@ -238,7 +234,7 @@ macro (gdal_check_package name purpose)
+     set(_find_dependency "find_dependency(${_find_dependency_args})\n")
+   endif()
+   if(NOT BUILD_SHARED_LIBS AND GDAL_USE_${key} AND _find_dependency)
+-    string(APPEND GDAL_IMPORT_DEPENDENCIES "${_find_dependency}")
++    string(APPEND GDAL_IMPORT_DEPENDENCIES "#${_find_dependency}")
+   endif()
+   unset(_find_dependency_args)
+   unset(_find_dependency)
+diff --git a/cmake/helpers/CheckDependentLibrariesGeoTIFF.cmake b/cmake/helpers/CheckDependentLibrariesGeoTIFF.cmake
+index a2ab32b933..d23d2b9801 100644
+--- a/cmake/helpers/CheckDependentLibrariesGeoTIFF.cmake
++++ b/cmake/helpers/CheckDependentLibrariesGeoTIFF.cmake
+@@ -1,5 +1 @@
+-gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE RECOMMENDED
+-  NAMES GeoTIFF
+-  TARGETS geotiff_library GEOTIFF::GEOTIFF
+-)
+-gdal_internal_library(GEOTIFF)
++find_package(geotiff CONFIG REQUIRED)
+diff --git a/cmake/helpers/CheckDependentLibrariesZLIB.cmake b/cmake/helpers/CheckDependentLibrariesZLIB.cmake
+index e253a78904..c13fb8d568 100644
+--- a/cmake/helpers/CheckDependentLibrariesZLIB.cmake
++++ b/cmake/helpers/CheckDependentLibrariesZLIB.cmake
+@@ -1,2 +1 @@
+-gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
+-gdal_internal_library(ZLIB REQUIRED)
++find_package(zlib CONFIG REQUIRED)
+diff --git a/cmake/helpers/SetupStandalonePlugin.cmake b/cmake/helpers/SetupStandalonePlugin.cmake
+index b0d88666d8..3a39b5683c 100644
+--- a/cmake/helpers/SetupStandalonePlugin.cmake
++++ b/cmake/helpers/SetupStandalonePlugin.cmake
+@@ -42,7 +42,7 @@ include(GdalDriverHelper)
+ include(GNUInstallDirs)
+ # Used by GdalDriverHelper's add_gdal_driver()
+ set(INSTALL_PLUGIN_DIR
+-  "${CMAKE_INSTALL_LIBDIR}/gdalplugins"
++  "${CMAKE_INSTALL_DATAROOTDIR}/gdal/plugins"
+   CACHE PATH "Installation sub-directory for plugins")
+ 
+ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+diff --git a/cmake/modules/DefineFindPackage2.cmake b/cmake/modules/DefineFindPackage2.cmake
+index 855e5156f0..18aef1fc1b 100644
+--- a/cmake/modules/DefineFindPackage2.cmake
++++ b/cmake/modules/DefineFindPackage2.cmake
+@@ -146,17 +146,6 @@ function(find_package2 pkgname)
+                                   IMPORTED_LINK_LANGUAGES C
+                                   IMPORTED_LOCATION "${${pkgname}_LIBRARY}")
+         endif()
+-        if(arg_OUT_DEPENDENCY)
+-            set(output "define_find_package2(${pkgname} \"${include_file}\" \"${library_name}\"")
+-            if(NOT pkgconfig_name STREQUAL "_unset_")
+-                string(APPEND output " PKGCONFIG_NAME \"${pkgconfig_name}\"")
+-            endif()
+-            if(NOT find_path_suffix STREQUAL "_unset_")
+-                string(APPEND output " FIND_PATH_SUFFIX \"${find_path_suffix}\"")
+-            endif()
+-            string(APPEND output ")\nfind_package2(${pkgname} REQUIRED)\n")
+-            set(${arg_OUT_DEPENDENCY} ${output} PARENT_SCOPE)
+-        endif()
+     else()
+         set_property(GLOBAL APPEND PROPERTY PACKAGES_NOT_FOUND "${pkgname}")
+     endif()
+diff --git a/cmake/modules/packages/FindTEIGHA.cmake b/cmake/modules/packages/FindTEIGHA.cmake
+index 36ba2755a1..0f377196fd 100644
+--- a/cmake/modules/packages/FindTEIGHA.cmake
++++ b/cmake/modules/packages/FindTEIGHA.cmake
+@@ -228,7 +228,7 @@ if(TEIGHA_FOUND)
+         endforeach()
+         if (EXISTS "${TEIGHA_ROOT}/lib/${TEIGHA_PLATFORM}/libTG_Db.a")
+             find_library(FREETYPE_LIBRARY NAMES freetype)
+-            list(APPEND TEIGHA_TARGETS ZLIB::ZLIB)
++            list(APPEND TEIGHA_TARGETS zlib)
+         endif()
+         add_library(TEIGHA::TEIGHA INTERFACE IMPORTED)
+         set_target_properties(TEIGHA::TEIGHA PROPERTIES
+diff --git a/cmake/template/GDALConfig.cmake.in b/cmake/template/GDALConfig.cmake.in
+index 0305899542..d84a163bfd 100644
+--- a/cmake/template/GDALConfig.cmake.in
++++ b/cmake/template/GDALConfig.cmake.in
+@@ -1,17 +1,32 @@
+-cmake_policy(SET CMP0012 NEW)
+-cmake_policy(SET CMP0057 NEW)
++include(CMakeFindDependencyMacro)
++
+ if(NOT "@BUILD_SHARED_LIBS@")
+     if(NOT CMAKE_CXX_COMPILER_LOADED)
+         message(WARNING "Linking to GDAL may need CXX to be enabled.")
+     endif()
+-    if(DEFINED CMAKE_MODULE_PATH)
+-        set(_gdal_module_path_backup "${CMAKE_MODULE_PATH}")
++
++# everything that they append to the string with all of their find_dependency(),
++# none of which should be used the way they intend to, so it still added here,
++# but commented out
++@GDAL_IMPORT_DEPENDENCIES@
++
++    # required dependencies
++    find_dependency(zlib CONFIG REQUIRED)
++    find_dependency(PROJ CONFIG REQUIRED)
++    find_dependency(tiff CONFIG REQUIRED)
++    find_dependency(geotiff CONFIG REQUIRED)
++    find_dependency(json-c CONFIG REQUIRED)
++    # optional dependencies
++    if(@GDAL_USE_JPEG@)
++        find_dependency(jpeg-turbo CONFIG REQUIRED)
+     endif()
+-    @GDAL_IMPORT_DEPENDENCIES@
+-    if(DEFINED _gdal_module_path_backup)
+-        set(CMAKE_MODULE_PATH  "${_gdal_module_path_backup}")
+-    else()
+-        unset(CMAKE_MODULE_PATH)
++    if(@GDAL_USE_PNG@)
++        find_dependency(png CONFIG REQUIRED)
+     endif()
++    if(@GDAL_USE_ZSTD@)
++        find_dependency(zstd CONFIG REQUIRED)
++    endif()
++    # ...
+ endif()
++
+ include("${CMAKE_CURRENT_LIST_DIR}/GDAL-targets.cmake")
+diff --git a/frmts/cals/calsdataset.cpp b/frmts/cals/calsdataset.cpp
+index 48ad43ef73..7f0197aeb5 100644
+--- a/frmts/cals/calsdataset.cpp
++++ b/frmts/cals/calsdataset.cpp
+@@ -14,7 +14,7 @@
+ #include "gdal_pam.h"
+ #include "gdal_priv.h"
+ 
+-#include "tiff.h"
++#include <tiff/tiff.h>
+ 
+ /************************************************************************/
+ /* ==================================================================== */
+diff --git a/frmts/georaster/CMakeLists.txt b/frmts/georaster/CMakeLists.txt
+index df02240b36..0dae5f56a0 100644
+--- a/frmts/georaster/CMakeLists.txt
++++ b/frmts/georaster/CMakeLists.txt
+@@ -55,5 +55,5 @@ endif ()
+ gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)
+ 
+ if (NOT GDAL_USE_ZLIB_INTERNAL)
+-  gdal_target_link_libraries(gdal_GEOR PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_GEOR PRIVATE zlib)
+ endif ()
+diff --git a/frmts/grib/CMakeLists.txt b/frmts/grib/CMakeLists.txt
+index 01f58c263e..9f2c70d06b 100644
+--- a/frmts/grib/CMakeLists.txt
++++ b/frmts/grib/CMakeLists.txt
+@@ -157,7 +157,7 @@ if (GDAL_USE_PNG AND NOT GDAL_USE_PNG_INTERNAL)
+ endif ()
+ 
+ if (GDAL_USE_ZLIB AND NOT GDAL_USE_ZLIB_INTERNAL)
+-  gdal_target_link_libraries(gdal_GRIB PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_GRIB PRIVATE zlib)
+ endif ()
+ 
+ if (GDAL_USE_LIBAEC)
+diff --git a/frmts/gtiff/CMakeLists.txt b/frmts/gtiff/CMakeLists.txt
+index bb95feeadd..5092df80b1 100644
+--- a/frmts/gtiff/CMakeLists.txt
++++ b/frmts/gtiff/CMakeLists.txt
+@@ -93,7 +93,7 @@ if (NOT GDAL_USE_TIFF_INTERNAL)
+ endif ()
+ 
+ if (NOT GDAL_USE_GEOTIFF_INTERNAL)
+-  gdal_target_link_libraries(gdal_GTIFF PRIVATE ${GeoTIFF_TARGET})
++  gdal_target_link_libraries(gdal_GTIFF PRIVATE geotiff)
+ endif ()
+ 
+ if (GDAL_USE_JXL)
+@@ -160,7 +160,7 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
+       if (GDAL_USE_ZLIB_INTERNAL)
+         target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libz>)
+       else ()
+-        target_link_libraries(generate_quant_table_md5sum PRIVATE ZLIB::ZLIB)
++        target_link_libraries(generate_quant_table_md5sum PRIVATE zlib)
+       endif ()
+       if (GDAL_USE_DEFLATE)
+         target_link_libraries(generate_quant_table_md5sum PRIVATE Deflate::Deflate)
+diff --git a/frmts/gtiff/cogdriver.cpp b/frmts/gtiff/cogdriver.cpp
+index ac56ca0d28..779782a6b4 100644
+--- a/frmts/gtiff/cogdriver.cpp
++++ b/frmts/gtiff/cogdriver.cpp
+@@ -18,7 +18,7 @@
+ #include "gdal_utils.h"
+ #include "gdalwarper.h"
+ #include "cogdriver.h"
+-#include "geotiff.h"
++#include <geotiff/geotiff.h>
+ 
+ #include "tilematrixset.hpp"
+ 
+diff --git a/frmts/gtiff/geotiff.cpp b/frmts/gtiff/geotiff.cpp
+index b15c09b354..08aa0454c2 100644
+--- a/frmts/gtiff/geotiff.cpp
++++ b/frmts/gtiff/geotiff.cpp
+@@ -20,9 +20,9 @@
+ #include "gdal.h"
+ #include "gdal_mdreader.h"  // RPC_xxx
+ #include "gtiffdataset.h"
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ #include "tif_jxl.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ #include <cctype>
+ #include <cmath>
+ 
+diff --git a/frmts/gtiff/gt_citation.cpp b/frmts/gtiff/gt_citation.cpp
+index 77536ecd78..62da2ce7dc 100644
+--- a/frmts/gtiff/gt_citation.cpp
++++ b/frmts/gtiff/gt_citation.cpp
+@@ -24,9 +24,9 @@
+ 
+ #include "cpl_conv.h"
+ #include "cpl_string.h"
+-#include "geokeys.h"
+-#include "geotiff.h"
+-#include "geovalues.h"
++#include <geotiff/geokeys.h>
++#include <geotiff/geotiff.h>
++#include <geotiff/geovalues.h>
+ #include "gt_wkt_srs_priv.h"
+ #include "ogr_core.h"
+ 
+diff --git a/frmts/gtiff/gt_citation.h b/frmts/gtiff/gt_citation.h
+index 6dd992fce4..4ca5bb1945 100644
+--- a/frmts/gtiff/gt_citation.h
++++ b/frmts/gtiff/gt_citation.h
+@@ -17,7 +17,7 @@
+ #define GT_CITATION_H_INCLUDED
+ 
+ #include "cpl_port.h"
+-#include "geo_normalize.h"
++#include <geotiff/geo_normalize.h>
+ #include "ogr_spatialref.h"
+ 
+ #include <string>
+diff --git a/frmts/gtiff/gt_jpeg_copy.h b/frmts/gtiff/gt_jpeg_copy.h
+index 7ae3c326ca..c530f7ea0a 100644
+--- a/frmts/gtiff/gt_jpeg_copy.h
++++ b/frmts/gtiff/gt_jpeg_copy.h
+@@ -32,7 +32,7 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
+ 
+ #ifdef HAVE_LIBJPEG
+ 
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ 
+ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions);
+ 
+diff --git a/frmts/gtiff/gt_overview.cpp b/frmts/gtiff/gt_overview.cpp
+index 001273ee96..4ea4f7f73f 100644
+--- a/frmts/gtiff/gt_overview.cpp
++++ b/frmts/gtiff/gt_overview.cpp
+@@ -31,11 +31,11 @@
+ #include "gdal_priv.h"
+ #include "gtiff.h"
+ #include "gtiffdataset.h"
+-#include "tiff.h"
+-#include "tiffvers.h"
++#include <tiff/tiff.h>
++#include <tiff/tiffvers.h>
+ #include "tifvsi.h"
+ #include "tif_jxl.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ 
+ // TODO(schwehr): Explain why 128 and not 127.
+ constexpr int knMaxOverviews = 128;
+diff --git a/frmts/gtiff/gt_overview.h b/frmts/gtiff/gt_overview.h
+index 5baec03581..43b1805e54 100644
+--- a/frmts/gtiff/gt_overview.h
++++ b/frmts/gtiff/gt_overview.h
+@@ -19,7 +19,7 @@
+ #include <cstdint>
+ 
+ #include "gdal_priv.h"
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ 
+ #include <utility>
+ 
+diff --git a/frmts/gtiff/gt_wkt_srs.cpp b/frmts/gtiff/gt_wkt_srs.cpp
+index 22eabfcd38..11dffbfe3e 100644
+--- a/frmts/gtiff/gt_wkt_srs.cpp
++++ b/frmts/gtiff/gt_wkt_srs.cpp
+@@ -33,18 +33,18 @@
+ #include "gt_wkt_srs_priv.h"
+ #include "gtiff.h"
+ #include "gdal.h"
+-#include "geokeys.h"
+-#include "geovalues.h"
++#include <geotiff/geokeys.h>
++#include <geotiff/geovalues.h>
+ #include "ogr_core.h"
+ #include "ogr_spatialref.h"
+ #include "ogr_srs_api.h"
+ #include "ogr_proj_p.h"
+-#include "tiff.h"
+-#include "tiffio.h"
++#include <tiff/tiff.h>
++#include <tiff/tiffio.h>
+ #include "tifvsi.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ static const geokey_t ProjLinearUnitsInterpCorrectGeoKey =
+     static_cast<geokey_t>(3059);
+diff --git a/frmts/gtiff/gt_wkt_srs.h b/frmts/gtiff/gt_wkt_srs.h
+index a90a15e076..fa13fc2fe9 100644
+--- a/frmts/gtiff/gt_wkt_srs.h
++++ b/frmts/gtiff/gt_wkt_srs.h
+@@ -18,8 +18,8 @@
+ #include "cpl_port.h"
+ #include "ogr_srs_api.h"
+ 
+-#include "geo_normalize.h"
+-#include "geotiff.h"
++#include <geotiff/geo_normalize.h>
++#include <geotiff/geotiff.h>
+ 
+ CPL_C_START
+ char CPL_DLL *GTIFGetOGISDefn(GTIF *, GTIFDefn *);
+diff --git a/frmts/gtiff/gt_wkt_srs_priv.h b/frmts/gtiff/gt_wkt_srs_priv.h
+index 01183dc150..4718721080 100644
+--- a/frmts/gtiff/gt_wkt_srs_priv.h
++++ b/frmts/gtiff/gt_wkt_srs_priv.h
+@@ -14,7 +14,7 @@
+ #ifndef GT_WKT_SRS_PRIV_H_INCLUDED
+ #define GT_WKT_SRS_PRIV_H_INCLUDED
+ 
+-#include "geotiff.h"
++#include <geotiff/geotiff.h>
+ 
+ #if LIBGEOTIFF_VERSION >= 1600
+ 
+diff --git a/frmts/gtiff/gtiff.h b/frmts/gtiff/gtiff.h
+index 02fdf07691..8bd6ea9ec4 100644
+--- a/frmts/gtiff/gtiff.h
++++ b/frmts/gtiff/gtiff.h
+@@ -20,8 +20,8 @@
+ #include <cstdint>
+ 
+ #include "gdal.h"
+-#include "tiffio.h"
+-#include "tiffvers.h"
++#include <tiff/tiffio.h>
++#include <tiff/tiffvers.h>
+ 
+ CPL_C_START
+ void CPL_DLL GTiffOneTimeInit();
+diff --git a/frmts/gtiff/gtiffdataset.cpp b/frmts/gtiff/gtiffdataset.cpp
+index 26d1f917d2..1a77c246dc 100644
+--- a/frmts/gtiff/gtiffdataset.cpp
++++ b/frmts/gtiff/gtiffdataset.cpp
+@@ -32,7 +32,7 @@
+ #include "ogr_proj_p.h"  // OSRGetProjTLSContext()
+ #include "tif_jxl.h"
+ #include "tifvsi.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ 
+ static const GTIFFTag asTIFFTags[] = {
+     {"TIFFTAG_DOCUMENTNAME", TIFFTAG_DOCUMENTNAME, GTIFFTAGTYPE_STRING},
+diff --git a/frmts/gtiff/gtiffdataset.h b/frmts/gtiff/gtiffdataset.h
+index 8d8a543279..f5e394424f 100644
+--- a/frmts/gtiff/gtiffdataset.h
++++ b/frmts/gtiff/gtiffdataset.h
+@@ -24,7 +24,7 @@
+ #include "fetchbufferdirectio.h"
+ #include "gtiff.h"
+ #include "gt_wkt_srs.h"  // GTIFFKeysFlavorEnum
+-#include "tiffio.h"      // TIFF*
++#include <tiff/tiffio.h>      // TIFF*
+ 
+ class GTiffJPEGOverviewDS;
+ 
+diff --git a/frmts/gtiff/gtiffdataset_read.cpp b/frmts/gtiff/gtiffdataset_read.cpp
+index dab5fd33f2..ad420c3920 100644
+--- a/frmts/gtiff/gtiffdataset_read.cpp
++++ b/frmts/gtiff/gtiffdataset_read.cpp
+@@ -37,11 +37,11 @@
+ #include "cpl_worker_thread_pool.h"
+ #include "fetchbufferdirectio.h"
+ #include "gdal_mdreader.h"    // MD_DOMAIN_RPC
+-#include "geovalues.h"        // RasterPixelIsPoint
++#include <geotiff/geovalues.h>        // RasterPixelIsPoint
+ #include "gt_wkt_srs_priv.h"  // GDALGTIFKeyGetSHORT()
+ #include "tif_jxl.h"
+ #include "tifvsi.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ 
+ /************************************************************************/
+ /*                        GetJPEGOverviewCount()                        */
+diff --git a/frmts/gtiff/gtiffdataset_write.cpp b/frmts/gtiff/gtiffdataset_write.cpp
+index 7d03429f20..90dadd9f17 100644
+--- a/frmts/gtiff/gtiffdataset_write.cpp
++++ b/frmts/gtiff/gtiffdataset_write.cpp
+@@ -38,14 +38,14 @@
+ #include "gdal_mdreader.h"          // GDALWriteRPCTXTFile()
+ #include "gdal_priv_templates.hpp"  // GDALIsValueInRange<>
+ #include "gdal_thread_pool.h"       // GDALGetGlobalThreadPool()
+-#include "geovalues.h"              // RasterPixelIsPoint
++#include <geotiff/geovalues.h>              // RasterPixelIsPoint
+ #include "gt_jpeg_copy.h"
+ #include "gt_overview.h"  // GTIFFBuildOverviewMetadata()
+ #include "quant_table_md5sum.h"
+ #include "quant_table_md5sum_jpeg9e.h"
+ #include "tif_jxl.h"
+ #include "tifvsi.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ 
+ #if LIFFLIB_VERSION > 20230908 || defined(INTERNAL_LIBTIFF)
+ /* libtiff < 4.6.1 doesn't generate a LERC mask for multi-band contig configuration */
+diff --git a/frmts/gtiff/gtiffoddbitsband.cpp b/frmts/gtiff/gtiffoddbitsband.cpp
+index dc69116704..3168b7d45e 100644
+--- a/frmts/gtiff/gtiffoddbitsband.cpp
++++ b/frmts/gtiff/gtiffoddbitsband.cpp
+@@ -15,7 +15,7 @@
+ 
+ #include "cpl_float.h"  // CPLFloatToHalf()
+ #include "gtiffdataset.h"
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ 
+ /************************************************************************/
+ /*                           GTiffOddBitsBand()                         */
+diff --git a/frmts/gtiff/gtiffrgbaband.cpp b/frmts/gtiff/gtiffrgbaband.cpp
+index fdaed879a2..9e06620f81 100644
+--- a/frmts/gtiff/gtiffrgbaband.cpp
++++ b/frmts/gtiff/gtiffrgbaband.cpp
+@@ -14,7 +14,7 @@
+ #include "gtiffrgbaband.h"
+ #include "gtiffdataset.h"
+ 
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ 
+ /************************************************************************/
+ /*                           GTiffRGBABand()                            */
+diff --git a/frmts/gtiff/libgeotiff/geo_extra.c b/frmts/gtiff/libgeotiff/geo_extra.c
+index 924e4810de..a571e10b90 100644
+--- a/frmts/gtiff/libgeotiff/geo_extra.c
++++ b/frmts/gtiff/libgeotiff/geo_extra.c
+@@ -13,8 +13,8 @@
+ 
+ #include <stddef.h>
+ 
+-#include "geo_normalize.h"
+-#include "geovalues.h"
++#include <geotiff/geo_normalize.h>
++#include <geotiff/geovalues.h>
+ 
+ static const int StatePlaneTable[] =
+ {
+diff --git a/frmts/gtiff/libgeotiff/geo_free.c b/frmts/gtiff/libgeotiff/geo_free.c
+index 0edf557c0b..8c75f05a8c 100644
+--- a/frmts/gtiff/libgeotiff/geo_free.c
++++ b/frmts/gtiff/libgeotiff/geo_free.c
+@@ -11,11 +11,11 @@
+  *
+  **********************************************************************/
+ 
+-#include "geotiff.h"   /* public interface        */
++#include <geotiff/geotiff.h>   /* public interface        */
+ #include "geo_tiffp.h" /* external TIFF interface */
+ #include "geo_keyp.h"  /* private interface       */
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ /**********************************************************************
+  *
+diff --git a/frmts/gtiff/libgeotiff/geo_get.c b/frmts/gtiff/libgeotiff/geo_get.c
+index 8fc5a9aa55..6bc67eb669 100644
+--- a/frmts/gtiff/libgeotiff/geo_get.c
++++ b/frmts/gtiff/libgeotiff/geo_get.c
+@@ -13,7 +13,7 @@
+ 
+ #include <stddef.h>
+ 
+-#include "geotiff.h"   /* public interface        */
++#include <geotiff/geotiff.h>   /* public interface        */
+ #include "geo_tiffp.h" /* external TIFF interface */
+ #include "geo_keyp.h"  /* private interface       */
+ 
+diff --git a/frmts/gtiff/libgeotiff/geo_keyp.h b/frmts/gtiff/libgeotiff/geo_keyp.h
+index c13f2ec6f9..e2c34dc358 100644
+--- a/frmts/gtiff/libgeotiff/geo_keyp.h
++++ b/frmts/gtiff/libgeotiff/geo_keyp.h
+@@ -15,7 +15,7 @@
+ 
+ #include <stdlib.h> /* for size_t */
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ /*
+  * This structure contains the internal program
+diff --git a/frmts/gtiff/libgeotiff/geo_names.c b/frmts/gtiff/libgeotiff/geo_names.c
+index c7e148df1c..757cbbb2dd 100644
+--- a/frmts/gtiff/libgeotiff/geo_names.c
++++ b/frmts/gtiff/libgeotiff/geo_names.c
+@@ -18,7 +18,7 @@
+ #include "geo_tiffp.h" /* for tag names */
+ #include "geo_keyp.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ static const KeyInfo _formatInfo[] =  {
+    {TYPE_BYTE,    "Byte"},
+diff --git a/frmts/gtiff/libgeotiff/geo_normalize.c b/frmts/gtiff/libgeotiff/geo_normalize.c
+index 8c2703ea11..e49a07b6d4 100644
+--- a/frmts/gtiff/libgeotiff/geo_normalize.c
++++ b/frmts/gtiff/libgeotiff/geo_normalize.c
+@@ -19,11 +19,11 @@
+ 
+ #include "cpl_serv.h"
+ #include "geo_tiffp.h"
+-#include "geovalues.h"
+-#include "geo_normalize.h"
++#include <geotiff/geovalues.h>
++#include <geotiff/geo_normalize.h>
+ #include "geo_keyp.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ #ifndef KvUserDefined
+ #  define KvUserDefined 32767
+diff --git a/frmts/gtiff/libgeotiff/geo_normalize.h b/frmts/gtiff/libgeotiff/geo_normalize.h
+index da70c4e5db..986997a31c 100644
+--- a/frmts/gtiff/libgeotiff/geo_normalize.h
++++ b/frmts/gtiff/libgeotiff/geo_normalize.h
+@@ -16,7 +16,7 @@
+ #define GEO_NORMALIZE_H_INCLUDED
+ 
+ #include <stdio.h>
+-#include "geotiff.h"
++#include <geotiff/geotiff.h>
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/frmts/gtiff/libgeotiff/geo_print.c b/frmts/gtiff/libgeotiff/geo_print.c
+index 5885354bcf..6f88317e9e 100644
+--- a/frmts/gtiff/libgeotiff/geo_print.c
++++ b/frmts/gtiff/libgeotiff/geo_print.c
+@@ -14,10 +14,10 @@
+ #include <stdio.h>
+ #include <string.h>
+ 
+-#include "geotiff.h"   /* public interface        */
++#include <geotiff/geotiff.h>   /* public interface        */
+ #include "geo_tiffp.h" /* external TIFF interface */
+ #include "geo_keyp.h"  /* private interface       */
+-#include "geokeys.h"
++#include <geotiff/geokeys.h>
+ 
+ 
+ #define FMT_GEOTIFF "Geotiff_Information:"
+diff --git a/frmts/gtiff/libgeotiff/geo_set.c b/frmts/gtiff/libgeotiff/geo_set.c
+index 165ff1df4f..146a0cea14 100644
+--- a/frmts/gtiff/libgeotiff/geo_set.c
++++ b/frmts/gtiff/libgeotiff/geo_set.c
+@@ -15,7 +15,7 @@
+ #include <stdarg.h>
+ #include <string.h>
+ 
+-#include "geotiff.h"   /* public interface        */
++#include <geotiff/geotiff.h>   /* public interface        */
+ #include "geo_tiffp.h" /* external TIFF interface */
+ #include "geo_keyp.h"  /* private interface       */
+ 
+diff --git a/frmts/gtiff/libgeotiff/geo_simpletags.c b/frmts/gtiff/libgeotiff/geo_simpletags.c
+index 68fc436626..78e00df945 100644
+--- a/frmts/gtiff/libgeotiff/geo_simpletags.c
++++ b/frmts/gtiff/libgeotiff/geo_simpletags.c
+@@ -9,7 +9,7 @@
+  *
+  *****************************************************************************/
+ 
+-#include "geotiff.h"    /* public GTIFF interface */
++#include <geotiff/geotiff.h>    /* public GTIFF interface */
+ #include "geo_simpletags.h"
+ 
+ #include "geo_tiffp.h"  /* Private TIFF interface */
+diff --git a/frmts/gtiff/libgeotiff/geo_simpletags.h b/frmts/gtiff/libgeotiff/geo_simpletags.h
+index 0aeef963cf..34eac65589 100644
+--- a/frmts/gtiff/libgeotiff/geo_simpletags.h
++++ b/frmts/gtiff/libgeotiff/geo_simpletags.h
+@@ -14,7 +14,7 @@
+ #ifndef LIBGEOTIFF_GEO_SIMPLETAGS_H_
+ #define LIBGEOTIFF_GEO_SIMPLETAGS_H_
+ 
+-#include "geotiff.h"
++#include <geotiff/geotiff.h>
+ 
+ #if defined(__cplusplus)
+ extern "C" {
+diff --git a/frmts/gtiff/libgeotiff/geo_tiffp.c b/frmts/gtiff/libgeotiff/geo_tiffp.c
+index ac2950bd26..2e27dc46f5 100644
+--- a/frmts/gtiff/libgeotiff/geo_tiffp.c
++++ b/frmts/gtiff/libgeotiff/geo_tiffp.c
+@@ -16,7 +16,7 @@
+  *
+  **********************************************************************/
+ 
+-#include "geotiff.h"    /* public GTIFF interface */
++#include <geotiff/geotiff.h>    /* public GTIFF interface */
+ 
+ #include "geo_tiffp.h"  /* Private TIFF interface */
+ #include "geo_keyp.h"   /* Private GTIFF interface */
+diff --git a/frmts/gtiff/libgeotiff/geo_tiffp.h b/frmts/gtiff/libgeotiff/geo_tiffp.h
+index f0da2a8a67..6e3411ebee 100644
+--- a/frmts/gtiff/libgeotiff/geo_tiffp.h
++++ b/frmts/gtiff/libgeotiff/geo_tiffp.h
+@@ -29,8 +29,8 @@
+  *
+  **********************************************************************/
+ 
+-#include "geotiff.h"
+-#include "xtiffio.h"
++#include <geotiff/geotiff.h>
++#include <geotiff/xtiffio.h>
+ #include "cpl_serv.h"
+ 
+ /*
+diff --git a/frmts/gtiff/libgeotiff/geo_trans.c b/frmts/gtiff/libgeotiff/geo_trans.c
+index 0e8208f319..023a992e03 100644
+--- a/frmts/gtiff/libgeotiff/geo_trans.c
++++ b/frmts/gtiff/libgeotiff/geo_trans.c
+@@ -15,10 +15,10 @@
+ #include <math.h>
+ #include <stddef.h>
+ 
+-#include "geotiff.h"
++#include <geotiff/geotiff.h>
+ #include "geo_tiffp.h" /* external TIFF interface */
+ #include "geo_keyp.h"  /* private interface       */
+-#include "geokeys.h"
++#include <geotiff/geokeys.h>
+ 
+ /************************************************************************/
+ /*                          inv_geotransform()                          */
+diff --git a/frmts/gtiff/libgeotiff/geotiff.h b/frmts/gtiff/libgeotiff/geotiff.h
+index 75de593c8a..34081a031c 100644
+--- a/frmts/gtiff/libgeotiff/geotiff.h
++++ b/frmts/gtiff/libgeotiff/geotiff.h
+@@ -50,7 +50,7 @@
+ #define LIBGEOTIFF_VERSION 1740
+ 
+ #include "geo_config.h"
+-#include "geokeys.h"
++#include <geotiff/geokeys.h>
+ 
+ /**********************************************************************
+  * Do we want to build as a DLL on windows?
+diff --git a/frmts/gtiff/libgeotiff/geotiff_proj4.c b/frmts/gtiff/libgeotiff/geotiff_proj4.c
+index 77041bcdaa..582dead811 100644
+--- a/frmts/gtiff/libgeotiff/geotiff_proj4.c
++++ b/frmts/gtiff/libgeotiff/geotiff_proj4.c
+@@ -18,11 +18,11 @@
+ #include <string.h>
+ 
+ #include "cpl_serv.h"
+-#include "geotiff.h"
+-#include "geo_normalize.h"
+-#include "geovalues.h"
++#include <geotiff/geotiff.h>
++#include <geotiff/geo_normalize.h>
++#include <geotiff/geovalues.h>
+ #include "geo_tiffp.h"
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ /************************************************************************/
+ /*                    GTIFProj4AppendEllipsoid()                        */
+diff --git a/frmts/gtiff/libgeotiff/geotiffio.h b/frmts/gtiff/libgeotiff/geotiffio.h
+index b9da19b61c..2a3617d7ad 100644
+--- a/frmts/gtiff/libgeotiff/geotiffio.h
++++ b/frmts/gtiff/libgeotiff/geotiffio.h
+@@ -14,7 +14,7 @@
+ #ifndef LIBGEOTIFF_GEOTIFFIO_H_
+ #define LIBGEOTIFF_GEOTIFFIO_H_
+ 
+-#include "geotiff.h"  /* public key interface */
+-#include "geovalues.h" /* key code definitions */
++#include <geotiff/geotiff.h>  /* public key interface */
++#include <geotiff/geovalues.h> /* key code definitions */
+ 
+ #endif /* LIBGEOTIFF_GEOTIFFIO_H_ */
+diff --git a/frmts/gtiff/libgeotiff/xtiff.c b/frmts/gtiff/libgeotiff/xtiff.c
+index 2b48516f53..78d50a17bf 100644
+--- a/frmts/gtiff/libgeotiff/xtiff.c
++++ b/frmts/gtiff/libgeotiff/xtiff.c
+@@ -14,7 +14,7 @@
+  *                     Backward compatible support provided.  --NDR.
+  */
+ 
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ #include <stdio.h>
+ #include "cpl_serv.h"
+ 
+diff --git a/frmts/gtiff/libgeotiff/xtiffio.h b/frmts/gtiff/libgeotiff/xtiffio.h
+index d5e5c77b74..15b6ee921d 100644
+--- a/frmts/gtiff/libgeotiff/xtiffio.h
++++ b/frmts/gtiff/libgeotiff/xtiffio.h
+@@ -7,7 +7,7 @@
+ #ifndef LIBGEOTIFF_XTIFFIO_H_
+ #define LIBGEOTIFF_XTIFFIO_H_
+ 
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ #include "geo_config.h"
+ 
+ /**
+diff --git a/frmts/gtiff/libtiff/CMakeLists.txt b/frmts/gtiff/libtiff/CMakeLists.txt
+index 8f879d5551..8e7e3704c1 100644
+--- a/frmts/gtiff/libtiff/CMakeLists.txt
++++ b/frmts/gtiff/libtiff/CMakeLists.txt
+@@ -112,7 +112,7 @@ if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
+ endif ()
+ 
+ if (NOT GDAL_USE_ZLIB_INTERNAL)
+-  gdal_target_link_libraries(libtiff PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(libtiff PRIVATE zlib)
+ endif ()
+ 
+ if (GDAL_USE_DEFLATE)
+diff --git a/frmts/gtiff/libtiff/tif_dir.h b/frmts/gtiff/libtiff/tif_dir.h
+index ffad085e02..8010087248 100644
+--- a/frmts/gtiff/libtiff/tif_dir.h
++++ b/frmts/gtiff/libtiff/tif_dir.h
+@@ -25,8 +25,8 @@
+ #ifndef _TIFFDIR_
+ #define _TIFFDIR_
+ 
+-#include "tiff.h"
+-#include "tiffio.h"
++#include <tiff/tiff.h>
++#include <tiff/tiffio.h>
+ 
+ /*
+  * ``Library-private'' Directory-related Definitions.
+diff --git a/frmts/gtiff/libtiff/tif_fax3.h b/frmts/gtiff/libtiff/tif_fax3.h
+index e095009bba..531eb20344 100644
+--- a/frmts/gtiff/libtiff/tif_fax3.h
++++ b/frmts/gtiff/libtiff/tif_fax3.h
+@@ -33,7 +33,7 @@
+  * in Frank Cringle's viewfax program;
+  *      Copyright (C) 1990, 1995  Frank D. Cringle.
+  */
+-#include "tiff.h"
++#include <tiff/tiff.h>
+ 
+ /*
+  * To override the default routine used to image decoded
+diff --git a/frmts/gtiff/libtiff/tif_fax3sm.c b/frmts/gtiff/libtiff/tif_fax3sm.c
+index ba2fc532e8..0cbf54b805 100644
+--- a/frmts/gtiff/libtiff/tif_fax3sm.c
++++ b/frmts/gtiff/libtiff/tif_fax3sm.c
+@@ -1,7 +1,7 @@
+ /* WARNING, this file was automatically generated by the
+     mkg3states program */
+ #include <stdint.h>
+-#include "tiff.h"
++#include <tiff/tiff.h>
+ #include "tif_fax3.h"
+  const TIFFFaxTabEnt TIFFFaxMainTable[128] = {
+ {12,7,0},{3,1,0},{5,3,1},{3,1,0},{2,3,0},{3,1,0},{4,3,1},{3,1,0},{1,4,0},{3,1,0},
+diff --git a/frmts/gtiff/libtiff/tif_lerc.c b/frmts/gtiff/libtiff/tif_lerc.c
+index d57b1d253d..a8abdeed50 100644
+--- a/frmts/gtiff/libtiff/tif_lerc.c
++++ b/frmts/gtiff/libtiff/tif_lerc.c
+@@ -32,7 +32,7 @@
+  */
+ 
+ #include "Lerc_c_api.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #ifdef ZSTD_SUPPORT
+ #include "zstd.h"
+ #endif
+diff --git a/frmts/gtiff/libtiff/tif_pixarlog.c b/frmts/gtiff/libtiff/tif_pixarlog.c
+index 56cf416a7f..82eedc1e92 100644
+--- a/frmts/gtiff/libtiff/tif_pixarlog.c
++++ b/frmts/gtiff/libtiff/tif_pixarlog.c
+@@ -88,7 +88,7 @@
+  */
+ 
+ #include "tif_predict.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #include <math.h>
+ #include <stdio.h>
+diff --git a/frmts/gtiff/libtiff/tif_predict.h b/frmts/gtiff/libtiff/tif_predict.h
+index de77328352..c3f6e38263 100644
+--- a/frmts/gtiff/libtiff/tif_predict.h
++++ b/frmts/gtiff/libtiff/tif_predict.h
+@@ -25,7 +25,7 @@
+ #ifndef _TIFFPREDICT_
+ #define _TIFFPREDICT_
+ 
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ #include "tiffiop.h"
+ 
+ /*
+diff --git a/frmts/gtiff/libtiff/tif_zip.c b/frmts/gtiff/libtiff/tif_zip.c
+index 2a2a1d787f..efdd18efe4 100644
+--- a/frmts/gtiff/libtiff/tif_zip.c
++++ b/frmts/gtiff/libtiff/tif_zip.c
+@@ -38,7 +38,7 @@
+  * For scanline access, zlib will be sued as a fallback.
+  */
+ #include "tif_predict.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #if LIBDEFLATE_SUPPORT
+ #include "libdeflate.h"
+diff --git a/frmts/gtiff/libtiff/tiffio.h b/frmts/gtiff/libtiff/tiffio.h
+index 225f3c1bfe..c1f4f7dee0 100644
+--- a/frmts/gtiff/libtiff/tiffio.h
++++ b/frmts/gtiff/libtiff/tiffio.h
+@@ -28,8 +28,8 @@
+ /*
+  * TIFF I/O Library Definitions.
+  */
+-#include "tiff.h"
+-#include "tiffvers.h"
++#include <tiff/tiff.h>
++#include <tiff/tiffvers.h>
+ 
+ /*
+  * TIFF is defined as an incomplete type to hide the
+diff --git a/frmts/gtiff/libtiff/tiffiop.h b/frmts/gtiff/libtiff/tiffiop.h
+index c4348206df..1850365d83 100644
+--- a/frmts/gtiff/libtiff/tiffiop.h
++++ b/frmts/gtiff/libtiff/tiffiop.h
+@@ -47,7 +47,7 @@
+ #endif
+ 
+ #include "tif_hash_set.h"
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ 
+ #include "tif_dir.h"
+ 
+diff --git a/frmts/gtiff/tifvsi.cpp b/frmts/gtiff/tifvsi.cpp
+index 00333d2e72..7be45ed255 100644
+--- a/frmts/gtiff/tifvsi.cpp
++++ b/frmts/gtiff/tifvsi.cpp
+@@ -36,7 +36,7 @@
+ #include "gdal_libgeotiff_symbol_rename.h"
+ #endif
+ 
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ 
+ #include <limits>
+ 
+diff --git a/frmts/gtiff/tifvsi.h b/frmts/gtiff/tifvsi.h
+index 023bd5335e..a2fa5f56a2 100644
+--- a/frmts/gtiff/tifvsi.h
++++ b/frmts/gtiff/tifvsi.h
+@@ -19,7 +19,7 @@
+ 
+ #include "cpl_port.h"
+ #include "cpl_vsi.h"
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ 
+ TIFF CPL_DLL *VSI_TIFFOpen(const char *name, const char *mode, VSILFILE *fp);
+ TIFF *VSI_TIFFOpenChild(
+diff --git a/frmts/hfa/hfaopen.cpp b/frmts/hfa/hfaopen.cpp
+index 3e13ddd030..847e87dffd 100644
+--- a/frmts/hfa/hfaopen.cpp
++++ b/frmts/hfa/hfaopen.cpp
+@@ -45,7 +45,7 @@
+ #include "gdal_priv.h"
+ #include "hfa.h"
+ #include "ogr_proj_p.h"
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ constexpr double R2D = 180.0 / M_PI;
+ 
+diff --git a/frmts/idrisi/IdrisiDataset.cpp b/frmts/idrisi/IdrisiDataset.cpp
+index c5e3db0cf5..bcf2bca3f2 100644
+--- a/frmts/idrisi/IdrisiDataset.cpp
++++ b/frmts/idrisi/IdrisiDataset.cpp
+@@ -26,7 +26,7 @@
+ #include "ogr_spatialref.h"
+ #include "idrisi.h"
+ 
+-#include "proj_experimental.h"
++#include <proj/proj_experimental.h>
+ #include "ogr_proj_p.h"
+ 
+ #include <cmath>
+diff --git a/frmts/jpeg/CMakeLists.txt b/frmts/jpeg/CMakeLists.txt
+index ae8127d4f0..61fd295c0a 100644
+--- a/frmts/jpeg/CMakeLists.txt
++++ b/frmts/jpeg/CMakeLists.txt
+@@ -49,7 +49,7 @@ if (NOT GDAL_USE_JPEG_INTERNAL)
+ endif ()
+ 
+ if (NOT GDAL_USE_ZLIB_INTERNAL)
+-  gdal_target_link_libraries(gdal_JPEG PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_JPEG PRIVATE zlib)
+ endif ()
+ 
+ # Breaks ODR
+diff --git a/frmts/mbtiles/CMakeLists.txt b/frmts/mbtiles/CMakeLists.txt
+index f1850f94c2..b6eb1fa051 100644
+--- a/frmts/mbtiles/CMakeLists.txt
++++ b/frmts/mbtiles/CMakeLists.txt
+@@ -20,7 +20,7 @@ target_compile_definitions(gdal_MBTiles PRIVATE -DHAVE_SQLITE)
+ gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite::SQLite3)
+ 
+ if (NOT GDAL_USE_ZLIB_INTERNAL)
+-  gdal_target_link_libraries(gdal_MBTiles PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_MBTiles PRIVATE zlib)
+ endif ()
+ if (NOT GDAL_USE_JSONC_INTERNAL)
+   gdal_target_link_libraries(gdal_MBTiles PRIVATE ${JSONC_TARGET})
+diff --git a/frmts/mbtiles/mbtilesdataset.cpp b/frmts/mbtiles/mbtilesdataset.cpp
+index 1326c3142b..422e03e7b0 100644
+--- a/frmts/mbtiles/mbtilesdataset.cpp
++++ b/frmts/mbtiles/mbtilesdataset.cpp
+@@ -27,7 +27,7 @@
+ #include "ogrsqlitevfs.h"
+ #include "ogrsqlitebase.h"
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #include "ogrlibjsonutils.h"
+ 
+ #include <math.h>
+diff --git a/frmts/mrf/CMakeLists.txt b/frmts/mrf/CMakeLists.txt
+index 596381e706..54712aa034 100644
+--- a/frmts/mrf/CMakeLists.txt
++++ b/frmts/mrf/CMakeLists.txt
+@@ -91,7 +91,7 @@ if (GDAL_USE_PNG AND NOT GDAL_USE_PNG_INTERNAL)
+ endif ()
+ 
+ if (NOT GDAL_USE_ZLIB_INTERNAL)
+-  gdal_target_link_libraries(gdal_MRF PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_MRF PRIVATE zlib)
+ endif ()
+ 
+ if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC)
+diff --git a/frmts/mrsid/CMakeLists.txt b/frmts/mrsid/CMakeLists.txt
+index fa112278d7..46ab6459b6 100644
+--- a/frmts/mrsid/CMakeLists.txt
++++ b/frmts/mrsid/CMakeLists.txt
+@@ -43,5 +43,5 @@ endif ()
+ if (GDAL_USE_GEOTIFF_INTERNAL)
+   gdal_add_vendored_lib(gdal_MrSID geotiff)
+ else ()
+-  gdal_target_link_libraries(gdal_MrSID PRIVATE ${GeoTIFF_TARGET})
++  gdal_target_link_libraries(gdal_MrSID PRIVATE geotiff)
+ endif ()
+diff --git a/frmts/nitf/CMakeLists.txt b/frmts/nitf/CMakeLists.txt
+index 9bed18a5a2..38cb2ab984 100644
+--- a/frmts/nitf/CMakeLists.txt
++++ b/frmts/nitf/CMakeLists.txt
+@@ -89,7 +89,7 @@ if (GDAL_USE_TIFF_INTERNAL)
+   if (GDAL_USE_ZLIB_INTERNAL)
+     target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libz>)
+   else ()
+-    target_link_libraries(nitfdump PRIVATE ZLIB::ZLIB)
++    target_link_libraries(nitfdump PRIVATE zlib)
+   endif ()
+   if (GDAL_USE_DEFLATE)
+     target_link_libraries(nitfdump PRIVATE Deflate::Deflate)
+diff --git a/frmts/nitf/nitfbilevel.cpp b/frmts/nitf/nitfbilevel.cpp
+index 1734fcdfa7..2a8639785b 100644
+--- a/frmts/nitf/nitfbilevel.cpp
++++ b/frmts/nitf/nitfbilevel.cpp
+@@ -20,9 +20,9 @@
+ #include "cpl_string.h"
+ #include "cpl_vsi.h"
+ #include "gdal.h"
+-// #include "tiff.h"
++// #include <tiff/tiff.h>
+ CPL_C_START
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ CPL_C_END
+ #include "tifvsi.h"
+ 
+diff --git a/frmts/ozi/CMakeLists.txt b/frmts/ozi/CMakeLists.txt
+index a31ed5da5a..7fb2c8444c 100644
+--- a/frmts/ozi/CMakeLists.txt
++++ b/frmts/ozi/CMakeLists.txt
+@@ -5,7 +5,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
+   gdal_add_vendored_lib(gdal_OZI libz)
+ else ()
+   target_compile_definitions(gdal_OZI PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
+-  gdal_target_link_libraries(gdal_OZI PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_OZI PRIVATE zlib)
+   if (MSVC AND NOT ZLIB_IS_STATIC)
+     target_compile_definitions(gdal_OZI PRIVATE -DZLIB_DLL)
+   endif ()
+diff --git a/frmts/ozi/ozidataset.cpp b/frmts/ozi/ozidataset.cpp
+index b617677965..a3cf8ca1c4 100644
+--- a/frmts/ozi/ozidataset.cpp
++++ b/frmts/ozi/ozidataset.cpp
+@@ -12,7 +12,7 @@
+ 
+ #include "gdal_frmts.h"
+ #include "gdal_pam.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ /* g++ -fPIC -g -Wall frmts/ozi/ozidataset.cpp -shared -o gdal_OZI.so -Iport
+  * -Igcore -Iogr -L. -lgdal  */
+diff --git a/frmts/pds/CMakeLists.txt b/frmts/pds/CMakeLists.txt
+index ac46b0ede9..0edf450e18 100644
+--- a/frmts/pds/CMakeLists.txt
++++ b/frmts/pds/CMakeLists.txt
+@@ -57,7 +57,7 @@ if (NOT GDAL_USE_JSONC_INTERNAL)
+   gdal_target_link_libraries(gdal_PDS PRIVATE ${JSONC_TARGET})
+ endif ()
+ if (GDAL_USE_GEOTIFF AND NOT GDAL_USE_GEOTIFF_INTERNAL)
+-  gdal_target_link_libraries(gdal_PDS PRIVATE ${GeoTIFF_TARGET})
++  gdal_target_link_libraries(gdal_PDS PRIVATE geotiff)
+   target_compile_definitions(gdal_PDS PRIVATE -DHAVE_GEOTIFF)
+ endif ()
+ if (GDAL_USE_TIFF AND NOT GDAL_USE_TIFF_INTERNAL)
+diff --git a/frmts/pds/vicardataset.cpp b/frmts/pds/vicardataset.cpp
+index 0fe1be702b..e5d4714dd7 100644
+--- a/frmts/pds/vicardataset.cpp
++++ b/frmts/pds/vicardataset.cpp
+@@ -30,9 +30,9 @@ constexpr double VICAR_NULL3 = -32768.0;
+ 
+ #if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
+ #include "gtiff.h"
+-#include "geotiff.h"
++#include <geotiff/geotiff.h>
+ #include "tifvsi.h"
+-#include "xtiffio.h"
++#include <geotiff/xtiffio.h>
+ #include "gt_wkt_srs_priv.h"
+ #endif
+ 
+diff --git a/frmts/png/CMakeLists.txt b/frmts/png/CMakeLists.txt
+index 42ae7e8415..fd7949938b 100644
+--- a/frmts/png/CMakeLists.txt
++++ b/frmts/png/CMakeLists.txt
+@@ -19,5 +19,5 @@ endif ()
+ if (GDAL_USE_ZLIB_INTERNAL)
+   gdal_add_vendored_lib(gdal_PNG libz)
+ else ()
+-  gdal_target_link_libraries(gdal_PNG PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_PNG PRIVATE zlib)
+ endif ()
+diff --git a/frmts/png/libpng/CMakeLists.txt b/frmts/png/libpng/CMakeLists.txt
+index f99083a8ed..f86ca3076e 100644
+--- a/frmts/png/libpng/CMakeLists.txt
++++ b/frmts/png/libpng/CMakeLists.txt
+@@ -20,7 +20,7 @@ add_library(
+ if (GDAL_USE_ZLIB_INTERNAL)
+   gdal_add_vendored_lib(libpng libz)
+ else ()
+-  gdal_target_link_libraries(libpng PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(libpng PRIVATE zlib)
+ endif ()
+ set_property(TARGET libpng PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+ target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libpng>)
+diff --git a/frmts/png/libpng/pngstruct.h b/frmts/png/libpng/pngstruct.h
+index e591d94d58..a4f2b0f30e 100644
+--- a/frmts/png/libpng/pngstruct.h
++++ b/frmts/png/libpng/pngstruct.h
+@@ -27,7 +27,7 @@
+    /* We must ensure that zlib uses 'const' in declarations. */
+ #  define ZLIB_CONST
+ #endif
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #ifdef const
+    /* zlib.h sometimes #defines const to nothing, undo this. */
+ #  undef const
+diff --git a/frmts/rik/CMakeLists.txt b/frmts/rik/CMakeLists.txt
+index 9edace854d..3c3069824d 100644
+--- a/frmts/rik/CMakeLists.txt
++++ b/frmts/rik/CMakeLists.txt
+@@ -4,5 +4,5 @@ gdal_standard_includes(gdal_RIK)
+ if (GDAL_USE_ZLIB_INTERNAL)
+   gdal_add_vendored_lib(gdal_RIK libz)
+ else ()
+-  gdal_target_link_libraries(gdal_RIK PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(gdal_RIK PRIVATE zlib)
+ endif ()
+diff --git a/frmts/zlib/compress.c b/frmts/zlib/compress.c
+index f43bacf7ab..d7182db016 100644
+--- a/frmts/zlib/compress.c
++++ b/frmts/zlib/compress.c
+@@ -6,7 +6,7 @@
+ /* @(#) $Id$ */
+ 
+ #define ZLIB_INTERNAL
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ /* ===========================================================================
+      Compresses the source buffer into the destination buffer. The level
+diff --git a/frmts/zlib/contrib/infback9/CMakeLists.txt b/frmts/zlib/contrib/infback9/CMakeLists.txt
+index fb2e8053c4..70e276389b 100644
+--- a/frmts/zlib/contrib/infback9/CMakeLists.txt
++++ b/frmts/zlib/contrib/infback9/CMakeLists.txt
+@@ -14,5 +14,5 @@ include(GdalDriverHelper)
+ if (GDAL_USE_ZLIB_INTERNAL)
+   gdal_add_vendored_lib(infback9 libz)
+ else()
+-  gdal_target_link_libraries(infback9 PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(infback9 PRIVATE zlib)
+ endif ()
+diff --git a/frmts/zlib/contrib/infback9/minified_zutil.h b/frmts/zlib/contrib/infback9/minified_zutil.h
+index d52c0e1b9d..a06ac540a1 100644
+--- a/frmts/zlib/contrib/infback9/minified_zutil.h
++++ b/frmts/zlib/contrib/infback9/minified_zutil.h
+@@ -19,7 +19,7 @@
+ #  define ZLIB_INTERNAL
+ #endif
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ // Gentoo and derivatives change the OF() macro from upstream zlib's zconf.h
+ // to _Z_OF(), so define OF() if it isn't
+diff --git a/frmts/zlib/gzguts.h b/frmts/zlib/gzguts.h
+index eba72085bb..b2e8d37eaf 100644
+--- a/frmts/zlib/gzguts.h
++++ b/frmts/zlib/gzguts.h
+@@ -18,7 +18,7 @@
+ #endif
+ 
+ #include <stdio.h>
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #ifdef STDC
+ #  include <string.h>
+ #  include <stdlib.h>
+diff --git a/frmts/zlib/uncompr.c b/frmts/zlib/uncompr.c
+index 5e256663b4..b4808ec28e 100644
+--- a/frmts/zlib/uncompr.c
++++ b/frmts/zlib/uncompr.c
+@@ -6,7 +6,7 @@
+ /* @(#) $Id$ */
+ 
+ #define ZLIB_INTERNAL
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ /* ===========================================================================
+      Decompresses the source buffer into the destination buffer.  *sourceLen is
+diff --git a/frmts/zlib/zlib.h b/frmts/zlib/zlib.h
+index 8d4b932eaf..b32be72add 100644
+--- a/frmts/zlib/zlib.h
++++ b/frmts/zlib/zlib.h
+@@ -31,7 +31,7 @@
+ #ifndef ZLIB_H
+ #define ZLIB_H
+ 
+-#include "zconf.h"
++#include <zlib/zconf.h>
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/frmts/zlib/zutil.h b/frmts/zlib/zutil.h
+index 48dd7febae..02094d9bf4 100644
+--- a/frmts/zlib/zutil.h
++++ b/frmts/zlib/zutil.h
+@@ -19,7 +19,7 @@
+ #  define ZLIB_INTERNAL
+ #endif
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #if defined(STDC) && !defined(Z_SOLO)
+ #  if !(defined(_WIN32_WCE) && defined(_MSC_VER))
+diff --git a/gcore/gdal_misc.cpp b/gcore/gdal_misc.cpp
+index 047a789993..baab829e60 100644
+--- a/gcore/gdal_misc.cpp
++++ b/gcore/gdal_misc.cpp
+@@ -44,7 +44,7 @@
+ #include "ogr_spatialref.h"
+ #include "ogr_geos.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ #ifdef HAVE_CURL
+ #include "cpl_curl_priv.h"
+diff --git a/gdal.cmake b/gdal.cmake
+index 0148674043..8a2997cda7 100644
+--- a/gdal.cmake
++++ b/gdal.cmake
+@@ -228,9 +228,9 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
+ else ()
+   include(GNUInstallDirs)
+   set(INSTALL_PLUGIN_DIR
+-      "${CMAKE_INSTALL_LIBDIR}/gdalplugins"
++      "${CMAKE_INSTALL_DATAROOTDIR}/gdal/plugins"
+       CACHE PATH "Installation sub-directory for plugins")
+-  set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
++  set(GDAL_RESOURCE_PATH "${CMAKE_INSTALL_DATADIR}/gdal/data")
+ 
+   option(GDAL_SET_INSTALL_RELATIVE_RPATH "Whether the rpath of installed binaries should be written as a relative path to the library" OFF)
+   if(GDAL_SET_INSTALL_RELATIVE_RPATH)
+@@ -482,7 +482,7 @@ install(
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
+-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
++  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gdal
+   FRAMEWORK DESTINATION "${FRAMEWORK_DESTINATION}")
+ 
+ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
+@@ -493,19 +493,6 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
+     NAMESPACE GDAL::
+     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
+     EXPORT_LINK_INTERFACE_LIBRARIES)
+-  if (NOT BUILD_SHARED_LIBS)
+-    install(
+-      FILES
+-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
+-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/DefineFindPackage2.cmake"
+-      DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
+-    include(GdalFindModulePath)
+-    foreach(dir IN LISTS GDAL_VENDORED_FIND_MODULES_CMAKE_VERSIONS ITEMS packages thirdparty)
+-      install(
+-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
+-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
+-    endforeach()
+-  endif ()
+ 
+   include(CMakePackageConfigHelpers)
+   # SameMinorVersion as our C++ ABI remains stable only among major.minor.XXX patch releases
+@@ -517,26 +504,6 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
+-
+-  # Generate gdal-config utility command and pkg-config module gdal.pc
+-  include(GdalGenerateConfig)
+-  gdal_generate_config(
+-    TARGET
+-    "${GDAL_LIB_TARGET_NAME}"
+-    GLOBAL_PROPERTY
+-    "gdal_private_link_libraries"
+-    GDAL_CONFIG
+-    "${PROJECT_BINARY_DIR}/apps/gdal-config"
+-    PKG_CONFIG
+-    "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
+-  install(
+-    PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
+-    DESTINATION ${CMAKE_INSTALL_BINDIR}
+-    COMPONENT applications)
+-  install(
+-    FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
+-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+-    COMPONENT libraries)
+ endif ()
+ 
+ configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
+diff --git a/ogr/CMakeLists.txt b/ogr/CMakeLists.txt
+index ce665225df..8155c58f25 100644
+--- a/ogr/CMakeLists.txt
++++ b/ogr/CMakeLists.txt
+@@ -134,7 +134,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
+   if (MSVC AND NOT ZLIB_IS_STATIC)
+     target_compile_definitions(ogr PRIVATE -DZLIB_DLL)
+   endif ()
+-  gdal_target_link_libraries(ogr PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(ogr PRIVATE zlib)
+ endif ()
+ 
+ if (GDAL_USE_EXPAT)
+diff --git a/ogr/ogr_fromepsg.cpp b/ogr/ogr_fromepsg.cpp
+index 8d632f5439..f0508e5f4d 100644
+--- a/ogr/ogr_fromepsg.cpp
++++ b/ogr/ogr_fromepsg.cpp
+@@ -38,7 +38,7 @@
+ #include "ogr_proj_p.h"
+ #include "ogr_spatialref.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ extern void OGRsnPrintDouble(char *pszStrBuf, size_t size, double dfValue);
+ 
+diff --git a/ogr/ogr_proj_p.cpp b/ogr/ogr_proj_p.cpp
+index 9ee654c097..d1811afcb5 100644
+--- a/ogr/ogr_proj_p.cpp
++++ b/ogr/ogr_proj_p.cpp
+@@ -17,7 +17,7 @@
+ #include "ogr_proj_p.h"
+ #include "ogr_srs_api.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ #ifndef _WIN32
+ #include <sys/types.h>
+diff --git a/ogr/ogr_proj_p.h b/ogr/ogr_proj_p.h
+index cef6d7ca48..deb07ffabf 100644
+--- a/ogr/ogr_proj_p.h
++++ b/ogr/ogr_proj_p.h
+@@ -13,7 +13,7 @@
+ #ifndef OGR_PROJ_P_H_INCLUDED
+ #define OGR_PROJ_P_H_INCLUDED
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ 
+ #include "cpl_mem_cache.h"
+ 
+diff --git a/ogr/ogrct.cpp b/ogr/ogrct.cpp
+index 621a2f69f6..0de96fc586 100644
+--- a/ogr/ogrct.cpp
++++ b/ogr/ogrct.cpp
+@@ -31,8 +31,8 @@
+ #include "ogr_srs_api.h"
+ #include "ogr_proj_p.h"
+ 
+-#include "proj.h"
+-#include "proj_experimental.h"
++#include <proj/proj.h>
++#include <proj/proj_experimental.h>
+ 
+ #ifdef DEBUG_PERF
+ static double g_dfTotalTimeCRStoCRS = 0;
+diff --git a/ogr/ogrlinestring.cpp b/ogr/ogrlinestring.cpp
+index 80445fea3b..f843279449 100644
+--- a/ogr/ogrlinestring.cpp
++++ b/ogr/ogrlinestring.cpp
+@@ -15,7 +15,7 @@
+ #include "ogr_geos.h"
+ #include "ogr_p.h"
+ 
+-#include "geodesic.h"  // from PROJ
++#include <proj/geodesic.h>  // from PROJ
+ 
+ #include <cmath>
+ #include <cstdlib>
+diff --git a/ogr/ogrsf_frmts/libkml/CMakeLists.txt b/ogr/ogrsf_frmts/libkml/CMakeLists.txt
+index 158e6cf702..317a903b08 100644
+--- a/ogr/ogrsf_frmts/libkml/CMakeLists.txt
++++ b/ogr/ogrsf_frmts/libkml/CMakeLists.txt
+@@ -26,7 +26,7 @@ endif()
+ 
+ gdal_standard_includes(ogr_LIBKML)
+ gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)
+-if (TARGET LIBKML::MINIZIP AND TARGET LIBKML::URIPARSER AND TARGET ZLIB::ZLIB AND GDAL_USE_EXPAT)
++if (TARGET LIBKML::MINIZIP AND TARGET LIBKML::URIPARSER AND TARGET zlib AND GDAL_USE_EXPAT)
+   # Fedora Rawhide doesn't have LIBKML::MINIZIP
+-  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER ZLIB::ZLIB ${EXPAT_TARGET})
++  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER zlib ${EXPAT_TARGET})
+ endif()
+diff --git a/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp b/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
+index c0a1bd99b3..3ddf09a034 100644
+--- a/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
++++ b/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
+@@ -54,7 +54,7 @@
+ #include "ogrsf_frmts.h"
+ #include "sqlite3.h"
+ 
+-#include "proj.h"
++#include <proj/proj.h>
+ #include "ogr_proj_p.h"
+ 
+ #ifdef __clang__
+diff --git a/ogr/ogrspatialreference.cpp b/ogr/ogrspatialreference.cpp
+index dd0c683ffc..197912a6a5 100644
+--- a/ogr/ogrspatialreference.cpp
++++ b/ogr/ogrspatialreference.cpp
+@@ -41,9 +41,9 @@
+ #include "ogr_srs_api.h"
+ #include "ogrmitabspatialref.h"
+ 
+-#include "proj.h"
+-#include "proj_experimental.h"
+-#include "proj_constants.h"
++#include <proj/proj.h>
++#include <proj/proj_experimental.h>
++#include <proj/proj_constants.h>
+ 
+ // Exists since 8.0.1
+ #ifndef PROJ_AT_LEAST_VERSION
+diff --git a/port/CMakeLists.txt b/port/CMakeLists.txt
+index c77e5c6b8d..9ce62409ce 100644
+--- a/port/CMakeLists.txt
++++ b/port/CMakeLists.txt
+@@ -195,7 +195,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
+   if (MSVC AND NOT ZLIB_IS_STATIC)
+     target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
+   endif ()
+-  gdal_target_link_libraries(cpl PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(cpl PRIVATE zlib)
+ endif ()
+ 
+ if (GDAL_USE_ARCHIVE)
+diff --git a/port/cpl_compressor.cpp b/port/cpl_compressor.cpp
+index 5f7a8b2b38..1bd1680bfa 100644
+--- a/port/cpl_compressor.cpp
++++ b/port/cpl_compressor.cpp
+@@ -22,7 +22,7 @@
+ #ifdef HAVE_LIBDEFLATE
+ #include "libdeflate.h"
+ #else
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #endif
+ 
+ #ifdef HAVE_LZMA
+diff --git a/port/cpl_minizip_ioapi.cpp b/port/cpl_minizip_ioapi.cpp
+index 6314eeec45..e68cf08597 100644
+--- a/port/cpl_minizip_ioapi.cpp
++++ b/port/cpl_minizip_ioapi.cpp
+@@ -30,8 +30,8 @@
+ 
+ #include "cpl_minizip_ioapi.h"
+ #include "cpl_vsi.h"
+-#include "zconf.h"
+-#include "zlib.h"
++#include <zlib/zconf.h>
++#include <zlib/zlib.h>
+ 
+ static voidpf ZCALLBACK fopen_file_func(voidpf /* opaque */,
+                                         const char *filename, int mode)
+diff --git a/port/cpl_minizip_ioapi.h b/port/cpl_minizip_ioapi.h
+index 10b62701fe..a050d82c0c 100644
+--- a/port/cpl_minizip_ioapi.h
++++ b/port/cpl_minizip_ioapi.h
+@@ -23,7 +23,7 @@
+ #ifndef DOXYGEN_SKIP
+ 
+ #include "cpl_vsi.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #define uLong64 vsi_l_offset
+ 
+diff --git a/port/cpl_zlib_header.h b/port/cpl_zlib_header.h
+index 3062fe9104..54bd20487a 100644
+--- a/port/cpl_zlib_header.h
++++ b/port/cpl_zlib_header.h
+@@ -17,7 +17,7 @@
+ #pragma GCC system_header
+ #endif
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #ifdef ENABLE_DEFLATE64
+ #include "infback9.h"
+diff --git a/scripts/CMakeLists.txt b/scripts/CMakeLists.txt
+index c3d3bcc920..5e6f8f039c 100644
+--- a/scripts/CMakeLists.txt
++++ b/scripts/CMakeLists.txt
+@@ -37,9 +37,3 @@ endif ()
+ set(BASH_COMPLETIONS_DIR
+     "${BASH_COMPLETIONS_DIR_DEFAULT}"
+     CACHE PATH "Installation sub-directory for bash completion scripts")
+-
+-if (NOT BASH_COMPLETIONS_DIR STREQUAL "")
+-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_bash_completions.cmake.in
+-                 ${CMAKE_CURRENT_BINARY_DIR}/install_bash_completions.cmake @ONLY)
+-  install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_bash_completions.cmake)
+-endif ()

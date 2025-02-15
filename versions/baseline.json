@@ -116,6 +116,11 @@
             "baseline": "2.12.1",
             "port-version": 0
         },
+        "gdal":
+        {
+            "baseline": "3.10.1",
+            "port-version": 0
+        },
         "geotiff":
         {
             "baseline": "1.7.3",
