@@ -49,6 +49,8 @@ vcpkg_cmake_configure(
         -DGDAL_USE_ICONV=0
         -DGDAL_USE_INTERNAL_LIBS="OFF" # has to be a string value, as they validate it against a list of "allowed values"
         -DGDAL_USE_JPEG=0
+        -DGDAL_USE_JPEG_INTERNAL=0
+        -DGDAL_USE_JPEG12_INTERNAL=0
         -DGDAL_USE_JSONC=1
         -DGDAL_USE_JSONC_INTERNAL=0
         -DGDAL_USE_JXL=0
@@ -69,6 +71,7 @@ vcpkg_cmake_configure(
         -DGDAL_USE_OPENSSL=0
         -DGDAL_USE_PCRE2=0
         -DGDAL_USE_PNG=0
+        -DGDAL_USE_PNG_INTERNAL=0
         -DGDAL_USE_POPPLER=0
         -DGDAL_USE_POSTGRESQL=0
         -DGDAL_USE_QHULL=0
@@ -91,21 +94,7 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "lib/cmake/${PORT}"
 )
 
-# they resolve dependencies in their own way, in which every dependency has a dedicated `Find*` module,
-# and the dependencies targets names are mostly different, while `find_dependency()` calls are appended
-# to a very long string that gets inserted into the resulting CMake config, and there is no clean way
-# to change that behavior, so it is easier to just fix the resulting files
-#
-# the downside is that these replacements are fragile, and the original strings will likely
-# change in the next GDAL versions
-#
-# GDAL-targets.cmake
-vcpkg_replace_string(
-    "${CURRENT_PACKAGES_DIR}/share/${PORT}/GDAL-targets.cmake"
-        [=[<LINK_ONLY:TIFF::TIFF>]=]
-        [=[<LINK_ONLY:TIFF::tiff>]=]
-)
-# cpl_config.h (here they hardcode GDAL location as an absolute path on the build host)
+# they put GDAL location as an absolute path on the build host
 vcpkg_replace_string(
     "${CURRENT_PACKAGES_DIR}/include/${PORT}/cpl_config.h"
         "#define GDAL_PREFIX \"${CURRENT_PACKAGES_DIR}\""
