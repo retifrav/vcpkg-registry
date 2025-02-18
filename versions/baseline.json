@@ -386,6 +386,11 @@
             "baseline": "2024.6.14",
             "port-version": 0
         },
+        "webp":
+        {
+            "baseline": "1.5.0",
+            "port-version": 0
+        },
         "wtl":
         {
             "baseline": "10.0.10320",
