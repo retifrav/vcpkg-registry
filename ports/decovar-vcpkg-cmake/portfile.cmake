@@ -1,3 +1,5 @@
+set(VCPKG_POLICY_CMAKE_HELPER_PORT enabled)
+
 if(VCPKG_CROSSCOMPILING)
     # should be FATAL_ERROR
     message(WARNING "${PORT} is a host-only port, mark it as a host dependency in your ports")
@@ -18,11 +20,4 @@ file(
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}/common"
 )
 
-file(
-    INSTALL
-        "${CMAKE_CURRENT_LIST_DIR}/license.txt"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
-
-set(VCPKG_POLICY_CMAKE_HELPER_PORT enabled)
+vcpkg_install_copyright(FILE_LIST "${CMAKE_CURRENT_LIST_DIR}/license.txt")
