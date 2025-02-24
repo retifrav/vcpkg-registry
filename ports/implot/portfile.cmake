@@ -8,19 +8,13 @@ vcpkg_from_git(
     URL git@github.com:epezent/implot.git
     REF 18c72431f8265e2b0b5378a3a73d8a883b2175ff
     PATCHES
-        dear-imgui-headers-from-package.patch
+        001-dear-imgui-headers-from-package.patch
 )
 
-file(COPY
-    "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"
-    DESTINATION "${SOURCE_PATH}"
-)
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" DESTINATION  "${SOURCE_PATH}")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
 file(COPY
     "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
-    DESTINATION "${SOURCE_PATH}"
-)
-file(COPY
-    "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"
     DESTINATION "${SOURCE_PATH}"
 )
 
@@ -41,8 +35,4 @@ vcpkg_cmake_config_fixup()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

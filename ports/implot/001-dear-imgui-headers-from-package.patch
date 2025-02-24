@@ -1,5 +1,5 @@
 diff --git a/implot.h b/implot.h
-index 7341300..1a17021 100644
+index 36c0d40..f30c95f 100644
 --- a/implot.h
 +++ b/implot.h
 @@ -45,7 +45,7 @@
@@ -12,7 +12,7 @@ index 7341300..1a17021 100644
  //-----------------------------------------------------------------------------
  // [SECTION] Macros and Defines
 diff --git a/implot_internal.h b/implot_internal.h
-index 72f28fa..caae2f7 100644
+index fb01204..e7b6606 100644
 --- a/implot_internal.h
 +++ b/implot_internal.h
 @@ -32,7 +32,7 @@

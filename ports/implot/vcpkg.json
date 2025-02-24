@@ -3,6 +3,7 @@
     "version": "0.16.0",
     "description": "Immediate mode plotting",
     "homepage": "https://github.com/epezent/implot",
+    "license": "MIT",
     "dependencies":
     [
         {
