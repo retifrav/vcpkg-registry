@@ -15,14 +15,7 @@ option(WITH_INTERNAL     "Using internal header(s)" 0)
 option(WITH_STB_TEXTEDIT "Using STB textedit"       0)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED 1)
-
-# if(WIN32 AND BUILD_SHARED_LIBS)
-#     # you won't get .lib on Windows, as it doesn't export symbols out of the box,
-#     # so if you don't want to export symbols manually, this might be an option,
-#     # although it's normally not recommended to export all symbols
-#     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
-# endif()
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 add_library(${PROJECT_NAME})
 
@@ -166,4 +159,6 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
+#set(PROJECT_INCLUDES_NAME_FOR_PACKAGE "imgui")
+set(PROJECT_NAMESPACE_FOR_PACKAGE "dearimgui")
 include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")

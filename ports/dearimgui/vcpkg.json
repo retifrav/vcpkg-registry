@@ -40,13 +40,7 @@
             "description": "Using GLFW with Vulkan",
             "dependencies":
             [
-                {
-                    "name": "glfw",
-                    "features":
-                    [
-                        "vulkan-static"
-                    ]
-                }
+                "glfw"
             ]
         },
         "docking":
