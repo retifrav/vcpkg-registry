@@ -119,7 +119,7 @@
         "gdal":
         {
             "baseline": "3.10.1",
-            "port-version": 0
+            "port-version": 1
         },
         "geotiff":
         {

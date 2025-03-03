@@ -32,6 +32,8 @@ vcpkg_cmake_configure(
         -DENABLE_GNM=0
         -DENABLE_PAM=0
         -DGDAL_BUILD_OPTIONAL_DRIVERS=0
+        -DGDAL_ENABLE_DRIVER_JPEG=1
+        -DGDAL_ENABLE_DRIVER_PNG=1
         -DGDAL_ENABLE_PLUGINS=0
         -DGDAL_ENABLE_PLUGINS_NO_DEPS=0
         -DGDAL_USE_ARCHIVE=0
@@ -48,9 +50,9 @@ vcpkg_cmake_configure(
         -DGDAL_USE_HDF5=0
         -DGDAL_USE_ICONV=0
         -DGDAL_USE_INTERNAL_LIBS="OFF" # has to be a string value, as they validate it against a list of "allowed values"
-        -DGDAL_USE_JPEG=0
-        -DGDAL_USE_JPEG_INTERNAL=0
         -DGDAL_USE_JPEG12_INTERNAL=0
+        -DGDAL_USE_JPEG=1
+        -DGDAL_USE_JPEG_INTERNAL=0
         -DGDAL_USE_JSONC=1
         -DGDAL_USE_JSONC_INTERNAL=0
         -DGDAL_USE_JXL=0
@@ -70,7 +72,7 @@ vcpkg_cmake_configure(
         -DGDAL_USE_OPENJPEG=0
         -DGDAL_USE_OPENSSL=0
         -DGDAL_USE_PCRE2=0
-        -DGDAL_USE_PNG=0
+        -DGDAL_USE_PNG=1
         -DGDAL_USE_PNG_INTERNAL=0
         -DGDAL_USE_POPPLER=0
         -DGDAL_USE_POSTGRESQL=0
