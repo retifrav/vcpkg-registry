@@ -1,7 +1,14 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index f3e69b845..8e1c5e85b 100644
+index f3e69b845..86cd7427b 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -1,5 +1,5 @@
+ # cmake_minimum_require must be the first command of the file
+-cmake_minimum_required(VERSION 3.5.0)
++cmake_minimum_required(VERSION 3.22)
+ 
+ project(Eigen3)
+ 
 @@ -430,7 +430,7 @@ if(EIGEN_INCLUDE_INSTALL_DIR AND NOT INCLUDE_INSTALL_DIR)
        CACHE PATH "The directory relative to CMAKE_INSTALL_PREFIX where Eigen header files are installed")
  else()
@@ -40,6 +47,15 @@ index f3e69b845..8e1c5e85b 100644
  add_subdirectory(demos EXCLUDE_FROM_ALL)
  
  # must be after test and unsupported, for configuring buildtests.in
+@@ -639,7 +631,7 @@ export (PACKAGE Eigen3)
+ 
+ install (EXPORT Eigen3Targets NAMESPACE Eigen3:: DESTINATION ${CMAKEPACKAGE_INSTALL_DIR})
+ 
+-install ( FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UseEigen3.cmake
++install ( FILES
+                 ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
+                 ${CMAKE_CURRENT_BINARY_DIR}/Eigen3ConfigVersion.cmake
+           DESTINATION ${CMAKEPACKAGE_INSTALL_DIR} )
 diff --git a/cmake/Eigen3Config.cmake.in b/cmake/Eigen3Config.cmake.in
 index 0a1ac61c9..f83ace570 100644
 --- a/cmake/Eigen3Config.cmake.in

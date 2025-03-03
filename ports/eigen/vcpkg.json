@@ -3,6 +3,7 @@
     "version": "3.4.0",
     "description": "Linear algebra: matrices, vectors, numerical solvers, and related algorithms",
     "homepage": "http://eigen.tuxfamily.org/",
+    "license": "MPL-2.0",
     "dependencies":
     [
         {

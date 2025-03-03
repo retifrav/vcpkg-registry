@@ -12,7 +12,7 @@ vcpkg_extract_source_archive(
     SOURCE_PATH
     ARCHIVE "${ARCHIVE}"
     PATCHES
-        installation.patch
+        001-installation.patch
 )
 
 vcpkg_cmake_configure(
@@ -23,6 +23,10 @@ vcpkg_cmake_configure(
         -DEIGEN_BUILD_DOC=0
         -DEIGEN_BUILD_PKGCONFIG=0
         -DEIGEN_ENABLE_LAPACK_TESTS=0
+        -DEIGEN_TEST_OPENMP=0
+    MAYBE_UNUSED_VARIABLES
+        EIGEN_ENABLE_LAPACK_TESTS
+        EIGEN_TEST_OPENMP
 )
 
 vcpkg_cmake_install()
