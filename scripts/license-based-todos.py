@@ -11,10 +11,21 @@ logging.basicConfig(
     stream=sys.stdout
 )
 
-# not a full list, just an example
+# not a full list
 licensesThatRequirePublishingPatches: List[str] = [
+    "LGPL-2.0-only",
+    "LGPL-2.0-or-later",
+    "LGPL-2.1-only",
+    "LGPL-2.1-or-later",
+    "LGPL-3.0-only",
     "LGPL-3.0-or-later",
     "MPL-2.0"
+]
+licensesThatRequireOpeningSources: List[str] = [
+    "GPL-2.0-only",
+    "GPL-2.0-or-later",
+    "GPL-3.0-only",
+    "GPL-3.0-or-later"
 ]
 
 todos: Dict[str, List[str]] = {
@@ -23,9 +34,10 @@ todos: Dict[str, List[str]] = {
     # these ports have their `license` value either set to `null`
     # or to one that is not listed in https://spdx.org/licenses/
     "non-spdx-license": [],
-    # these ports are licensed under such terms which require publishing
-    # modifications/patches (which is redundant in case of a public registry)
-    "publish-patches": []
+    # these ports licenses require publishing patches
+    "publish-patches": [],
+    # these ports licenses require opening/sharing our sources
+    "open-sources": []
 }
 
 
@@ -89,6 +101,8 @@ for p in ports:
             else:
                 if license in licensesThatRequirePublishingPatches:
                     todos["publish-patches"].append(p)
+                elif license in licensesThatRequireOpeningSources:
+                    todos["open-sources"].append(p)
         else:
             todos["missing-license"].append(p)
 
@@ -113,12 +127,26 @@ if portsWithNonSpdxLicensesCnt > 0:
 
 portsRequirePublishingPatchesCnt: int = len(todos["publish-patches"])
 if portsRequirePublishingPatchesCnt > 0:
+    # logging.info(
+    #     " ".join((
+    #         "Ports that require publishing patches:\n-",
+    #         '\n- '.join(todos["publish-patches"])
+    #     ))
+    # )
     logging.info(
         " ".join((
-            # "Ports that require publishing patches:\n-",
-            # '\n- '.join(todos["publish-patches"])
             "Ports that require publishing patches",
             f"(total {portsRequirePublishingPatchesCnt}):",
             ", ".join(todos["publish-patches"])
+        ))
+    )
+
+portsRequireOpeningSourcesCnt: int = len(todos["open-sources"])
+if portsRequireOpeningSourcesCnt > 0:
+    logging.info(
+        " ".join((
+            "Ports that require opening sources",
+            f"(total {portsRequireOpeningSourcesCnt}):",
+            ", ".join(todos["open-sources"])
         ))
     )
