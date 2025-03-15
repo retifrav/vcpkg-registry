@@ -1,0 +1,9 @@
+To use Oculus SDK in your project:
+
+    find_package(OculusSDK) # no CONFIG, unfortunately
+    if(OculusSDK_FOUND)
+        target_include_directories(main PRIVATE ${OculusSDK_INCLUDE_DIR})
+        target_link_libraries(main PRIVATE OculusSDK::OVR)
+    else()
+        message(STATUS "Could not find Oculus SDK, make it REQUIRED, if configuration should fail in this case")
+    endif()

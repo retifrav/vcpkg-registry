@@ -1,0 +1,10 @@
+{
+    "name": "oculus-sdk",
+    "version": "1.64.0",
+    "description": "Oculus SDK for build VR desktop applications for Rift and Rift S",
+    "homepage": "https://developers.meta.com/horizon/downloads/package/oculus-sdk-for-windows",
+    "supports": "windows",
+    "dependencies":
+    [
+    ]
+}

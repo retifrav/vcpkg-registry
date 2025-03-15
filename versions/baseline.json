@@ -221,6 +221,11 @@
             "baseline": "2023.6.18",
             "port-version": 0
         },
+        "oculus-sdk":
+        {
+            "baseline": "1.64.0",
+            "port-version": 0
+        },
         "openssl":
         {
             "baseline": "3.1.4",
