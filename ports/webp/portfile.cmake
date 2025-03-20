@@ -3,7 +3,12 @@ if(VCPKG_TARGET_IS_OSX OR VCPKG_TARGET_IS_IOS)
     list(LENGTH VCPKG_OSX_ARCHITECTURES VCPKG_OSX_ARCHITECTURES_LENGTH)
     if(VCPKG_OSX_ARCHITECTURES_LENGTH GREATER 1)
         message(STATUS "VCPKG_OSX_ARCHITECTURES: ${VCPKG_OSX_ARCHITECTURES}")
-        message(WARNING "Building ${PORT} as fat library is likely to fail")
+        message(WARNING
+            "Building ${PORT} as fat/universal library is likely to fail, "
+            "Google closed the bugreport from 2015 about that - "
+            "https://issues.webmproject.org/issues/42331778 - "
+            "as \"won't fix\""
+        )
     endif()
 endif()
 
