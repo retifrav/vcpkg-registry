@@ -1,10 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:libsdl-org/SDL.git
-    REF 9519b9916cd29a14587af0507292f2bd31dd5752
+    REF e11183ea6caa3ae4895f4bc54cad2bbb0e365417
     PATCHES
-        001-fixed-alsa-condition.patch
-        002-not-installing-license.patch
+        001-installation.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" SDL_STATIC)
@@ -26,6 +25,7 @@ vcpkg_cmake_configure(
         -DSDL_INSTALL_CMAKEDIR="cmake"
         -DSDL_LIBC=1
         -DSDL_TEST=0
+        -DSDL_INSTALL_TESTS=0
     MAYBE_UNUSED_VARIABLES
         SDL_FORCE_STATIC_VCRT # applies only on Windows (MSVC)
 )
@@ -49,5 +49,10 @@ if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
         "${CURRENT_PACKAGES_DIR}/debug/bin"
     )
 endif()
+
+file(
+    INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+)
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")

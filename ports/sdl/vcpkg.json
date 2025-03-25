@@ -1,6 +1,6 @@
 {
     "name": "sdl",
-    "version": "2.30.7",
+    "version": "2.32.2",
     "description": "Simple Directmedia Layer",
     "homepage": "https://libsdl.org/",
     "dependencies":

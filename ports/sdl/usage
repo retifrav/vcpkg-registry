@@ -1,0 +1,8 @@
+To use SDL in your project:
+
+    find_package(SDL2 CONFIG REQUIRED)
+    target_link_directories(main
+        PRIVATE
+            SDL2::SDL2
+            SDL2::SDL2main
+    )

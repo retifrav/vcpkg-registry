@@ -288,7 +288,7 @@
         },
         "sdl":
         {
-            "baseline": "2.30.7",
+            "baseline": "2.32.2",
             "port-version": 0
         },
         "sha":
