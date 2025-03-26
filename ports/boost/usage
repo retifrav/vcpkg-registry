@@ -1,0 +1,35 @@
+To use Boost in your project:
+
+    find_package(Boost) # no CONFIG, unfortunately
+    if(Boost_FOUND)
+        target_include_directories(main PRIVATE "${Boost_INCLUDE_DIR}")
+
+        # that is an overkill, and it will work only for STATIC variant and only if /DEFAULTLIB:"..." is set (vcpkg seems to be doing that)
+        #target_link_directories(main
+        #    PRIVATE
+        #        "$<IF:$<CONFIG:Debug>,${Boost_LIBRARIES_DEBUG},${Boost_LIBRARIES_RELEASE}>"
+        #)
+        # otherwise (with filesystem library as an example)
+        find_library(Boost_filesystem_LIBRARY_DEBUG
+            NAMES
+                "libboost_filesystem-vc143-mt-gd-x64-1_87" # STATIC library, DYNAMIC CRT
+                "libboost_filesystem-vc143-mt-sgd-x64-1_87" # STATIC library, STATIC CRT
+                "boost_filesystem-vc143-mt-gd-x64-1_87" # SHARED
+            PATHS "${Boost_LIBRARIES_DEBUG}"
+            NO_CMAKE_FIND_ROOT_PATH
+        )
+        find_library(Boost_filesystem_LIBRARY_RELEASE
+            NAMES
+                "libboost_filesystem-vc143-mt-x64-1_87" # STATIC, DYNAMIC CRT
+                "libboost_filesystem-vc143-mt-s-x64-1_87" # STATIC, STATIC CRT
+                "boost_filesystem-vc143-mt-x64-1_87" # SHARED
+            PATHS "${Boost_LIBRARIES_RELEASE}"
+            NO_CMAKE_FIND_ROOT_PATH
+        )
+        target_link_libraries(main
+            PRIVATE
+                $<IF:$<CONFIG:Debug>,${Boost_filesystem_LIBRARY_DEBUG},${Boost_filesystem_LIBRARY_RELEASE}>
+        )
+    else()
+        message(STATUS "Could not find Boost, make it REQUIRED, if configuration should fail in this case")
+    endif()

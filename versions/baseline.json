@@ -21,6 +21,11 @@
             "baseline": "1.11.416",
             "port-version": 0
         },
+        "boost":
+        {
+            "baseline": "1.87.0",
+            "port-version": 0
+        },
         "brotli":
         {
             "baseline": "1.1.0",
