@@ -14,8 +14,8 @@ vcpkg_from_git(
     URL git@github.com:libjpeg-turbo/libjpeg-turbo.git
     REF 7fa4b5b762c9a99b46b0b7838f5fd55071b92ea5
     PATCHES
-        disable-tools-docs-single-architecture-fix-installation.patch
-        boolean-typedef.patch
+        001-single-target-and-architecture.patch
+        002-boolean-typedef.patch
 )
 
 if(VCPKG_TARGET_ARCHITECTURE STREQUAL "wasm32")
@@ -73,33 +73,6 @@ vcpkg_cmake_config_fixup(
 )
 
 vcpkg_fixup_pkgconfig()
-
-# rename libraries for static builds
-if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
-    if(EXISTS "${CURRENT_PACKAGES_DIR}/lib/jpeg-static.lib")
-        file(RENAME "${CURRENT_PACKAGES_DIR}/lib/jpeg-static.lib" "${CURRENT_PACKAGES_DIR}/lib/jpeg.lib")
-        file(RENAME "${CURRENT_PACKAGES_DIR}/lib/turbojpeg-static.lib" "${CURRENT_PACKAGES_DIR}/lib/turbojpeg.lib")
-    endif()
-    if(EXISTS "${CURRENT_PACKAGES_DIR}/debug/lib/jpeg-static.lib")
-        file(RENAME "${CURRENT_PACKAGES_DIR}/debug/lib/jpeg-static.lib" "${CURRENT_PACKAGES_DIR}/debug/lib/jpeg.lib")
-        file(RENAME "${CURRENT_PACKAGES_DIR}/debug/lib/turbojpeg-static.lib" "${CURRENT_PACKAGES_DIR}/debug/lib/turbojpeg.lib")
-    endif()
-    
-    file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/bin" "${CURRENT_PACKAGES_DIR}/debug/bin")
-    
-    if (EXISTS "${CURRENT_PACKAGES_DIR}/share/${PORT}/jpeg-turboTargets-debug.cmake")
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/${PORT}/jpeg-turboTargets-debug.cmake"
-            "jpeg-static${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}" "jpeg${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}")
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/${PORT}/jpeg-turboTargets-debug.cmake"
-            "turbojpeg-static${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}" "turbojpeg${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}")
-    endif()
-    if (EXISTS "${CURRENT_PACKAGES_DIR}/share/${PORT}/jpeg-turboTargets-release.cmake")
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/${PORT}/jpeg-turboTargets-release.cmake"
-            "jpeg-static${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}" "jpeg${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}")
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/${PORT}/jpeg-turboTargets-release.cmake"
-            "turbojpeg-static${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}" "turbojpeg${VCPKG_TARGET_STATIC_LIBRARY_SUFFIX}")
-    endif()
-endif()
 
 file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/share"
