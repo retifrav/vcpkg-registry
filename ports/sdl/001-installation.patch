@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8baa8a50e..ea746ea25 100644
+index 8baa8a50e..4ce67c433 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -5,8 +5,8 @@ endif()
@@ -50,7 +50,39 @@ index 8baa8a50e..ea746ea25 100644
  macro(check_add_debug_flag FLAG SUFFIX)
      check_c_compiler_flag(${FLAG} HAS_C_FLAG_${SUFFIX})
      if (HAS_C_FLAG_${SUFFIX})
-@@ -3507,18 +3495,18 @@ if(SDL_SHARED)
+@@ -3387,7 +3375,11 @@ if(NOT WINDOWS_STORE AND NOT SDL2_DISABLE_SDL2MAIN)
+     PRIVATE "${SDL2_BINARY_DIR}/include/SDL2"
+     PRIVATE "${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2"
+   )
+-  target_include_directories(SDL2main PUBLIC "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>" $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>)
++  target_include_directories(SDL2main
++      PUBLIC
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
++          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++  )
+   if (WIN32)
+     target_link_libraries(SDL2main PRIVATE shell32)
+   endif()
+@@ -3482,12 +3474,12 @@ if(SDL_SHARED)
+   endif()
+   # FIXME: if CMAKE_VERSION >= 3.13, use target_link_options for EXTRA_LDFLAGS
+   target_link_libraries(SDL2 PRIVATE ${EXTRA_LIBS} ${EXTRA_LDFLAGS} ${EXTRA_LDFLAGS_BUILD} ${CMAKE_LIBS})
+-  target_include_directories(SDL2 PUBLIC
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
+-      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+-      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>"
++  target_include_directories(SDL2
++      PUBLIC
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
++          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+   )
+   # This picks up all the compiler options and such we've accumulated up to here.
+   target_link_libraries(SDL2 PRIVATE $<BUILD_INTERFACE:sdl-build-options>)
+@@ -3507,34 +3499,34 @@ if(SDL_SHARED)
  endif()
  
  if(SDL_STATIC)
@@ -71,13 +103,18 @@ index 8baa8a50e..ea746ea25 100644
    # libraries - do we need to consider this?
 -  target_link_libraries(SDL2-static PRIVATE ${EXTRA_LIBS} ${EXTRA_LDFLAGS} ${CMAKE_LIBS})
 -  target_include_directories(SDL2-static PUBLIC
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
+-      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+-      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>"
 +  target_link_libraries(SDL2 PRIVATE ${EXTRA_LIBS} ${EXTRA_LDFLAGS} ${CMAKE_LIBS})
-+  target_include_directories(SDL2 PUBLIC
-       "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
-       "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
-       "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
-@@ -3526,15 +3514,15 @@ if(SDL_STATIC)
-       "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>"
++  target_include_directories(SDL2
++      PUBLIC
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
++          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
    )
    # This picks up all the compiler options and such we've accumulated up to here.
 -  target_link_libraries(SDL2-static PRIVATE $<BUILD_INTERFACE:sdl-build-options>)
@@ -98,7 +135,27 @@ index 8baa8a50e..ea746ea25 100644
  endif()
  
  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSDL_BUILD_MAJOR_VERSION=${SDL_MAJOR_VERSION}")
-@@ -3567,8 +3555,8 @@ if(MSVC AND NOT SDL_LIBC)
+@@ -3550,12 +3542,13 @@ if(SDL_TEST)
+   add_library(SDL2::SDL2test ALIAS SDL2_test)
+   set_target_properties(SDL2_test PROPERTIES
+       EXPORT_NAME SDL2test)
+-  target_include_directories(SDL2_test PUBLIC
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
+-      "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
+-      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+-      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>")
++  target_include_directories(SDL2_test
++      PUBLIC
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include>"
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include/SDL2>"
++          "$<BUILD_INTERFACE:${SDL2_BINARY_DIR}/include-config-$<LOWER_CASE:$<CONFIG>>/SDL2>"
++          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
++  )
+   target_link_libraries(SDL2_test PRIVATE ${EXTRA_TEST_LIBS})
+   target_include_directories(SDL2_test PRIVATE ${EXTRA_TEST_INCLUDES})
+   set_property(TARGET SDL2_test APPEND PROPERTY COMPATIBLE_INTERFACE_STRING "SDL_VERSION")
+@@ -3567,8 +3560,8 @@ if(MSVC AND NOT SDL_LIBC)
    if(TARGET SDL2)
      list(APPEND targets SDL2)
    endif()
@@ -109,7 +166,7 @@ index 8baa8a50e..ea746ea25 100644
    endif()
    if(TARGET SDL2_test)
      list(APPEND targets SDL2_test)
-@@ -3581,15 +3569,7 @@ endif()
+@@ -3581,15 +3574,7 @@ endif()
  
  ##### Installation targets #####
  if(NOT SDL2_DISABLE_INSTALL)
@@ -126,7 +183,7 @@ index 8baa8a50e..ea746ea25 100644
  
    if(NOT WINDOWS_STORE AND NOT SDL2_DISABLE_SDL2MAIN)
      install(TARGETS SDL2main EXPORT SDL2mainTargets
-@@ -3601,16 +3581,6 @@ if(NOT SDL2_DISABLE_INSTALL)
+@@ -3601,16 +3586,6 @@ if(NOT SDL2_DISABLE_INSTALL)
      endif()
    endif()
  
@@ -143,7 +200,7 @@ index 8baa8a50e..ea746ea25 100644
    if(SDL_TEST)
      install(TARGETS SDL2_test EXPORT SDL2testTargets
        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-@@ -3641,12 +3611,13 @@ if(NOT SDL2_DISABLE_INSTALL)
+@@ -3641,12 +3616,13 @@ if(NOT SDL2_DISABLE_INSTALL)
      COMPATIBILITY AnyNewerVersion
    )
  
@@ -162,7 +219,7 @@ index 8baa8a50e..ea746ea25 100644
      if(ANDROID AND NOT CMAKE_VERSION VERSION_LESS 3.7)
        install(EXPORT_ANDROID_MK SDL2Targets
          DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/ndk-modules/SDL2")
-@@ -3666,11 +3637,6 @@ if(NOT SDL2_DISABLE_INSTALL)
+@@ -3666,11 +3642,6 @@ if(NOT SDL2_DISABLE_INSTALL)
    endif()
  
    if(SDL_STATIC)
@@ -174,7 +231,7 @@ index 8baa8a50e..ea746ea25 100644
      if(ANDROID AND NOT CMAKE_VERSION VERSION_LESS 3.7)
        install(EXPORT_ANDROID_MK SDL2staticTargets
          DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/ndk-modules/SDL2-static")
-@@ -3712,14 +3678,8 @@ if(NOT SDL2_DISABLE_INSTALL)
+@@ -3712,14 +3683,8 @@ if(NOT SDL2_DISABLE_INSTALL)
      set(SOPOSTFIX "")
    endif()
  
@@ -191,7 +248,7 @@ index 8baa8a50e..ea746ea25 100644
    if(NOT (WINDOWS OR CYGWIN) OR MINGW)
      if(SDL_SHARED)
        set(SOEXT ${CMAKE_SHARED_LIBRARY_SUFFIX}) # ".so", ".dylib", etc.
-@@ -3732,9 +3692,9 @@ if(NOT SDL2_DISABLE_INSTALL)
+@@ -3732,9 +3697,9 @@ if(NOT SDL2_DISABLE_INSTALL)
            install(FILES ${SDL2_BINARY_DIR}/libSDL2${SOPOSTFIX}${SOEXT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
        endif()
      endif()
@@ -203,7 +260,7 @@ index 8baa8a50e..ea746ea25 100644
    endif()
  endif()
  
-@@ -3762,8 +3722,3 @@ endif()
+@@ -3762,8 +3727,3 @@ endif()
  
  ##### Fix Objective C builds #####
  set(CMAKE_OBJC_FLAGS "${CMAKE_OBJC_FLAGS} ${CMAKE_C_FLAGS}")
