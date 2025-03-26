@@ -1,0 +1,7 @@
+To use SDL2_image in your project:
+
+    find_package(SDL2_image CONFIG REQUIRED)
+    target_link_directories(main
+        PRIVATE
+            SDL2::SDL2_image
+    )

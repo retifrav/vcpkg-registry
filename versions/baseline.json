@@ -291,6 +291,11 @@
             "baseline": "2.32.2",
             "port-version": 0
         },
+        "sdl-image":
+        {
+            "baseline": "2.8.8",
+            "port-version": 0
+        },
         "sha":
         {
             "baseline": "2011.5.1",

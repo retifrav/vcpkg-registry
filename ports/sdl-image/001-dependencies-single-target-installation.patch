@@ -1,0 +1,1368 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4ceee1d5..231342b1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.16)
++cmake_minimum_required(VERSION 3.22)
+ 
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+ 
+@@ -37,15 +37,6 @@ set(SDL2IMAGE_DEBUG_POSTFIX "d"
+     CACHE STRING "Name suffix for debug builds")
+ mark_as_advanced(SDL2IMAGE_DEBUG_POSTFIX)
+ 
+-# Assume MSVC projects don't have a package manager and need vendored dependencies (by default).
+-# Most other platforms have some kind of package manager.
+-# FIXME: consider a package manager such as conan/vcpkg instead of vendoring
+-if(MSVC)
+-    set(vendored_default ON)
+-else()
+-    set(vendored_default OFF)
+-endif()
+-
+ set(sdl2image_install_enableable ON)
+ if ((TARGET SDL2 OR TARGET SDL2-static) AND SDL2_DISABLE_INSTALL)
+     # Cannot install SDL2_image when SDL2 is built in same built, and is not installed.
+@@ -57,11 +48,11 @@ include(CMakePackageConfigHelpers)
+ include(GNUInstallDirs)
+ 
+ option(CMAKE_POSITION_INDEPENDENT_CODE "Build static libraries with -fPIC" ON)
+-option(BUILD_SHARED_LIBS "Build the library as a shared library" ON)
++option(BUILD_SHARED_LIBS "Build the library as a shared library" 0)
+ 
+ cmake_dependent_option(SDL2IMAGE_INSTALL "Enable SDL2_image install target" ${SDL2IMAGE_ROOTPROJECT} "${sdl2image_install_enableable}" OFF)
+ option(SDL2IMAGE_DEPS_SHARED "Load dependencies dynamically" ON)
+-option(SDL2IMAGE_VENDORED "Use vendored third-party libraries" ${vendored_default})
++option(SDL2IMAGE_VENDORED "Use vendored third-party libraries" 0)
+ 
+ option(SDL2IMAGE_STRICT "Fail when a dependency could not be found" OFF)
+ set(required "")
+@@ -184,17 +175,7 @@ endif()
+ # Save BUILD_SHARED_LIBS variable
+ set(SDL2IMAGE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+ 
+-if(SDL2IMAGE_BUILD_SHARED_LIBS)
+-    set(sdl2_image_export_name SDL2_image)
+-    set(sdl2_image_install_name_infix shared)
+-    set(sdl2_target_name SDL2::SDL2)
+-else()
+-    set(sdl2_image_export_name SDL2_image-static)
+-    set(sdl2_image_install_name_infix static)
+-    set(sdl2_target_name SDL2::SDL2-static)
+-endif()
+-
+-sdl_find_sdl2(${sdl2_target_name} ${SDL_REQUIRED_VERSION})
++find_package(SDL2 CONFIG REQUIRED)
+ 
+ # Set PROJECT_VERSION of subprojects to "" if it's project call does not set VERSION
+ cmake_policy(SET CMP0048 NEW)
+@@ -231,11 +212,10 @@ add_library(SDL2_image
+     src/IMG_xpm.c
+     src/IMG_xv.c
+ )
+-add_library(SDL2_image::${sdl2_image_export_name} ALIAS SDL2_image)
++add_library(SDL2::SDL2_image ALIAS SDL2_image)
+ target_include_directories(SDL2_image PUBLIC
+     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>"
+ )
+ target_compile_definitions(SDL2_image PRIVATE
+     BUILD_SDL
+@@ -243,7 +223,7 @@ target_compile_definitions(SDL2_image PRIVATE
+     SDL_BUILD_MINOR_VERSION=${MINOR_VERSION}
+     SDL_BUILD_MICRO_VERSION=${MICRO_VERSION}
+ )
+-target_link_libraries(SDL2_image PRIVATE $<BUILD_INTERFACE:${sdl2_target_name}>)
++target_link_libraries(SDL2_image PRIVATE SDL2::SDL2)
+ if(WIN32 AND SDL2IMAGE_BUILD_SHARED_LIBS)
+     target_sources(SDL2_image PRIVATE
+         src/version.rc
+@@ -254,7 +234,7 @@ if(WIN32 AND SDL2IMAGE_BUILD_SHARED_LIBS)
+ endif()
+ set_target_properties(SDL2_image PROPERTIES
+     DEFINE_SYMBOL DLL_EXPORT
+-    EXPORT_NAME ${sdl2_image_export_name}
++    EXPORT_NAME SDL2_image
+     C_VISIBILITY_PRESET "hidden"
+ )
+ if(NOT ANDROID)
+@@ -278,29 +258,6 @@ if(SDL2IMAGE_BUILD_SHARED_LIBS AND (APPLE OR (UNIX AND NOT ANDROID)))
+         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+     )
+ endif()
+-if(SDL2IMAGE_BUILD_SHARED_LIBS)
+-    if(WIN32 OR OS2)
+-        set_target_properties(SDL2_image PROPERTIES
+-            PREFIX ""
+-        )
+-    endif()
+-    if(OS2)
+-        # OS/2 doesn't support a DLL name longer than 8 characters.
+-        set_target_properties(SDL2_image PROPERTIES
+-            OUTPUT_NAME "SDL2img"
+-        )
+-    elseif(UNIX AND NOT ANDROID)
+-        set_target_properties(SDL2_image PROPERTIES
+-            OUTPUT_NAME "SDL2_image-${LT_RELEASE}"
+-        )
+-    endif()
+-else()
+-    if(MSVC OR (WATCOM AND (WIN32 OR OS2)))
+-        set_target_properties(SDL2_image PROPERTIES
+-            OUTPUT_NAME "SDL2_image-static"
+-        )
+-    endif()
+-endif()
+ 
+ # Use `Compatible Interface Properties` to ensure a shared SDL2_image is built with a shared SDL2
+ if(SDL2IMAGE_BUILD_SHARED_LIBS)
+@@ -361,35 +318,9 @@ if(SDL2IMAGE_BACKEND_WIC)
+ endif()
+ 
+ if(SDL2IMAGE_ZLIB)
+-    if(SDL2IMAGE_ZLIB_VENDORED)
+-        message(STATUS "${PROJECT_NAME}: Using vendored zlib")
+-        # disable build of zlib example programs:
+-        set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "zlib examples" FORCE)
+-        sdl_check_project_in_subfolder(external/zlib zlib SDL2IMAGE_VENDORED)
+-        add_subdirectory(external/zlib EXCLUDE_FROM_ALL)
+-        set(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/external/zlib;${CMAKE_CURRENT_BINARY_DIR}/external/zlib")
+-        # ZLIB_INCLUDE_DIR variable is used by vendored libpng
+-        set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/zlib;${CMAKE_CURRENT_BINARY_DIR}/external/zlib" CACHE STRING "path of zlib, passed to libpng" FORCE)
+-        # ZLIB_LIBRARY variable is used by vendored libpng
+-        if(SDL2IMAGE_ZLIB_SHARED)
+-            set(ZLIB_LIBRARY zlib)
+-        else()
+-            set(ZLIB_LIBRARY zlibstatic)
+-            set(SKIP_INSTALL_CONFIG_FILE ON)
+-        endif()
+-        if(NOT TARGET ZLIB::ZLIB)
+-            add_library(ZLIB::ZLIB ALIAS ${ZLIB_LIBRARY})
+-        endif()
+-        # ZLIB_INCLUDE_DIRS variable is used by vendored libpng
+-        set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}")
+-        # ZLIB_LIBRARIES variable is used by vendored libpng
+-        set(ZLIB_LIBRARIES "${ZLIB_LIBRARY}")
+-        list(APPEND INSTALL_EXTRA_TARGETS ${ZLIB_LIBRARY})
+-        set_target_properties(${ZLIB_LIBRARY} PROPERTIES EXPORT_NAME external_zlib)
+-        add_library(SDL2_image::external_zlib ALIAS ${ZLIB_LIBRARY})
+-    else()
+-        message(FATAL_ERROR "Internal error (zlib is only required when requesting vendored dependencies)")
+-    endif()
++    # is this needed? Or is it just their crutches for getting transitive zlib for PNG?
++    #find_package(zlib CONFIG REQUIRED)
++    #target_link_libraries(SDL2_image PRIVATE zlib)
+ endif()
+ 
+ if(SDL2IMAGE_DAV1D)
+@@ -418,7 +349,7 @@ if(SDL2IMAGE_AVIF)
+         add_subdirectory(external/libavif EXCLUDE_FROM_ALL)
+         list(APPEND INSTALL_EXTRA_TARGETS avif)
+         set_target_properties(avif PROPERTIES EXPORT_NAME external_libavif)
+-        add_library(SDL2_image::external_libavif ALIAS avif)
++        add_library(SDL2::external_libavif ALIAS avif)
+         if(NOT SDL2IMAGE_AVIF_SHARED)
+             list(APPEND PC_LIBS -l$<TARGET_FILE_BASE_NAME:avif>)
+         endif()
+@@ -486,47 +417,9 @@ if(SDL2IMAGE_JPG)
+     if(SDL2IMAGE_BACKEND_STB OR SDL2IMAGE_BACKEND_WIC OR SDL2IMAGE_BACKEND_IMAGEIO)
+         set(SDL2IMAGE_JPG_ENABLED TRUE)
+     else()
+-        if(SDL2IMAGE_JPG_VENDORED)
+-            set(SDL2IMAGE_JPG_ENABLED TRUE)
+-            message(STATUS "${PROJECT_NAME}: Using vendored libjpeg")
+-            sdl_check_project_in_subfolder(external/jpeg libjpeg SDL2IMAGE_VENDORED)
+-            set(BUILD_SHARED_LIBS ${SDL2IMAGE_JPG_SHARED})
+-            add_subdirectory(external/jpeg EXCLUDE_FROM_ALL)
+-            list(APPEND INSTALL_EXTRA_TARGETS jpeg)
+-            set_target_properties(jpeg PROPERTIES EXPORT_NAME external_libjpeg)
+-            add_library(SDL2_image::external_libjpeg ALIAS jpeg)
+-            if(NOT SDL2IMAGE_JPG_SHARED)
+-                list(APPEND PC_LIBS -l$<TARGET_FILE_BASE_NAME:jpeg>)
+-            endif()
+-        else()
+-            find_package(JPEG ${required})
+-            if(JPEG_FOUND)
+-                set(SDL2IMAGE_JPG_ENABLED TRUE)
+-                message(STATUS "${PROJECT_NAME}: Using system libjpeg")
+-                if(NOT SDL2IMAGE_JPG_SHARED)
+-                    list(APPEND PC_REQUIRES libjpeg)
+-                endif()
+-            else()
+-                message(${fatal_error} "libjpeg NOT found")
+-            endif()
+-        endif()
+-        if(SDL2IMAGE_JPG_ENABLED)
+-            if(SDL2IMAGE_JPG_SHARED)
+-                target_include_directories(SDL2_image PRIVATE
+-                    $<TARGET_PROPERTY:JPEG::JPEG,INCLUDE_DIRECTORIES>
+-                    $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_INCLUDE_DIRECTORIES>
+-                    $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_SYSTEM_INCLUDE_DIRECTORIES>
+-                )
+-                target_get_dynamic_library(dynamic_jpeg JPEG::JPEG)
+-                message(STATUS "Dynamic libjpeg: ${dynamic_jpeg}")
+-                target_compile_definitions(SDL2_image PRIVATE "LOAD_JPG_DYNAMIC=\"${dynamic_jpeg}\"")
+-                if(SDL2IMAGE_JPG_VENDORED)
+-                    add_dependencies(SDL2_image JPEG::JPEG)
+-                endif()
+-            else()
+-                target_link_libraries(SDL2_image PRIVATE JPEG::JPEG)
+-            endif()
+-        endif()
++        find_package(jpeg-turbo CONFIG REQUIRED)
++        set(SDL2IMAGE_JPG_ENABLED TRUE)
++        target_link_libraries(SDL2_image PRIVATE jpeg-turbo::turbojpeg)
+     endif()
+     if(SDL2IMAGE_JPG_ENABLED)
+         target_compile_definitions(SDL2_image PRIVATE
+@@ -572,7 +465,7 @@ if(SDL2IMAGE_JXL)
+             list(APPEND INSTALL_EXTRA_TARGETS brotlidec brotlicommon hwy ${jxl_lib})
+         endif()
+         set_target_properties(${jxl_lib} PROPERTIES EXPORT_NAME external_libjxl)
+-        add_library(SDL2_image::external_libjxl ALIAS ${jxl_lib})
++        add_library(SDL2::external_libjxl ALIAS ${jxl_lib})
+         if(NOT TARGET libjxl::libjxl)
+             add_library(libjxl::libjxl ALIAS ${jxl_lib})
+         endif()
+@@ -628,58 +521,9 @@ if(SDL2IMAGE_PNG)
+     if(SDL2IMAGE_BACKEND_STB OR SDL2IMAGE_BACKEND_WIC OR SDL2IMAGE_BACKEND_IMAGEIO)
+         set(SDL2IMAGE_PNG_ENABLED TRUE)
+     else()
+-        if(SDL2IMAGE_PNG_VENDORED)
+-            set(SDL2IMAGE_PNG_ENABLED TRUE)
+-            message(STATUS "${PROJECT_NAME}: Using vendored libpng")
+-            sdl_check_project_in_subfolder(external/libpng libpng SDL2IMAGE_VENDORED)
+-            add_subdirectory(external/libpng EXCLUDE_FROM_ALL)
+-            if(SDL2IMAGE_PNG_SHARED)
+-                set(PNG_LIBRARY png_shared)
+-            else()
+-                set(PNG_LIBRARY png_static)
+-            endif()
+-            add_library(PNG::PNG ALIAS ${PNG_LIBRARY})
+-            target_include_directories(SDL2_image PRIVATE external/libpng)
+-            list(APPEND INSTALL_EXTRA_TARGETS ${PNG_LIBRARY})
+-            set_target_properties(${PNG_LIBRARY} PROPERTIES EXPORT_NAME external_libpng)
+-            add_library(SDL2_image::external_libpng ALIAS ${PNG_LIBRARY})
+-            if(NOT SDL2IMAGE_PNG_SHARED)
+-                list(APPEND PC_LIBS -l$<TARGET_FILE_BASE_NAME:${PNG_LIBRARY}>)
+-                if(SDL2IMAGE_ZLIB_VENDORED)
+-                    list(APPEND PC_LIBS -l$<TARGET_FILE_BASE_NAME:${ZLIB_LIBRARY}>)
+-                else()
+-                    list(APPEND PC_REQUIRES zlib)
+-                endif()
+-            endif()
+-        else()
+-            find_package(PNG ${required})
+-            if(PNG_FOUND)
+-                set(SDL2IMAGE_PNG_ENABLED TRUE)
+-                message(STATUS "${PROJECT_NAME}: Using system libpng")
+-                if(NOT SDL2IMAGE_PNG_SHARED)
+-                    list(APPEND PC_REQUIRES libpng)
+-                endif()
+-            else()
+-                message(${FATAL_ERROR} "libpng NOT found")
+-            endif()
+-        endif()
+-        if(SDL2IMAGE_PNG_ENABLED)
+-            if(SDL2IMAGE_PNG_SHARED)
+-                target_include_directories(SDL2_image PRIVATE
+-                    $<TARGET_PROPERTY:PNG::PNG,INCLUDE_DIRECTORIES>
+-                    $<TARGET_PROPERTY:PNG::PNG,INTERFACE_INCLUDE_DIRECTORIES>
+-                    $<TARGET_PROPERTY:PNG::PNG,INTERFACE_SYSTEM_INCLUDE_DIRECTORIES>
+-                )
+-                target_get_dynamic_library(dynamic_png PNG::PNG)
+-                message(STATUS "Dynamic libpng: ${dynamic_png}")
+-                target_compile_definitions(SDL2_image PRIVATE "LOAD_PNG_DYNAMIC=\"${dynamic_png}\"")
+-                if(SDL2IMAGE_PNG_VENDORED)
+-                    add_dependencies(SDL2_image PNG::PNG)
+-                endif()
+-            else()
+-                target_link_libraries(SDL2_image PRIVATE PNG::PNG)
+-            endif()
+-        endif()
++        find_package(png CONFIG REQUIRED)
++        set(SDL2IMAGE_PNG_ENABLED TRUE)
++        target_link_libraries(SDL2_image PRIVATE png)
+     endif()
+     if(SDL2IMAGE_PNG_ENABLED)
+         target_compile_definitions(SDL2_image PRIVATE
+@@ -720,131 +564,17 @@ endif()
+ list(APPEND SDL2IMAGE_BACKENDS TIF)
+ set(SDL2IMAGE_TIF_ENABLED FALSE)
+ if(SDL2IMAGE_TIF)
+-    if(SDL2IMAGE_TIF_VENDORED)
+-        set(SDL2IMAGE_TIF_ENABLED TRUE)
+-        message(STATUS "${PROJECT_NAME}: Using vendored libtiff")
+-        # jpeg variable is used by vendored libtiff
+-        set(jpeg OFF CACHE BOOL "libtiff: jpeg option" FORCE)
+-        # libdeflate variable is used by vendored libtiff
+-        set(libdeflate OFF CACHE BOOL "libtiff: libdeflate option" FORCE)
+-        # DEFLATE_FOUND variable is used by vendored libtiff
+-        set(DEFLATE_FOUND OFF CACHE BOOL "libtiff: libdeflate option" FORCE)
+-        # zlib variable is used by vendored libtiff (controls use of `find_package`)
+-        set(zlib OFF CACHE BOOL "libtiff: find zlib using find_package" FORCE)
+-        # ZLIB_FOUND is used by vendored libtiff
+-        set(ZLIB_FOUND "")
+-        # lzma variable is used by vendored libtiff
+-        set(lzma OFF CACHE BOOL "libtiff: lzma option" FORCE)
+-        # webp variable is used by vendored libtiff
+-        set(webp OFF CACHE BOOL "libtiff: webp option" FORCE)
+-        # zstd variable is used by vendored libtiff
+-        set(zstd OFF CACHE BOOL "libtiff: zstd option" FORCE)
+-        # ZSTD_FOUND variable is used by vendored libtiff
+-        set(ZSTD_FOUND OFF)
+-        # WEBP_LIBRARY variable is used by vendored libtiff
+-        set(WEBP_LIBRARY "")
+-        sdl_check_project_in_subfolder(external/libtiff libtiff SDL2IMAGE_VENDORED)
+-        set(BUILD_SHARED_LIBS ${SDL2IMAGE_TIF_SHARED})
+-        add_subdirectory(external/libtiff EXCLUDE_FROM_ALL)
+-        add_library(TIFF::TIFF ALIAS tiff)
+-        set(SDL2IMAGE_TIF_TARGET "TIFF::TIFF")
+-        list(APPEND INSTALL_EXTRA_TARGETS tiff)
+-        set_target_properties(tiff PROPERTIES EXPORT_NAME external_libtiff)
+-        add_library(SDL2_image::external_libtiff ALIAS tiff)
+-        if(NOT SDL2IMAGE_TIF_SHARED)
+-            list(APPEND PC_LIBS -l$<TARGET_FILE_BASE_NAME:tiff>)
+-        endif()
+-    else()
+-        find_package(TIFF ${required})
+-        if(TIFF_FOUND)
+-            set(SDL2IMAGE_TIF_ENABLED TRUE)
+-            message(STATUS "${PROJECT_NAME}: Using system libtiff")
+-            if(NOT SDL2IMAGE_TIF_SHARED)
+-                list(APPEND PC_REQUIRES libtiff-4)
+-            endif()
+-            if(TARGET TIFF::tiff)
+-                # Introduced in CMake 3.28
+-                # TIFF::TIFF still exists, but it is an INTERFACE library linking to TIFF::tiff (no ALIAS library)
+-                set(SDL2IMAGE_TIF_TARGET "TIFF::tiff")
+-            else()
+-                set(SDL2IMAGE_TIF_TARGET "TIFF::TIFF")
+-            endif()
+-        else()
+-            message(${fatal_error} "libtiff NOT found")
+-        endif()
+-    endif()
+-    if(SDL2IMAGE_TIF_ENABLED)
+-        target_compile_definitions(SDL2_image PRIVATE LOAD_TIF)
+-        if(SDL2IMAGE_TIF_SHARED)
+-            target_include_directories(SDL2_image PRIVATE
+-                $<TARGET_PROPERTY:${SDL2IMAGE_TIF_TARGET},INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:${SDL2IMAGE_TIF_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:${SDL2IMAGE_TIF_TARGET},INTERFACE_SYSTEM_INCLUDE_DIRECTORIES>
+-            )
+-            target_get_dynamic_library(dynamic_tif ${SDL2IMAGE_TIF_TARGET})
+-            message(STATUS "Dynamic libtiff: ${dynamic_tif}")
+-            target_compile_definitions(SDL2_image PRIVATE "LOAD_TIF_DYNAMIC=\"${dynamic_tif}\"")
+-            if(SDL2IMAGE_TIF_VENDORED)
+-                add_dependencies(SDL2_image ${SDL2IMAGE_TIF_TARGET})
+-            endif()
+-        else()
+-            target_link_libraries(SDL2_image PRIVATE ${SDL2IMAGE_TIF_TARGET})
+-        endif()
+-    endif()
++    find_package(tiff CONFIG REQUIRED)
++    set(SDL2IMAGE_TIF_ENABLED TRUE)
++    target_link_libraries(SDL2_image PRIVATE TIFF::tiff)
+ endif()
+ 
+ list(APPEND SDL2IMAGE_BACKENDS WEBP)
+ set(SDL2IMAGE_WEBP_ENABLED FALSE)
+ if(SDL2IMAGE_WEBP)
+-    # missing cpufeatures
+-    if(SDL2IMAGE_WEBP_VENDORED)
+-        set(SDL2IMAGE_WEBP_ENABLED TRUE)
+-        message(STATUS "${PROJECT_NAME}: Using vendored libwebp")
+-        sdl_check_project_in_subfolder(external/libwebp libwebp SDL2IMAGE_VENDORED)
+-        set(BUILD_SHARED_LIBS ${SDL2IMAGE_WEBP_SHARED})
+-        add_subdirectory(external/libwebp EXCLUDE_FROM_ALL)
+-        target_include_directories(SDL2_image PRIVATE external/libwebp/src)
+-        add_library(WebP::webp ALIAS webp)
+-        add_library(WebP::webpdemux ALIAS webpdemux)
+-        list(APPEND INSTALL_EXTRA_TARGETS webp webpdemux)
+-        set_target_properties(webp PROPERTIES EXPORT_NAME "external_libwebp")
+-        add_library(SDL2_image::external_libwebp ALIAS webp)
+-    else()
+-        find_package(webp ${required})
+-        if(webp_FOUND)
+-            set(SDL2IMAGE_WEBP_ENABLED TRUE)
+-            message(STATUS "${PROJECT_NAME}: Using system libwebp")
+-            if(NOT SDL2IMAGE_WEBP_SHARED)
+-                list(APPEND PC_REQUIRES libwebp libwebpdemux)
+-            endif()
+-        else()
+-            message(${fatal_error} "libwebp NOT found")
+-        endif()
+-    endif()
+-    if(SDL2IMAGE_WEBP_ENABLED)
+-        target_compile_definitions(SDL2_image PRIVATE LOAD_WEBP)
+-        if(SDL2IMAGE_WEBP_SHARED)
+-            target_include_directories(SDL2_image PRIVATE
+-                $<TARGET_PROPERTY:WebP::webp,INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:WebP::webp,INTERFACE_INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:WebP::webp,INTERFACE_SYSTEM_INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:WebP::webpdemux,INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:WebP::webpdemux,INTERFACE_INCLUDE_DIRECTORIES>
+-                $<TARGET_PROPERTY:WebP::webpdemux,INTERFACE_SYSTEM_INCLUDE_DIRECTORIES>
+-            )
+-            target_get_dynamic_library(dynamic_webpdemux WebP::webpdemux)
+-            message(STATUS "Dynamic libwebpdemux: ${dynamic_webpdemux}")
+-            target_compile_definitions(SDL2_image PRIVATE "LOAD_WEBPDEMUX_DYNAMIC=\"${dynamic_webpdemux}\"")
+-            target_get_dynamic_library(dynamic_webp WebP::webp)
+-            message(STATUS "Dynamic libwebp: ${dynamic_webp}")
+-            target_compile_definitions(SDL2_image PRIVATE "LOAD_WEBP_DYNAMIC=\"${dynamic_webp}\"")
+-            if(SDL2IMAGE_WEBP_VENDORED)
+-                add_dependencies(SDL2_image WebP::webp WebP::webpdemux)
+-            endif()
+-        else()
+-            target_link_libraries(SDL2_image PRIVATE WebP::webp WebP::webpdemux)
+-        endif()
+-    endif()
++    find_package(WebP CONFIG REQUIRED)
++    set(SDL2IMAGE_WEBP_ENABLED TRUE)
++    target_link_libraries(${PROJECT_NAME} PRIVATE WebP::webp)
+ endif()
+ 
+ list(APPEND SDL2IMAGE_BACKENDS XCF)
+@@ -895,12 +625,7 @@ if(SDL2IMAGE_INSTALL)
+         )
+     endif()
+ 
+-    if(WIN32 AND NOT MINGW)
+-        set(SDLIMAGE_INSTALL_CMAKEDIR_DEFAULT "cmake")
+-    else()
+-        set(SDLIMAGE_INSTALL_CMAKEDIR_DEFAULT "${CMAKE_INSTALL_LIBDIR}/cmake/SDL2_image")
+-    endif()
+-    set(SDLIMAGE_INSTALL_CMAKEDIR "${SDLIMAGE_INSTALL_CMAKEDIR_DEFAULT}" CACHE STRING "Location where to install SDL2_imageConfig.cmake")
++    set(SDLIMAGE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/SDL2_image" CACHE STRING "Location where to install SDL2_imageConfig.cmake")
+ 
+     configure_package_config_file(SDL2_imageConfig.cmake.in SDL2_imageConfig.cmake
+         INSTALL_DESTINATION "${SDLIMAGE_INSTALL_CMAKEDIR}"
+@@ -913,47 +638,16 @@ if(SDL2IMAGE_INSTALL)
+         FILES
+             "${CMAKE_CURRENT_BINARY_DIR}/SDL2_imageConfig.cmake"
+             "${CMAKE_CURRENT_BINARY_DIR}/SDL2_imageConfigVersion.cmake"
+-            cmake/Findlibjxl.cmake
+-            cmake/Findwebp.cmake
+         DESTINATION "${SDLIMAGE_INSTALL_CMAKEDIR}"
+         COMPONENT devel
+     )
+     install(EXPORT SDL2ImageExports
+-        FILE SDL2_image-${sdl2_image_install_name_infix}-targets.cmake
+-        NAMESPACE SDL2_image::
++        FILE SDL2_image-targets.cmake
++        NAMESPACE SDL2::
+         DESTINATION "${SDLIMAGE_INSTALL_CMAKEDIR}"
+         COMPONENT devel
+     )
+ 
+-    set(prefix "${CMAKE_INSTALL_PREFIX}")
+-    set(exec_prefix "\${prefix}")
+-    set(libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+-    set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+-    set(PACKAGE "${PROJECT_NAME}")
+-    set(VERSION "${FULL_VERSION}")
+-    set(SDL_VERSION "${SDL_REQUIRED_VERSION}")
+-    string(JOIN " " PC_REQUIRES ${PC_REQUIRES})
+-    string(JOIN " " PC_LIBS ${PC_LIBS})
+-    configure_file("${PROJECT_SOURCE_DIR}/SDL2_image.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.pc.intermediate" @ONLY)
+-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/SDL2_image-$<CONFIG>.pc" INPUT "${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.pc.intermediate")
+-
+-    set(PC_DESTDIR)
+-    if(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+-        # FreeBSD uses ${PREFIX}/libdata/pkgconfig
+-        set(PC_DESTDIR "libdata/pkgconfig")
+-    else()
+-        set(PC_DESTDIR "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+-    endif()
+-    # Always install SDL2_net.pc file: libraries might be different between config modes
+-    install(CODE "
+-            # FIXME: use file(COPY_FILE) if minimum CMake version >= 3.21
+-            execute_process(COMMAND \"\${CMAKE_COMMAND}\" -E copy_if_different
+-                \"${CMAKE_CURRENT_BINARY_DIR}/SDL2_image-$<CONFIG>.pc\"
+-                \"${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.pc\")
+-            file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${PC_DESTDIR}\"
+-                TYPE FILE
+-                FILES \"${CMAKE_CURRENT_BINARY_DIR}/SDL2_image.pc\")" COMPONENT devel)
+-
+     if(SDL2IMAGE_BUILD_SHARED_LIBS AND (APPLE OR (UNIX AND NOT ANDROID)))
+         install(
+             FILES
+@@ -962,11 +656,6 @@ if(SDL2IMAGE_INSTALL)
+             COMPONENT devel
+         )
+     endif()
+-
+-    install(FILES "LICENSE.txt"
+-        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/licenses/${PROJECT_NAME}"
+-        COMPONENT library
+-    )
+ endif()
+ 
+ if(SDL2IMAGE_SAMPLES)
+@@ -981,11 +670,11 @@ if(SDL2IMAGE_SAMPLES)
+             target_link_libraries(${prog} PRIVATE mingw32)
+             target_link_options(${prog} PRIVATE -mwindows)
+         endif()
+-        target_link_libraries(${prog} PRIVATE SDL2_image::${sdl2_image_export_name})
++        target_link_libraries(${prog} PRIVATE SDL2::SDL2_image)
+         if(TARGET SDL2::SDL2main)
+             target_link_libraries(${prog} PRIVATE SDL2::SDL2main)
+         endif()
+-        target_link_libraries(${prog} PRIVATE ${sdl2_target_name})
++        target_link_libraries(${prog} PRIVATE SDL2::SDL2)
+ 
+         if(SDL2IMAGE_SAMPLES_INSTALL)
+             install(TARGETS ${prog}
+@@ -1001,7 +690,7 @@ set_target_properties(SDL2::image PROPERTIES
+ )
+ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.17")
+     set_target_properties(SDL2::image PROPERTIES
+-        DEPRECATION "Use SDL2_image::SDL2_image or SDL2_image::SDL2_image-static instead"
++        DEPRECATION "Use SDL2::SDL2_image instead"
+     )
+ endif()
+ 
+diff --git a/SDL2_imageConfig.cmake.in b/SDL2_imageConfig.cmake.in
+index 7c7efab5..5ee6b859 100644
+--- a/SDL2_imageConfig.cmake.in
++++ b/SDL2_imageConfig.cmake.in
+@@ -1,97 +1,22 @@
+-# sdl2_image cmake project-config input for CMakeLists.txt script
+-
+-include(FeatureSummary)
+-set_package_properties(SDL2_image PROPERTIES
+-    URL "https://www.libsdl.org/projects/SDL_image/"
+-    DESCRIPTION "SDL_image is an image file loading library"
+-)
+-
+-set(SDL2_image_FOUND ON)
+-
+-set(SDL2IMAGE_AVIF  @SDL2IMAGE_AVIF@)
+-set(SDL2IMAGE_BMP   @SDL2IMAGE_BMP@)
+-set(SDL2IMAGE_GIF   @SDL2IMAGE_GIF@)
+-set(SDL2IMAGE_JPG   @SDL2IMAGE_JPG@)
+-set(SDL2IMAGE_JXL   @SDL2IMAGE_JXL@)
+-set(SDL2IMAGE_LBM   @SDL2IMAGE_LBM@)
+-set(SDL2IMAGE_PCX   @SDL2IMAGE_PCX@)
+-set(SDL2IMAGE_PNG   @SDL2IMAGE_PNG@)
+-set(SDL2IMAGE_PNM   @SDL2IMAGE_PNM@)
+-set(SDL2IMAGE_QOI   @SDL2IMAGE_QOI@)
+-set(SDL2IMAGE_SVG   @SDL2IMAGE_SVG@)
+-set(SDL2IMAGE_TGA   @SDL2IMAGE_TGA@)
+-set(SDL2IMAGE_TIF   @SDL2IMAGE_TIF@)
+-set(SDL2IMAGE_XCF   @SDL2IMAGE_XCF@)
+-set(SDL2IMAGE_XPM   @SDL2IMAGE_XPM@)
+-set(SDL2IMAGE_XV    @SDL2IMAGE_XV@)
+-set(SDL2IMAGE_WEBP  @SDL2IMAGE_WEBP@)
+-
+-set(SDL2IMAGE_JPG_SAVE @SDL2IMAGE_JPG_SAVE@)
+-set(SDL2IMAGE_PNG_SAVE @SDL2IMAGE_PNG_SAVE@)
+-
+-set(SDL2IMAGE_VENDORED  @SDL2IMAGE_VENDORED@)
+-
+-set(SDL2IMAGE_BACKEND_IMAGEIO   @SDL2IMAGE_BACKEND_IMAGEIO@)
+-set(SDL2IMAGE_BACKEND_STB       @SDL2IMAGE_BACKEND_STB@)
+-set(SDL2IMAGE_BACKEND_WIC       @SDL2IMAGE_BACKEND_WIC@)
+-
+-set(SDL2IMAGE_SDL2_REQUIRED_VERSION  @SDL_REQUIRED_VERSION@)
+-
+-if(NOT SDL2IMAGE_VENDORED)
+-    set(_sdl_cmake_module_path "${CMAKE_MODULE_PATH}")
+-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+-endif()
++@PACKAGE_INIT@
+ 
+ include(CMakeFindDependencyMacro)
+ 
+-if(SDL2IMAGE_AVIF AND NOT SDL2IMAGE_VENDORED AND NOT TARGET avif)
+-    find_package(libavif 1.0 QUIET)
+-    if(NOT libavif_FOUND)
+-        find_package(libavif @LIBAVIF_MINIMUM_VERSION@ QUIET)
+-    endif()
+-    if(NOT libavif_FOUND)
+-        set(SDL2_image_FOUND FALSE)
+-        return()
+-    endif()
+-endif()
++find_dependency(SDL2 CONFIG REQUIRED)
++find_dependency(png CONFIG REQUIRED)
+ 
+-if(SDL2IMAGE_JPG AND NOT SDL2IMAGE_VENDORED AND NOT TARGET JPEG::JPEG)
+-    find_dependency(JPEG)
++if(@SDL2IMAGE_JPG@)
++    find_dependency(jpeg-turbo CONFIG REQUIRED)
+ endif()
+ 
+-if(SDL2IMAGE_JXL AND NOT SDL2IMAGE_VENDORED AND NOT TARGET libjxl::libjxl)
+-    list(APPEND libjxl_ROOT "${CMAKE_CURRENT_LIST_DIR}")
+-    find_dependency(libjxl)
++if(@SDL2IMAGE_TIF@)
++    find_dependency(tiff CONFIG REQUIRED)
+ endif()
+ 
+-if(SDL2IMAGE_PNG AND NOT SDL2IMAGE_VENDORED AND NOT TARGET PNG::PNG)
+-    find_dependency(PNG)
++if(@SDL2IMAGE_WEBP@)
++    find_dependency(WebP CONFIG REQUIRED)
+ endif()
+ 
+-if(SDL2IMAGE_TIF AND NOT SDL2IMAGE_VENDORED AND NOT TARGET TIFF::TIFF)
+-    find_dependency(TIFF)
+-endif()
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
+ 
+-if(SDL2IMAGE_WEBP AND NOT SDL2IMAGE_VENDORED AND NOT TARGET WebP::webp)
+-    list(APPEND webp_ROOT "${CMAKE_CURRENT_LIST_DIR}")
+-    find_dependency(webp)
+-endif()
+-
+-#FIXME: can't add SDL2IMAGE_SDL2_REQUIRED_VERSION since not all SDL2 installs ship SDL2ConfigVersion.cmake
+-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/SDL2_image-shared-targets.cmake")
+-    include("${CMAKE_CURRENT_LIST_DIR}/SDL2_image-shared-targets.cmake")
+-endif()
+-
+-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/SDL2_image-static-targets.cmake")
+-    include(CheckLanguage)
+-    check_language(CXX)
+-    if(SDL2IMAGE_VENDORED AND NOT CMAKE_CXX_COMPILER AND NOT _sdl2image_nowarning)
+-        message(WARNING "CXX language not enabled. Linking to SDL2_image::SDL2_image-static might fail.")
+-    endif()
+-    include("${CMAKE_CURRENT_LIST_DIR}/SDL2_image-static-targets.cmake")
+-endif()
+-
+-if(NOT SDL2IMAGE_VENDORED)
+-    set(CMAKE_MODULE_PATH "${_sdl_cmake_module_path}")
+-    unset(_sdl_cmake_module_path)
+-endif()
++check_required_components(@PROJECT_NAME@)
+diff --git a/VisualC/pkg-support/cmake/sdl2_image-config.cmake b/VisualC/pkg-support/cmake/sdl2_image-config.cmake
+index 892a251e..da60ef2a 100644
+--- a/VisualC/pkg-support/cmake/sdl2_image-config.cmake
++++ b/VisualC/pkg-support/cmake/sdl2_image-config.cmake
+@@ -55,9 +55,9 @@ set(_sdl2image_dll          "${CMAKE_CURRENT_LIST_DIR}/../lib/${_sdl_arch_subdir
+ # All targets are created, even when some might not be requested though COMPONENTS.
+ # This is done for compatibility with CMake generated SDL2_image-target.cmake files.
+ 
+-if(NOT TARGET SDL2_image::SDL2_image)
+-    add_library(SDL2_image::SDL2_image SHARED IMPORTED)
+-    set_target_properties(SDL2_image::SDL2_image
++if(NOT TARGET SDL2::SDL2_image)
++    add_library(SDL2::SDL2_image SHARED IMPORTED)
++    set_target_properties(SDL2::SDL2_image
+         PROPERTIES
+             INTERFACE_INCLUDE_DIRECTORIES "${_sdl2image_incdir}"
+             IMPORTED_IMPLIB "${_sdl2image_library}"
+diff --git a/Xcode/pkg-support/resources/CMake/sdl2_image-config.cmake b/Xcode/pkg-support/resources/CMake/sdl2_image-config.cmake
+index b59b1df1..17b4d71e 100644
+--- a/Xcode/pkg-support/resources/CMake/sdl2_image-config.cmake
++++ b/Xcode/pkg-support/resources/CMake/sdl2_image-config.cmake
+@@ -45,9 +45,9 @@ string(REGEX REPLACE "SDL2_image\\.framework.*" "" _sdl2image_framework_parent_p
+ # All targets are created, even when some might not be requested though COMPONENTS.
+ # This is done for compatibility with CMake generated SDL2_image-target.cmake files.
+ 
+-if(NOT TARGET SDL2_image::SDL2_image)
+-    add_library(SDL2_image::SDL2_image INTERFACE IMPORTED)
+-    set_target_properties(SDL2_image::SDL2_image
++if(NOT TARGET SDL2::SDL2_image)
++    add_library(SDL2::SDL2_image INTERFACE IMPORTED)
++    set_target_properties(SDL2::SDL2_image
+         PROPERTIES
+             INTERFACE_COMPILE_OPTIONS "SHELL:-F ${_sdl2image_framework_parent_path}"
+             INTERFACE_INCLUDE_DIRECTORIES "${_sdl2image_framework_path}/Headers"
+diff --git a/cmake/CommonFindSDL2.cmake b/cmake/CommonFindSDL2.cmake
+deleted file mode 100644
+index 59939dc9..00000000
+--- a/cmake/CommonFindSDL2.cmake
++++ /dev/null
+@@ -1,22 +0,0 @@
+-# Common variables for FindSDL2*.cmake modules
+-
+-set(_inc_suffixes include)
+-set(_lib_suffixes)
+-if(MSVC)
+-    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+-        list(APPEND _lib_suffixes "lib/x86")
+-    endif()
+-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+-        list(APPEND _lib_suffixes "lib/x64")
+-    endif()
+-endif()
+-if(MINGW)
+-    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+-        list(APPEND _lib_suffixes "i686-w64-mingw32/lib")
+-        list(APPEND _inc_suffixes "i686-w64-mingw32/include")
+-    endif()
+-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+-        list(APPEND _lib_suffixes "x86_64-w64-mingw32/lib")
+-        list(APPEND _inc_suffixes "x86_64-w64-mingw32/include")
+-    endif()
+-endif()
+diff --git a/cmake/FindPrivateSDL2.cmake b/cmake/FindPrivateSDL2.cmake
+deleted file mode 100644
+index 03141706..00000000
+--- a/cmake/FindPrivateSDL2.cmake
++++ /dev/null
+@@ -1,47 +0,0 @@
+-# FIXME: this should be provided by SDL2
+-
+-include(FindPackageHandleStandardArgs)
+-include("${CMAKE_CURRENT_LIST_DIR}/CommonFindSDL2.cmake")
+-
+-find_library(SDL2_LIBRARY
+-    NAMES SDL2
+-    HINTS ${SDL2_DIR} ENV SDL2_DIR
+-    PATH_SUFFIXES ${_lib_suffixes}
+-)
+-
+-find_path(SDL2_INCLUDE_DIR
+-    NAMES SDL_haptic.h
+-    PATH_SUFFIXES SDL2
+-    HINTS ${SDL2_DIR} ENV SDL2_DIR
+-    PATH_SUFFIXES ${_inc_suffixes}
+-)
+-
+-set(SDL2_VERSION)
+-if(SDL2_INCLUDE_DIR)
+-    file(READ "${SDL2_INCLUDE_DIR}/SDL_version.h" _sdl_version_h)
+-    string(REGEX MATCH "#define[ \t]+SDL_MAJOR_VERSION[ \t]+([0-9]+)" _sdl2_major_re "${_sdl_version_h}")
+-    set(_sdl2_major "${CMAKE_MATCH_1}")
+-    string(REGEX MATCH "#define[ \t]+SDL_MINOR_VERSION[ \t]+([0-9]+)" _sdl2_minor_re "${_sdl_version_h}")
+-    set(_sdl2_minor "${CMAKE_MATCH_1}")
+-    string(REGEX MATCH "#define[ \t]+SDL_PATCHLEVEL[ \t]+([0-9]+)" _sdl2_patch_re "${_sdl_version_h}")
+-    set(_sdl2_patch "${CMAKE_MATCH_1}")
+-    if(_sdl2_major_re AND _sdl2_minor_re AND _sdl2_patch_re)
+-        set(SDL2_VERSION "${_sdl2_major}.${_sdl2_minor}.${_sdl2_patch}")
+-    endif()
+-endif()
+-
+-find_package_handle_standard_args(PrivateSDL2
+-    REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR
+-    VERSION_VAR SDL2_VERSION
+-)
+-
+-if(PrivateSDL2_FOUND)
+-    if(NOT TARGET PrivateSDL2::PrivateSDL2)
+-        add_library(PrivateSDL2::PrivateSDL2 UNKNOWN IMPORTED)
+-        set_target_properties(PrivateSDL2::PrivateSDL2 PROPERTIES
+-            INTERFACE_INCLUDE_DIRECTORIES "${SDL2_INCLUDE_DIR}"
+-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+-            IMPORTED_LOCATION "${SDL2_LIBRARY}"
+-        )
+-    endif()
+-endif()
+diff --git a/cmake/FindSDL2main.cmake b/cmake/FindSDL2main.cmake
+deleted file mode 100644
+index cbdfee86..00000000
+--- a/cmake/FindSDL2main.cmake
++++ /dev/null
+@@ -1,24 +0,0 @@
+-# FIXME: this should be provided by SDL2
+-
+-include(FindPackageHandleStandardArgs)
+-include("${CMAKE_CURRENT_LIST_DIR}/CommonFindSDL2.cmake")
+-
+-find_library(SDL2_MAIN_LIBRARY
+-    NAMES SDL2main
+-    HINTS ${SDL2_DIR} ENV SDL2_DIR
+-    PATH_SUFFIXES ${_lib_suffixes}
+-)
+-
+-find_package_handle_standard_args(SDL2main
+-    REQUIRED_VARS SDL2_MAIN_LIBRARY
+-)
+-
+-if(SDL2main_FOUND)
+-    if(NOT TARGET SDL2::SDL2main)
+-        add_library(SDL2::SDL2main UNKNOWN IMPORTED)
+-        set_target_properties(SDL2::SDL2main PROPERTIES
+-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+-            IMPORTED_LOCATION "${SDL2_MAIN_LIBRARY}"
+-        )
+-    endif()
+-endif()
+diff --git a/cmake/FindSDL2test.cmake b/cmake/FindSDL2test.cmake
+deleted file mode 100644
+index 1318fba6..00000000
+--- a/cmake/FindSDL2test.cmake
++++ /dev/null
+@@ -1,31 +0,0 @@
+-# FIXME: this should be provided by SDL2
+-
+-include(FindPackageHandleStandardArgs)
+-include("${CMAKE_CURRENT_LIST_DIR}/CommonFindSDL2.cmake")
+-
+-find_library(SDL2_TEST_LIBRARY
+-    NAMES SDL2test SDL2_test
+-    HINTS ${SDL2_DIR} ENV SDL2_DIR
+-    PATH_SUFFIXES ${_lib_suffixes}
+-)
+-
+-find_package_handle_standard_args(SDL2test
+-    REQUIRED_VARS SDL2_TEST_LIBRARY
+-)
+-
+-if(SDL2test_FOUND)
+-    if(NOT TARGET SDL2::SDL2test)
+-        add_library(SDL2::SDL2test UNKNOWN IMPORTED)
+-        set_target_properties(SDL2::SDL2test PROPERTIES
+-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+-            IMPORTED_LOCATION "${SDL2_TEST_LIBRARY}"
+-        )
+-        if(MSVC AND ((SDL2_VERSION AND SDL2_VERSION VERSION_LESS "2.0.20") OR NOT SDL2_VERSION))
+-            # FIXME: remove once minimum required SDL library is >=2.0.20
+-            # Until 2.0.18, SDL2test.lib used `printf` in SDL_test_common.c. instead of `SDL_log`. (fixed in 2.0.20)
+-            set_target_properties(SDL2::SDL2test PROPERTIES
+-                INTERFACE_LINK_LIBRARIES "legacy_stdio_definitions.lib"
+-            )
+-        endif()
+-    endif()
+-endif()
+diff --git a/cmake/Findlibjxl.cmake b/cmake/Findlibjxl.cmake
+deleted file mode 100644
+index e74f265d..00000000
+--- a/cmake/Findlibjxl.cmake
++++ /dev/null
+@@ -1,32 +0,0 @@
+-include(FindPackageHandleStandardArgs)
+-
+-find_library(libjxl_LIBRARY
+-    NAMES jxl
+-)
+-
+-find_path(libjxl_INCLUDE_PATH
+-    NAMES jxl/decode.h
+-)
+-
+-set(libjxl_COMPILE_OPTIONS "" CACHE STRING "Extra compile options of libjxl")
+-
+-set(libjxl_LINK_LIBRARIES "" CACHE STRING "Extra link libraries of libjxl")
+-
+-set(libjxl_LINK_FLAGS "" CACHE STRING "Extra link flags of libjxl")
+-
+-find_package_handle_standard_args(libjxl
+-    REQUIRED_VARS libjxl_LIBRARY libjxl_INCLUDE_PATH
+-)
+-
+-if (libjxl_FOUND)
+-    if (NOT TARGET libjxl::libjxl)
+-        add_library(libjxl::libjxl UNKNOWN IMPORTED)
+-        set_target_properties(libjxl::libjxl PROPERTIES
+-            IMPORTED_LOCATION "${libjxl_LIBRARY}"
+-            INTERFACE_INCLUDE_DIRECTORIES "${libjxl_INCLUDE_PATH}"
+-            INTERFACE_COMPILE_OPTIONS "${libjxl_COMPILE_OPTIONS}"
+-            INTERFACE_LINK_LIBRARIES "${libjxl_LINK_LIBRARIES}"
+-            INTERFACE_LINK_FLAGS "${libjxl_LINK_FLAGS}"
+-        )
+-    endif()
+-endif()
+diff --git a/cmake/Findwebp.cmake b/cmake/Findwebp.cmake
+deleted file mode 100644
+index e07b377c..00000000
+--- a/cmake/Findwebp.cmake
++++ /dev/null
+@@ -1,56 +0,0 @@
+-include(FindPackageHandleStandardArgs)
+-
+-find_library(webp_LIBRARY
+-    NAMES webp
+-)
+-
+-find_path(webp_INCLUDE_PATH
+-    NAMES webp/decode.h
+-)
+-
+-set(webp_COMPILE_OPTIONS "" CACHE STRING "Extra compile options of webp")
+-
+-set(webp_LINK_LIBRARIES "" CACHE STRING "Extra link libraries of webp")
+-
+-set(webp_LINK_FLAGS "" CACHE STRING "Extra link flags of webp")
+-
+-find_library(webpdemux_LIBRARY
+-    NAMES webpdemux
+-)
+-
+-find_path(webpdemux_INCLUDE_PATH
+-    NAMES webp/demux.h
+-)
+-
+-set(webpdemux_COMPILE_OPTIONS "" CACHE STRING "Extra compile options of webpdemux")
+-
+-set(webpdemux_LINK_LIBRARIES "" CACHE STRING "Extra link libraries of webpdemux")
+-
+-set(webpdemux_LINK_FLAGS "" CACHE STRING "Extra link flags of webpdemux")
+-
+-find_package_handle_standard_args(webp
+-    REQUIRED_VARS webp_LIBRARY webp_INCLUDE_PATH webpdemux_LIBRARY webpdemux_INCLUDE_PATH
+-)
+-
+-if (webp_FOUND)
+-    if (NOT TARGET WebP::webp)
+-        add_library(WebP::webp UNKNOWN IMPORTED)
+-        set_target_properties(WebP::webp PROPERTIES
+-            IMPORTED_LOCATION "${webp_LIBRARY}"
+-            INTERFACE_INCLUDE_DIRECTORIES "${webp_INCLUDE_PATH}"
+-            INTERFACE_COMPILE_OPTIONS "${webp_COMPILE_FLAGS}"
+-            INTERFACE_LINK_LIBRARIES "${webp_LINK_LIBRARIES}"
+-            INTERFACE_LINK_FLAGS "${webp_LINK_FLAGS}"
+-        )
+-    endif()
+-    if (NOT TARGET WebP::webpdemux)
+-        add_library(WebP::webpdemux UNKNOWN IMPORTED)
+-        set_target_properties(WebP::webpdemux PROPERTIES
+-            IMPORTED_LOCATION "${webpdemux_LIBRARY}"
+-            INTERFACE_INCLUDE_DIRECTORIES "${webpdemux_INCLUDE_PATH}"
+-            INTERFACE_COMPILE_OPTIONS "${webpdemux_COMPILE_FLAGS}"
+-            INTERFACE_LINK_LIBRARIES "${webwebpdemux_LINK_LIBRARIES}"
+-            INTERFACE_LINK_FLAGS "${webpdemux_LINK_FLAGS}"
+-        )
+-    endif()
+-endif()
+diff --git a/cmake/PrivateSdlFunctions.cmake b/cmake/PrivateSdlFunctions.cmake
+index 1f3786c0..1cbb4dc3 100644
+--- a/cmake/PrivateSdlFunctions.cmake
++++ b/cmake/PrivateSdlFunctions.cmake
+@@ -43,31 +43,6 @@ macro(sdl_calculate_derived_version_variables)
+     set(DYLIB_COMPATIBILITY_VERSION "${DYLIB_CURRENT_VERSION_MAJOR}.0.0")
+ endmacro()
+ 
+-macro(sdl_find_sdl2 TARGET VERSION)
+-    if(NOT TARGET ${TARGET})
+-        # FIXME: can't add REQUIRED since not all SDL2 installs ship SDL2ConfigVersion.cmake (or sdl2-config-version.cmake)
+-        find_package(SDL2 ${VERSION} QUIET)
+-    endif()
+-    if(NOT TARGET ${TARGET})
+-        # FIXME: can't add REQUIRED since not all SDL2 installs ship SDL2Config.cmake (or sdl2-config.cmake)
+-        find_package(SDL2 QUIET)
+-        if(SDL2_FOUND)
+-            message(WARNING "Could not verify SDL2 version. Assuming SDL2 has version of at least ${VERSION}.")
+-        endif()
+-    endif()
+-
+-    # Use Private FindSDL2.cmake module to find SDL2 for installations where no SDL2Config.cmake is available,
+-    # or for those installations where no target is generated.
+-    if(NOT TARGET ${TARGET})
+-        message(STATUS "Using private SDL2 find module")
+-        find_package(PrivateSDL2 ${VERSION} REQUIRED)
+-        add_library(${TARGET} INTERFACE IMPORTED)
+-        set_target_properties(${TARGET} PROPERTIES
+-            INTERFACE_LINK_LIBRARIES "PrivateSDL2::PrivateSDL2"
+-        )
+-    endif()
+-endmacro()
+-
+ function(read_absolute_symlink DEST PATH)
+     file(READ_SYMLINK "${PATH}" p)
+     if(NOT IS_ABSOLUTE "${p}")
+diff --git a/cmake/test/CMakeLists.txt b/cmake/test/CMakeLists.txt
+index 1bbeb4c8..5006d414 100644
+--- a/cmake/test/CMakeLists.txt
++++ b/cmake/test/CMakeLists.txt
+@@ -17,33 +17,20 @@ option(TEST_STATIC "Test linking to static SDL2_image library" ON)
+ add_feature_info("TEST_STATIC" TEST_STATIC "Test linking with static library")
+ 
+ if(TEST_SHARED)
+-    # FIXME: in the distant future, must become REQUIRED
+-    find_package(SDL2 CONFIG COMPONENTS SDL2)
+-    # FIXME: and the following should be removed
+-    if(NOT TARGET SDL2::SDL2)
+-        list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
+-        include(PrivateSdlFunctions)
+-        sdl_find_sdl2(SDL2::SDL2 2.0)
+-    endif()
+-    find_package(SDL2_image REQUIRED CONFIG)
++    find_package(SDL2 CONFIG REQUIRED)
++    #find_package(SDL2_image CONFIG REQUIRED) # find_package() in its own project?
+     add_executable(main_shared main.c)
+-    target_link_libraries(main_shared PRIVATE SDL2::SDL2 SDL2_image::SDL2_image)
++    target_link_libraries(main_shared PRIVATE SDL2::SDL2 SDL2::SDL2_image)
+ endif()
+ 
+ if(TEST_STATIC)
+-    # FIXME: in the distant future, must become REQUIRED
+-    find_package(SDL2 CONFIG COMPONENTS SDL2-static)
+-    # FIXME: and the following should be removed
+-    if(NOT TARGET SDL2::SDL2-static)
+-        list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
+-        include(PrivateSdlFunctions)
+-        sdl_find_sdl2(SDL2::SDL2-static 2.0)
+-    endif()
++    find_package(SDL2 CONFIG REQUIRED)
++    #find_package(SDL2_image CONFIG REQUIRED) # find_package() in its own project?
+     # some static vendored libraries use c++ (enable CXX after `find_package` might show a warning)
+     enable_language(CXX)
+     find_package(SDL2_image REQUIRED CONFIG)
+     add_executable(main_static main.c)
+-    target_link_libraries(main_static PRIVATE SDL2::SDL2-static SDL2_image::SDL2_image-static)
++    target_link_libraries(main_static PRIVATE SDL2::SDL2 SDL2::SDL2_image)
+ endif()
+ 
+ feature_summary(WHAT ALL)
+diff --git a/cmake/test/main.c b/cmake/test/main.c
+index fb655ef2..ae4540c9 100644
+--- a/cmake/test/main.c
++++ b/cmake/test/main.c
+@@ -1,5 +1,5 @@
+ #define SDL_MAIN_HANDLED
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ #include "SDL_image.h"
+ #include <stdio.h>
+ 
+diff --git a/examples/showanim.c b/examples/showanim.c
+index 041343b4..fa140b73 100644
+--- a/examples/showanim.c
++++ b/examples/showanim.c
+@@ -19,7 +19,7 @@
+   3. This notice may not be removed or altered from any source distribution.
+ */
+ 
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ #include "SDL_image.h"
+ 
+ 
+diff --git a/examples/showimage.c b/examples/showimage.c
+index 24417d77..ad4fd5ed 100644
+--- a/examples/showimage.c
++++ b/examples/showimage.c
+@@ -19,7 +19,7 @@
+   3. This notice may not be removed or altered from any source distribution.
+ */
+ 
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ #include "SDL_image.h"
+ 
+ 
+diff --git a/include/SDL_image.h b/include/SDL_image.h
+index 34fca876..21de598d 100644
+--- a/include/SDL_image.h
++++ b/include/SDL_image.h
+@@ -29,9 +29,9 @@
+ #ifndef SDL_IMAGE_H_
+ #define SDL_IMAGE_H_
+ 
+-#include "SDL.h"
+-#include "SDL_version.h"
+-#include "begin_code.h"
++#include <SDL2/SDL.h>
++#include <SDL2/SDL_version.h>
++#include <SDL2/begin_code.h>
+ 
+ /* Set up for C function definitions, even when using C++ */
+ #ifdef __cplusplus
+@@ -2190,6 +2190,6 @@ extern DECLSPEC IMG_Animation * SDLCALL IMG_LoadWEBPAnimation_RW(SDL_RWops *src)
+ #ifdef __cplusplus
+ }
+ #endif
+-#include "close_code.h"
++#include <SDL2/close_code.h>
+ 
+ #endif /* SDL_IMAGE_H_ */
+diff --git a/sdl2_image-config.cmake.in b/sdl2_image-config.cmake.in
+deleted file mode 100644
+index eb0f9d60..00000000
+--- a/sdl2_image-config.cmake.in
++++ /dev/null
+@@ -1,127 +0,0 @@
+-# sdl2_image cmake project-config input for ./configure scripts
+-
+-include(FeatureSummary)
+-set_package_properties(SDL2_image PROPERTIES
+-    URL "https://www.libsdl.org/projects/SDL_image/"
+-    DESCRIPTION "SDL_image is an image file loading library"
+-)
+-
+-set(SDL2_image_FOUND TRUE)
+-
+-set(SDL2IMAGE_AVIF  @LOAD_AVIF@)
+-set(SDL2IMAGE_BMP   @LOAD_BMP@)
+-set(SDL2IMAGE_GIF   @LOAD_GIF@)
+-set(SDL2IMAGE_JPG   @LOAD_JPG@)
+-set(SDL2IMAGE_JXL   @LOAD_JXL@)
+-set(SDL2IMAGE_LBM   @LOAD_LBM@)
+-set(SDL2IMAGE_PCX   @LOAD_PCX@)
+-set(SDL2IMAGE_PNG   @LOAD_PNG@)
+-set(SDL2IMAGE_PNM   @LOAD_PNM@)
+-set(SDL2IMAGE_QOI   @LOAD_QOI@)
+-set(SDL2IMAGE_SVG   @LOAD_SVG@)
+-set(SDL2IMAGE_TGA   @LOAD_TGA@)
+-set(SDL2IMAGE_TIF   @LOAD_TIF@)
+-set(SDL2IMAGE_XCF   @LOAD_XCF@)
+-set(SDL2IMAGE_XPM   @LOAD_XPM@)
+-set(SDL2IMAGE_XV    @LOAD_XV@)
+-set(SDL2IMAGE_WEBP  @LOAD_WEBP@)
+-
+-set(SDL2IMAGE_JPG_SAVE @SDL2IMAGE_JPG_SAVE@)
+-set(SDL2IMAGE_PNG_SAVE @SDL2IMAGE_PNG_SAVE@)
+-
+-set(SDL2IMAGE_VENDORED  FALSE)
+-
+-set(SDL2IMAGE_BACKEND_IMAGEIO   @USE_IMAGEIO@)
+-set(SDL2IMAGE_BACKEND_STB       @USE_STBIMAGE@)
+-set(SDL2IMAGE_BACKEND_WIC       @USE_WIC@)
+-
+-get_filename_component(CMAKE_CURRENT_LIST_DIR ${CMAKE_CURRENT_LIST_DIR} REALPATH)
+-get_filename_component(prefix "${CMAKE_CURRENT_LIST_DIR}/@cmake_prefix_relpath@" ABSOLUTE)
+-set(exec_prefix "@exec_prefix@")
+-set(bindir "@bindir@")
+-set(includedir "@includedir@")
+-set(libdir "@libdir@")
+-set(_sdl2image_extra_static_libraries "@CMAKE_LIBS@")
+-string(REGEX REPLACE "(^[;]+|[;]+$)" "" _sdl2image_extra_static_libraries "${_sdl2image_extra_static_libraries}")
+-
+-set(_sdl2image_bindir   "${bindir}")
+-set(_sdl2image_libdir   "${libdir}")
+-set(_sdl2image_incdir   "${includedir}/SDL2")
+-
+-include(CMakeFindDependencyMacro)
+-
+-set(_original_cmake_module_path "${CMAKE_MODULE_PATH}")
+-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+-
+-if("WebP::webp" IN_LIST _sdl2image_extra_static_libraries)
+-    find_dependency(webp)
+-endif()
+-
+-if("avif" IN_LIST _sdl2image_extra_static_libraries)
+-    find_dependency(libavif)
+-endif()
+-
+-if("TIFF::TIFF" IN_LIST _sdl2image_extra_static_libraries)
+-    find_dependency(TIFF)
+-endif()
+-
+-if("JPEG::JPEG" IN_LIST _sdl2image_extra_static_libraries)
+-    find_dependency(JPEG)
+-endif()
+-
+-if("libjxl::libjxl" IN_LIST _sdl2image_extra_static_libraries)
+-    find_dependency(libjxl)
+-endif()
+-
+-if("PNG::PNG" IN_LIST _sdl2image_extra_static_libraries)
+-    find_dependency(PNG)
+-endif()
+-
+-set(CMAKE_MODULE_PATH "${_original_cmake_module_path}")
+-unset(_original_cmake_module_path)
+-
+-unset(prefix)
+-unset(exec_prefix)
+-unset(bindir)
+-unset(includedir)
+-unset(libdir)
+-
+-include(CMakeFindDependencyMacro)
+-
+-if(NOT TARGET SDL2_image::SDL2_image)
+-    add_library(SDL2_image::SDL2_image SHARED IMPORTED)
+-    set_target_properties(SDL2_image::SDL2_image
+-        PROPERTIES
+-            INTERFACE_INCLUDE_DIRECTORIES "${_sdl2image_incdir}"
+-            COMPATIBLE_INTERFACE_BOOL "SDL2_SHARED"
+-            INTERFACE_SDL2_SHARED "ON"
+-    )
+-    if(WIN32)
+-        set_target_properties(SDL2_image::SDL2_image
+-            PROPERTIES
+-                IMPORTED_LOCATION "${_sdl2image_bindir}/SDL2_image.dll"
+-                IMPORTED_IMPLIB "${_sdl2image_libdir}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2_image.dll${CMAKE_STATIC_LIBRARY_SUFFIX}"
+-        )
+-    else()
+-        set_target_properties(SDL2_image::SDL2_image
+-            PROPERTIES
+-                IMPORTED_LOCATION "${_sdl2image_libdir}/${CMAKE_SHARED_LIBRARY_PREFIX}SDL2_image${CMAKE_SHARED_LIBRARY_SUFFIX}"
+-        )
+-    endif()
+-endif()
+-
+-if(NOT TARGET SDL2_image::SDL2_image-static)
+-    add_library(SDL2_image::SDL2_image-static STATIC IMPORTED)
+-
+-    set_target_properties(SDL2_image::SDL2_image-static
+-        PROPERTIES
+-            INTERFACE_INCLUDE_DIRECTORIES "${_sdl2image_incdir}"
+-            IMPORTED_LOCATION "${_sdl2image_libdir}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2_image${CMAKE_STATIC_LIBRARY_SUFFIX}"
+-            INTERFACE_LINK_LIBRARIES "${_sdl2image_extra_static_libraries}"
+-    )
+-endif()
+-
+-unset(_sdl2image_extra_static_libraries)
+-unset(_sdl2image_bindir)
+-unset(_sdl2image_libdir)
+-unset(_sdl2image_incdir)
+diff --git a/src/IMG_bmp.c b/src/IMG_bmp.c
+index ee1f628c..742a096e 100644
+--- a/src/IMG_bmp.c
++++ b/src/IMG_bmp.c
+@@ -88,9 +88,9 @@ int IMG_isCUR(SDL_RWops *src)
+     return IMG_isICOCUR(src, 2);
+ }
+ 
+-#include "SDL_error.h"
+-#include "SDL_video.h"
+-#include "SDL_endian.h"
++#include <SDL2/SDL_error.h>
++#include <SDL2/SDL_video.h>
++#include <SDL2/SDL_endian.h>
+ 
+ /* Compression encodings for BMP files */
+ #ifndef BI_RGB
+diff --git a/src/IMG_gif.c b/src/IMG_gif.c
+index 58667e94..f2f98e76 100644
+--- a/src/IMG_gif.c
++++ b/src/IMG_gif.c
+@@ -44,7 +44,7 @@
+    Use SDL_Surface rather than xpaint Image structure
+    Define SDL versions of RWSetMsg(), ImageNewCmap() and ImageSetCmap()
+ */
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ 
+ #define Image           SDL_Surface
+ #define RWSetMsg        IMG_SetError
+diff --git a/src/IMG_jpg.c b/src/IMG_jpg.c
+index 98050b9d..dd61858d 100644
+--- a/src/IMG_jpg.c
++++ b/src/IMG_jpg.c
+@@ -50,7 +50,7 @@
+ 
+ #define USE_JPEGLIB
+ 
+-#include <jpeglib.h>
++#include <jpeg/jpeglib.h>
+ 
+ #ifdef JPEG_TRUE  /* MinGW version of jpeg-8.x renamed TRUE to JPEG_TRUE etc. */
+     typedef JPEG_boolean boolean;
+diff --git a/src/IMG_lbm.c b/src/IMG_lbm.c
+index 66215e6f..3b5b5a26 100644
+--- a/src/IMG_lbm.c
++++ b/src/IMG_lbm.c
+@@ -30,7 +30,7 @@
+    Buffer overflow fix in RLE decompression by David Raulo in January 2008.
+ */
+ 
+-#include "SDL_endian.h"
++#include <SDL2/SDL_endian.h>
+ #include "SDL_image.h"
+ 
+ #ifdef LOAD_LBM
+diff --git a/src/IMG_pcx.c b/src/IMG_pcx.c
+index 317488ff..ba7137e2 100644
+--- a/src/IMG_pcx.c
++++ b/src/IMG_pcx.c
+@@ -33,7 +33,7 @@
+  *  4-plane 32bpp format with a fourth "intensity" plane
+  */
+ 
+-#include "SDL_endian.h"
++#include <SDL2/SDL_endian.h>
+ 
+ #include "SDL_image.h"
+ 
+diff --git a/src/IMG_png.c b/src/IMG_png.c
+index cdee02cf..40e1a4bc 100644
+--- a/src/IMG_png.c
++++ b/src/IMG_png.c
+@@ -48,12 +48,12 @@
+ 
+ /* This code was originally written by Philippe Lavoie (2 November 1998) */
+ 
+-#include "SDL_endian.h"
++#include <SDL2/SDL_endian.h>
+ 
+ #ifdef macintosh
+ #define MACOS
+ #endif
+-#include <png.h>
++#include <png/png.h>
+ 
+ /* Check for the older version of libpng */
+ #if (PNG_LIBPNG_VER_MAJOR == 1)
+diff --git a/src/IMG_tga.c b/src/IMG_tga.c
+index 537f2ee7..cd5af262 100644
+--- a/src/IMG_tga.c
++++ b/src/IMG_tga.c
+@@ -23,7 +23,7 @@
+ 
+ /* This is a Targa image file loading framework */
+ 
+-#include "SDL_endian.h"
++#include <SDL2/SDL_endian.h>
+ 
+ #include "SDL_image.h"
+ 
+diff --git a/src/IMG_tif.c b/src/IMG_tif.c
+index a6b76b94..4dc96916 100644
+--- a/src/IMG_tif.c
++++ b/src/IMG_tif.c
+@@ -27,7 +27,7 @@
+ 
+ #ifdef LOAD_TIF
+ 
+-#include <tiffio.h>
++#include <tiff/tiffio.h>
+ 
+ static struct {
+     int loaded;
+diff --git a/src/IMG_webp.c b/src/IMG_webp.c
+index 7c96e02d..4a65e984 100644
+--- a/src/IMG_webp.c
++++ b/src/IMG_webp.c
+@@ -34,7 +34,7 @@
+ 
+ =============================================================================*/
+ 
+-#include "SDL_endian.h"
++#include <SDL2/SDL_endian.h>
+ 
+ #ifdef macintosh
+ #define MACOS
+diff --git a/src/IMG_xcf.c b/src/IMG_xcf.c
+index 95c1526c..f666f4d6 100644
+--- a/src/IMG_xcf.c
++++ b/src/IMG_xcf.c
+@@ -21,7 +21,7 @@
+ 
+ /* This is a XCF image file loading framework */
+ 
+-#include "SDL_endian.h"
++#include <SDL2/SDL_endian.h>
+ #include "SDL_image.h"
+ 
+ #ifdef LOAD_XCF
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index 90a4b8cf..7ce95e97 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -46,11 +46,11 @@ set(TESTS_ENVIRONMENT
+ 
+ foreach(prog ${ALL_TESTS})
+     target_compile_definitions(${prog} PRIVATE $<TARGET_PROPERTY:SDL2_image,COMPILE_DEFINITIONS>)
+-    target_link_libraries(${prog} PRIVATE SDL2_image::${sdl2_image_export_name})
++    target_link_libraries(${prog} PRIVATE SDL2::SDL2_image)
+     if(TARGET SDL2::SDL2main)
+         target_link_libraries(${prog} PRIVATE SDL2::SDL2main)
+     endif()
+-    target_link_libraries(${prog} PRIVATE SDL2::SDL2test ${sdl2_target_name})
++    target_link_libraries(${prog} PRIVATE SDL2::SDL2test SDL2::SDL2)
+ 
+     add_test(
+         NAME ${prog}
+diff --git a/test/main.c b/test/main.c
+index c6231ecc..e96ce346 100644
+--- a/test/main.c
++++ b/test/main.c
+@@ -13,7 +13,7 @@
+ 
+ #include "SDL_image.h"
+ 
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ #include "SDL_test.h"
+ 
+ #if defined(SDL_FILESYSTEM_OS2) || defined(SDL_FILESYSTEM_WINDOWS)
