@@ -1,0 +1,13 @@
+diff --git a/regex.h b/regex.h
+index a98c00f..cdaec87 100644
+--- a/regex.h
++++ b/regex.h
+@@ -29,7 +29,7 @@
+ #define REGEX_H
+ 
+ #define PCRE2_CODE_UNIT_WIDTH 8
+-#include <pcre2.h>
++#include <pcre/pcre2.h>
+ 
+ #include <string>
+ #include <vector>

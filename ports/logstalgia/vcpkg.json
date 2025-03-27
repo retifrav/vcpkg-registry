@@ -1,0 +1,30 @@
+{
+    "name": "logstalgia",
+    "version": "1.1.4",
+    "description": "Website traffic visualization that replays or streams web-server access logs as a pong-like battle between the web server and an never ending torrent of requests",
+    "homepage": "https://logstalgia.io/",
+    "license": "GPL-3.0-or-later",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "$comment": "On non-Windows platforms Boost is expected to be already available in the system",
+            "name": "boost",
+            "platform": "windows"
+        },
+        "freetype",
+        "glew",
+        "glm",
+        "pcre",
+        "png",
+        "sdl",
+        "sdl-image"
+    ]
+}

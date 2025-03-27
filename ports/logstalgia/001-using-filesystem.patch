@@ -1,0 +1,97 @@
+diff --git a/src/logstalgia.cpp b/src/logstalgia.cpp
+index fa78aca..ac9fd06 100644
+--- a/src/logstalgia.cpp
++++ b/src/logstalgia.cpp
+@@ -17,6 +17,7 @@
+ 
+ #define __STDC_FORMAT_MACROS
+ #include <inttypes.h>
++#include <filesystem>
+ 
+ #include "logstalgia.h"
+ #include "settings.h"
+@@ -375,11 +376,7 @@ void Logstalgia::saveConfig() {
+ #ifdef _WIN32
+     if(settings.load_config.empty()) {
+         //get original directory
+-        char cwd_buff[1024];
+-
+-        if(getcwd(cwd_buff, 1024) != cwd_buff) {
+-            SDLAppQuit("error getting current working directory");
+-        }
++        auto currentPath = std::filesystem::current_path();
+ 
+         OPENFILENAME ofn;
+ 
+@@ -401,9 +398,7 @@ void Logstalgia::saveConfig() {
+         GetSaveFileName(&ofn);
+ 
+         //change back to original directory
+-        if(chdir(cwd_buff) != 0) {
+-            SDLAppQuit("error changing directory");
+-        }
++        std::filesystem::current_path(currentPath);
+ 
+         settings.load_config = std::string(filepath);
+     }
+@@ -432,11 +427,7 @@ void Logstalgia::saveConfig() {
+ void Logstalgia::loadConfig() {
+ #ifdef _WIN32
+     //get original directory
+-    char cwd_buff[1024];
+-
+-    if(getcwd(cwd_buff, 1024) != cwd_buff) {
+-        SDLAppQuit("error getting current working directory");
+-    }
++    auto currentPath = std::filesystem::current_path();
+ 
+     OPENFILENAME ofn;
+ 
+@@ -458,9 +449,7 @@ void Logstalgia::loadConfig() {
+     GetOpenFileName(&ofn);
+ 
+     //change back to original directory
+-    if(chdir(cwd_buff) != 0) {
+-        SDLAppQuit("error changing directory");
+-    }
++    std::filesystem::current_path(currentPath);
+ 
+     loadConfig(std::string(filepath));
+ #endif
+diff --git a/src/main.cpp b/src/main.cpp
+index 6bff3a6..3325b54 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -15,6 +15,8 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <filesystem>
++
+ #include "logstalgia.h"
+ #include "settings.h"
+ #include "tests.h"
+@@ -23,11 +25,7 @@
+ std::string win32LogSelector() {
+ 
+     //get original directory
+-    char cwd_buff[1024];
+-
+-    if(getcwd(cwd_buff, 1024) != cwd_buff) {
+-        SDLAppQuit("error getting current working directory");
+-    }
++    auto currentPath = std::filesystem::current_path();
+ 
+     OPENFILENAME ofn;
+ 
+@@ -49,9 +47,7 @@ std::string win32LogSelector() {
+     GetOpenFileName(&ofn);
+ 
+     //change back to original directory
+-    if(chdir(cwd_buff) != 0) {
+-        SDLAppQuit("error changing directory");
+-    }
++    std::filesystem::current_path(currentPath);
+ 
+     return std::string(filepath);
+ }

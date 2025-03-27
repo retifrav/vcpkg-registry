@@ -1,0 +1,91 @@
+diff --git a/display.cpp b/display.cpp
+index eba1c4b..53b04e3 100644
+--- a/display.cpp
++++ b/display.cpp
+@@ -31,7 +31,7 @@
+ #include <iostream>
+ 
+ #if SDL_VERSION_ATLEAST(2,0,0)
+-#include "SDL_syswm.h"
++#include <SDL2/SDL_syswm.h>
+ #endif
+ 
+ SDLAppDisplay display;
+diff --git a/png_writer.h b/png_writer.h
+index 3553e76..73c0f5d 100644
+--- a/png_writer.h
++++ b/png_writer.h
+@@ -28,7 +28,7 @@
+ #ifndef PNG_WRITER_H
+ #define PNG_WRITER_H
+ 
+-#include "SDL_thread.h"
++#include <SDL2/SDL_thread.h>
+ 
+ #include <fstream>
+ #include <vector>
+diff --git a/ppm.h b/ppm.h
+index 76b33da..82024d4 100644
+--- a/ppm.h
++++ b/ppm.h
+@@ -24,7 +24,7 @@
+ #include <string>
+ #include <exception>
+ 
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ #include "gl.h"
+ 
+ enum { FRAME_EXPORTER_WAIT,
+diff --git a/sdlapp.cpp b/sdlapp.cpp
+index 30f38d6..9e04d86 100644
+--- a/sdlapp.cpp
++++ b/sdlapp.cpp
+@@ -28,7 +28,7 @@
+ #include "sdlapp.h"
+ #include "display.h"
+ #include "logger.h"
+-#include "SDL_syswm.h"
++#include <SDL2/SDL_syswm.h>
+ 
+ #ifndef _MSC_VER
+ #include <unistd.h>
+diff --git a/sdlapp.h b/sdlapp.h
+index 7e94bbd..b4345dc 100644
+--- a/sdlapp.h
++++ b/sdlapp.h
+@@ -28,7 +28,7 @@
+ #ifndef SDLAPP_H
+ #define SDLAPP_H
+ 
+-#include "SDL.h"
++#include <SDL2/SDL.h>
+ 
+ #ifdef _WIN32
+ 
+diff --git a/texture.h b/texture.h
+index ddf2230..b31e842 100644
+--- a/texture.h
++++ b/texture.h
+@@ -28,7 +28,7 @@
+ #ifndef TEXTURE_H
+ #define TEXTURE_H
+ 
+-#include "SDL_image.h"
++#include <SDL2/SDL_image.h>
+ 
+ #include "resource.h"
+ #include "gl.h"
+diff --git a/tga.h b/tga.h
+index 99486cc..2a78c06 100644
+--- a/tga.h
++++ b/tga.h
+@@ -28,7 +28,7 @@
+ #ifndef TGA_WRITER_H
+ #define TGA_WRITER_H
+ 
+-#include "SDL_thread.h"
++#include <SDL2/SDL_thread.h>
+ 
+ #include <ostream>
+ #include <fstream>

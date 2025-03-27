@@ -1,0 +1,38 @@
+diff --git a/src/settings.cpp b/src/settings.cpp
+index e7b97c9..0f24a25 100644
+--- a/src/settings.cpp
++++ b/src/settings.cpp
+@@ -24,7 +24,11 @@
+ 
+ #include <time.h>
+ #include <algorithm>
+-#include <boost/algorithm/string.hpp>
++#include <boost/algorithm/string.hpp> // entire Boost just to remove spaces from a string
++
++#ifdef _WIN32
++#include <io.h>
++#endif
+ 
+ LogstalgiaSettings settings;
+ 
+@@ -637,7 +641,20 @@ void LogstalgiaSettings::importLogstalgiaSettings(ConfFile& conffile, ConfSectio
+ 
+         std::string field_list = entry->getString();
+ 
++        // entire Boost just for this?
+         boost::algorithm::erase_all(field_list, " ");
++        // alternatively
++        // field_list.erase(
++        //     std::remove_if(
++        //         field_list.begin(),
++        //         field_list.end(),
++        //         [](unsigned char x) { return std::isspace(x); }
++        //     ),
++        //     field_list.end()
++        // );
++        // or
++        // std::string::iterator end_pos = std::remove(field_list.begin(), field_list.end(), ' ');
++        // field_list.erase(end_pos, field_list.end());
+ 
+         size_t sep;
+         while((sep = field_list.find(",")) != std::string::npos) {

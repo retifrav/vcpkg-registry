@@ -1,0 +1,13 @@
+diff --git a/png_writer.cpp b/png_writer.cpp
+index 6ef3388..1e6532f 100644
+--- a/png_writer.cpp
++++ b/png_writer.cpp
+@@ -31,7 +31,7 @@
+ #include <iostream>
+ 
+ #define PNG_SKIP_SETJMP_CHECK
+-#include <png.h>
++#include <png/png.h>
+ 
+ PNGWriter::PNGWriter(int components)
+     : components(components) {
