@@ -1,0 +1,10 @@
+To use PCRE in your project:
+
+    find_package(pcre CONFIG REQUIRED)
+    target_link_libraries(main
+        PRIVATE
+            pcre::pcre2-posix
+            #pcre::pcre2-8
+            #pcre::pcre2-16
+            #pcre::pcre2-32
+    )

@@ -1,0 +1,30 @@
+{
+    "name": "pcre",
+    "version": "10.45.0",
+    "description": "Regular expression pattern matching",
+    "homepage": "https://pcre2project.github.io/pcre2/",
+    "license": "BSD-3-Clause",
+    "supports": "!emscripten & !ios",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ],
+    "default-features":
+    [
+        "sljit"
+    ],
+    "features":
+    {
+        "sljit":
+        {
+            "description": "Enable JIT compiler"
+        }
+    }
+}

@@ -251,6 +251,11 @@
             "baseline": "1.1.36",
             "port-version": 0
         },
+        "pcre":
+        {
+            "baseline": "10.45.0",
+            "port-version": 0
+        },
         "pdqsort":
         {
             "baseline": "2021.3.14",
