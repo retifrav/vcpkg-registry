@@ -1,5 +1,21 @@
 if(NOT VCPKG_TARGET_IS_WINDOWS)
-    message(FATAL_ERROR "This port is only for getting pre-built Boost binaries for Windows")
+    message(STATUS
+        "This port is only for getting pre-built Boost binaries for Windows. "
+        "On other platforms it is expected that Boost is already pre-installed "
+        "with the system package manager.\n\n"
+        "# Mac OS\n\n"
+        "```\n$ brew install boost\n```\n\n"
+        "# GNU/Linux\n\n"
+        "```\n$ sudo apt install libboost-all-dev\n```\n"
+    )
+
+    file(
+        INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage-unix"
+        DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+        RENAME usage
+    )
+
+    return()
 endif()
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" BOOST_LINKAGE_IS_DYNAMIC)
@@ -103,8 +119,9 @@ file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/FindBoost.cmake"
 )
 
 file(
-    INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage"
+    INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage-windows"
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+    RENAME usage
 )
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE_1_0.txt")

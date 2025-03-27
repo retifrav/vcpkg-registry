@@ -1,0 +1,14 @@
+To use Boost in your project:
+
+    find_package(Boost
+        REQUIRED
+        COMPONENTS
+            filesystem
+            # any other
+        CONFIG
+    )
+    target_link_libraries(main
+        PRIVATE
+            #${Boost_FILESYSTEM_LIBRARY}
+            ${Boost_LIBRARIES} # contains all the libraries that were found from COMPONENTS
+    )
