@@ -18,6 +18,8 @@ Although a good portion of the ports here are based on the ports from the [Micro
     - [license-based-todos](#license-based-todos)
 - [Branches](#branches)
 - [Non-development ports](#non-development-ports)
+    - [reSL](#resl)
+    - [Logstalgia](#logstalgia)
 
 <!-- /MarkdownTOC -->
 
@@ -252,6 +254,8 @@ Some ports in this registry aren't "normal" ports, meaning that they are not lib
 
 The building procedure for those ports is [the same](#installing-ports-in-a-dummy-project).
 
+### reSL
+
 One example of such a port is the [reSL](https://github.com/retifrav/vcpkg-registry/tree/master/ports/resl) game. Here's what you'd need to have in your `vcpkg.json` for installing it:
 
 ``` json
@@ -275,4 +279,31 @@ or with dynamically linked dependencies:
 $ vcpkg install --triplet arm64-osx-dynamic
 ```
 
-The game will be deployed to `/path/to/this/dummy/vcpkg_installed/TRIPLET-NAME-HERE/bin/reSL/`, which you can then copy anywhere you want and launch it from there.
+The game will be deployed to `/path/to/this/dummy/vcpkg_installed/TRIPLET-NAME-HERE/bin/`, which you can then copy anywhere you want and launch it from there.
+
+### Logstalgia
+
+Another example is the [Logstalgia](https://github.com/retifrav/vcpkg-registry/tree/master/ports/logstalgia) application. Same thing - simply add it to your `vcpkg.json`:
+
+``` json
+{
+    "dependencies":
+    [
+        "logstalgia"
+    ]
+}
+```
+
+and build it either statically linked:
+
+``` sh
+$ vcpkg install --triplet x64-windows-static-md
+```
+
+or dynamically linked:
+
+``` sh
+$ vcpkg install --triplet x64-windows
+```
+
+The resulting application will be in `./vcpkg_installed/TRIPLET-NAME-HERE/bin/`.
