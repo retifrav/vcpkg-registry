@@ -151,6 +151,11 @@
             "baseline": "3.4.0",
             "port-version": 0
         },
+        "glm":
+        {
+            "baseline": "1.0.1",
+            "port-version": 0
+        },
         "glslang":
         {
             "baseline": "12.2.0",

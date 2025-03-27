@@ -1,0 +1,9 @@
+To use glm in your project:
+
+    # as a proper library
+    find_package(glm CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE glm::glm)
+
+    # or as a header-only library
+    find_package(glm CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE glm::glm-header-only)
