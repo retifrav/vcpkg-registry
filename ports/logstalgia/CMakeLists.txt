@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.22)
 project("logstalgia" VERSION 1.1.4)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
 # seems to be redundant, as CMake 3.22 is explicitly required
@@ -63,7 +65,7 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
-find_package(Boost REQUIRED) # no CONFIG, unfortunately
+find_package(Threads REQUIRED)
 find_package(freetype CONFIG REQUIRED)
 find_package(glew CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
@@ -76,58 +78,78 @@ target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
         "${Boost_INCLUDE_DIR}"
 )
-# very not nice
-find_library(Boost_filesystem_LIBRARY_DEBUG
-    NAMES
-        "libboost_filesystem-vc143-mt-gd-x64-1_87" # STATIC library, DYNAMIC CRT
-        "libboost_filesystem-vc143-mt-sgd-x64-1_87" # STATIC library, STATIC CRT
-        "boost_filesystem-vc143-mt-gd-x64-1_87" # SHARED
-    PATHS "${Boost_LIBRARIES_DEBUG}"
-    NO_CMAKE_FIND_ROOT_PATH
-)
-find_library(Boost_filesystem_LIBRARY_RELEASE
-    NAMES
-        "libboost_filesystem-vc143-mt-x64-1_87" # STATIC, DYNAMIC CRT
-        "libboost_filesystem-vc143-mt-s-x64-1_87" # STATIC, STATIC CRT
-        "boost_filesystem-vc143-mt-x64-1_87" # SHARED
-    PATHS "${Boost_LIBRARIES_RELEASE}"
-    NO_CMAKE_FIND_ROOT_PATH
-)
-# that is an overkill, and it will work only for STATIC variant
-# target_link_directories(${CMAKE_PROJECT_NAME}
-#     PRIVATE
-#         "$<IF:$<CONFIG:Debug>,${Boost_LIBRARIES_DEBUG},${Boost_LIBRARIES_RELEASE}>"
-# )
-# ...because looks like vcpkg toolchain/scripts does some Boost-related shenanigans,
-# such as setting `/DEFAULTLIB:"libboost_filesystem-vc143-mt-x64-1_87.lib"` in object files
-# and the likes, and apparently `BOOST_ALL_NO_LIB` definition prevents that,
-# according to https://gitlab.kitware.com/cmake/cmake/-/issues/17717#note_372697
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    find_package(Boost REQUIRED) # no CONFIG, unfortunately
+    # very not nice
+    find_library(Boost_filesystem_LIBRARY_DEBUG
+        NAMES
+            "libboost_filesystem-vc143-mt-gd-x64-1_87" # STATIC library, DYNAMIC CRT
+            "libboost_filesystem-vc143-mt-sgd-x64-1_87" # STATIC library, STATIC CRT
+            "boost_filesystem-vc143-mt-gd-x64-1_87" # SHARED
+        PATHS "${Boost_LIBRARIES_DEBUG}"
+        NO_CMAKE_FIND_ROOT_PATH
+    )
+    find_library(Boost_filesystem_LIBRARY_RELEASE
+        NAMES
+            "libboost_filesystem-vc143-mt-x64-1_87" # STATIC, DYNAMIC CRT
+            "libboost_filesystem-vc143-mt-s-x64-1_87" # STATIC, STATIC CRT
+            "boost_filesystem-vc143-mt-x64-1_87" # SHARED
+        PATHS "${Boost_LIBRARIES_RELEASE}"
+        NO_CMAKE_FIND_ROOT_PATH
+    )
+    # that is an overkill, and it will work only for STATIC variant
+    # target_link_directories(${CMAKE_PROJECT_NAME}
+    #     PRIVATE
+    #         "$<IF:$<CONFIG:Debug>,${Boost_LIBRARIES_DEBUG},${Boost_LIBRARIES_RELEASE}>"
+    # )
+    # ...because looks like vcpkg toolchain/scripts does some Boost-related shenanigans,
+    # such as setting `/DEFAULTLIB:"libboost_filesystem-vc143-mt-x64-1_87.lib"` in object files
+    # and the likes, and apparently `BOOST_ALL_NO_LIB` definition prevents that,
+    # according to https://gitlab.kitware.com/cmake/cmake/-/issues/17717#note_372697
     target_compile_definitions(${CMAKE_PROJECT_NAME}
         PRIVATE
             "BOOST_ALL_NO_LIB"
     )
+
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            $<IF:$<CONFIG:Debug>,${Boost_filesystem_LIBRARY_DEBUG},${Boost_filesystem_LIBRARY_RELEASE}>
+    )
+else()
+    find_package(Boost
+        REQUIRED
+        COMPONENTS
+            filesystem
+        CONFIG
+    )
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            #${Boost_FILESYSTEM_LIBRARY}
+            ${Boost_LIBRARIES} # contains all the libraries that were found from COMPONENTS
+    )
 endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
-    ${OPENGL_gl_LIBRARY}
-    freetype
-    GLEW::glew
-    glm::glm
-    pcre::pcre2-posix
-    png
-    SDL2::SDL2
-    SDL2::SDL2main
-    SDL2::SDL2_image
-    $<IF:$<CONFIG:Debug>,${Boost_filesystem_LIBRARY_DEBUG},${Boost_filesystem_LIBRARY_RELEASE}>
-    # these might be needed when building with MinGW
-    # -lglu32
-    # -static-libgcc
-    # -static-libstdc++
-    # -lcomdlg32
+    PRIVATE
+        ${OPENGL_gl_LIBRARY}
+        freetype
+        GLEW::glew
+        glm::glm
+        pcre::pcre2-posix
+        png
+        SDL2::SDL2
+        SDL2::SDL2main
+        SDL2::SDL2_image
+        # these might be needed when building with MinGW
+        # -lglu32
+        # -static-libgcc
+        # -static-libstdc++
+        # -lcomdlg32
 )
 
 install(TARGETS ${CMAKE_PROJECT_NAME})
 install(DIRECTORY "data"
     DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+    PATTERN "logstalgia.1" EXCLUDE
 )

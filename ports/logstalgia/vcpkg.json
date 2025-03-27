@@ -14,11 +14,7 @@
             "name": "vcpkg-cmake-config",
             "host": true
         },
-        {
-            "$comment": "On non-Windows platforms Boost is expected to be already available in the system",
-            "name": "boost",
-            "platform": "windows"
-        },
+        "boost",
         "freetype",
         "glew",
         "glm",
