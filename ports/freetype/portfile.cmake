@@ -1,6 +1,8 @@
 vcpkg_download_distfile(ARCHIVE
-    URLS "https://download.savannah.gnu.org/releases/freetype/freetype-${VERSION}.tar.xz" # 2.12.1
-    FILENAME "freetype-${VERSION}.tar.xz" # 2.12.1
+    URLS
+        "https://download.savannah.gnu.org/releases/${PORT}/${PORT}-${VERSION}.tar.xz" # 2.12.1
+        "https://files.decovar.dev/public/packages/${PORT}/v${VERSION}/src/${PORT}-${VERSION}.tar.xz"
+    FILENAME "${PORT}-${VERSION}.tar.xz" # 2.12.1
     # don't forget that the hash is for 2.12.1 (so actually there is no point in using ${VERSION})
     SHA512 6482de1748dc2cc01e033d21a3b492dadb1f039d13d9179685fdcf985e24d7f587cbca4c27ed8a7fdb7d9ad59612642ac5f4db062443154753295363f45c052f
 )
@@ -10,8 +12,9 @@ vcpkg_extract_source_archive(
     ARCHIVE ${ARCHIVE}
     PATCHES
         001-dependencies-and-installation.patch
-        002-disable-pkgconfig.patch
 )
+
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES

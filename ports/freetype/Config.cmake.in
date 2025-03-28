@@ -1,0 +1,19 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+if(NOT @FT_DISABLE_BROTLI@)
+    find_dependency(brotli CONFIG REQUIRED)
+endif()
+if(NOT @FT_DISABLE_BZIP2@)
+    find_dependency(bzip2 CONFIG REQUIRED)
+endif()
+if(NOT @FT_DISABLE_PNG@)
+    find_dependency(png CONFIG REQUIRED)
+endif()
+if(NOT @FT_DISABLE_ZLIB@)
+    find_dependency(zlib CONFIG REQUIRED)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
+
+check_required_components(@PROJECT_NAME@)
