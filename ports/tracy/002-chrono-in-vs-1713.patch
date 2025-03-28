@@ -1,0 +1,12 @@
+diff --git a/profiler/src/profiler/TracyView.hpp b/profiler/src/profiler/TracyView.hpp
+index 02526614..29ed7079 100644
+--- a/profiler/src/profiler/TracyView.hpp
++++ b/profiler/src/profiler/TracyView.hpp
+@@ -8,6 +8,7 @@
+ #include <string>
+ #include <thread>
+ #include <vector>
++#include <chrono>
+ 
+ #include "imgui.h"
+ 

@@ -4,6 +4,7 @@ vcpkg_from_git(
     REF 5d542dc09f3d9378d005092a4ad446bd405f819a
     PATCHES
         001-dependencies-and-installation.patch
+        002-chrono-in-vs-1713.patch # might need to make this Windows-specific
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
