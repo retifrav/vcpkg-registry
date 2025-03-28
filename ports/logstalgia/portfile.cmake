@@ -87,6 +87,16 @@ vcpkg_execute_required_process(
     LOGNAME git-${PORT}-patching-005
 )
 
+# the fucking freetype include paths actually work as they are,
+# no need to patch it, although this is not bloody correct
+# set(PATCH_NAME "006-freetype-headers.patch")
+# message(STATUS "Applying patch ${PATCH_NAME}")
+# vcpkg_execute_required_process(
+#     COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
+#     WORKING_DIRECTORY ${SOURCE_PATH}/src/core
+#     LOGNAME git-${PORT}-patching-006
+# )
+
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"  DESTINATION "${SOURCE_PATH}")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/logstalgia.ico" DESTINATION "${SOURCE_PATH}")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/resources.rc" DESTINATION "${SOURCE_PATH}")

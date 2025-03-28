@@ -1,0 +1,13 @@
+diff --git a/fxfont.h b/fxfont.h
+index cb25298..0ff48ce 100644
+--- a/fxfont.h
++++ b/fxfont.h
+@@ -65,7 +65,7 @@
+ #include <vector>
+ #include <map>
+ 
+-#include <ft2build.h>
++#include <freetype2/ft2build.h>
+ #include FT_FREETYPE_H
+ #include FT_GLYPH_H
+ #include "ftgl/FTUnicode.h"
