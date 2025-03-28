@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8baa8a50e..4ce67c433 100644
+index 8baa8a50e..b93b72721 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -5,8 +5,8 @@ endif()
@@ -13,15 +13,6 @@ index 8baa8a50e..4ce67c433 100644
  
  if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
    set(SDL2_SUBPROJECT OFF)
-@@ -71,7 +71,7 @@ include(CMakeDependentOption)
- include(CMakePushCheckState)
- include(GNUInstallDirs)
- 
--find_package(PkgConfig)
-+#find_package(PkgConfig)
- 
- list(APPEND CMAKE_MODULE_PATH "${SDL2_SOURCE_DIR}/cmake")
- include(${SDL2_SOURCE_DIR}/cmake/macros.cmake)
 @@ -3145,12 +3145,7 @@ foreach(_hdr IN LISTS SDL2_INCLUDE_FILES)
  endforeach()
  list(APPEND SDL_GENERATED_HEADERS ${SDL2_COPIED_INCLUDE_FILES})
