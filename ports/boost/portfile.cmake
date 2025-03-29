@@ -1,4 +1,6 @@
 if(NOT VCPKG_TARGET_IS_WINDOWS)
+    set(VCPKG_POLICY_EMPTY_PACKAGE enabled)
+
     message(STATUS
         "This port is only for getting pre-built Boost binaries for Windows. "
         "On other platforms it is expected that Boost is already pre-installed "
