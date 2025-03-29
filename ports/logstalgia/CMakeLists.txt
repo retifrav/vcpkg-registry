@@ -148,6 +148,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # -lcomdlg32
 )
 
+include(GNUInstallDirs)
+
 install(TARGETS ${CMAKE_PROJECT_NAME})
 install(DIRECTORY "data"
     DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
