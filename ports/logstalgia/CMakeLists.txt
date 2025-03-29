@@ -7,12 +7,25 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
-# seems to be redundant, as CMake 3.22 is explicitly required
+# seems to be redundant, as CMake 3.22 is explicitly required, so CMP0072 should already be NEW
 #cmake_policy(PUSH)
 #if(POLICY CMP0072)
 #    cmake_policy(SET CMP0072 NEW) # prefer GLVND
 #endif()
+#
+# vcpkg toolchain sets CMAKE_FIND_FRAMEWORK to LAST, and that leads to finding OpenGL from Homebrew,
+# which then results in segmentation fault crash on application launch on Mac OS
+set(CMAKE_FIND_FRAMEWORK_BACKUP ${CMAKE_FIND_FRAMEWORK})
+if(
+    DEFINED VCPKG_INSTALLED_DIR
+    AND
+    CMAKE_SYSTEM_NAME STREQUAL "Darwin"
+)
+    set(CMAKE_FIND_FRAMEWORK "FIRST")
+endif()
 find_package(OpenGL REQUIRED)
+set(CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_BACKUP})
+#
 #cmake_policy(POP)
 
 set(sources
