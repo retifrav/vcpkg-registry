@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
+add_executable(${CMAKE_PROJECT_NAME})
+
 # seems to be redundant, as CMake 3.22 is explicitly required, so CMP0072 should already be NEW
 #cmake_policy(PUSH)
 #if(POLICY CMP0072)
@@ -29,6 +31,7 @@ set(CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_BACKUP})
 #cmake_policy(POP)
 
 set(sources
+    src/configwatcher.cpp
     src/custom.cpp
     src/logentry.cpp
     src/logstalgia.cpp
@@ -39,9 +42,8 @@ set(sources
     src/settings.cpp
     src/slider.cpp
     src/summarizer.cpp
-    src/textarea.cpp
     src/tests.cpp
-    src/configwatcher.cpp
+    src/textarea.cpp
     src/core/conffile.cpp
     src/core/display.cpp
     src/core/frustum.cpp
@@ -65,12 +67,15 @@ set(sources
     src/core/vectors.cpp
 )
 
-add_executable(${CMAKE_PROJECT_NAME})
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    list(APPEND sources
+        resources.rc
+    )
+endif()
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${sources}
-        resources.rc
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}
