@@ -78,7 +78,7 @@
         },
         "decovar-vcpkg-cmake":
         {
-            "baseline": "2025-02-21",
+            "baseline": "2025-04-03",
             "port-version": 0
         },
         "dos2unix":

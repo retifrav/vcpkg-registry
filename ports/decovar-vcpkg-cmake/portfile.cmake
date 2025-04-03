@@ -9,6 +9,7 @@ endif()
 file(
     INSTALL
         "${CMAKE_CURRENT_LIST_DIR}/decovar_vcpkg_cmake_ololo.cmake"
+        "${CMAKE_CURRENT_LIST_DIR}/decovar_vcpkg_cmake_helpers.cmake"
         "${CMAKE_CURRENT_LIST_DIR}/vcpkg-port-config.cmake"
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
 )
