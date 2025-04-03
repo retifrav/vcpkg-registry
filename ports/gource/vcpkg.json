@@ -1,0 +1,31 @@
+{
+    "name": "gource",
+    "version": "0.55.0",
+    "description": "Visualization tool for source control repositories",
+    "homepage": "https://gource.io/",
+    "license": "GPL-3.0-or-later",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        },
+        "boost",
+        "freetype",
+        "glew",
+        "glm",
+        "pcre",
+        "png",
+        "sdl",
+        "sdl-image",
+        "tinyxml"
+    ]
+}

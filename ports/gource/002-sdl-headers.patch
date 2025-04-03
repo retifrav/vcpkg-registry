@@ -1,0 +1,13 @@
+diff --git a/src/logmill.h b/src/logmill.h
+index 781b208..ba1bc63 100644
+--- a/src/logmill.h
++++ b/src/logmill.h
+@@ -20,7 +20,7 @@
+ 
+ #include <boost/filesystem.hpp>
+ 
+-#include "SDL_thread.h"
++#include <SDL2/SDL_thread.h>
+ 
+ #include "core/sdlapp.h"
+ #include "core/display.h"

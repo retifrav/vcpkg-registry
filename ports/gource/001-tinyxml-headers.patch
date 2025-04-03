@@ -1,0 +1,34 @@
+diff --git a/src/formats/cvs2cl.cpp b/src/formats/cvs2cl.cpp
+index 45abe59..de0a78e 100644
+--- a/src/formats/cvs2cl.cpp
++++ b/src/formats/cvs2cl.cpp
+@@ -18,11 +18,7 @@
+ #include "cvs2cl.h"
+ #include "../gource_settings.h"
+ 
+-#ifdef HAVE_LIBTINYXML
+-#include <tinyxml.h>
+-#else
+-#include "../tinyxml/tinyxml.h"
+-#endif
++#include <tinyxml/tinyxml.h>
+ 
+ Regex cvs2cl_xml_tag("^<\\??xml");
+ Regex cvs2cl_logentry_start("^<entry");
+diff --git a/src/formats/svn.cpp b/src/formats/svn.cpp
+index c324a0e..2f1d0de 100644
+--- a/src/formats/svn.cpp
++++ b/src/formats/svn.cpp
+@@ -20,11 +20,7 @@
+ 
+ #include <boost/format.hpp>
+ 
+-#ifdef HAVE_LIBTINYXML
+-#include <tinyxml.h>
+-#else
+-#include "../tinyxml/tinyxml.h"
+-#endif
++#include <tinyxml/tinyxml.h>
+ 
+ Regex svn_xml_tag("^<\\??xml");
+ Regex svn_logentry_start("^<logentry");
