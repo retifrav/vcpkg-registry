@@ -1,7 +1,9 @@
 vcpkg_download_distfile(ARCHIVE
     URLS
-        "https://netix.dl.sourceforge.net/project/libpng/libpng16/${VERSION}/libpng-${VERSION}.tar.xz"
         "http://repository.timesys.com/buildsources/l/libpng/libpng-${VERSION}/libpng-${VERSION}.tar.xz"
+        "https://netix.dl.sourceforge.net/project/libpng/libpng16/${VERSION}/libpng-${VERSION}.tar.xz?viasf=1"
+        "https://deac-fra.dl.sourceforge.net/project/libpng/libpng16/${VERSION}/libpng-${VERSION}.tar.xz?viasf=1"
+        "https://files.decovar.dev/public/packages/png/v${VERSION}/src/libpng-${VERSION}.tar.xz"
     FILENAME "libpng-${VERSION}.tar.xz" # 1.6.43
     # don't forget that the hash is for 1.6.43 (so actually there is no point in using ${VERSION})
     SHA512 c95d661fed548708ce7de5d80621a432272bdfe991f0d4db3695036e5fafb8a717b4e4314991bdd3227d7aa07f8c6afb6037c57fa0fe3349334a0b6c58268487
