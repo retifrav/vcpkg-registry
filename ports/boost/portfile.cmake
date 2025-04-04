@@ -27,7 +27,7 @@ vcpkg_download_distfile(
     ARCHIVE
     URLS
         "https://boost.teeks99.com/bin/1.87.0/boost_1_87_0-bin-msvc-all-32-64.7z"
-        "https://altushost-swe.dl.sourceforge.net/project/boost/boost-binaries/1.87.0/boost_1_87_0-bin-msvc-all-32-64.7z"
+        "https://altushost-swe.dl.sourceforge.net/project/boost/boost-binaries/1.87.0/boost_1_87_0-bin-msvc-all-32-64.7z?viasf=1"
     FILENAME "boost_1_87_0-bin-msvc-all-32-64.7z"
     SHA512 d6a21f3fb0406115c71102f56391b91058d009f611d3b7469aea35895c2bd3236de0a6387d01753c3506bfd3351254a20fa7deb8cff3ef206c317281ecee5685
 )
