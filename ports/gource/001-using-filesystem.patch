@@ -1,0 +1,159 @@
+diff --git a/src/formats/commitlog.cpp b/src/formats/commitlog.cpp
+index 67f5b51..e3a4625 100644
+--- a/src/formats/commitlog.cpp
++++ b/src/formats/commitlog.cpp
+@@ -15,6 +15,8 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <filesystem>
++
+ #include "commitlog.h"
+ #include "../gource_settings.h"
+ #include "../core/sdlapp.h"
+@@ -91,6 +93,7 @@ RCommitLog::~RCommitLog() {
+ }
+ 
+ int RCommitLog::systemCommand(const std::string& command) {
++    debugLog("Command: %s", command.c_str());
+     int rc = system(command.c_str());
+     return rc;
+ }
+@@ -266,16 +269,16 @@ bool RCommitLog::createTempFile(std::string& temp_file) {
+     if(tmplen == 0 || tmplen >= temp.size()) return false;
+ 
+     tempdir = std::string(temp.begin(), temp.begin() + static_cast<std::size_t>(tmplen));
+-    tempdir += "\\";
+ #else
+     tempdir = "/tmp/";
+ #endif
+ 
+     char tmplate[1024];
+-    snprintf(tmplate, 1024, "%sgource-XXXXXX", tempdir.c_str());
++    snprintf(tmplate, 1024, "%sgource-XXXXXX", tempdir.c_str()); // XXXXXX, really?
+ 
+ #ifdef _WIN32
+-    if(mktemp(tmplate) == NULL) return false;
++    // no need to create a file
++    debugLog("Temporary file: %s", tmplate);
+ #else
+     if(mkstemp(tmplate) < 0) return false;
+ #endif
+diff --git a/src/formats/git.cpp b/src/formats/git.cpp
+index 153f22d..196afcd 100644
+--- a/src/formats/git.cpp
++++ b/src/formats/git.cpp
+@@ -15,6 +15,8 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <filesystem>
++
+ #include "git.h"
+ #include "../gource_settings.h"
+ 
+@@ -139,11 +141,7 @@ GitCommitLog::GitCommitLog(const std::string& logfile) : RCommitLog(logfile, 'u'
+ 
+ BaseLog* GitCommitLog::generateLog(const std::string& dir) {
+     //get working directory
+-    char cwd_buff[1024];
+-
+-    if(getcwd(cwd_buff, 1024) != cwd_buff) {
+-        return 0;
+-    }
++    auto currentPath = std::filesystem::current_path();
+ 
+     //does directory have a .git ?
+     std::string gitdir = dir + std::string("/.git");
+@@ -163,7 +161,10 @@ BaseLog* GitCommitLog::generateLog(const std::string& dir) {
+ 
+     if(temp_file.size()==0) return 0;
+ 
+-    if(chdir(dir.c_str()) != 0) {
++    try { std::filesystem::current_path(dir.c_str()); }
++    catch (std::filesystem::filesystem_error const& ex)
++    {
++        errorLog(ex.what());
+         return 0;
+     }
+ 
+@@ -177,7 +178,11 @@ BaseLog* GitCommitLog::generateLog(const std::string& dir) {
+     int command_rc = systemCommand(cmd_buff);
+ 
+     //change back to original directory
+-    chdir(cwd_buff);
++    try { std::filesystem::current_path(currentPath); }
++    catch (std::filesystem::filesystem_error const& ex)
++    {
++        errorLog(ex.what());
++    }
+ 
+     if(command_rc != 0) {
+         return 0;
+diff --git a/src/formats/svn.cpp b/src/formats/svn.cpp
+index c324a0e..01203ed 100644
+--- a/src/formats/svn.cpp
++++ b/src/formats/svn.cpp
+@@ -15,6 +15,8 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <filesystem>
++
+ #include "svn.h"
+ #include "../gource_settings.h"
+ 
+@@ -66,11 +68,7 @@ SVNCommitLog::SVNCommitLog(const std::string& logfile) : RCommitLog(logfile, '<'
+ 
+ BaseLog* SVNCommitLog::generateLog(const std::string& dir) {
+     //get working directory
+-    char cwd_buff[1024];
+-
+-    if(getcwd(cwd_buff, 1024) != cwd_buff) {
+-        return 0;
+-    }
++    auto currentPath = std::filesystem::current_path();
+ 
+     //does directory have a .svn ?
+     std::string gitdir = dir + std::string("/.svn");
+@@ -90,7 +88,10 @@ BaseLog* SVNCommitLog::generateLog(const std::string& dir) {
+ 
+     if(temp_file.size()==0) return 0;
+ 
+-    if(chdir(dir.c_str()) != 0) {
++    try { std::filesystem::current_path(dir.c_str()); }
++    catch (std::filesystem::filesystem_error const& ex)
++    {
++        errorLog(ex.what());
+         return 0;
+     }
+ 
+@@ -99,7 +100,11 @@ BaseLog* SVNCommitLog::generateLog(const std::string& dir) {
+ 
+     int command_rc = systemCommand(cmd_buff);
+ 
+-    chdir(cwd_buff);
++    try { std::filesystem::current_path(currentPath); }
++    catch (std::filesystem::filesystem_error const& ex)
++    {
++        errorLog(ex.what());
++    }
+ 
+     if(command_rc != 0) {
+         return 0;
+diff --git a/src/logmill.cpp b/src/logmill.cpp
+index da12852..bb23bc1 100644
+--- a/src/logmill.cpp
++++ b/src/logmill.cpp
+@@ -205,7 +205,10 @@ RCommitLog* RLogMill::fetchLog(std::string& log_format) {
+                     logfile = repo_path.string();
+                 }
+             }
+-        } catch(boost::filesystem::filesystem_error& error) {
++        }
++        catch(boost::filesystem::filesystem_error& error)
++        {
++            errorLog(error.what());
+         }
+     }
+ 

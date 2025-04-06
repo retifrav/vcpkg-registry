@@ -55,15 +55,14 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/src/tinyxml"
 )
 
-set(PATCH_NAME "001-tinyxml-headers.patch")
+set(PATCH_NAME "001-using-filesystem.patch")
 message(STATUS "Applying patch ${PATCH_NAME}")
 vcpkg_execute_required_process(
     COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
     WORKING_DIRECTORY ${SOURCE_PATH}
     LOGNAME git-${PORT}-patching-001
 )
-
-set(PATCH_NAME "002-sdl-headers.patch")
+set(PATCH_NAME "002-no-unistd-on-windows.patch")
 message(STATUS "Applying patch ${PATCH_NAME}")
 vcpkg_execute_required_process(
     COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
@@ -71,12 +70,44 @@ vcpkg_execute_required_process(
     LOGNAME git-${PORT}-patching-002
 )
 
-set(PATCH_NAME "003-sdl-headers-in-core.patch")
+set(PATCH_NAME "003-tinyxml-headers.patch")
+message(STATUS "Applying patch ${PATCH_NAME}")
+vcpkg_execute_required_process(
+    COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
+    WORKING_DIRECTORY ${SOURCE_PATH}
+    LOGNAME git-${PORT}-patching-003
+)
+
+set(PATCH_NAME "004-sdl-headers.patch")
+message(STATUS "Applying patch ${PATCH_NAME}")
+vcpkg_execute_required_process(
+    COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
+    WORKING_DIRECTORY ${SOURCE_PATH}
+    LOGNAME git-${PORT}-patching-004
+)
+
+set(PATCH_NAME "005-sdl-headers-in-core.patch")
 message(STATUS "Applying patch ${PATCH_NAME}")
 vcpkg_execute_required_process(
     COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
     WORKING_DIRECTORY ${SOURCE_PATH}/src/core
-    LOGNAME git-${PORT}-patching-003
+    LOGNAME git-${PORT}-patching-005
+)
+
+set(PATCH_NAME "006-pcre-headers-in-core.patch")
+message(STATUS "Applying patch ${PATCH_NAME}")
+vcpkg_execute_required_process(
+    COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
+    WORKING_DIRECTORY ${SOURCE_PATH}/src/core
+    LOGNAME git-${PORT}-patching-006
+)
+
+set(PATCH_NAME "007-png-headers-in-core.patch")
+message(STATUS "Applying patch ${PATCH_NAME}")
+vcpkg_execute_required_process(
+    COMMAND ${GIT} apply "${CMAKE_CURRENT_LIST_DIR}/${PATCH_NAME}"
+    WORKING_DIRECTORY ${SOURCE_PATH}/src/core
+    LOGNAME git-${PORT}-patching-007
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"  DESTINATION "${SOURCE_PATH}")

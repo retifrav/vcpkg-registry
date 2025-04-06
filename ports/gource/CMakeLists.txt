@@ -187,6 +187,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # -lcomdlg32
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_compile_definitions(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            NOMINMAX
+    )
+endif()
+
 include(GNUInstallDirs)
 
 install(TARGETS ${CMAKE_PROJECT_NAME})

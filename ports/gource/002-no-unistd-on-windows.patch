@@ -1,0 +1,14 @@
+diff --git a/src/formats/gitraw.h b/src/formats/gitraw.h
+index 3d893aa..d05c25f 100644
+--- a/src/formats/gitraw.h
++++ b/src/formats/gitraw.h
+@@ -20,7 +20,9 @@
+ 
+ #include "commitlog.h"
+ 
++#ifndef _MSC_VER
+ #include <unistd.h>
++#endif
+ 
+ extern std::string gGourceGitRawLogCommand;
+ 
