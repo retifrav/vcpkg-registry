@@ -11,7 +11,7 @@ $token = "YOUR_ARTIFACTORY_ACCESS_TOKEN" # $env:YOUR_ARTIFACTORY_ACCESS_TOKEN
 $headers = @{ Authorization = "Bearer $token" }
 $contentype = "multipart/form-data"
 $filename = Split-Path -Path $Destination -Leaf
-$correctFilename = $filename -replace '\.\d+\.part$', ''
+$correctFilename = $filename -replace "\.\d+\.part$", ""
 $cacheurl = "$baseurl/$correctFilename"
 
 $downloadsfolder = Split-Path -Path "$Destination" -Parent
@@ -34,7 +34,7 @@ function Verify-SHA512 {
     $hashBytes = $hasher.ComputeHash($stream)
     $stream.Close()
 
-    $fileHash = [BitConverter]::ToString($hashBytes) -replace '-', ''
+    $fileHash = [BitConverter]::ToString($hashBytes) -replace "-", ""
 
     $hashesMatch = ($fileHash -eq $expectedHash)
     if(-not $hashesMatch) {
@@ -83,7 +83,54 @@ if (-not (Test-Path $Destination))
     Write-Warning "Falling back to download from $Url"
     try
     {
-        $response = Invoke-WebRequest -Uri $Url -OutFile $Destination
+        $domainsThatRequireAuthentication = @(
+            "artifactory.YOUR.HOST" # yes, we already have credentials for it, as that's the same host that we are using for asset caching, but let's imagine it's a different one
+            "some.other.domain"
+        )
+        $downloadRequiresAuthentication = $false
+        # https://stackoverflow.com/a/25703406/1688203
+        $regexDomain = "^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)"
+        $downloadDomain = "unknown"
+        if ($Url -match $regexDomain)
+        {
+            $downloadDomain = $Matches.1
+            Write-Output "Domain: ${downloadDomain}"
+            if ($downloadDomain -in $domainsThatRequireAuthentication)
+            {
+                $downloadRequiresAuthentication = $true
+            }
+        }
+        Write-Output "The download requires authentication: $downloadRequiresAuthentication"
+
+        if ($downloadRequiresAuthentication)
+        {
+            # https://learn.microsoft.com/en-us/powershell/scripting/learn/deep-dives/add-credentials-to-powershell-functions#creating-credential-object
+            #$downloadCredentials = Get-Credential
+
+            switch ($downloadDomain)
+            {
+                "artifactory.YOUR.HOST" {
+                    # YOUR-ARTIFACTORY-LOGIN and YOUR-ARTIFACTORY-API-KEY could also be environment variables,
+                    # or you might want to read them from some common credentials file, such as that very same .netrc
+                    $password = ConvertTo-SecureString "YOUR-ARTIFACTORY-API-KEY" -AsPlainText -Force
+                    $downloadCredentials = New-Object System.Management.Automation.PSCredential("YOUR-ARTIFACTORY-LOGIN", $password)
+                    $response = Invoke-WebRequest -Uri $Url -OutFile $Destination -Authentication Basic -Credential $downloadCredentials
+                    # could probably also do this with `-Headers` and `X-JFrog-Art-Api` instead
+                }
+                #"some.other.domain" {
+                #    #$downloadCredentials = [...]
+                #    #$response = Invoke-WebRequest -Uri $Url -OutFile $Destination [...]
+                #}
+                default {
+                    Write-Error "Authenticating with this host has not been implemented yet"
+                    exit 1
+                }
+            }
+        }
+        else # no authentication, just a regular download
+        {
+            $response = Invoke-WebRequest -Uri $Url -OutFile $Destination
+        }
     }
     catch
     {
