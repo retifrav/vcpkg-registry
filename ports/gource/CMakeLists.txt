@@ -85,12 +85,11 @@ set(sources
     src/core/vectors.cpp
 )
 
-# no icon yet
-# if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-#     list(APPEND sources
-#         resources.rc
-#     )
-# endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    list(APPEND sources
+        resources.rc
+    )
+endif()
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE

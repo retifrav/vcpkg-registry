@@ -111,9 +111,8 @@ vcpkg_execute_required_process(
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt"  DESTINATION "${SOURCE_PATH}")
-# no icon yet
-#file(COPY "${CMAKE_CURRENT_LIST_DIR}/gource.ico" DESTINATION "${SOURCE_PATH}")
-#file(COPY "${CMAKE_CURRENT_LIST_DIR}/resources.rc" DESTINATION "${SOURCE_PATH}")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/gource.ico" DESTINATION "${SOURCE_PATH}")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/resources.rc" DESTINATION "${SOURCE_PATH}")
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
