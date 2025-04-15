@@ -1,6 +1,6 @@
 {
     "name": "sqlite",
-    "version": "3.45.2",
+    "version": "3.49.1",
     "description": "Small, fast, self-contained, high-reliability, full-featured, SQL database engine",
     "homepage": "https://sqlite.org/",
     "dependencies":

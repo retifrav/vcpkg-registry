@@ -14,17 +14,17 @@
 #     "${SQLITE_VERSION_VALUE}"
 # )
 # what genius had the idea to put year into URL
-set(SQLITE_VERSION_YEAR "2024")
+set(SQLITE_VERSION_YEAR "2025")
 # is it the same genius who came up with this version string format
-set(SQLITE_VERSION_VALUE "3450200")
-# download the file yourself first and get its hash with sha512sum
-set(SQLITE_VERSION_HASH "7541c05cdb5954d37a45e5ca29fed7c5cbb53e65f0683cad7f7307564f470280574ca49acb3b637f4f5d82bb99e6ba28076826f9e8f6b28ad7e6bb96d01885cd")
+set(SQLITE_VERSION_VALUE "3490100")
 
 vcpkg_download_distfile(
     ARCHIVE
-    URLS "https://sqlite.org/${SQLITE_VERSION_YEAR}/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
+    URLS
+        "https://sqlite.org/${SQLITE_VERSION_YEAR}/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
+        "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
     FILENAME "sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
-    SHA512 ${SQLITE_VERSION_HASH}
+    SHA512 8124e78110122e2792f54924877d3f394776b36a69c4b5129404e04cd01972cc3d38ac21de222f64a2659f60768f424c9053b33ec16fbaf910020b5a73df554b
 )
 
 vcpkg_extract_source_archive(
@@ -98,7 +98,12 @@ if("in-memory-vfs" IN_LIST FEATURES)
     # it isn't available in amalgamated source package, is it
     vcpkg_download_distfile(
         MEMVFS_C
-        URLS "https://www.sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=memvfs.c"
+        URLS
+            # the hash doesn't seem to have anything to do with the version commit hash,
+            # it just doesn't change if there were no changes in the file, so there is no point
+            # in making it a variable
+            "https://sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=memvfs.c"
+            "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/memvfs.c"
         FILENAME "memvfs.c"
         SHA512 e47757db92a4dfb0ad305d19175ef300fc9b86467605d34ed2133e2f80320a4b98f4f519359fd7ab0f3cbeef8958aad45fede63641c54b77aa8ad4d950fdae4c
     )

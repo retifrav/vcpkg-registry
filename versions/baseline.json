@@ -343,7 +343,7 @@
         },
         "sqlite":
         {
-            "baseline": "3.45.2",
+            "baseline": "3.49.1",
             "port-version": 0
         },
         "srtp":
