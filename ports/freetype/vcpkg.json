@@ -3,6 +3,7 @@
     "version": "2.12.1",
     "description": "A freely available software library to render fonts",
     "homepage": "https://freetype.org/",
+    "license": "FTL OR GPL-2.0-or-later",
     "dependencies":
     [
         {
