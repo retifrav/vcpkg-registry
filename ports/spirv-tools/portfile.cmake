@@ -1,16 +1,25 @@
+# they do attempt to support building as SHARED too, but it is done in a twisted way,
+# which does not work when only one type of library is built at a time
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+endif()
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Tools.git
-    REF 0cfe9e7219148716dfd30b37f4d21753f098707a
+    REF f289d047f49fb60488301ec62bafab85573668cc
     PATCHES
-        001-python-discovery.patch
-        002-dependencies-discovery.patch
-        003-installation.patch
+        001-single-target-dependencies-and-installation.patch
 )
 
 vcpkg_find_acquire_program(PYTHON3)
 get_filename_component(PYTHON3_DIR "${PYTHON3}" DIRECTORY)
 vcpkg_add_to_path("${PYTHON3_DIR}")
+
+set(SPIRV_TOOLS_BUILD_STATIC 1)
+if(NOT VCPKG_TARGET_IS_WINDOWS)
+    string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" SPIRV_TOOLS_BUILD_STATIC)
+endif()
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
@@ -21,8 +30,11 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DENABLE_RTTI=0
+        -DSKIP_SPIRV_TOOLS_INSTALL=0
         -DSPIRV_SKIP_EXECUTABLES=1
         -DSPIRV_SKIP_TESTS=1
+        -DSPIRV_TOOLS_BUILD_STATIC=${SPIRV_TOOLS_BUILD_STATIC}
 )
 
 vcpkg_cmake_install()
@@ -51,8 +63,6 @@ vcpkg_cmake_config_fixup(
     PACKAGE_NAME "SPIRV-Tools-reduce"
     CONFIG_PATH "lib/cmake/SPIRV-Tools-reduce"
 ) # after fixing up the last package, the parent folder can finally be deleted
-
-vcpkg_fixup_pkgconfig()
 
 if("with-source-headers" IN_LIST FEATURES) # need to fix include paths for *.inc files
     vcpkg_replace_string(
