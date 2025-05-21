@@ -416,6 +416,11 @@
             "baseline": "2024-09-29",
             "port-version": 0
         },
+        "vcpkg-tool-meson":
+        {
+            "baseline": "1.7.2",
+            "port-version": 0
+        },
         "vulkan-headers":
         {
             "baseline": "2024.6.14",

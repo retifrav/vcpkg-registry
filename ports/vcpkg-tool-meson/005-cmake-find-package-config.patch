@@ -1,0 +1,16 @@
+diff --git a/mesonbuild/dependencies/data/CMakeLists.txt b/mesonbuild/dependencies/data/CMakeLists.txt
+index 4e7838ebb..98284157e 100644
+--- a/mesonbuild/dependencies/data/CMakeLists.txt
++++ b/mesonbuild/dependencies/data/CMakeLists.txt
+@@ -14,9 +14,9 @@ endif()
+ 
+ while(TRUE)
+   if ("${VERSION}" STREQUAL "")
+-    find_package("${NAME}" QUIET COMPONENTS ${COMPS})
++    find_package("${NAME}" QUIET COMPONENTS ${COMPS} CONFIG)
+   else()
+-    find_package("${NAME}" "${VERSION}" QUIET COMPONENTS ${COMPS})
++    find_package("${NAME}" "${VERSION}" QUIET COMPONENTS ${COMPS} CONFIG)
+   endif()
+ 
+   # ARCHS has to be set via the CMD interface
