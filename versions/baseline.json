@@ -338,7 +338,7 @@
         },
         "spirv-headers":
         {
-            "baseline": "2024.6.12",
+            "baseline": "2025.2.5",
             "port-version": 0
         },
         "spirv-tools":

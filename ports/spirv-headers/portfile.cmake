@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Headers.git
-    REF 2acb319af38d43be3ea76bfabf3998e5281d8d12
+    REF 09913f088a1197aba4aefd300a876b2ebbaa3391
     PATCHES
         001-versions.patch
 )
