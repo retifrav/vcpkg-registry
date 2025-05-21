@@ -1,8 +1,10 @@
 {
     "name": "cpp-http",
     "version": "0.15.3",
+    "port-version": 1,
     "description": "Header-only HTTP/HTTPS server and client library",
     "homepage": "https://github.com/yhirose/cpp-httplib",
+    "license": "MIT",
     "dependencies":
     [
         {

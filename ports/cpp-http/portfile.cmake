@@ -3,7 +3,7 @@ vcpkg_from_git(
     URL git@github.com:yhirose/cpp-httplib.git
     REF 5c00bbf36ba8ff47b4fb97712fc38cb2884e5b98
     PATCHES
-        dependencies-discovery-and-installation.patch
+        001-dependencies-and-installation.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -17,6 +17,7 @@ vcpkg_cmake_configure(
         ${FEATURE_OPTIONS}
         -DHTTPLIB_REQUIRE_BROTLI=1
         -DHTTPLIB_REQUIRE_ZLIB=1
+        -DHTTPLIB_USE_OPENSSL_IF_AVAILABLE=0
 )
 
 vcpkg_cmake_install()
