@@ -158,7 +158,7 @@
         },
         "glslang":
         {
-            "baseline": "12.2.0",
+            "baseline": "15.2.0",
             "port-version": 0
         },
         "gource":

@@ -1,8 +1,9 @@
 {
     "name": "glslang",
-    "version": "12.2.0",
+    "version": "15.2.0",
     "description": "Khronos reference front end for GLSL/ESSL, partial front-end for HLSL and a SPIR-V generator",
     "homepage": "https://www.khronos.org/opengles/sdk/tools/Reference-Compiler/",
+    "license": "Apache-2.0 AND BSD-3-Clause AND MIT AND GPL-3.0-or-later",
     "dependencies":
     [
         {
@@ -20,6 +21,14 @@
     ],
     "features":
     {
+        "opt":
+        {
+            "description": "Use SPIR-V optimizer",
+            "dependencies":
+            [
+                "spirv-tools"
+            ]
+        },
         "tools":
         {
             "description": "Build the tools"

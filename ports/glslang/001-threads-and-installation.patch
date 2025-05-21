@@ -1,35 +1,37 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d2eb3c51..71f65be2 100644
+index 150b0129..f6817158 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -339,7 +339,7 @@ if(ENABLE_GLSLANG_INSTALL)
+@@ -365,8 +365,8 @@ if (GLSLANG_ENABLE_INSTALL)
          include("@PACKAGE_PATH_EXPORT_TARGETS@")
      ]=])
  
 -    set(PATH_EXPORT_TARGETS "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/glslang-targets.cmake")
+-    if(UNIX OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia")
 +    set(PATH_EXPORT_TARGETS "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/glslang-targets.cmake")
-     if(UNIX OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia")
++    if((UNIX OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia") AND NOT APPLE) # NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"
          set(INSTALL_CONFIG_UNIX [=[
-             include(CMakeFindDependencyMacro)
-@@ -352,7 +352,7 @@ if(ENABLE_GLSLANG_INSTALL)
+             set(THREADS_PREFER_PTHREAD_FLAG ON)
+             find_dependency(Threads)
+@@ -377,7 +377,7 @@ if (GLSLANG_ENABLE_INSTALL)
          "${CMAKE_CURRENT_BINARY_DIR}/glslang-config.cmake"
          PATH_VARS
              PATH_EXPORT_TARGETS
 -        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 +        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}
      )
-     
+ 
      write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/glslang-config-version.cmake"
-@@ -363,7 +363,7 @@ if(ENABLE_GLSLANG_INSTALL)
+@@ -388,7 +388,7 @@ if (GLSLANG_ENABLE_INSTALL)
      install(
          EXPORT      glslang-targets
          NAMESPACE   "glslang::"
 -        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 +        DESTINATION "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}"
      )
-     
+ 
      install(
-@@ -371,6 +371,6 @@ if(ENABLE_GLSLANG_INSTALL)
+@@ -396,6 +396,6 @@ if (GLSLANG_ENABLE_INSTALL)
              "${CMAKE_CURRENT_BINARY_DIR}/glslang-config.cmake"
              "${CMAKE_CURRENT_BINARY_DIR}/glslang-config-version.cmake"
          DESTINATION
@@ -37,3 +39,22 @@ index d2eb3c51..71f65be2 100644
 +            "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}"
      )
  endif()
+diff --git a/glslang/CMakeLists.txt b/glslang/CMakeLists.txt
+index eb1dc68e..e83095c8 100644
+--- a/glslang/CMakeLists.txt
++++ b/glslang/CMakeLists.txt
+@@ -260,11 +260,9 @@ if(GLSLANG_ENABLE_INSTALL)
+         Public/ResourceLimits.h
+         Public/ShaderLang.h
+         Public/resource_limits_c.h
+-        Include/glslang_c_interface.h
+-        Include/glslang_c_shader_types.h
+-        Include/ResourceLimits.h
+-        Include/visibility.h
+-        MachineIndependent/Versions.h)
++        ${GLSLANG_HEADERS}
++        ${MACHINEINDEPENDENT_HEADERS}
++    )
+ 
+     foreach(file ${PUBLIC_HEADERS})
+         get_filename_component(dir ${file} DIRECTORY)
