@@ -1,0 +1,140 @@
+diff --git a/meson.build b/meson.build
+index 8963b314256..7286cd10205 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1534,14 +1534,22 @@ else
+   dep_clock = cc.find_library('rt')
+ endif
+ 
+-dep_zlib = dependency('zlib', version : '>= 1.2.3',
+-                      allow_fallback: true,
+-                      required : get_option('zlib'))
++dep_zlib = dependency(
++    'zlib',
++    version : '>= 1.2.3',
++    allow_fallback: false,
++    required : get_option('zlib'),
++    method: 'cmake'
++)
+ if dep_zlib.found()
+   pre_args += '-DHAVE_ZLIB'
+ endif
+ 
+-dep_zstd = dependency('libzstd', required : get_option('zstd'))
++dep_zstd = dependency(
++    'zstd',
++    required : get_option('zstd'),
++    method: 'cmake'
++)
+ if dep_zstd.found()
+   pre_args += '-DHAVE_ZSTD'
+ endif
+diff --git a/src/broadcom/cle/v3d_decoder.c b/src/broadcom/cle/v3d_decoder.c
+index 46cd152e599..87eb7895ee1 100644
+--- a/src/broadcom/cle/v3d_decoder.c
++++ b/src/broadcom/cle/v3d_decoder.c
+@@ -34,7 +34,7 @@
+ #include <expat.h>
+ #endif
+ #include <inttypes.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include <util/macros.h>
+ #include <util/ralloc.h>
+diff --git a/src/compiler/clc/nir_load_libclc.c b/src/compiler/clc/nir_load_libclc.c
+index e736a2b2d3f..51820690b8b 100644
+--- a/src/compiler/clc/nir_load_libclc.c
++++ b/src/compiler/clc/nir_load_libclc.c
+@@ -36,7 +36,7 @@
+ #endif
+ 
+ #ifdef HAVE_STATIC_LIBCLC_ZSTD
+-#include <zstd.h>
++#include <zstd/zstd.h>
+ #endif
+ 
+ #ifdef HAVE_STATIC_LIBCLC_SPIRV
+diff --git a/src/intel/common/intel_decoder.c b/src/intel/common/intel_decoder.c
+index 0afa70f15ca..536d927632e 100644
+--- a/src/intel/common/intel_decoder.c
++++ b/src/intel/common/intel_decoder.c
+@@ -28,7 +28,7 @@
+ #include <string.h>
+ #include <expat.h>
+ #include <inttypes.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include <util/list.h>
+ #include <util/macros.h>
+diff --git a/src/intel/tools/aubinator_error_decode.c b/src/intel/tools/aubinator_error_decode.c
+index bec874edd8f..d468af438b2 100644
+--- a/src/intel/tools/aubinator_error_decode.c
++++ b/src/intel/tools/aubinator_error_decode.c
+@@ -36,7 +36,7 @@
+ #include <err.h>
+ #include <assert.h>
+ #include <getopt.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "common/intel_decoder.h"
+ #include "compiler/brw_compiler.h"
+diff --git a/src/intel/tools/error2aub.c b/src/intel/tools/error2aub.c
+index 601e08a00f3..d4eb0ad067c 100644
+--- a/src/intel/tools/error2aub.c
++++ b/src/intel/tools/error2aub.c
+@@ -30,7 +30,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdarg.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "util/list.h"
+ 
+diff --git a/src/intel/tools/error2hangdump.c b/src/intel/tools/error2hangdump.c
+index 72f8761a806..43590b7090f 100644
+--- a/src/intel/tools/error2hangdump.c
++++ b/src/intel/tools/error2hangdump.c
+@@ -30,7 +30,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdarg.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "util/list.h"
+ 
+diff --git a/src/util/compress.c b/src/util/compress.c
+index 1f4b429a770..293d413bebf 100644
+--- a/src/util/compress.c
++++ b/src/util/compress.c
+@@ -31,11 +31,11 @@
+ #endif
+ 
+ #ifdef HAVE_ZLIB
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #endif
+ 
+ #ifdef HAVE_ZSTD
+-#include "zstd.h"
++#include <zstd/zstd.h>
+ #endif
+ 
+ #include "util/compress.h"
+diff --git a/src/util/crc32.c b/src/util/crc32.c
+index ec5ad2cc94c..4b7988a3c3b 100644
+--- a/src/util/crc32.c
++++ b/src/util/crc32.c
+@@ -34,7 +34,7 @@
+ 
+ 
+ #ifdef HAVE_ZLIB
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #endif
+ #include "crc32.h"
+ 

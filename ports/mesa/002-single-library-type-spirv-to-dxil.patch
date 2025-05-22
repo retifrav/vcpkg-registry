@@ -1,0 +1,22 @@
+diff --git a/src/microsoft/spirv_to_dxil/meson.build b/src/microsoft/spirv_to_dxil/meson.build
+index 7a75e267760..2741f745375 100644
+--- a/src/microsoft/spirv_to_dxil/meson.build
++++ b/src/microsoft/spirv_to_dxil/meson.build
+@@ -19,7 +19,7 @@
+ # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ # IN THE SOFTWARE.
+ 
+-libspirv_to_dxil = both_libraries(
++libspirv_to_dxil = library(
+   'spirv_to_dxil',
+   [
+     files(
+@@ -38,7 +38,7 @@ libspirv_to_dxil = both_libraries(
+ )
+ 
+ idep_libspirv_to_dxil = declare_dependency(
+-   link_with : libspirv_to_dxil.get_static_lib(),
++   link_with : libspirv_to_dxil,
+    include_directories : include_directories('.')
+ )
+ 

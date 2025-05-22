@@ -226,6 +226,11 @@
             "baseline": "23.1.0",
             "port-version": 0
         },
+        "mesa":
+        {
+            "baseline": "24.0.7",
+            "port-version": 0
+        },
         "miniupnpc":
         {
             "baseline": "2.2.5",

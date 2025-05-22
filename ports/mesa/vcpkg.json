@@ -1,0 +1,77 @@
+{
+    "name": "mesa",
+    "version": "24.0.7",
+    "description": "3D graphics library",
+    "homepage": "https://docs.mesa3d.org/",
+    "license": "MIT AND BSL-1.0 AND SGI-B-2.0",
+    "supports": "windows & !(windows & arm) & !staticcrt",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-get-python-packages",
+            "host": true
+        },
+        {
+            "name": "vcpkg-tool-meson",
+            "host": true
+        },
+        "zlib"
+    ],
+    "default-features":
+    [
+        "opengl",
+        "spirv-to-dxil",
+        "zstd"
+    ],
+    "features":
+    {
+        "egl":
+        {
+            "description": "Build support for EGL platform",
+            "dependencies":
+            [
+                "egl-registry"
+            ]
+        },
+        "gles1":
+        {
+            "description": "Build support for OpenGL ES 1.x",
+            "dependencies":
+            [
+                "opengl"
+            ]
+        },
+        "gles2":
+        {
+            "description": "Build support for OpenGL ES 2.x and 3.x",
+            "dependencies":
+            [
+                "opengl"
+            ]
+        },
+        "offscreen":
+        {
+            "description": "Build with support for offscreen rendering (OSMesa)",
+            "dependencies":
+            [
+                "opengl"
+            ]
+        },
+        "opengl":
+        {
+            "description": "Build OpenGL library"
+        },
+        "spirv-to-dxil":
+        {
+            "description": "Build spirv-to-dxil library"
+        },
+        "zstd":
+        {
+            "description": "Using Zstandard capabilities",
+            "dependencies":
+            [
+                "zstd"
+            ]
+        }
+    }
+}
