@@ -1,20 +1,45 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:curl/curl.git
-    REF 7ab9d43720bc34d9aa351c7ca683c1668ebf8335
+    REF 4dacb79fcdd9364c1083e06f6a011d797a344f47
     PATCHES
-        installation-and-targets.patch
+        001-dependencies-and-installation.patch
+)
+
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
+    DESTINATION "${SOURCE_PATH}"
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        openssl   CURL_USE_OPENSSL # although OpenSSL port is missing at the moment
-        openssl   USE_OPENSSL # this one is never declared, only set to ON if CURL_USE_OPENSSL is set
-        sspi      CURL_WINDOWS_SSPI
+        brotli    CURL_BROTLI
+        openssl   CURL_USE_OPENSSL
         schannel  CURL_USE_SCHANNEL
         sectransp CURL_USE_SECTRANSP
+        ssl       CURL_ENABLE_SSL
+        sspi      CURL_WINDOWS_SSPI
         tool      BUILD_CURL_EXE
+        zlib      CURL_ZLIB
+        zstd      CURL_ZSTD
 )
+
+if(
+    VCPKG_TARGET_IS_OSX
+    AND
+    "tool" IN_LIST FEATURES
+    AND
+    "openssl" IN_LIST FEATURES
+)
+    message(
+        WARNING
+            "Enabling OpenSSL on Mac OS might not succeed, because it can get a mess "
+            "of OpenSSL resolved via vcpkg and OpenSSL package from Homebrew prefix, "
+            "which might then fail on linking, so it is probably advisable to remove "
+            "`openssl` from the list of enabled features"
+    )
+endif()
 
 if("sectransp" IN_LIST FEATURES)
     list(APPEND FEATURE_OPTIONS
@@ -26,7 +51,6 @@ endif()
 if(VCPKG_TARGET_IS_UWP)
     list(APPEND FEATURE_OPTIONS
         -DCURL_DISABLE_TELNET=1
-        -DENABLE_IPV6=0
         -DENABLE_UNIX_SOCKETS=0
     )
 endif()
@@ -35,14 +59,23 @@ if(VCPKG_TARGET_IS_WINDOWS)
     list(APPEND FEATURE_OPTIONS -DENABLE_UNICODE=1)
 endif()
 
+string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" CURL_STATIC)
+string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" CURL_SHARED)
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DBUILD_SHARED_LIBS=${CURL_SHARED}
+        -DBUILD_STATIC_LIBS=${CURL_STATIC}
+        -DBUILD_STATIC_CURL=${CURL_STATIC}
+        -DBUILD_LIBCURL_DOCS=0
         -DBUILD_TESTING=0
-        -DENABLE_MANUAL=0
         -DCURL_CA_FALLBACK=1
         -DCURL_USE_LIBPSL=0
+        -DCURL_USE_PKGCONFIG=0
+        -DENABLE_CURL_MANUAL=0
+        -DHTTP_ONLY=1
 )
 
 vcpkg_cmake_install()
@@ -55,8 +88,4 @@ vcpkg_cmake_config_fixup()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/COPYING"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING")

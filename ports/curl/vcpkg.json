@@ -1,8 +1,9 @@
 {
     "name": "curl",
-    "version": "8.1.2",
+    "version": "8.14.0",
     "description": "Library for transferring data with URL syntax",
     "homepage": "https://curl.se/",
+    "license": "curl AND ISC AND BSD-3-Clause",
     "dependencies":
     [
         {
@@ -13,14 +14,26 @@
             "name": "vcpkg-cmake-config",
             "host": true
         },
-        "zlib"
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
     ],
     "default-features":
     [
-        "ssl"
+        "ssl",
+        "zlib"
     ],
     "features":
     {
+        "brotli":
+        {
+            "description": "Use brotli",
+            "dependencies":
+            [
+                "brotli"
+            ]
+        },
         "openssl":
         {
             "description": "Enable OpenSSL backend (SSL support)",
@@ -87,6 +100,22 @@
                     ],
                     "platform": "(uwp | !windows) & !(osx | ios) & !mingw"
                 }
+            ]
+        },
+        "zlib":
+        {
+            "description": "Use zlib",
+            "dependencies":
+            [
+                "zlib"
+            ]
+        },
+        "zstd":
+        {
+            "description": "Use zstd",
+            "dependencies":
+            [
+                "zstd"
             ]
         },
         "tool":
