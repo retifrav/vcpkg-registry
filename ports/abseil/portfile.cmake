@@ -32,16 +32,15 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/share"
 )
 
-if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
-    file(GLOB_RECURSE headers "${CURRENT_PACKAGES_DIR}/include/absl/*.h")
-    foreach(header IN LISTS ${headers})
-        vcpkg_replace_string("${header}"
-            "!defined(ABSL_CONSUME_DLL)" "0"
-        )
-        vcpkg_replace_string("${header}"
-            "defined(ABSL_CONSUME_DLL)" "1"
-        )
-    endforeach()
+if(VCPKG_TARGET_IS_WINDOWS AND VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/absl/base/config.h"
+        "defined(ABSL_CONSUME_DLL)"
+        "1"
+    )
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/absl/base/internal/thread_identity.h"
+        "defined(ABSL_CONSUME_DLL)"
+        "1"
+    )
 endif()
 
 file(
