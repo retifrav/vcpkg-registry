@@ -803,23 +803,24 @@ index 34648c9715..6103a922c2 100644
      "WorkerThread.h"
      "metrics/HistogramMacros.h"
 diff --git a/src/dawn/utils/CMakeLists.txt b/src/dawn/utils/CMakeLists.txt
-index 5eb7120d99..4d09feddb0 100644
+index 5eb7120d99..fe9b64498d 100644
 --- a/src/dawn/utils/CMakeLists.txt
 +++ b/src/dawn/utils/CMakeLists.txt
-@@ -34,6 +34,8 @@ if (TINT_BUILD_SPV_READER)
+@@ -34,6 +34,9 @@ if (TINT_BUILD_SPV_READER)
        list(APPEND private_wgpu_depends SPIRV-Tools-opt)
  endif()
  
++find_package(SPIRV-Headers CONFIG REQUIRED)
 +find_package(SPIRV-Tools CONFIG REQUIRED)
 +
  dawn_add_library(
    dawn_wgpu_utils
    ENABLE_EMSCRIPTEN
-@@ -49,6 +51,7 @@ dawn_add_library(
+@@ -49,6 +52,7 @@ dawn_add_library(
      "TextureUtils.cpp"
      "WGPUHelpers.cpp"
    DEPENDS
-+    SPIRV-Tools-static
++    SPIRV-Tools
      webgpu_cpp
      dawn::dawn_common
    PRIVATE_DEPENDS
@@ -947,7 +948,7 @@ index 61f4f4d2d4..261ad72d7c 100644
 -  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools)
 -  target_include_directories(${TARGET} PRIVATE "${TINT_SPIRV_TOOLS_DIR}/include")
 +  find_package(SPIRV-Tools CONFIG REQUIRED)
-+  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools-static)
++  target_link_libraries(${TARGET} PRIVATE SPIRV-Tools)
  endfunction()
  
  function(tint_lib_compile_options TARGET)
@@ -1057,3 +1058,55 @@ index 8c875e4524..0731b01ba7 100644
  target_sources(webgpu_c_bundled PRIVATE
      ${WEBGPU_JNI_SOURCES}
      ${WEBGPU_JNI_HEADERS}
+diff --git a/src/tint/lang/spirv/reader/ast_parser/ast_parser.cc b/src/tint/lang/spirv/reader/ast_parser/ast_parser.cc
+index 58c9ef955b..48ab5bf056 100644
+--- a/src/tint/lang/spirv/reader/ast_parser/ast_parser.cc
++++ b/src/tint/lang/spirv/reader/ast_parser/ast_parser.cc
+@@ -32,7 +32,7 @@
+ #include <string_view>
+ #include <utility>
+ 
+-#include "source/opt/build_module.h"
++#include <spirv-tools/source/opt/build_module.h>
+ #include "src/tint/lang/core/fluent_types.h"
+ #include "src/tint/lang/core/type/depth_texture.h"
+ #include "src/tint/lang/core/type/multisampled_texture.h"
+diff --git a/src/tint/lang/spirv/reader/ast_parser/ast_parser.h b/src/tint/lang/spirv/reader/ast_parser/ast_parser.h
+index 760f31b127..c29b3414ea 100644
+--- a/src/tint/lang/spirv/reader/ast_parser/ast_parser.h
++++ b/src/tint/lang/spirv/reader/ast_parser/ast_parser.h
+@@ -43,7 +43,7 @@ TINT_BEGIN_DISABLE_WARNING(NEWLINE_EOF);
+ TINT_BEGIN_DISABLE_WARNING(OLD_STYLE_CAST);
+ TINT_BEGIN_DISABLE_WARNING(SIGN_CONVERSION);
+ TINT_BEGIN_DISABLE_WARNING(WEAK_VTABLES);
+-#include "source/opt/ir_context.h"
++#include <spirv-tools/source/opt/ir_context.h>
+ TINT_END_DISABLE_WARNING(WEAK_VTABLES);
+ TINT_END_DISABLE_WARNING(SIGN_CONVERSION);
+ TINT_END_DISABLE_WARNING(OLD_STYLE_CAST);
+diff --git a/src/tint/lang/spirv/reader/ast_parser/helper_test.h b/src/tint/lang/spirv/reader/ast_parser/helper_test.h
+index 5ea3cf7871..9c75d9bf59 100644
+--- a/src/tint/lang/spirv/reader/ast_parser/helper_test.h
++++ b/src/tint/lang/spirv/reader/ast_parser/helper_test.h
+@@ -40,7 +40,7 @@ TINT_BEGIN_DISABLE_WARNING(NEWLINE_EOF);
+ TINT_BEGIN_DISABLE_WARNING(OLD_STYLE_CAST);
+ TINT_BEGIN_DISABLE_WARNING(SIGN_CONVERSION);
+ TINT_BEGIN_DISABLE_WARNING(WEAK_VTABLES);
+-#include "source/opt/ir_context.h"
++#include <spirv-tools/source/opt/ir_context.h>
+ TINT_END_DISABLE_WARNING(WEAK_VTABLES);
+ TINT_END_DISABLE_WARNING(SIGN_CONVERSION);
+ TINT_END_DISABLE_WARNING(OLD_STYLE_CAST);
+diff --git a/src/tint/lang/spirv/reader/parser/parser.cc b/src/tint/lang/spirv/reader/parser/parser.cc
+index 9a4094f47e..f9f5c9129d 100644
+--- a/src/tint/lang/spirv/reader/parser/parser.cc
++++ b/src/tint/lang/spirv/reader/parser/parser.cc
+@@ -36,7 +36,7 @@ TINT_BEGIN_DISABLE_WARNING(NEWLINE_EOF);
+ TINT_BEGIN_DISABLE_WARNING(OLD_STYLE_CAST);
+ TINT_BEGIN_DISABLE_WARNING(SIGN_CONVERSION);
+ TINT_BEGIN_DISABLE_WARNING(WEAK_VTABLES);
+-#include "source/opt/build_module.h"
++#include <spirv-tools/source/opt/build_module.h>
+ TINT_END_DISABLE_WARNING(WEAK_VTABLES);
+ TINT_END_DISABLE_WARNING(SIGN_CONVERSION);
+ TINT_END_DISABLE_WARNING(OLD_STYLE_CAST);

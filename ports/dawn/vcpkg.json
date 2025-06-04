@@ -1,6 +1,7 @@
 {
     "name": "dawn",
     "version": "2024.11.21",
+    "port-version": 1,
     "description": "An implementation of the WebGPU standard",
     "homepage": "https://dawn.googlesource.com/dawn",
     "dependencies":
@@ -18,10 +19,14 @@
             "host": true
         },
         "abseil",
-        "spirv-headers",
+        {
+            "name": "spirv-headers",
+            "version>=": "2025.2.5"
+        },
         {
             "name": "spirv-tools",
-            "features": [ "with-source-headers" ]
+            "features": [ "with-source-headers" ],
+            "version>=": "2025.2.25"
         }
     ],
     "default-features":
