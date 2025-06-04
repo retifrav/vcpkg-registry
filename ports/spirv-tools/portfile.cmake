@@ -64,7 +64,7 @@ vcpkg_cmake_config_fixup(
     CONFIG_PATH "lib/cmake/SPIRV-Tools-reduce"
 ) # after fixing up the last package, the parent folder can finally be deleted
 
-if("with-source-headers" IN_LIST FEATURES) # need to fix include paths for *.inc files
+if("with-source-headers" IN_LIST FEATURES) # the include paths are fucked up
     vcpkg_replace_string(
         "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/extensions.h"
             [=[#include "extension_enum.inc"]=]
@@ -80,6 +80,16 @@ if("with-source-headers" IN_LIST FEATURES) # need to fix include paths for *.inc
             [=[#include "OpenCLDebugInfo100.h"]=]
             [=[#include "spirv-tools/OpenCLDebugInfo100.h"]=]
     )
+
+    file(GLOB_RECURSE spirv_headers_source "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/*.h")
+    foreach(spirv_header IN ITEMS ${spirv_headers_source})
+        vcpkg_replace_string(
+            "${spirv_header}"
+                [=[#include "source/]=]
+                [=[#include "spirv-tools/source/]=]
+            IGNORE_UNCHANGED
+        )
+    endforeach()
 endif()
 
 file(REMOVE_RECURSE
