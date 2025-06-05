@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:curl/curl.git
-    REF 4dacb79fcdd9364c1083e06f6a011d797a344f47
+    REF fdb8a789d2b446b77bd7cdd2eff95f6cbc814cf4
     PATCHES
         001-dependencies-and-installation.patch
 )
