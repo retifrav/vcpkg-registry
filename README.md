@@ -207,7 +207,8 @@ Checks that declared rev-parse hashes in ports versions match their actual value
 
 ``` sh
 $ cd /path/to/vcpkg-registry
-$ ./scripts/check-versions-and-hashes.sh
+$ pip install pandas pandera tabulate colorama
+$ python ./scripts/check-versions-and-hashes.py
 ```
 
 More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#checking-versions-and-hashes).
