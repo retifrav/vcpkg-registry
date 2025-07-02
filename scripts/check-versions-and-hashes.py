@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 import pathlib
 import argparse
 import sys
@@ -16,9 +17,13 @@ loggingFormat: str = "[%(levelname)s] %(message)s"
 
 argParser = argparse.ArgumentParser(
     prog="check-versions-and-hashes",
-    description=" ".join((
-        "%(prog)s  Declaration of VAR\nVerifies",
-        "currently stated port versions and their rev-parse hashes."
+    description="".join((
+        "-= %(prog)s =-\n",
+        "Verifies currently stated port versions ",
+        "and their rev-parse hashes.\n\n",
+        f"Copyright (C) 2025-{datetime.now().year} ",
+        "Declaration of VAR\n",
+        "License: GPLv3"
     )),
     formatter_class=argparse.RawDescriptionHelpFormatter,
     allow_abbrev=False

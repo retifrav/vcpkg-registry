@@ -15,9 +15,9 @@ loggingFormat: str = "[%(levelname)s] %(message)s"
 argParser = argparse.ArgumentParser(
     prog="install-vcpkg-artifacts",
     description="".join((
-        "%(prog)s\n",
+        "-= %(prog)s =-\n",
         "Merges vcpkg installation into the project installation, ",
-        "while filtering out blacklisted dependencies\n\n",
+        "while filtering out blacklisted dependencies.\n\n",
         f"Copyright (C) 2023-{datetime.now().year} ",
         "Declaration of VAR\n",
         "License: GPLv3"
