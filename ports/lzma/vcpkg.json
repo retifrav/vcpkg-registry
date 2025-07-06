@@ -1,6 +1,6 @@
 {
     "name": "lzma",
-    "version": "23.1.0",
+    "version": "25.0.0",
     "description": "LZMA provides a high compression ratio and fast decompression",
     "homepage": "https://7-zip.org/sdk.html",
     "dependencies":

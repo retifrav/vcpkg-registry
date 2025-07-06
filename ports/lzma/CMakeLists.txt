@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("lzma"
-    VERSION 23.1.0
+    VERSION 25.0.0
 )
 
 option(ENABLE_AVX2 "Enable AVX2 intrinsics" 1)
