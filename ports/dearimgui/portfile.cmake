@@ -4,9 +4,9 @@ if(VCPKG_TARGET_IS_WINDOWS)
 endif()
 
 # carefully check the commit hashes every time you are updating the version
-set(GIT_COMMIT_HASH "85b2fe8486190fa9326565a2fb5fccb6caea4396") # version tag commit from `master` branch
+set(GIT_COMMIT_HASH "5d4126876bc10396d4c6511853ff10964414c776") # version tag commit from `master` branch
 if("docking" IN_LIST FEATURES)
-    set(GIT_COMMIT_HASH "adfa5364cd84db127f8f5d093be90c2e3608be0f") # version tag commit from `docking` branch
+    set(GIT_COMMIT_HASH "44aa9a4b3a6f27d09a4eb5770d095cbd376dfc4b") # version tag commit from `docking` branch
 endif()
 
 vcpkg_from_git(
@@ -35,6 +35,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DDEARIMGUI_VERSION="${VERSION}"
 )
 
 vcpkg_cmake_install()

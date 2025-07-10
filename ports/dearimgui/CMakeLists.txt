@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
+set(DEARIMGUI_VERSION "0.0.0" CACHE STRING "Dear ImGui version")
+
 project("dearimgui"
-    VERSION 1.92.0
+    VERSION "${DEARIMGUI_VERSION}"
 )
 
 option(BACKEND_OPENGL2 "OpenGL 2 graphics backend"  0)
