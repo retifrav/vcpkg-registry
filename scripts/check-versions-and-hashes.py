@@ -107,6 +107,7 @@ def getRevParseHash(
                 ))
             )
         else:
+            logging.debug(f"- {revParsedHash}")
             return revParsedHash
 
 
