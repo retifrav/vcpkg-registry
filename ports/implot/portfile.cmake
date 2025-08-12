@@ -6,7 +6,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:epezent/implot.git
-    REF 18c72431f8265e2b0b5378a3a73d8a883b2175ff
+    REF 3da8bd34299965d3b0ab124df743fe3e076fa222
     PATCHES
         001-dear-imgui-headers-from-package.patch
 )
@@ -27,6 +27,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DIMPLOT_VERSION="${VERSION}"
 )
 
 vcpkg_cmake_install()

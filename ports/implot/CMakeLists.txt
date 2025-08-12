@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
+set(IMPLOT_VERSION "0.0.0" CACHE STRING "ImPlot version")
+
 project("implot"
-    VERSION 0.16.0
+    VERSION "${IMPLOT_VERSION}"
 )
 
 option(WITH_INTERNAL "Using internal header(s)" 0)
