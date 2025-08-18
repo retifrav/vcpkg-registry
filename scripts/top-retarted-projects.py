@@ -14,9 +14,9 @@ argParser = argparse.ArgumentParser(
     prog="top-retarted-projects",
     description="".join((
         "-= %(prog)s =-\n\n",
-        "Prints out the glorious Top 10 most retarded projects, ",
-        "the criteria being a total size of all the patches that need ",
-        "to be applied to the original sources to make them ",
+        "Prints out a list of the most retarded ports (projects), where ",
+        "the criteria of retardiness is the total size of all the patches ",
+        "that need to be applied to the original sources to make them ",
         "build or/and install properly.\n\n",
         f"Copyright (C) 2025-{datetime.now().year} ",
         "Declaration of VAR\n",
@@ -48,6 +48,11 @@ argParser.add_argument(
     help="size of patches (in bytes) to become retarded"
 )
 argParser.add_argument(
+    "--without-portfile",
+    action='store_true',
+    help="do not count the size of portfile.cmake"
+)
+argParser.add_argument(
     "--debug",
     action='store_true',
     help="enable debug/dev mode (default: %(default)s)"
@@ -57,6 +62,7 @@ cliArgs = argParser.parse_args()
 registryPath: pathlib.Path = cliArgs.registryPath
 topListLength: int = cliArgs.top
 retartedThreshold: int = cliArgs.threshold
+withoutPortfile: bool = cliArgs.without_portfile
 debugMode: bool = cliArgs.debug
 
 if debugMode:
@@ -132,11 +138,11 @@ logging.info("-")
 
 for p in ports:
     portFolder: pathlib.Path = portsPath / p
-    manifest: pathlib.Path = portFolder / "portfile.cmake"
-    if not manifest.is_file():
+    portfile: pathlib.Path = portFolder / "portfile.cmake"
+    if not portfile.is_file():
         logging.warning(f"Port [{p}] has no portfile, skipping it")
     else:
-        patchesList = list(portFolder.glob("*.patch"))
+        patchesList = list(portFolder.rglob("*.patch"))  # recursive
         patchesCnt: int = len(patchesList)
         logging.debug(f"[{p}] number of patches: {patchesCnt}")
         if patchesCnt > 0:
@@ -145,8 +151,24 @@ for p in ports:
                 patchSize: int = ptch.stat().st_size
                 logging.debug(f"- [{ptch.name}] size (in bytes): {patchSize}")
                 patchesSizeInBytes += patchSize
+            andPortfile: str = ""
+            if not withoutPortfile:
+                portfileSize: int = portfile.stat().st_size
+                logging.debug(
+                    f"- [{portfile.name}] size (in bytes): {portfileSize}"
+                )
+                if portfileSize > 2048:  # 2 KB "ought to be enough", innit
+                    patchesSizeInBytes += portfileSize
+                    andPortfile = " and portfile"
+            # should probably also count all the other `*.cmake` files
+            # aside from the `portfile.cmake`, as some ports do `include()`;
+            # and there are also `Find*.cmake` modules too, which is almost
+            # the same thing as patching the original project
             logging.debug(
-                f"- total size of patches (in bytes): {patchesSizeInBytes}"
+                " ".join((
+                    f"- total size of patches{andPortfile}",
+                    f"(in bytes): {patchesSizeInBytes}"
+                ))
             )
             patchesSizePerProject[p] = patchesSizeInBytes
 
@@ -169,11 +191,14 @@ topRetardedProjects = {
     for key, value in projectsSortedByPatchesSize.items()
     if value > retartedThreshold
 }
+andPortfile: str = ""
+if not withoutPortfile:
+    andPortfile = " and portfile"
 if (len(topRetardedProjects) > 0):
     logging.info(
         " ".join((
             f"Top {topListLength} retarded projects (whose total",
-            "patches size is bigger than",
+            f"patches{andPortfile} size is bigger than",
             f"{bytesToHumanReadableSize(retartedThreshold)}):"
         ))
     )
@@ -186,8 +211,8 @@ if (len(topRetardedProjects) > 0):
 else:
     logging.info(
         " ".join((
-            "Not a single port has the total size of patches bigger",
-            "than the retarted threshold",
+            f"Not a single port has the total size of patches{andPortfile}",
+            "bigger than the retarted threshold",
             f"({bytesToHumanReadableSize(retartedThreshold)}).",
             "That is simply too good to be true, so you probably provided",
             "a way too high of a threshold. Or maybe your registry",
