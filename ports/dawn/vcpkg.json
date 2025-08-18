@@ -1,7 +1,7 @@
 {
     "name": "dawn",
     "version": "2024.11.21",
-    "port-version": 1,
+    "port-version": 2,
     "description": "An implementation of the WebGPU standard",
     "homepage": "https://dawn.googlesource.com/dawn",
     "dependencies":
@@ -93,6 +93,10 @@
         "fuzzers":
         {
             "description": "Build fuzzers"
+        },
+        "with-emscripten-tools":
+        {
+            "description": "Fetching Emscripten tools"
         }
     }
 }

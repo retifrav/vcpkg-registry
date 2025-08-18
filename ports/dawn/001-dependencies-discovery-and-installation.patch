@@ -61,9 +61,9 @@ index 1ef7a60cc6..6a0c75f8d9 100644
 +        message(FATAL_ERROR "[ERROR] The `EMSDK` environment variable isn't set, you probably haven't sourced emsdk_env.sh")
 +    endif()
 +    set(DAWN_EMSCRIPTEN_PATH "$ENV{EMSDK}/upstream/emscripten")
-+    if(NOT EXISTS "${DAWN_EMSCRIPTEN_PATH}/tools/maint/gen_struct_info.py")
++    if(NOT EXISTS "${DAWN_EMSCRIPTEN_PATH}/tools/gen_struct_info.py")
 +        message(FATAL_ERROR
-+            "[ERROR] The ${DAWN_EMSCRIPTEN_PATH}/tools/maint/gen_struct_info.py "
++            "[ERROR] The ${DAWN_EMSCRIPTEN_PATH}/tools/gen_struct_info.py "
 +            "does not seem to exist, so generating certain files (such as with `webgpu_gen_struct_info()`) "
 +            "will fail; note that these tools aren't installed with the regular Emscripten installation procedure."
 +        )
@@ -853,7 +853,7 @@ index d5454328f7..eabc8c7410 100644
          set(ARGS
 -            "${DAWN_EMSCRIPTEN_TOOLCHAIN}/tools/maint/gen_struct_info.py"
 +            "${Python3_EXECUTABLE}"
-+            "${DAWN_EMSCRIPTEN_PATH}/tools/maint/gen_struct_info.py"
++            "${DAWN_EMSCRIPTEN_PATH}/tools/gen_struct_info.py"
              -q
              "${EM_BUILD_GEN_DIR}/struct_info_webgpu.json"
              "-I=${EM_BUILD_GEN_DIR}/include"

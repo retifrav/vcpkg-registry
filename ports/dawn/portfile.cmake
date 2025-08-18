@@ -6,16 +6,19 @@ vcpkg_from_git(
     URL https://dawn.googlesource.com/dawn
     REF 740d2502dbbd719a76c5a8d3fb4dac1b5363f42e
     PATCHES
-        001-dependencies-discovery-and-installation.patch # if only Google developers knew how to make proper CMake packages
-        002-string-view-type.patch                        # and were careful about types
-        003-shader-spirv-wrong-type.patch                 # and followed their own deprecations (actually, not sure, if this is a correct fix)
-        004-missing-includes.patch                        # and were not forgetting includes
+        001-dependencies-discovery-and-installation.patch
+        002-string-view-type.patch # actually, the correct resolution here should be to build Abseil with C++17 and propagate the requirement
+        003-shader-spirv-wrong-type.patch
+        004-missing-includes.patch
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/FindD3D12.cmake" DESTINATION "${SOURCE_PATH}/src/cmake")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
 
-if(VCPKG_TARGET_IS_EMSCRIPTEN)
+# starting with Emscripten 4.0.3(?) this is no longer needed(?)
+# https://github.com/emscripten-core/emscripten/commit/b31dd92a4b1b7a0cbdc1b1b3f4fb22e8a0726aea
+# https://dawn.googlesource.com/dawn/+/3c60c992572f5c2c83be5f50f8ab3bd3aec959a9^!
+if(VCPKG_TARGET_IS_EMSCRIPTEN AND "with-emscripten-tools" IN_LIST FEATURES)
     # get Emscripten tools, as they are not installed with regular Emscripten installation procedure
     # (https://github.com/emscripten-core/emscripten/blob/ac676d5e437525d15df5fd46bc2c208ec6d376a3/tools/install.py#L20-L30),
     # but Dawn does require some of those for generating stuff
