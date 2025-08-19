@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Headers.git
-    REF 09913f088a1197aba4aefd300a876b2ebbaa3391
+    REF 2a611a970fdbc41ac2e3e328802aed9985352dca
     PATCHES
         001-versions.patch
 )
@@ -13,6 +13,7 @@ vcpkg_from_git(
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
+        -DSPIRV_HEADERS_VERSION="${VERSION}"
         -DSPIRV_HEADERS_ENABLE_TESTS=0
 )
 

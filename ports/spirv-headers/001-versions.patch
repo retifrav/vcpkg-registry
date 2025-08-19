@@ -1,15 +1,21 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 957b922..ba200e7 100644
+index c7711c7..f05de0b 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -23,8 +23,8 @@
- # CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- # MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+@@ -6,8 +6,14 @@
+ # SPECIFICATIONS AND HEADER INFORMATION ARE LOCATED AT
+ #    https://www.khronos.org/registry/
+ 
 -cmake_minimum_required(VERSION 3.14)
 -project(SPIRV-Headers LANGUAGES C CXX VERSION 1.5.5)
 +cmake_minimum_required(VERSION 3.22)
-+project(SPIRV-Headers LANGUAGES C CXX VERSION 2025.2.5)
++
++set(SPIRV_HEADERS_VERSION "1.5.5" CACHE STRING "SPIRV-Headers version")
++
++project(SPIRV-Headers
++    LANGUAGES C CXX
++    VERSION "${SPIRV_HEADERS_VERSION}"
++)
  
  if (CMAKE_VERSION VERSION_LESS "3.21")
      # https://cmake.org/cmake/help/latest/variable/PROJECT_IS_TOP_LEVEL.html
