@@ -38,7 +38,7 @@ argParser.add_argument(
     type=int,
     default=10,
     metavar="10",
-    help="how long is the top list"
+    help="how long should the top list be"
 )
 argParser.add_argument(
     "--threshold",
