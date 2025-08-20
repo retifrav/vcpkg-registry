@@ -7,7 +7,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Tools.git
-    REF f289d047f49fb60488301ec62bafab85573668cc
+    REF 33e02568181e3312f49a3cf33df470bf96ef293a
     PATCHES
         001-single-target-dependencies-and-installation.patch
 )
@@ -30,6 +30,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DSPIRV_TOOLS_VERSION="${VERSION}"
         -DENABLE_RTTI=0
         -DSKIP_SPIRV_TOOLS_INSTALL=0
         -DSPIRV_SKIP_EXECUTABLES=1
@@ -66,9 +67,9 @@ vcpkg_cmake_config_fixup(
 
 if("with-source-headers" IN_LIST FEATURES) # the include paths are fucked up
     vcpkg_replace_string(
-        "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/extensions.h"
-            [=[#include "extension_enum.inc"]=]
-            [=[#include "spirv-tools/extension_enum.inc"]=]
+        "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/table2.h"
+            [=[#include "core_tables_header.inc"]=]
+            [=[#include "spirv-tools/core_tables_header.inc"]=]
     )
     vcpkg_replace_string(
         "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/opt/instruction.h"
