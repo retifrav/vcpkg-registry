@@ -428,7 +428,7 @@
         },
         "vulkan-headers":
         {
-            "baseline": "2024.6.14",
+            "baseline": "2025.7.4",
             "port-version": 0
         },
         "vulkan-utility-libraries":
