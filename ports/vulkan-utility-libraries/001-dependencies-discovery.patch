@@ -1,17 +1,17 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 042550b..a03dcb3 100644
+index fea5be3..fb1ecf0 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -25,7 +25,7 @@ set(API_TYPE "vulkan")
+@@ -23,7 +23,7 @@ set(API_TYPE "vulkan")
  
  add_subdirectory(scripts)
  
 -find_package(VulkanHeaders CONFIG)
 +find_package(VulkanHeaders CONFIG REQUIRED)
  
- add_subdirectory(src)
- add_subdirectory(include)
-@@ -66,7 +66,7 @@ if (VUL_IS_TOP_LEVEL)
+ option(VUL_ENABLE_ASAN "Use address sanitization")
+ if (VUL_ENABLE_ASAN)
+@@ -84,7 +84,7 @@ if (VUL_ENABLE_INSTALL)
      file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/VulkanUtilityLibrariesConfig.cmake.in" [=[
          include(CMakeFindDependencyMacro)
          # NOTE: Because VulkanHeaders is a PUBLIC dependency it needs to be found prior to VulkanUtilityLibraries
