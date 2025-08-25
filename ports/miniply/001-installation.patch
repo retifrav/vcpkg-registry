@@ -1,0 +1,105 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bde25da..80edb43 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,20 +1,49 @@
+-cmake_minimum_required(VERSION 3.5)
++cmake_minimum_required(VERSION 3.22)
+ 
+-project(miniply LANGUAGES CXX)
++set(MINIPLY_VERSION "0.0.0" CACHE STRING "miniply version")
++
++project(miniply
++    LANGUAGES CXX
++    VERSION "${MINIPLY_VERSION}"
++)
+ 
+ set(CMAKE_CXX_STANDARD 11)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ 
+-include_directories(.)
++option(BUILD_TOOLS "Build tools" 0)
+ 
+-add_executable(miniply-perf
+-  miniply.cpp
+-  miniply.h
+-  extra/miniply-perf.cpp
+-)
++add_library(${PROJECT_NAME})
+ 
+-add_executable(miniply-info
+-  miniply.cpp
+-  miniply.h
+-  extra/miniply-info.cpp
++target_sources(${PROJECT_NAME}
++    PRIVATE
++        miniply.cpp
++)
++target_include_directories(${PROJECT_NAME}
++    PRIVATE
++        # where the library itself will look for its internal headers
++        ${CMAKE_CURRENT_SOURCE_DIR}/include
++    PUBLIC
++        # where top-level project will look for the library's public headers
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
++        # where external projects will look for the library's public headers
++        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+ )
++set(public_headers include/miniply/miniply.h)
++
++if(BUILD_TOOLS)
++    add_executable(miniply-perf)
++    target_sources(miniply-perf PRIVATE extra/miniply-perf.cpp)
++    target_link_libraries(miniply-perf PRIVATE ${PROJECT_NAME})
++
++    add_executable(miniply-info)
++    target_sources(miniply-info PRIVATE extra/miniply-info.cpp)
++    target_link_libraries(miniply-info PRIVATE ${PROJECT_NAME})
++
++    install(TARGETS miniply-perf miniply-info
++        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++        CONFIGURATIONS Release
++    )
++endif()
++
++set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
+diff --git a/extra/miniply-info.cpp b/extra/miniply-info.cpp
+index 043fb51..11ebfe2 100644
+--- a/extra/miniply-info.cpp
++++ b/extra/miniply-info.cpp
+@@ -1,5 +1,5 @@
+ // Copyright 2019 Vilya Harvey
+-#include "miniply.h"
++#include <miniply/miniply.h>
+ 
+ #include <cstdio>
+ #include <cstring>
+diff --git a/extra/miniply-perf.cpp b/extra/miniply-perf.cpp
+index 70175a4..e81709e 100644
+--- a/extra/miniply-perf.cpp
++++ b/extra/miniply-perf.cpp
+@@ -1,5 +1,5 @@
+ // Copyright 2019 Vilya Harvey
+-#include "miniply.h"
++#include <miniply/miniply.h>
+ 
+ #include <chrono>
+ #include <cstdio>
+diff --git a/miniply.h b/include/miniply/miniply.h
+similarity index 100%
+rename from miniply.h
+rename to include/miniply/miniply.h
+diff --git a/miniply.cpp b/miniply.cpp
+index f2f9b39..41ceb14 100644
+--- a/miniply.cpp
++++ b/miniply.cpp
+@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
+ 
+-#include "miniply.h"
++#include <miniply/miniply.h>
+ 
+ #include <cassert>
+ #include <cctype>

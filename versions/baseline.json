@@ -231,6 +231,11 @@
             "baseline": "24.0.7",
             "port-version": 0
         },
+        "miniply":
+        {
+            "baseline": "2022.9.15",
+            "port-version": 0
+        },
         "miniupnpc":
         {
             "baseline": "2.2.5",
