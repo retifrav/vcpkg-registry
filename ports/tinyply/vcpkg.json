@@ -1,0 +1,22 @@
+{
+    "name": "tinyply",
+    "version": "2025.6.22",
+    "description": "PLY 3D mesh format importer and exporter",
+    "homepage": "https://github.com/ddiakopoulos/tinyply",
+    "license": null,
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ]
+}
