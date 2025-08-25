@@ -40,9 +40,18 @@ index 150b0129..f6817158 100644
      )
  endif()
 diff --git a/glslang/CMakeLists.txt b/glslang/CMakeLists.txt
-index eb1dc68e..e83095c8 100644
+index eb1dc68e..9d905a08 100644
 --- a/glslang/CMakeLists.txt
 +++ b/glslang/CMakeLists.txt
+@@ -197,7 +197,7 @@ if(ENABLE_SPIRV)
+ endif()
+ 
+ # Link pthread
+-if(UNIX OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia" OR ANDROID)
++if((UNIX OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia" OR ANDROID) AND NOT APPLE) # NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"
+     set(THREADS_PREFER_PTHREAD_FLAG ON)
+     find_package(Threads REQUIRED)
+     target_link_libraries(glslang Threads::Threads)
 @@ -260,11 +260,9 @@ if(GLSLANG_ENABLE_INSTALL)
          Public/ResourceLimits.h
          Public/ShaderLang.h

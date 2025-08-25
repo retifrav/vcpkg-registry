@@ -13,7 +13,15 @@ vcpkg_add_to_path("${PYTHON_PATH}")
 # this is not in vcpkg_check_features() because on iOS executables will require BUNDLE DESTINATION,
 # so that will fail, and on WASM tools are not built(?), so they will fail to copy with vcpkg_copy_tools()
 set(BUILD_BINARIES 0)
-if("tools" IN_LIST FEATURES AND NOT VCPKG_TARGET_IS_IOS AND NOT VCPKG_TARGET_IS_EMSCRIPTEN)
+if(
+    "tools" IN_LIST FEATURES
+    AND
+    NOT VCPKG_TARGET_IS_IOS
+    AND
+    NOT VCPKG_TARGET_IS_ANDROID
+    AND
+    NOT VCPKG_TARGET_IS_EMSCRIPTEN
+)
     set(BUILD_BINARIES 1)
 endif()
 
