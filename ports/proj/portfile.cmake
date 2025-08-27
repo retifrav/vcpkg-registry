@@ -1,16 +1,15 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:OSGeo/PROJ.git
-    REF 7cd00d0b2ca594315acd6c76912df39be4607094
+    REF 7c3d4a1fa9c1d5a3941b5eaee7c8d149f5936f54
     PATCHES
-        001-dependencies-discovery.patch
-        002-installation.patch
+        001-dependencies-and-installation.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        tiff ENABLE_TIFF
         curl ENABLE_CURL
+        tiff ENABLE_TIFF
 )
 
 find_program(SQLITE_TOOL
@@ -19,6 +18,12 @@ find_program(SQLITE_TOOL
     NO_DEFAULT_PATH
     REQUIRED
 )
+
+set(PROJ_EMBED_RESOURCE_FILES 0)
+if("embed-resource-files" IN_LIST FEATURES)
+    set(PROJ_EMBED_RESOURCE_FILES 1)
+endif()
+
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
@@ -30,6 +35,7 @@ vcpkg_cmake_configure(
         -DBUILD_TESTING=0
         -DBUILD_APPS=0
         -DINSTALL_LEGACY_CMAKE_FILES=0
+        -DEMBED_RESOURCE_FILES=${PROJ_EMBED_RESOURCE_FILES}
 )
 
 vcpkg_cmake_install()

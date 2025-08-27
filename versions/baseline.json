@@ -293,7 +293,7 @@
         },
         "proj":
         {
-            "baseline": "9.4.0",
+            "baseline": "9.6.2",
             "port-version": 0
         },
         "pybind11":

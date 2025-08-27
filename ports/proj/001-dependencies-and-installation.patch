@@ -1,8 +1,17 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 3fa3ec68..3902c7ec 100644
+index 20826ba3..cf2eebbc 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -167,7 +167,7 @@ set_property(CACHE NLOHMANN_JSON_ORIGIN PROPERTY STRINGS auto internal external)
+@@ -9,7 +9,7 @@
+ ################################################################################
+ # General settings
+ ################################################################################
+-cmake_minimum_required(VERSION 3.16)
++cmake_minimum_required(VERSION 3.22)
+ 
+ project(PROJ
+   DESCRIPTION "PROJ coordinate transformation software library"
+@@ -176,7 +176,7 @@ set_property(CACHE NLOHMANN_JSON_ORIGIN PROPERTY STRINGS auto internal external)
  set(MIN_NLOHMANN_JSON_VERSION 3.7.0)
  
  if(NLOHMANN_JSON_ORIGIN STREQUAL "external")
@@ -11,15 +20,12 @@ index 3fa3ec68..3902c7ec 100644
    set(NLOHMANN_JSON "external")
  elseif(NLOHMANN_JSON_ORIGIN STREQUAL "internal")
    set(NLOHMANN_JSON "internal")
-@@ -212,11 +212,14 @@ if(DEFINED SQLITE3_LIBRARY)
+@@ -221,11 +221,11 @@ if(DEFINED SQLITE3_LIBRARY)
    set(SQLite3_LIBRARY ${SQLITE3_LIBRARY})
  endif()
  
 -find_package(SQLite3 REQUIRED)
 +find_package(SQLite3 CONFIG REQUIRED)
-+#if(NOT SQLITE3_FOUND) # it is REQUIRED
-+#  message(SEND_ERROR "sqlite3 dependency not found!")
-+#endif()
  
  # Would build and run with older versions, but with horrible performance
  # See https://github.com/OSGeo/PROJ/issues/1718
@@ -28,55 +34,107 @@ index 3fa3ec68..3902c7ec 100644
    message(SEND_ERROR "SQLite3 >= 3.11 required!")
  endif()
  
-@@ -228,13 +231,13 @@ option(ENABLE_TIFF "Enable TIFF support to read some grids" ON)
+@@ -237,13 +237,8 @@ option(ENABLE_TIFF "Enable TIFF support to read some grids" ON)
  mark_as_advanced(ENABLE_TIFF)
  set(TIFF_ENABLED FALSE)
  if(ENABLE_TIFF)
 -  find_package(TIFF REQUIRED)
 -  if(TIFF_FOUND)
-+  find_package(tiff CONFIG REQUIRED)
-+  # if(TIFF_FOUND) # it is REQUIRED
-     set(TIFF_ENABLED TRUE)
+-    set(TIFF_ENABLED TRUE)
 -  else()
 -    message(SEND_ERROR
 -      "libtiff dependency not found! Use ENABLE_TIFF=OFF to force it off")
 -  endif()
-+  # else()
-+  #   message(SEND_ERROR
-+  #     "libtiff dependency not found! Use ENABLE_TIFF=OFF to force it off")
-+  # endif()
++  find_package(tiff CONFIG REQUIRED)
++  set(TIFF_ENABLED TRUE)
  else()
    message(WARNING
      "TIFF support is not enabled and will result in the inability to read "
-@@ -248,8 +251,8 @@ endif()
+@@ -257,19 +252,8 @@ endif()
  option(ENABLE_CURL "Enable Curl support" ON)
  set(CURL_ENABLED FALSE)
  if(ENABLE_CURL)
 -  find_package(CURL REQUIRED)
 -  if(CURL_FOUND)
-+  find_package(curl CONFIG REQUIRED)
-+  # if(CURL_FOUND) # it is REQUIRED
-     set(CURL_ENABLED TRUE)
- 
-     # Curl SSL options are described in
-@@ -258,9 +261,9 @@ if(ENABLE_CURL)
-     #set(SSL_OPTIONS ${CURLSSLOPT_NO_REVOKE})
-     #add_compile_definitions(SSL_OPTIONS=${SSL_OPTIONS})
- 
+-    set(CURL_ENABLED TRUE)
+-
+-    # Curl SSL options are described in
+-    #   https://curl.se/libcurl/c/CURLOPT_SSL_OPTIONS.html
+-    #set(CURLSSLOPT_NO_REVOKE 2)
+-    #set(SSL_OPTIONS ${CURLSSLOPT_NO_REVOKE})
+-    #add_compile_definitions(SSL_OPTIONS=${SSL_OPTIONS})
+-
 -  else()
 -    message(SEND_ERROR "curl dependency not found!")
 -  endif()
-+  # else()
-+  #   message(SEND_ERROR "curl dependency not found!")
-+  # endif()
++  find_package(curl CONFIG REQUIRED)
++  set(CURL_ENABLED TRUE)
  endif()
  
  ################################################################################
+@@ -305,7 +289,7 @@ endif()
+ if(MSVC OR CMAKE_CONFIGURATION_TYPES)
+   # For multi-config systems and for Visual Studio, the debug version of
+   # the library has _d appended.
+-  set(CMAKE_DEBUG_POSTFIX _d)
++  set(CMAKE_DEBUG_POSTFIX d)
+ endif()
+ 
+ # Put the libraries and binaries that get built into directories at the
+@@ -335,7 +319,9 @@ include(GNUInstallDirs)
+ 
+ set(PROJECT_NAME "${PROJECT_NAME_ORIGINAL}")
+ 
+-set(PROJ_DATA_PATH "${CMAKE_INSTALL_FULL_DATADIR}/proj")
++if(NOT DEFINED PROJ_DATA_PATH)
++    set(PROJ_DATA_PATH "${CMAKE_INSTALL_FULL_DATADIR}/proj")
++endif()
+ 
+ ################################################################################
+ # Tests
+@@ -415,7 +401,7 @@ include_directories(${PROJ_SOURCE_DIR}/src)
+ add_subdirectory(data)
+ add_subdirectory(include)
+ add_subdirectory(src)
+-add_subdirectory(man)
++#add_subdirectory(man)
+ add_subdirectory(cmake)
+ if(BUILD_TESTING)
+   add_subdirectory(test)
+@@ -428,9 +414,9 @@ endif()
+ 
+ add_subdirectory(scripts)
+ 
+-set(docfiles COPYING NEWS.md AUTHORS.md)
+-install(FILES ${docfiles}
+-        DESTINATION ${CMAKE_INSTALL_DOCDIR})
++#set(docfiles COPYING NEWS.md AUTHORS.md)
++#install(FILES ${docfiles}
++#        DESTINATION ${CMAKE_INSTALL_DOCDIR})
+ 
+ ################################################################################
+ # Build debug symbols
+@@ -458,11 +444,11 @@ endif()
+ ################################################################################
+ # pkg-config support
+ ################################################################################
+-configure_proj_pc()
++#configure_proj_pc()
+ 
+-install(FILES
+-  ${CMAKE_CURRENT_BINARY_DIR}/proj.pc
+-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
++#install(FILES
++#  ${CMAKE_CURRENT_BINARY_DIR}/proj.pc
++#  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+ 
+ ################################################################################
+ # "make dist" workalike
 diff --git a/cmake/project-config.cmake.in b/cmake/project-config.cmake.in
-index 0ca48aaa..d57838a0 100644
+index 0ca48aaa..399172a5 100644
 --- a/cmake/project-config.cmake.in
 +++ b/cmake/project-config.cmake.in
-@@ -27,23 +27,23 @@ if("@CURL_ENABLED@")
+@@ -27,23 +27,15 @@ if("@CURL_ENABLED@")
  endif()
  cmake_policy(POP)
  
@@ -91,8 +149,7 @@ index 0ca48aaa..d57838a0 100644
  if(DEFINED PROJ_CONFIG_FIND_CURL_DEP)
    # Chainload CURL usage requirements
 -  find_dependency(CURL)
-+  find_dependency(curl CONFIG REQUIRED)
-   # Target CURL::libcurl only defined since CMake 3.12
+-  # Target CURL::libcurl only defined since CMake 3.12
 -  if(NOT TARGET CURL::libcurl)
 -      add_library(CURL::libcurl INTERFACE IMPORTED)
 -      set_target_properties(CURL::libcurl PROPERTIES
@@ -100,18 +157,36 @@ index 0ca48aaa..d57838a0 100644
 -        INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
 -      )
 -  endif()
-+  # if(NOT TARGET CURL::libcurl)
-+  #     add_library(CURL::libcurl INTERFACE IMPORTED)
-+  #     set_target_properties(CURL::libcurl PROPERTIES
-+  #       INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
-+  #       INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
-+  #     )
-+  # endif()
++  find_dependency(curl CONFIG REQUIRED)
  endif()
  
  function(set_variable_from_rel_or_absolute_path var root rel_or_abs_path)
+@@ -65,15 +57,15 @@ set_variable_from_rel_or_absolute_path("@PROJECT_VARIANT_NAME@_BINARY_DIRS" "${_
+ set (@PROJECT_VARIANT_NAME@_LIBRARIES @PROJECT_VARIANT_NAME@::proj)
+ # Read in the exported definition of the library
+ include ("${_DIR}/@PROJECT_NAME_LOWER@-targets.cmake")
+-if (@INSTALL_LEGACY_CMAKE_FILES@)
+-  include ("${_DIR}/@PROJECT_LEGACY_LOWER@-targets.cmake")
+-endif()
++#if (@INSTALL_LEGACY_CMAKE_FILES@)
++#  include ("${_DIR}/@PROJECT_LEGACY_LOWER@-targets.cmake")
++#endif()
+ 
+ unset (_ROOT)
+ unset (_DIR)
+ 
+-if ("@PROJECT_VARIANT_NAME@" STREQUAL "PROJ4")
+-  # For backward compatibility with old releases of libgeotiff
+-  set (@PROJECT_VARIANT_NAME@_INCLUDE_DIR
+-    ${@PROJECT_VARIANT_NAME@_INCLUDE_DIRS})
+-endif ()
++#if ("@PROJECT_VARIANT_NAME@" STREQUAL "PROJ4")
++#  # For backward compatibility with old releases of libgeotiff
++#  set (@PROJECT_VARIANT_NAME@_INCLUDE_DIR
++#    ${@PROJECT_VARIANT_NAME@_INCLUDE_DIRS})
++#endif ()
 diff --git a/src/grids.cpp b/src/grids.cpp
-index d61e85b4..eb1aab56 100644
+index ca426d24..729a14d1 100644
 --- a/src/grids.cpp
 +++ b/src/grids.cpp
 @@ -38,7 +38,7 @@
@@ -124,7 +199,7 @@ index d61e85b4..eb1aab56 100644
  
  #include <algorithm>
 diff --git a/src/iso19111/factory.cpp b/src/iso19111/factory.cpp
-index 5b4bfc4e..ac3cdc13 100644
+index f1ad1ca9..d12ae915 100644
 --- a/src/iso19111/factory.cpp
 +++ b/src/iso19111/factory.cpp
 @@ -74,7 +74,7 @@
@@ -134,8 +209,8 @@ index 5b4bfc4e..ac3cdc13 100644
 -#include <sqlite3.h>
 +#include <sqlite3/sqlite3.h>
  
- // Custom SQLite VFS as our database is not supposed to be modified in
- // parallel. This is slightly faster
+ #ifdef EMBED_RESOURCE_FILES
+ #include "embedded_resources.h"
 diff --git a/src/iso19111/internal.cpp b/src/iso19111/internal.cpp
 index c6ba11c7..728ec300 100644
 --- a/src/iso19111/internal.cpp
@@ -150,10 +225,10 @@ index c6ba11c7..728ec300 100644
  NS_PROJ_START
  
 diff --git a/src/lib_proj.cmake b/src/lib_proj.cmake
-index 8e3b88a6..fc11fc4e 100644
+index 5753d319..c37f6da5 100644
 --- a/src/lib_proj.cmake
 +++ b/src/lib_proj.cmake
-@@ -462,7 +462,7 @@ if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+@@ -591,7 +591,7 @@ if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
    target_link_libraries(proj PRIVATE ${CMAKE_THREAD_LIBS_INIT})
  endif()
  
@@ -162,7 +237,7 @@ index 8e3b88a6..fc11fc4e 100644
  
  if(NLOHMANN_JSON STREQUAL "external")
    target_compile_definitions(proj PRIVATE EXTERNAL_NLOHMANN_JSON)
-@@ -472,12 +472,12 @@ endif()
+@@ -601,12 +601,12 @@ endif()
  
  if(TIFF_ENABLED)
    target_compile_definitions(proj PRIVATE -DTIFF_ENABLED)
@@ -173,15 +248,50 @@ index 8e3b88a6..fc11fc4e 100644
  if(CURL_ENABLED)
    target_compile_definitions(proj PRIVATE -DCURL_ENABLED)
 -  target_link_libraries(proj PRIVATE CURL::libcurl)
-+  target_link_libraries(proj PRIVATE CURL::curl)
++  target_link_libraries(proj PRIVATE curl)
    target_link_libraries(proj
      PRIVATE
        $<$<CXX_COMPILER_ID:MSVC>:ws2_32>
+@@ -636,7 +636,7 @@ install(TARGETS proj
+ 
+ if(NOT BUILD_FRAMEWORKS_AND_BUNDLE)
+   install(FILES ${ALL_LIBPROJ_HEADERS}
+-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/proj)
+ endif()
+ 
+ ##############################################
+diff --git a/src/memvfs.c b/src/memvfs.c
+index acb89d7d..1b010874 100644
+--- a/src/memvfs.c
++++ b/src/memvfs.c
+@@ -36,7 +36,7 @@
+ ** then it defaults to the sz= value.  Parameter values can be in either
+ ** decimal or hexadecimal.  The filename in the URI is ignored.
+ */
+-#include <sqlite3.h>
++#include <sqlite3/sqlite3.h>
+ 
+ #include <assert.h>
+ #include <stdint.h>
+diff --git a/src/memvfs.h b/src/memvfs.h
+index f8d7e412..1c7c62dd 100644
+--- a/src/memvfs.h
++++ b/src/memvfs.h
+@@ -1,7 +1,7 @@
+ #ifndef MEMVFS_H
+ #define MEMVFS_H
+ 
+-#include <sqlite3.h>
++#include <sqlite3/sqlite3.h>
+ 
+ #ifdef __cplusplus
+ extern "C" {
 diff --git a/src/networkfilemanager.cpp b/src/networkfilemanager.cpp
-index bec611f6..e6c647fa 100644
+index 2da6e465..e9b280d7 100644
 --- a/src/networkfilemanager.cpp
 +++ b/src/networkfilemanager.cpp
-@@ -51,7 +51,7 @@
+@@ -52,7 +52,7 @@
  
  #ifdef CURL_ENABLED
  #include <curl/curl.h>
@@ -204,7 +314,7 @@ index a6052225..95edd48f 100644
  #include <string.h>
  #define CPLAssert(x)                                                           \
 diff --git a/src/sqlite3_utils.hpp b/src/sqlite3_utils.hpp
-index 42ec33af..8359e426 100644
+index e592e760..f3e8ad33 100644
 --- a/src/sqlite3_utils.hpp
 +++ b/src/sqlite3_utils.hpp
 @@ -30,7 +30,7 @@
@@ -217,20 +327,20 @@ index 42ec33af..8359e426 100644
  #include "proj.h"
  #include "proj/util.hpp"
 diff --git a/test/unit/CMakeLists.txt b/test/unit/CMakeLists.txt
-index 1205b82f..bbf82ef5 100644
+index 09d0c5ef..5ddd248b 100644
 --- a/test/unit/CMakeLists.txt
 +++ b/test/unit/CMakeLists.txt
-@@ -169,7 +169,7 @@ add_executable(test_network
+@@ -213,7 +213,7 @@ add_executable(test_network
    test_network.cpp)
  if(CURL_ENABLED)
    target_compile_definitions(test_network PRIVATE -DCURL_ENABLED)
 -  target_link_libraries(test_network PRIVATE CURL::libcurl)
-+  target_link_libraries(test_network PRIVATE CURL::curl)
++  target_link_libraries(test_network PRIVATE curl)
  endif()
  target_link_libraries(test_network
    PRIVATE GTest::gtest
 diff --git a/test/unit/test_c_api.cpp b/test/unit/test_c_api.cpp
-index efa5c2db..5396ecc2 100644
+index f7d7bf39..9d95a318 100644
 --- a/test/unit/test_c_api.cpp
 +++ b/test/unit/test_c_api.cpp
 @@ -45,7 +45,7 @@
@@ -243,7 +353,7 @@ index efa5c2db..5396ecc2 100644
  #if !defined(_WIN32)
  #include <sys/resource.h>
 diff --git a/test/unit/test_factory.cpp b/test/unit/test_factory.cpp
-index 8f885425..7a7277a9 100644
+index bb4bda1b..dc7df3ed 100644
 --- a/test/unit/test_factory.cpp
 +++ b/test/unit/test_factory.cpp
 @@ -42,7 +42,7 @@
@@ -256,12 +366,12 @@ index 8f885425..7a7277a9 100644
  #ifdef _MSC_VER
  #include <stdio.h>
 diff --git a/test/unit/test_network.cpp b/test/unit/test_network.cpp
-index e5a3946f..1c61de16 100644
+index 538790ae..47303ab3 100644
 --- a/test/unit/test_network.cpp
 +++ b/test/unit/test_network.cpp
-@@ -35,7 +35,7 @@
- #include "proj_internal.h"
- #include <proj.h>
+@@ -41,7 +41,7 @@
+ 
+ #include "proj/internal/io_internal.hpp"
  
 -#include <sqlite3.h>
 +#include <sqlite3/sqlite3.h>
