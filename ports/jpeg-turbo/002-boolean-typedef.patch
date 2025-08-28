@@ -1,13 +1,13 @@
-diff --git a/jconfig.h.in b/jconfig.h.in
-index 6cb82962..312084b8 100644
---- a/jconfig.h.in
-+++ b/jconfig.h.in
+diff --git a/src/jconfig.h.in b/src/jconfig.h.in
+index 6cb82962..df809bfb 100644
+--- a/src/jconfig.h.in
++++ b/src/jconfig.h.in
 @@ -57,4 +57,8 @@ typedef signed int INT32;
     unsigned. */
  #cmakedefine RIGHT_SHIFT_IS_UNSIGNED 1
  
 +// other platforms need this too, at the very least Emscripten does
-+typedef unsigned char boolean;
-+#define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
++//typedef unsigned char boolean;
++//#define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
 +
  #endif

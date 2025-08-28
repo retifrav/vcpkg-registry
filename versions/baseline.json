@@ -188,8 +188,8 @@
         },
         "jpeg-turbo":
         {
-            "baseline": "3.0.3",
-            "port-version": 1
+            "baseline": "3.1.1",
+            "port-version": 0
         },
         "json-c":
         {

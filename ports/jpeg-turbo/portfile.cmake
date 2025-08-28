@@ -1,6 +1,6 @@
 # even though it can build a shared library and seems to export symbols for DLL,
-# apparently not all the symbols are exported, as projects fail to find some
-# when linking dynamically
+# apparently not all the symbols are exported, as projects fail
+# to find some when linking dynamically
 if(VCPKG_TARGET_IS_WINDOWS)
     vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 endif()
@@ -12,9 +12,9 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:libjpeg-turbo/libjpeg-turbo.git
-    REF 7fa4b5b762c9a99b46b0b7838f5fd55071b92ea5
+    REF 7723f50f3f66b9da74376e6d8badb6162464212c
     PATCHES
-        001-single-target-and-architecture.patch
+        001-disabled-tools-docs-single-architecture-and-installation.patch
         002-boolean-typedef.patch
 )
 
