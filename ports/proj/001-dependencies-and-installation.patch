@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 20826ba3..cf2eebbc 100644
+index 20826ba3..c24ba3c8 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -9,7 +9,7 @@
@@ -81,10 +81,23 @@ index 20826ba3..cf2eebbc 100644
  endif()
  
  # Put the libraries and binaries that get built into directories at the
-@@ -335,7 +319,9 @@ include(GNUInstallDirs)
+@@ -322,20 +306,11 @@ link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+ ################################################################################
+ include(ProjInstallPath)
  
- set(PROJECT_NAME "${PROJECT_NAME_ORIGINAL}")
+-# By default GNUInstallDirs will use the upper case project name
+-# for CMAKE_INSTALL_DOCDIR, resulting in something like share/doc/PROJ
+-# instead of share/doc/proj which historically have been the path used
+-# by the project.
+-# Here force the use of a lower case project name and reset after
+-# GNUInstallDirs has done its thing
+-set(PROJECT_NAME_ORIGINAL "${PROJECT_NAME}")
+-string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME)
+-
+ include(GNUInstallDirs)
  
+-set(PROJECT_NAME "${PROJECT_NAME_ORIGINAL}")
+-
 -set(PROJ_DATA_PATH "${CMAKE_INSTALL_FULL_DATADIR}/proj")
 +if(NOT DEFINED PROJ_DATA_PATH)
 +    set(PROJ_DATA_PATH "${CMAKE_INSTALL_FULL_DATADIR}/proj")
@@ -92,7 +105,7 @@ index 20826ba3..cf2eebbc 100644
  
  ################################################################################
  # Tests
-@@ -415,7 +401,7 @@ include_directories(${PROJ_SOURCE_DIR}/src)
+@@ -415,7 +390,7 @@ include_directories(${PROJ_SOURCE_DIR}/src)
  add_subdirectory(data)
  add_subdirectory(include)
  add_subdirectory(src)
@@ -101,7 +114,7 @@ index 20826ba3..cf2eebbc 100644
  add_subdirectory(cmake)
  if(BUILD_TESTING)
    add_subdirectory(test)
-@@ -428,9 +414,9 @@ endif()
+@@ -428,9 +403,9 @@ endif()
  
  add_subdirectory(scripts)
  
@@ -114,7 +127,7 @@ index 20826ba3..cf2eebbc 100644
  
  ################################################################################
  # Build debug symbols
-@@ -458,11 +444,11 @@ endif()
+@@ -458,11 +433,11 @@ endif()
  ################################################################################
  # pkg-config support
  ################################################################################
