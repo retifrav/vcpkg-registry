@@ -1,12 +1,12 @@
 diff --git a/libgeotiff/CMakeLists.txt b/libgeotiff/CMakeLists.txt
-index 4862f86..0ea42e1 100644
+index 0216ead..caa1e58 100644
 --- a/libgeotiff/CMakeLists.txt
 +++ b/libgeotiff/CMakeLists.txt
 @@ -5,14 +5,14 @@
  # Author: Mateusz Loskot <mateusz@loskot.net>
  #
  ###############################################################################
--CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
+-CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
 +CMAKE_MINIMUM_REQUIRED(VERSION 3.22)
  
 -PROJECT(GeoTIFF)
@@ -14,77 +14,75 @@ index 4862f86..0ea42e1 100644
  
  include(GNUInstallDirs)
  
- SET(GEOTIFF_LIB_NAME geotiff)
+-SET(GEOTIFF_LIB_NAME geotiff)
 -SET(GEOTIFF_LIBRARY_TARGET geotiff_library)
++SET(GEOTIFF_LIB_NAME ${PROJECT_NAME})
 +SET(GEOTIFF_LIBRARY_TARGET ${GEOTIFF_LIB_NAME})
  
  ##############################################################################
  # CMake settings
-@@ -45,8 +45,6 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
- ###############################################################################
- # General build settings
- 
--option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
--
- IF(NOT CMAKE_BUILD_TYPE)
-     SET(CMAKE_BUILD_TYPE Debug CACHE STRING
-         "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel"
-@@ -108,88 +106,29 @@ CHECK_INCLUDE_FILES(strings.h GEOTIFF_HAVE_STRINGS_H)
- ###############################################################################
- # User-defined build settings
- 
--SET(WITH_UTILITIES TRUE CACHE BOOL "Choose if GeoTIFF utilities should be built")
--
+@@ -102,14 +102,10 @@ endif (MSVC)
  ###############################################################################
  # Search for dependencies
  
- INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
- INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/libxtiff)
- 
--# TIFF support - required, default=ON
--SET(WITH_TIFF TRUE CACHE BOOL "Choose if TIFF support should be built")
-+option(WITH_JPEG "Choose if JPEG support should be built" 0)
-+option(WITH_ZLIB "Choose if zlib support should be built" 0)
-+option(WITH_UTILITIES "Choose if GeoTIFF utilities should be built" 0)
+-
+ # TIFF support - required, default=ON
+ option(WITH_TIFF "Choose if TIFF support should be built" ON)
  
 -FIND_PACKAGE(PROJ NO_MODULE QUIET)
 -if (NOT PROJ_FOUND)
--    FIND_PACKAGE(PROJ)
+-  FIND_PACKAGE(PROJ REQUIRED)
 -endif ()
 +find_package(PROJ CONFIG REQUIRED)
-+find_package(tiff CONFIG REQUIRED)
  
--IF(PROJ_FOUND)
--    INCLUDE_DIRECTORIES(${PROJ_INCLUDE_DIR})
--ELSE()
--    MESSAGE(FATAL_ERROR "Failed to detect PROJ >= 6")
-+IF(WITH_JPEG)
-+    FIND_PACKAGE(jpeg-turbo CONFIG REQUIRED)
-+    ADD_DEFINITIONS(-DHAVE_JPEG=1)
- ENDIF()
+ # Zlib support - optional, default=OFF
+ option(WITH_ZLIB "Choose if zlib support should be built" OFF)
+@@ -117,7 +113,6 @@ option(WITH_ZLIB "Choose if zlib support should be built" OFF)
+ # JPEG support - optional, default=OFF
+ option(WITH_JPEG  "Choose if JPEG support should be built" OFF)
  
--# Zlib support - optional, default=OFF
--SET(WITH_ZLIB FALSE CACHE BOOL "Choose if zlib support should be built")
 -
- IF(WITH_ZLIB)
--    FIND_PACKAGE(ZLIB NO_MODULE QUIET)
--    if (NOT ZLIB_FOUND)
--      FIND_PACKAGE(ZLIB)
--    endif ()
--
--    IF(ZLIB_FOUND)
--        SET(HAVE_ZIP 1)
--        INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
--        ADD_DEFINITIONS(-DHAVE_ZIP=${HAVE_ZIP})
--    ENDIF()
-+    FIND_PACKAGE(zlib CONFIG REQUIRED)
-+    ADD_DEFINITIONS(-DHAVE_ZIP=1)
- ENDIF()
+ # Turn off TOWGS84 support
+ option(WITH_TOWGS84 "Build with TOWGS84 support" ON)
+ IF (NOT WITH_TOWGS84)
+@@ -135,7 +130,6 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
  
--# JPEG support - optional, default=OFF
--SET(WITH_JPEG FALSE CACHE BOOL "Choose if JPEG support should be built")
+ MESSAGE(STATUS "Generating geo_config.h header - done")
+ 
 -
--IF(WITH_JPEG)
+ ###############################################################################
+ # Installation settings
+ 
+@@ -181,10 +175,6 @@ if(BUILD_MAN)
+   INSTALL(FILES ${GEOTIFF_MAN_PAGES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+ endif ()
+ 
+-# Install header files for development distribution
+-INSTALL(FILES ${GEOTIFF_LIB_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+-
+-
+ ###############################################################################
+ # Build libgeotiff library
+ 
+@@ -206,11 +196,11 @@ SET(GEOTIFF_LIB_SOURCES
+ 
+ SET(XTIFF_SOURCES libxtiff/xtiff.c)
+ 
+-if (MSVC OR CMAKE_CONFIGURATION_TYPES)
++#if (MSVC OR CMAKE_CONFIGURATION_TYPES)
+   # For multi-config systems and for Visual Studio, the debug versions
+   # of the libraries have a _d suffix.
+-  set (CMAKE_DEBUG_POSTFIX _d)
+-endif ()
++  set (CMAKE_DEBUG_POSTFIX d)
++#endif ()
+ 
+ ADD_LIBRARY(${GEOTIFF_LIBRARY_TARGET}
+     ${GEOTIFF_LIB_SOURCES} ${XTIFF_SOURCES})
+@@ -221,63 +211,26 @@ set_property(TARGET ${GEOTIFF_LIBRARY_TARGET} PROPERTY POSITION_INDEPENDENT_CODE
+ set_property(TARGET ${GEOTIFF_LIBRARY_TARGET} PROPERTY OUTPUT_NAME ${GEOTIFF_LIB_NAME})
+ 
+ IF(WITH_JPEG)
 -    FIND_PACKAGE(JPEG NO_MODULE QUIET)
 -    if (NOT JPEG_FOUND)
 -      FIND_PACKAGE(JPEG)
@@ -92,12 +90,16 @@ index 4862f86..0ea42e1 100644
 -
 -    IF(JPEG_FOUND)
 -        SET(HAVE_JPEG 1)
--        INCLUDE_DIRECTORIES(${JPEG_INCLUDE_DIR})
--        ADD_DEFINITIONS(-DHAVE_JPEG=${HAVE_JPEG})
+-        TARGET_INCLUDE_DIRECTORIES(${GEOTIFF_LIBRARY_TARGET} PRIVATE ${JPEG_INCLUDE_DIR})
+-        target_compile_definitions(${GEOTIFF_LIBRARY_TARGET} PRIVATE -DHAVE_JPEG=${HAVE_JPEG})
 -    ENDIF()
--ENDIF()
++    find_package(jpeg-turbo CONFIG REQUIRED)
++    set(HAVE_JPEG 1)
++    target_compile_definitions(${GEOTIFF_LIBRARY_TARGET} PRIVATE -DHAVE_JPEG=${HAVE_JPEG})
+ ENDIF()
+ 
 -
--IF(WITH_TIFF)
+ IF(WITH_TIFF)
 -    FIND_PACKAGE(TIFF NO_MODULE QUIET)
 -    if (NOT TIFF_FOUND)
 -      FIND_PACKAGE(TIFF REQUIRED)
@@ -120,60 +122,41 @@ index 4862f86..0ea42e1 100644
 -            MESSAGE(FATAL_ERROR "Failed to link with libtiff - TIFFMergeFieldInfo function not found. libtiff 3.6.0 Beta or later required. Please upgrade or use an older version of libgeotiff")
 -        ENDIF()
 -
--        INCLUDE_DIRECTORIES(${TIFF_INCLUDE_DIR})
--        ADD_DEFINITIONS(-DHAVE_TIFF=1)
+-        TARGET_INCLUDE_DIRECTORIES(${GEOTIFF_LIBRARY_TARGET} PRIVATE ${TIFF_INCLUDE_DIR})
+-        TARGET_COMPILE_DEFINITIONS(${GEOTIFF_LIBRARY_TARGET} PRIVATE -DHAVE_TIFF=1)
 -    ENDIF(TIFF_FOUND)
 -ENDIF(WITH_TIFF)
--
- # Turn off TOWGS84 support
- SET(WITH_TOWGS84 TRUE CACHE BOOL "Build with TOWGS84 support")
- IF (NOT WITH_TOWGS84)
-@@ -243,18 +182,6 @@ SET(GEOTIFF_MAN_PAGES
++    find_package(tiff CONFIG REQUIRED)
++    target_compile_definitions(${GEOTIFF_LIBRARY_TARGET} PRIVATE -DHAVE_TIFF=1)
++ENDIF()
  
- #    ${PROJECT_BINARY_DIR}/geotiff_version.h
+ IF(WITH_ZLIB)
+-    FIND_PACKAGE(ZLIB REQUIRED )
+-    IF(ZLIB_FOUND)
+-        SET(HAVE_ZIP 1)
+-        TARGET_INCLUDE_DIRECTORIES(${GEOTIFF_LIBRARY_TARGET} PRIVATE ${ZLIB_INCLUDE_DIR})
+-        TARGET_COMPILE_DEFINITIONS(${GEOTIFF_LIBRARY_TARGET} PRIVATE -DHAVE_ZIP=${HAVE_ZIP})
+-    ENDIF()
++    find_package(zlib CONFIG REQUIRED)
++    SET(HAVE_ZIP 1)
++    target_compile_definitions(${GEOTIFF_LIBRARY_TARGET} PRIVATE -DHAVE_ZIP=${HAVE_ZIP})
+ ENDIF()
  
--# Install doc files
--INSTALL(FILES
--    AUTHORS ChangeLog COPYING LICENSE README README_BIN README.WIN
--    DESTINATION ${CMAKE_INSTALL_DOCDIR})
--
--# Install man pages
--INSTALL(FILES ${GEOTIFF_MAN_PAGES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
--
--
--# Install header files for development distribution
--INSTALL(FILES ${GEOTIFF_LIB_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
--
- ###############################################################################
- # Build libxtiff library
- 
-@@ -281,19 +208,15 @@ SET(GEOTIFF_LIB_SOURCES
- 
- SET(XTIFF_SOURCES libxtiff/xtiff.c)
- 
--if (MSVC OR CMAKE_CONFIGURATION_TYPES)
-+#if (MSVC OR CMAKE_CONFIGURATION_TYPES)
-   # For multi-config systems and for Visual Studio, the debug versions
-   # of the libraries have a _d suffix.
--  set (CMAKE_DEBUG_POSTFIX _d)
--endif ()
-+  set(CMAKE_DEBUG_POSTFIX d)
-+#endif ()
- 
- ADD_LIBRARY(${GEOTIFF_LIBRARY_TARGET}
-     ${GEOTIFF_LIB_SOURCES} ${XTIFF_SOURCES})
- 
+ TARGET_INCLUDE_DIRECTORIES(${GEOTIFF_LIBRARY_TARGET} PUBLIC
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/>
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/libxtiff>
+                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 -IF(WIN32 AND MSVC)
--    SET_TARGET_PROPERTIES(${GEOTIFF_LIBRARY_TARGET} PROPERTIES IMPORT_SUFFIX "_i.lib")
+-    SET_TARGET_PROPERTIES(${GEOTIFF_LIBRARY_TARGET} PROPERTIES IMPORT_SUFFIX "${INTERFACE_LIB_PREFIX}.lib")
 -ENDIF(WIN32 AND MSVC)
--
+ 
  # Unix, linux:
  if(UNIX)
-    SET_TARGET_PROPERTIES(
-@@ -313,54 +236,49 @@ endif()
- SET_TARGET_PROPERTIES(${GEOTIFF_LIBRARY_TARGET} PROPERTIES
-    OUTPUT_NAME ${GEOTIFF_LIB_NAME})
+@@ -320,68 +273,54 @@ IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+     ENDIF()
+ ENDIF()
  
+-
 -set(CONFIG_PUBLIC_DEPENDENCIES "")
 -set(CONFIG_PRIVATE_DEPENDENCIES "")
 -if(TARGET TIFF::TIFF)
@@ -185,15 +168,31 @@ index 4862f86..0ea42e1 100644
 -
 -if(TARGET PROJ::proj)
 -    set(PROJ_LIBRARIES PROJ::proj)
--    string(APPEND CONFIG_PRIVATE_DEPENDENCIES "  find_dependency(PROJ CONFIG)\n")
+-    string(APPEND CONFIG_PRIVATE_DEPENDENCIES "  find_dependency(PROJ)\n")
 -endif()
--target_link_libraries(${GEOTIFF_LIBRARY_TARGET} PRIVATE
--    ${PROJ_LIBRARIES})
 -
--target_include_directories(
--  ${GEOTIFF_LIBRARY_TARGET}
--  PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
--         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+-if(TARGET ZLIB::zlib)
+-    set(ZLIB_LIBRARIES ZLIB::zlib)
+-    string(APPEND CONFIG_PRIVATE_DEPENDENCIES "  find_dependency(ZLIB)\n")
++target_link_libraries(${GEOTIFF_LIBRARY_TARGET}
++    PRIVATE
++        PROJ::proj
++)
++if(WITH_TIFF)
++    target_link_libraries(${GEOTIFF_LIBRARY_TARGET}
++        PRIVATE
++            TIFF::tiff
++    )
+ endif()
+ 
+-target_link_libraries(${GEOTIFF_LIBRARY_TARGET} PRIVATE
+-                      ${PROJ_LIBRARIES}
+-                      ${TIFF_LIBRARIES}
+-                      ${ZLIB_LIBRARIES})
+-
+-target_include_directories( ${GEOTIFF_LIBRARY_TARGET} PUBLIC
+-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 -
 -INSTALL( TARGETS ${GEOTIFF_LIBRARY_TARGET}
 -     EXPORT depends
@@ -201,6 +200,12 @@ index 4862f86..0ea42e1 100644
 -     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 -     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 -     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+-
+-IF (MSVC)
+-IF (BUILD_SHARED_LIBS)
+-    INSTALL(FILES $<TARGET_PDB_FILE:${GEOTIFF_LIBRARY_TARGET}> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+-ENDIF (BUILD_SHARED_LIBS)
+-ENDIF (MSVC)
 -
 -# Install libgeotiff.pc
 -set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -222,12 +227,6 @@ index 4862f86..0ea42e1 100644
 -INSTALL(
 -    FILES ${CMAKE_CURRENT_BINARY_DIR}/libgeotiff.pc
 -    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-+target_link_libraries(${GEOTIFF_LIBRARY_TARGET}
-+    PRIVATE
-+        TIFF::tiff
-+        PROJ::proj
-+)
-+
 +target_include_directories(${GEOTIFF_LIBRARY_TARGET}
 +    PRIVATE
 +        ${CMAKE_CURRENT_SOURCE_DIR}
@@ -268,25 +267,47 @@ index 4862f86..0ea42e1 100644
  
  # Define grouping of source files in PROJECT file (e.g. Visual Studio)
  SOURCE_GROUP("CMake Files" FILES CMakeLists.txt)
-@@ -374,4 +292,3 @@ IF(WITH_UTILITIES)
+@@ -395,8 +334,6 @@ IF(WITH_UTILITIES)
      ADD_SUBDIRECTORY(bin)
  ENDIF()
  
 -ADD_SUBDIRECTORY(cmake)
+-
+ message(STATUS "
+ ################################
+ Summary of build options:
 diff --git a/libgeotiff/bin/CMakeLists.txt b/libgeotiff/bin/CMakeLists.txt
-index c61585c..07b2127 100644
+index 87957b1..18821c5 100644
 --- a/libgeotiff/bin/CMakeLists.txt
 +++ b/libgeotiff/bin/CMakeLists.txt
-@@ -30,8 +30,15 @@ TARGET_LINK_LIBRARIES(geotifcp
+@@ -23,14 +23,33 @@ MESSAGE(STATUS "Adding GeoTIFF utilities to build")
+ FOREACH(utility ${GEOTIFF_UTILITIES})
+     ADD_EXECUTABLE(${utility} ${utility}.c ${GETOPT_SOURCE})
+     TARGET_LINK_LIBRARIES(${utility} PRIVATE ${GEOTIFF_LIBRARY_TARGET})
++    if(WITH_TIFF)
++        target_link_libraries(${utility}
++            PRIVATE
++                TIFF::tiff
++        )
++    endif()
+ ENDFOREACH()
+ 
+ ADD_EXECUTABLE(geotifcp geotifcp.c ${GETOPT_SOURCE})
+ TARGET_LINK_LIBRARIES(geotifcp
      PRIVATE
-     xtiff
      ${GEOTIFF_LIBRARY_TARGET}
 -    ${JPEG_LIBRARIES}
 -    ${ZLIB_LIBRARIES})
 +)
++if(WITH_TIFF)
++    target_link_libraries(geotifcp
++        PRIVATE
++            TIFF::tiff
++    )
++endif()
 +
 +if(WITH_JPEG)
-+    target_link_libraries(geotifcp PRIVATE jpeg-turbo::jpeg-static)
++    target_link_libraries(geotifcp PRIVATE jpeg-turbo::turbojpeg)
 +endif()
 +
 +if(WITH_ZLIB)
@@ -294,6 +315,19 @@ index c61585c..07b2127 100644
 +endif()
  
  SET(GEOTIFF_UTILITIES ${GEOTIFF_UTILITIES} geotifcp )
+ 
+diff --git a/libgeotiff/bin/listgeo.c b/libgeotiff/bin/listgeo.c
+index 6e68616..38d2621 100644
+--- a/libgeotiff/bin/listgeo.c
++++ b/libgeotiff/bin/listgeo.c
+@@ -11,7 +11,7 @@
+ #include "geo_normalize.h"
+ #include "geo_simpletags.h"
+ #include "geovalues.h"
+-#include "tiffio.h"
++#include <tiff/tiffio.h>
+ #include "cpl_serv.h"
+ #include <stdio.h>
  
 diff --git a/libgeotiff/geo_free.c b/libgeotiff/geo_free.c
 index 0edf557..80c0f8d 100644
@@ -335,7 +369,7 @@ index c7e148d..757cbbb 100644
  static const KeyInfo _formatInfo[] =  {
     {TYPE_BYTE,    "Byte"},
 diff --git a/libgeotiff/geo_normalize.c b/libgeotiff/geo_normalize.c
-index 1151746..58af8a7 100644
+index f16b67b..ca16a38 100644
 --- a/libgeotiff/geo_normalize.c
 +++ b/libgeotiff/geo_normalize.c
 @@ -39,7 +39,7 @@
@@ -348,10 +382,10 @@ index 1151746..58af8a7 100644
  #ifndef KvUserDefined
  #  define KvUserDefined 32767
 diff --git a/libgeotiff/geotiff_proj4.c b/libgeotiff/geotiff_proj4.c
-index 9d25a7c..386bca1 100644
+index 2cb3bd8..11ce944 100644
 --- a/libgeotiff/geotiff_proj4.c
 +++ b/libgeotiff/geotiff_proj4.c
-@@ -38,7 +38,7 @@
+@@ -21,7 +21,7 @@
  #include "geo_normalize.h"
  #include "geovalues.h"
  #include "geo_tiffp.h"
@@ -360,16 +394,6 @@ index 9d25a7c..386bca1 100644
  
  /************************************************************************/
  /*                    GTIFProj4AppendEllipsoid()                        */
-diff --git a/libgeotiff/libxtiff/CMakeLists.txt b/libgeotiff/libxtiff/CMakeLists.txt
-index 747313c..9e15c80 100644
---- a/libgeotiff/libxtiff/CMakeLists.txt
-+++ b/libgeotiff/libxtiff/CMakeLists.txt
-@@ -7,3 +7,5 @@
- ###############################################################################
- 
- ADD_LIBRARY(xtiff STATIC xtiff.c)
-+
-+target_link_libraries(xtiff PRIVATE TIFF::tiff)
 diff --git a/libgeotiff/libxtiff/xtiffio.h b/libgeotiff/libxtiff/xtiffio.h
 index cb09435..0f3ee82 100644
 --- a/libgeotiff/libxtiff/xtiffio.h

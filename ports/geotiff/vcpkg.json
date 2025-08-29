@@ -1,6 +1,6 @@
 {
     "name": "geotiff",
-    "version": "1.7.3",
+    "version": "1.7.4",
     "description": "TIFF-based interchange format for georeferenced raster imagery",
     "homepage": "https://github.com/OSGeo/libgeotiff",
     "license": "MIT",
