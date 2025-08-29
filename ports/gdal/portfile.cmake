@@ -1,9 +1,24 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:OSGeo/gdal.git
-    REF 9b7a7c8ffa7b7aff696974c432d4254a809b3efe
+    REF 20be66345f7dd2d8e368684abb22b0f6355e8cf0
     PATCHES
         001-dependencies-and-installation.patch
+)
+
+# should make a port for this one too
+file(RENAME
+    "${SOURCE_PATH}/frmts/zlib/contrib/infback9"
+    "${SOURCE_PATH}/frmts/infback9"
+)
+# do not vendor 3rd-party dependencies
+file(REMOVE_RECURSE
+    "${SOURCE_PATH}/frmts/gtiff/libgeotiff"
+    "${SOURCE_PATH}/frmts/gtiff/libtiff"
+    "${SOURCE_PATH}/frmts/jpeg/libjpeg"
+    "${SOURCE_PATH}/frmts/png/libpng"
+    "${SOURCE_PATH}/frmts/zlib"
+    "${SOURCE_PATH}/ogr/ogrsf_frmts/geojson/libjson"
 )
 
 # vcpkg_find_acquire_program(PYTHON3)
@@ -34,6 +49,7 @@ vcpkg_cmake_configure(
         -DGDAL_BUILD_OPTIONAL_DRIVERS=0
         -DGDAL_ENABLE_DRIVER_JPEG=1
         -DGDAL_ENABLE_DRIVER_PNG=1
+        -DGDAL_ENABLE_DRIVER_VRT=0
         -DGDAL_ENABLE_PLUGINS=0
         -DGDAL_ENABLE_PLUGINS_NO_DEPS=0
         -DGDAL_USE_ARCHIVE=0
@@ -81,7 +97,6 @@ vcpkg_cmake_configure(
         -DGDAL_USE_LIBLZMA=0
         -DGDAL_USE_LIBQB3=0
         -DGDAL_USE_LIBXML2=0
-        -DGDAL_USE_LURATECH=0
         -DGDAL_USE_LZ4=0
         -DGDAL_USE_MONGOCXX=0
         -DGDAL_USE_MRSID=0
@@ -91,10 +106,8 @@ vcpkg_cmake_configure(
         -DGDAL_USE_NETCDF=0
         -DGDAL_USE_ODBC=0
         -DGDAL_USE_ODBCCPP=0
-        -DGDAL_USE_OGDI=0
         -DGDAL_USE_OPENCAD=0
         -DGDAL_USE_OPENCAD_INTERNAL=0
-        -DGDAL_USE_OPENCL=0
         -DGDAL_USE_OPENDRIVE=0
         -DGDAL_USE_OPENEXR=0
         -DGDAL_USE_OPENJPEG=0
@@ -111,7 +124,6 @@ vcpkg_cmake_configure(
         -DGDAL_USE_QHULL=0
         -DGDAL_USE_QHULL_INTERNAL=0
         -DGDAL_USE_RASTERLITE2=0
-        -DGDAL_USE_RDB=0
         -DGDAL_USE_SFCGAL=0
         -DGDAL_USE_SHAPELIB=0
         -DGDAL_USE_SHAPELIB_INTERNAL=0
@@ -147,8 +159,4 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/share"
 )
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE.TXT"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.TXT")
