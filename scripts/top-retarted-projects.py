@@ -2,10 +2,9 @@ import logging
 from datetime import datetime
 import pathlib
 import argparse
-import json
 import sys
 
-from typing import List, Dict, Optional, Any
+from typing import List, Dict
 
 loggingLevel: int = logging.INFO
 loggingFormat: str = "[%(levelname)s] %(message)s"
