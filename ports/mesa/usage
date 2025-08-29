@@ -1,6 +1,6 @@
 To use Mesa components in your project (with SpirvToDxil as an example):
 
-    find_package(SpirvToDxil REQUIRED) # no CONFIG here, obviously
+    find_package(SpirvToDxil REQUIRED) # no CONFIG here, unfortunately
     target_include_directories(main
         PRIVATE
             ${SpirvToDxil_INCLUDE_DIR}
