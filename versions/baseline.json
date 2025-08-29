@@ -226,6 +226,11 @@
             "baseline": "25.0.0",
             "port-version": 0
         },
+        "mach-siegbert-vogt-dxcsa":
+        {
+            "baseline": "2025.2.26",
+            "port-version": 0
+        },
         "mesa":
         {
             "baseline": "24.0.7",

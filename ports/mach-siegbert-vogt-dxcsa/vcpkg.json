@@ -1,0 +1,22 @@
+{
+    "name": "mach-siegbert-vogt-dxcsa",
+    "version": "2025.2.26",
+    "description": "Mach Siegbert Vogt DX Code Signing Algorithm on a DXIL binary file / container blob",
+    "homepage": "https://github.com/hexops/DirectXShaderCompiler/blob/main/tools/clang/tools/dxcompiler/MachSiegbertVogtDXCSA.h",
+    "license": null,
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ]
+}
