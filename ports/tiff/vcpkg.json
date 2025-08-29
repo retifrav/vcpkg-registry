@@ -3,6 +3,7 @@
     "version": "4.7.0",
     "description": "Tag Image File Format (TIFF), a widely used format for storing image data",
     "homepage": "http://libtiff.org/",
+    "license": "libtiff",
     "dependencies":
     [
         {
@@ -25,14 +26,6 @@
         {
             "description": "Build C++ libtiffxx library",
             "supports": "!arm"
-        },
-        "lzma":
-        {
-            "description": "Enable LZMA2 compression",
-            "dependencies":
-            [
-                "lzma"
-            ]
         },
         "zip":
         {
