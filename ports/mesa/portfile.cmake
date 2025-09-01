@@ -194,7 +194,19 @@ if("spirv-to-dxil" IN_LIST FEATURES)
         DESTINATION "${CURRENT_PACKAGES_DIR}/share/${SpirvToDxil_PACKAGE_NAME}"
     )
 
-    vcpkg_copy_tools(TOOL_NAMES spirv2dxil AUTO_CLEAN)
+    if("tools" IN_LIST FEATURES)
+        vcpkg_copy_tools(TOOL_NAMES spirv2dxil AUTO_CLEAN)
+    else()
+        # should also patch-in an option for not building it in the first place,
+        # but it's Meson, so probably better not patch it too often
+        #
+        # also, that's probably not the best place to remove tools,
+        # because other Mesa components might have tools as well
+        file(REMOVE_RECURSE
+            "${CURRENT_PACKAGES_DIR}/bin"
+            "${CURRENT_PACKAGES_DIR}/debug/bin"
+        )
+    endif()
 endif()
 
 file(

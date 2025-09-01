@@ -19,9 +19,7 @@
     ],
     "default-features":
     [
-        "opengl",
-        "spirv-to-dxil",
-        "zstd"
+        "spirv-to-dxil"
     ],
     "features":
     {
@@ -64,6 +62,10 @@
         "spirv-to-dxil":
         {
             "description": "Build spirv-to-dxil library"
+        },
+        "tools":
+        {
+            "description": "Build tools"
         },
         "zstd":
         {
