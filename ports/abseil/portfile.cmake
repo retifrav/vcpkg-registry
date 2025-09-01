@@ -8,12 +8,16 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:abseil/abseil-cpp.git
-    REF 4447c7562e3bc702ade25105912dce503f0c4010
+    REF 76bb24329e8bf5f39704eb10d21b9a80befa7c81
+    PATCHES
+        001-proper-version.patch
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
+        -DABSEIL_VERSION="${VERSION}"
+        -DCMAKE_CXX_STANDARD=17 # could be an optional feature, but probably better have it by default
         -DABSL_PROPAGATE_CXX_STD=1
         -DBUILD_TESTING=0
 )

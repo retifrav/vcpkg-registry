@@ -3,7 +3,7 @@
     {
         "abseil":
         {
-            "baseline": "2024.8.1",
+            "baseline": "2025.6.17",
             "port-version": 0
         },
         "alsa":
