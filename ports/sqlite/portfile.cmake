@@ -95,18 +95,27 @@ endif()
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 if("in-memory-vfs" IN_LIST FEATURES)
+    set(MEMVFS_FILE "memvfs.c")
     # it isn't available in amalgamated source package, is it
     vcpkg_download_distfile(
-        MEMVFS_C
+        MEMVFS_FILE_DOWNLOADED
         URLS
             # the hash doesn't seem to have anything to do with the version commit hash,
             # it just doesn't change if there were no changes in the file, so there is no point
             # in making it a variable
-            "https://sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=memvfs.c"
-            "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/memvfs.c"
-        FILENAME "memvfs.c"
+            "https://sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=${MEMVFS_FILE}"
+            "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/${MEMVFS_FILE}"
+        FILENAME "${MEMVFS_FILE}"
         SHA512 e47757db92a4dfb0ad305d19175ef300fc9b86467605d34ed2133e2f80320a4b98f4f519359fd7ab0f3cbeef8958aad45fede63641c54b77aa8ad4d950fdae4c
     )
+    if(VCPKG_TARGET_IS_WINDOWS)
+        message(
+            STATUS
+                "[WARNING] If you intend to compile ${MEMVFS_FILE} source file as a part of your project, "
+                "then you should be aware that for making a DLL it expects `sqlite3_EXPORTS` compile definition "
+                "to be set"
+        )
+    endif()
     # in general, this is needed for being able to serialize an SQLite database file
     # and then load it from VFS (virtual file system), which might be needed in cases
     # when database file cannot be loaded from local file system, such as in web-applications
@@ -115,8 +124,13 @@ if("in-memory-vfs" IN_LIST FEATURES)
     # might need to come up with a better(?) way of compiling this source file
     # in the consuming project, perhaps it should be built together with SQLite sources?
     file(
-        INSTALL "${MEMVFS_C}"
+        INSTALL "${MEMVFS_FILE_DOWNLOADED}"
         DESTINATION "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
+    )
+    vcpkg_execute_required_process(
+        COMMAND patch "${MEMVFS_FILE}" "${CMAKE_CURRENT_LIST_DIR}/001-dll-definitions.patch"
+        WORKING_DIRECTORY "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
+        LOGNAME git-patching-memvfs
     )
 endif()
 

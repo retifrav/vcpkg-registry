@@ -1,0 +1,27 @@
+546,548c546,561
+<   
+< #ifdef _WIN32
+< __declspec(dllexport)
+---
+> #ifdef sqlite3_EXPORTS // CMake sets that when BUILD_SHARED_LIBS=1, however if some other project will build this source file, then the definition would need to be set explicitly (or renamed)
+>     #ifdef _MSC_VER // what about Clang and MinGW?
+>         // export on compiling the DLL (when building)
+>         #define DLLEXPORT __declspec(dllexport)
+>     #endif
+> // cannot apply the __declspec(dllimport) keyword to implement functions
+> // https://learn.microsoft.com/en-us/troubleshoot/developer/visualstudio/cpp/language-compilers/c2491-define-data-member-dllimport
+> // #else
+> //     #ifdef _MSC_VER // what about Clang and MinGW?
+> //         // import on using the created DLL (when using in projects)
+> //         #define DLLEXPORT __declspec(dllimport)
+> //     #endif
+> #endif
+> 
+> #ifndef DLLEXPORT
+>     #define DLLEXPORT // so it doesn't fail being undefined
+549a563
+>   
+554c568
+< int sqlite3_memvfs_init(
+---
+> DLLEXPORT int sqlite3_memvfs_init(
