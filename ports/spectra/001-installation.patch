@@ -1,0 +1,66 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 211ba8a..c2afcae 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,9 @@
+-cmake_minimum_required (VERSION 3.5 FATAL_ERROR)
+-project (Spectra VERSION 0.9.0 LANGUAGES CXX)
++cmake_minimum_required (VERSION 3.22)
+ 
+-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)  # make CMake look into the ./cmake/ folder for configuration files
++project(Spectra
++    VERSION 0.9.0
++    LANGUAGES CXX
++)
+ 
+ option(ENABLE_COVERAGE_BUILD "Do a coverage build" OFF)
+ if(ENABLE_COVERAGE_BUILD)
+@@ -20,7 +22,7 @@ include(FeatureSummary) # More verbose Output for libraries using set_package_pr
+ 
+ # Look for supporting libraries
+ # -----------------------------
+-find_package(Eigen3 NO_MODULE REQUIRED)
++find_package(Eigen3 CONFIG REQUIRED)
+ set_package_properties(Eigen3 PROPERTIES TYPE REQUIRED PURPOSE "C++ vector data structures")
+ message(STATUS "Found Eigen3 Version: ${Eigen3_VERSION} Path: ${Eigen3_DIR}")
+ 
+@@ -50,7 +52,6 @@ include(GNUInstallDirs)
+ 
+ install(TARGETS Spectra
+     EXPORT Spectra-targets
+-	INCLUDES DESTINATION include
+ )
+ 
+ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include)
+@@ -85,14 +86,5 @@ install(
+     DESTINATION cmake
+ )
+ 
+-find_package(CLANG_FORMAT 7.0.1)
+-if(CLANG_FORMAT_FOUND)
+-    file(GLOB_RECURSE FORMAT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+-  add_custom_target(format
+-    COMMAND ${CLANG_FORMAT_EXECUTABLE} -i -style=file ${FORMAT_SOURCES}
+-    DEPENDS ${FORMAT_SOURCES})
+-endif()
+-
+-
+ # Print out summary of all detected packages
+ feature_summary(INCLUDE_QUIET_PACKAGES WHAT ALL)
+diff --git a/cmake/spectra-config.cmake.in b/cmake/spectra-config.cmake.in
+index 002eb96..c025aff 100644
+--- a/cmake/spectra-config.cmake.in
++++ b/cmake/spectra-config.cmake.in
+@@ -1,5 +1,9 @@
+ @PACKAGE_INIT@
+ 
+-if(NOT TARGET Spectra::Spectra)
+-  include(${CMAKE_CURRENT_LIST_DIR}/Spectra-targets.cmake)
+-endif()
++include(CMakeFindDependencyMacro)
++
++find_dependency(Eigen3 REQUIRED)
++
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
++
++check_required_components(@PROJECT_NAME@)
