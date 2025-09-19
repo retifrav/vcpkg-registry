@@ -1,0 +1,82 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9b437c4..6c10fd8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,10 @@
+-cmake_minimum_required(VERSION 3.10)
+-project(pmc VERSION 1.0.0)
++cmake_minimum_required(VERSION 3.22)
++
++project(pmc VERSION 2025.1.28)
++
++set(CMAKE_CXX_STANDARD 11)
++
++option(PMC_BUILD_EXECUTABLE "Build the tool" 0)
+ 
+ set(PMC_SOURCE_FILES
+         ${CMAKE_CURRENT_SOURCE_DIR}/pmc_heu.cpp
+@@ -12,12 +17,9 @@ set(PMC_SOURCE_FILES
+         ${CMAKE_CURRENT_SOURCE_DIR}/pmc_clique_utils.cpp
+         )
+ 
+-option(PMC_BUILD_SHARED "Build pmc as a shared library (.so)" ON)
+-if (PMC_BUILD_SHARED)
+-        add_library(pmc SHARED ${PMC_SOURCE_FILES})
+-else()
+-        add_library(pmc STATIC ${PMC_SOURCE_FILES})
+-endif()
++file(GLOB public_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/pmc/*.h")
++
++add_library(pmc ${PMC_SOURCE_FILES})
+ 
+ target_include_directories(pmc PUBLIC
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+@@ -25,36 +27,20 @@ target_include_directories(pmc PUBLIC
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+         )
+ 
+-add_executable(pmc_main pmc_driver.cpp)
+-target_link_libraries(pmc_main pmc)
++set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
+ 
++# on Mac OS you'll probably need to:
++# ```
++# $ brew install libomp
++# $ export OpenMP_ROOT=$(brew --prefix)/opt/libomp
++# ```
+ find_package(OpenMP REQUIRED)
+ target_link_libraries(pmc OpenMP::OpenMP_CXX)
+-target_link_libraries(pmc_main OpenMP::OpenMP_CXX)
+-
+-# Installation
+-include(GNUInstallDirs)
+ 
+-install(TARGETS pmc
+-        EXPORT pmc-export
+-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-        )
+-
+-export(
+-        EXPORT pmc-export
+-        FILE ${CMAKE_CURRENT_BINARY_DIR}/pmcTargets.cmake
+-        NAMESPACE pmc::
+-)
+-
+-install(EXPORT pmc-export
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/pmc
+-        NAMESPACE pmc::
+-        FILE pmcTargets.cmake
+-        )
+-
+-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++if(PMC_BUILD_EXECUTABLE)
++    add_executable(pmc_main pmc_driver.cpp)
++    target_link_libraries(pmc_main pmc OpenMP::OpenMP_CXX)
++endif()
+ 
+-install(FILES cmake/pmcConfig.cmake
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/pmc
+-        )
++set(PROJECT_NAMESPACE_FOR_PACKAGE "pmc")
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
