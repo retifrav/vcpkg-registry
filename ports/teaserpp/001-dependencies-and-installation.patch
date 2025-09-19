@@ -1,0 +1,235 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2a9c194..c4a9c63 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,6 @@
+-cmake_minimum_required(VERSION 3.10)
+-project(teaserpp VERSION 1.0.0)
++cmake_minimum_required(VERSION 3.22)
++
++project(teaserpp VERSION 2024.5.18)
+ 
+ set(CMAKE_CXX_STANDARD 14)
+ 
+@@ -34,17 +35,12 @@ endif ()
+ 
+ # Find dependencies
+ # Eigen3
+-find_package(Eigen3 3.2 QUIET REQUIRED NO_MODULE)
++find_package(Eigen3 CONFIG REQUIRED)
+ if (ENABLE_MKL)
+-    find_package(MKL)
+-    if (MKL_FOUND)
+-        message(STATUS "MKL found at: ${MKL_LIBRARIES}")
+-        include_directories(${MKL_INCLUDE_DIR})
+-        add_definitions(-DEIGEN_USE_MKL_ALL)
+-        list(APPEND TEASERPP_BLAS_LAPACK_LIBS ${MKL_LIBRARIES})
+-    else ()
+-        message(STATUS "MKL not found.")
+-    endif ()
++    find_package(MKL CONFIG REQUIRED)
++    add_definitions(-DEIGEN_USE_MKL_ALL)
++    # these need to be updated to actual targets from MKL CMake config (once it has one)
++    list(APPEND TEASERPP_BLAS_LAPACK_LIBS ${MKL_LIBRARIES})
+ endif ()
+ 
+ if (BUILD_TEASER_FPFH)
+@@ -73,46 +69,17 @@ if (BUILD_TEASER_FPFH)
+     endif()
+ endif ()
+ 
+-# googletest
+-configure_file(cmake/GoogleTest.CMakeLists.txt.in googletest-download/CMakeLists.txt)
+-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
+-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
+-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+-add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
+-        "${CMAKE_BINARY_DIR}/googletest-build" EXCLUDE_FROM_ALL)
+-
+-# pmc (Parallel Maximum Clique)
+-configure_file(cmake/pmc.CMakeLists.txt.in pmc-download/CMakeLists.txt)
+-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pmc-download")
+-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pmc-download")
+-add_subdirectory("${CMAKE_BINARY_DIR}/pmc-src"
+-        "${CMAKE_BINARY_DIR}/pmc-build")
+-
+-# tinyply
+-configure_file(cmake/tinyply.CMakeLists.txt.in tinyply-download/CMakeLists.txt)
+-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/tinyply-download")
+-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/tinyply-download")
+-add_subdirectory("${CMAKE_BINARY_DIR}/tinyply-src"
+-        "${CMAKE_BINARY_DIR}/tinyply-build")
+-target_include_directories(tinyply PUBLIC
+-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/tinyply-src/source>)
+-
+-# spectra
+-configure_file(cmake/spectra.CMakeLists.txt.in spectra-download/CMakeLists.txt)
+-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/spectra-download")
+-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/spectra-download")
+-set(SPECTRA_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/spectra-src/include")
++if(BUILD_TESTS)
++    # get googletest
++    # ...
++endif()
++
++find_package(pmc CONFIG REQUIRED)
++find_package(tinyply CONFIG REQUIRED)
++find_package(spectra CONFIG REQUIRED)
+ 
+ # Building Targets
+-set(TEASERPP_ROOT ${CMAKE_CURRENT_LIST_DIR})
++
+ add_subdirectory(teaser)
+ 
+ if (BUILD_TESTS)
+@@ -130,24 +97,18 @@ if (BUILD_MATLAB_BINDINGS)
+ endif ()
+ 
+ if (BUILD_PYTHON_BINDINGS)
++    # that is not how it should be done
+     set(PYBIND11_PYTHON_VERSION ${TEASERPP_PYTHON_VERSION})
+ 
+-    # download the pybind11 repo
+-    configure_file(cmake/pybind11.CMakeLists.txt.in pybind11-download/CMakeLists.txt)
+-    execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pybind11-download")
+-    execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pybind11-download")
+-    add_subdirectory("${CMAKE_BINARY_DIR}/pybind11-src"
+-            "${CMAKE_BINARY_DIR}/pybind11-build")
++    # get pybind
++    # ...
+ 
+-    message(STATUS "TEASER++ Python binding will be built.")
+     add_subdirectory(python)
+ endif ()
+ 
+ # export targets
+-export(TARGETS ${TEASERPP_EXPORTED_TARGETS} FILE teaserpp-exports.cmake)
++# export(TARGETS ${TEASERPP_EXPORTED_TARGETS} FILE teaserpp-exports.cmake)
+ 
+-install(FILES cmake/teaserppConfig.cmake
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
+-        )
++# install(FILES cmake/teaserppConfig.cmake
++#         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
++#         )
+diff --git a/teaser/CMakeLists.txt b/teaser/CMakeLists.txt
+index 89e9209..da6b851 100644
+--- a/teaser/CMakeLists.txt
++++ b/teaser/CMakeLists.txt
+@@ -2,8 +2,8 @@ project(teaser_source)
+ include(GNUInstallDirs)
+ 
+ # teaser_io library
+-add_library(teaser_io SHARED src/ply_io.cc)
+-target_link_libraries(teaser_io PRIVATE tinyply)
++add_library(teaser_io src/ply_io.cc)
++target_link_libraries(teaser_io PRIVATE tinyply)
+ target_include_directories(teaser_io PUBLIC
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+@@ -18,25 +18,33 @@ list(APPEND TEASERPP_EXPORTED_TARGETS teaser_io tinyply)
+ add_library(teaserpp::teaser_io ALIAS teaser_io)
+ 
+ # teaser_registration library
+-add_library(teaser_registration SHARED
++add_library(teaser_registration
+         src/certification.cc
+         src/registration.cc
+         src/graph.cc
+         )
+ target_link_libraries(teaser_registration
+-        PUBLIC Eigen3::Eigen
+-        PRIVATE pmc ${TEASERPP_BLAS_LAPACK_LIBS}
++        PUBLIC
++            Eigen3::Eigen
++        PRIVATE
++            pmc::pmc
++            ${TEASERPP_BLAS_LAPACK_LIBS}
++            Spectra::Spectra
+         )
+ target_include_directories(teaser_registration PUBLIC
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+-        $<BUILD_INTERFACE:${SPECTRA_INCLUDE_DIRS}>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+ 
++# on Mac OS you'll probably need to:
++# ```
++# $ brew install libomp
++# $ export OpenMP_ROOT=$(brew --prefix)/opt/libomp
++# ```
+ find_package(OpenMP)
+ if(OpenMP_CXX_FOUND)
+     target_link_libraries(teaser_registration PUBLIC OpenMP::OpenMP_CXX)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
++    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") # not sure if this is needed
+ endif()
+ 
+ install(TARGETS teaser_registration
+@@ -44,13 +52,13 @@ install(TARGETS teaser_registration
+     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ )
+-list(APPEND TEASERPP_EXPORTED_TARGETS teaser_registration pmc)
++list(APPEND TEASERPP_EXPORTED_TARGETS teaser_registration)
+ add_library(teaserpp::teaser_registration ALIAS teaser_registration)
+ 
+ # teaser_features library
+ if (BUILD_TEASER_FPFH)
+     include_directories(${PCL_INCLUDE_DIRS})
+-    add_library(teaser_features SHARED
++    add_library(teaser_features
+             src/fpfh.cc
+             src/matcher.cc
+             )
+@@ -88,11 +96,25 @@ endif ()
+ set(TEASERPP_EXPORTED_TARGETS "${TEASERPP_EXPORTED_TARGETS}" PARENT_SCOPE)
+ 
+ # installation
+-install(EXPORT teaserpp-export 
++install(EXPORT teaserpp-export
+     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp
+     NAMESPACE teaserpp::
+     FILE teaserppTargets.cmake
+ )
+ 
+ install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+-install(DIRECTORY ${SPECTRA_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++
++include(CMakePackageConfigHelpers)
++
++# create config file
++configure_package_config_file(
++    "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
++    "${CMAKE_CURRENT_BINARY_DIR}/teaserppConfig.cmake"
++    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp"
++)
++
++# install config files
++install(FILES
++    "${CMAKE_CURRENT_BINARY_DIR}/teaserppConfig.cmake"
++    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/teaserpp"
++)
+diff --git a/teaser/src/ply_io.cc b/teaser/src/ply_io.cc
+index 8bbf406..b6fd5f5 100644
+--- a/teaser/src/ply_io.cc
++++ b/teaser/src/ply_io.cc
+@@ -13,7 +13,7 @@
+ #include <cstring>
+ 
+ #include "teaser/ply_io.h"
+-#include "tinyply.h"
++#include <tinyply/tinyply.h>
+ 
+ // Internal datatypes for storing ply vertices
+ struct float3 {

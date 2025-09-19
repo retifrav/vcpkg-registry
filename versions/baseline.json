@@ -391,6 +391,11 @@
             "baseline": "2024.2.13",
             "port-version": 0
         },
+        "teaserpp":
+        {
+            "baseline": "2024.5.18",
+            "port-version": 0
+        },
         "thingy":
         {
             "baseline": "0.9.1",

@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(OpenMP) # should probably be `REQUIRED`, but it isn't so in their project file
+find_dependency(pmc CONFIG REQUIRED) # also will look for OpenMP, and this time with `REQUIRED`
+find_dependency(tinyply CONFIG REQUIRED)
+find_dependency(spectra CONFIG REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/teaserppTargets.cmake")
+
+check_required_components(teaserpp)
