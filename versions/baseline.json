@@ -491,6 +491,11 @@
             "baseline": "0.8.2",
             "port-version": 0
         },
+        "xz":
+        {
+            "baseline": "5.8.1",
+            "port-version": 0
+        },
         "yoctopuce":
         {
             "baseline": "2.0.63744",

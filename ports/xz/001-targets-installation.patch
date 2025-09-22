@@ -1,0 +1,783 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 32506cdd..4de45451 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -77,7 +77,7 @@
+ #
+ #############################################################################
+ 
+-cmake_minimum_required(VERSION 3.20...3.31 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.22)
+ 
+ include(CMakePushCheckState)
+ include(CheckIncludeFile)
+@@ -129,6 +129,10 @@ endif()
+ # Among other things, this gives us variables xz_VERSION and xz_VERSION_MAJOR.
+ project(xz VERSION "${PACKAGE_VERSION_SHORT}" LANGUAGES C)
+ 
++option(BUILD_TOOLS "Build CLI tools" 0)
++
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
+ if(OVERRIDE_O3_IN_C_FLAGS_RELEASE)
+     # Looking at CMake's source, there aren't any _FLAGS_RELEASE_INIT
+     # entries where "-O3" would appear as part of some other option,
+@@ -470,7 +474,7 @@ endif()
+ # liblzma
+ #############################################################################
+ 
+-option(BUILD_SHARED_LIBS "Build liblzma as a shared library instead of static")
++option(BUILD_SHARED_LIBS "Build liblzma as a shared library instead of static" 0)
+ 
+ # Symbol versioning is supported with ELF shared libraries on certain OSes.
+ # First assume that symbol versioning isn't supported.
+@@ -559,24 +563,25 @@ symbol versioning (${SUPPORTED_SYMBOL_VERSIONING_VARIANTS})")
+ endif()
+ 
+ set(LIBLZMA_API_HEADERS
+-    src/liblzma/api/lzma.h
+-    src/liblzma/api/lzma/base.h
+-    src/liblzma/api/lzma/bcj.h
+-    src/liblzma/api/lzma/block.h
+-    src/liblzma/api/lzma/check.h
+-    src/liblzma/api/lzma/container.h
+-    src/liblzma/api/lzma/delta.h
+-    src/liblzma/api/lzma/filter.h
+-    src/liblzma/api/lzma/hardware.h
+-    src/liblzma/api/lzma/index.h
+-    src/liblzma/api/lzma/index_hash.h
+-    src/liblzma/api/lzma/lzma12.h
+-    src/liblzma/api/lzma/stream_flags.h
+-    src/liblzma/api/lzma/version.h
+-    src/liblzma/api/lzma/vli.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/base.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/bcj.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/block.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/check.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/container.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/delta.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/filter.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/hardware.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/index.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/index_hash.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/lzma12.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/stream_flags.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/version.h
++    ${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api/lzma/vli.h
+ )
+ 
+-add_library(liblzma
++set(LZMA_LIBRARY_NAME lzma)
++add_library(${LZMA_LIBRARY_NAME}
+     src/common/mythread.h
+     src/common/sysdefs.h
+     src/common/tuklib_common.h
+@@ -608,7 +613,7 @@ add_library(liblzma
+     src/liblzma/common/vli_size.c
+ )
+ 
+-target_include_directories(liblzma PRIVATE
++target_include_directories(${LZMA_LIBRARY_NAME} PRIVATE
+     src/liblzma/api
+     src/liblzma/common
+     src/liblzma/check
+@@ -688,7 +693,7 @@ if(XZ_THREADS)
+             # liblzma-config.cmake later.
+             set(USE_POSIX_THREADS ON)
+ 
+-            target_link_libraries(liblzma PRIVATE Threads::Threads)
++            target_link_libraries(${LZMA_LIBRARY_NAME} PRIVATE Threads::Threads)
+             add_compile_definitions(MYTHREAD_POSIX)
+ 
+             # Make the thread libs available in later checks. In practice
+@@ -711,7 +716,7 @@ if(XZ_THREADS)
+         message(SEND_ERROR "No supported threading library found")
+     endif()
+ 
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/common/tuklib_cpucores.c
+         src/common/tuklib_cpucores.h
+         src/liblzma/common/hardware_cputhreads.c
+@@ -749,17 +754,17 @@ foreach(CHECK IN LISTS XZ_CHECKS)
+ endforeach()
+ 
+ if(XZ_SMALL)
+-    target_sources(liblzma PRIVATE src/liblzma/check/crc32_small.c)
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/check/crc32_small.c)
+ else()
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/check/crc32_fast.c
+         src/liblzma/check/crc32_table_be.h
+         src/liblzma/check/crc32_table_le.h
+     )
+ 
+     if(XZ_ASM_I386)
+-        target_sources(liblzma PRIVATE src/liblzma/check/crc32_x86.S)
+-        target_compile_definitions(liblzma PRIVATE HAVE_CRC_X86_ASM)
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/check/crc32_x86.S)
++        target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE HAVE_CRC_X86_ASM)
+     endif()
+ endif()
+ 
+@@ -767,16 +772,16 @@ if("crc64" IN_LIST XZ_CHECKS)
+     add_compile_definitions("HAVE_CHECK_CRC64")
+ 
+     if(XZ_SMALL)
+-        target_sources(liblzma PRIVATE src/liblzma/check/crc64_small.c)
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/check/crc64_small.c)
+     else()
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/check/crc64_fast.c
+             src/liblzma/check/crc64_table_be.h
+             src/liblzma/check/crc64_table_le.h
+         )
+ 
+         if(XZ_ASM_I386)
+-            target_sources(liblzma PRIVATE src/liblzma/check/crc64_x86.S)
++            target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/check/crc64_x86.S)
+             # Adding #define HAVE_CRC_X86_ASM was already handled in
+             # the CRC32 case a few lines above. CRC32 is always built.
+         endif()
+@@ -820,7 +825,7 @@ if("sha256" IN_LIST XZ_CHECKS)
+             string(REGEX REPLACE "[/.]" "_" HAVE_X "${HAVE_X}")
+             check_include_file("${X}" "${HAVE_X}")
+             if(${HAVE_X})
+-                target_compile_definitions(liblzma PRIVATE "${HAVE_X}")
++                target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE "${HAVE_X}")
+                 set(SHA256_HEADER "${X}")
+                 break()
+             endif()
+@@ -846,7 +851,7 @@ if("sha256" IN_LIST XZ_CHECKS)
+                         }")
+                 check_c_source_compiles("${SOURCE}" "${HAVE_X}")
+                 if(${HAVE_X})
+-                    target_compile_definitions(liblzma PRIVATE "${HAVE_X}")
++                    target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE "${HAVE_X}")
+                     set(SHA256_TYPE "${X}")
+                     break()
+                 endif()
+@@ -873,7 +878,7 @@ if("sha256" IN_LIST XZ_CHECKS)
+ 
+                     check_c_source_compiles("${SOURCE}" "${HAVE_X}")
+                     if(${HAVE_X})
+-                        target_compile_definitions(liblzma PRIVATE "${HAVE_X}")
++                        target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE "${HAVE_X}")
+                         set(USE_INTERNAL_SHA256 OFF)
+                         break()
+                     else()
+@@ -884,9 +889,9 @@ if("sha256" IN_LIST XZ_CHECKS)
+                         list(POP_FRONT CMAKE_REQUIRED_LIBRARIES)
+                         if(${HAVE_X}_LIBMD)
+                             # NOTE: Just "${HAVE_X}", not "${HAVE_X}_LIBMD":
+-                            target_compile_definitions(liblzma PRIVATE
++                            target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE
+                                                        "${HAVE_X}")
+-                            target_link_libraries(liblzma PRIVATE md)
++                            target_link_libraries(${LZMA_LIBRARY_NAME} PRIVATE md)
+                             set(LIBS "-lmd ${LIBS}") # For liblzma.pc
+                             set(USE_INTERNAL_SHA256 OFF)
+                             break()
+@@ -898,7 +903,7 @@ if("sha256" IN_LIST XZ_CHECKS)
+     endif()
+ 
+     if(USE_INTERNAL_SHA256)
+-        target_sources(liblzma PRIVATE src/liblzma/check/sha256.c)
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/check/sha256.c)
+     endif()
+ endif()
+ 
+@@ -982,7 +987,7 @@ endforeach()
+ if(HAVE_ENCODERS)
+     add_compile_definitions(HAVE_ENCODERS)
+ 
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/common/alone_encoder.c
+         src/liblzma/common/block_buffer_encoder.c
+         src/liblzma/common/block_buffer_encoder.h
+@@ -1005,20 +1010,20 @@ if(HAVE_ENCODERS)
+     )
+ 
+     if(XZ_THREADS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/common/stream_encoder_mt.c
+         )
+     endif()
+ 
+     if(SIMPLE_ENCODERS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/simple/simple_encoder.c
+             src/liblzma/simple/simple_encoder.h
+         )
+     endif()
+ 
+     if("lzma1" IN_LIST XZ_ENCODERS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/lzma/lzma_encoder.c
+             src/liblzma/lzma/lzma_encoder.h
+             src/liblzma/lzma/lzma_encoder_optimum_fast.c
+@@ -1036,12 +1041,12 @@ if(HAVE_ENCODERS)
+         )
+ 
+         if(NOT XZ_SMALL)
+-            target_sources(liblzma PRIVATE src/liblzma/lzma/fastpos_table.c)
++            target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/lzma/fastpos_table.c)
+         endif()
+     endif()
+ 
+     if("lzma2" IN_LIST XZ_ENCODERS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/lzma/lzma2_encoder.c
+             src/liblzma/lzma/lzma2_encoder.h
+         )
+@@ -1049,7 +1054,7 @@ if(HAVE_ENCODERS)
+ 
+     if("delta" IN_LIST XZ_ENCODERS)
+         set(HAVE_DELTA_CODER ON)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/delta/delta_encoder.c
+             src/liblzma/delta/delta_encoder.h
+         )
+@@ -1084,7 +1089,7 @@ endforeach()
+ if(HAVE_DECODERS)
+     add_compile_definitions(HAVE_DECODERS)
+ 
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/common/alone_decoder.c
+         src/liblzma/common/alone_decoder.h
+         src/liblzma/common/auto_decoder.c
+@@ -1109,20 +1114,20 @@ if(HAVE_DECODERS)
+     )
+ 
+     if(XZ_THREADS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/common/stream_decoder_mt.c
+         )
+     endif()
+ 
+     if(SIMPLE_DECODERS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/simple/simple_decoder.c
+             src/liblzma/simple/simple_decoder.h
+         )
+     endif()
+ 
+     if("lzma1" IN_LIST XZ_DECODERS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/lzma/lzma_decoder.c
+             src/liblzma/lzma/lzma_decoder.h
+             src/liblzma/rangecoder/range_decoder.h
+@@ -1132,7 +1137,7 @@ if(HAVE_DECODERS)
+     endif()
+ 
+     if("lzma2" IN_LIST XZ_DECODERS)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/lzma/lzma2_decoder.c
+             src/liblzma/lzma/lzma2_decoder.h
+         )
+@@ -1140,7 +1145,7 @@ if(HAVE_DECODERS)
+ 
+     if("delta" IN_LIST XZ_DECODERS)
+         set(HAVE_DELTA_CODER ON)
+-        target_sources(liblzma PRIVATE
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+             src/liblzma/delta/delta_decoder.c
+             src/liblzma/delta/delta_decoder.h
+         )
+@@ -1150,7 +1155,7 @@ endif()
+ # Some sources must appear if the filter is configured as either
+ # an encoder or decoder.
+ if("lzma1" IN_LIST XZ_ENCODERS OR "lzma1" IN_LIST XZ_DECODERS)
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/rangecoder/range_common.h
+         src/liblzma/lzma/lzma_encoder_presets.c
+         src/liblzma/lzma/lzma_common.h
+@@ -1158,7 +1163,7 @@ if("lzma1" IN_LIST XZ_ENCODERS OR "lzma1" IN_LIST XZ_DECODERS)
+ endif()
+ 
+ if(HAVE_DELTA_CODER)
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/delta/delta_common.c
+         src/liblzma/delta/delta_common.h
+         src/liblzma/delta/delta_private.h
+@@ -1166,7 +1171,7 @@ if(HAVE_DELTA_CODER)
+ endif()
+ 
+ if(SIMPLE_ENCODERS OR SIMPLE_DECODERS)
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/simple/simple_coder.c
+         src/liblzma/simple/simple_coder.h
+         src/liblzma/simple/simple_private.h
+@@ -1175,7 +1180,7 @@ endif()
+ 
+ foreach(SIMPLE_CODER IN LISTS SIMPLE_FILTERS)
+     if(SIMPLE_CODER IN_LIST XZ_ENCODERS OR SIMPLE_CODER IN_LIST XZ_DECODERS)
+-        target_sources(liblzma PRIVATE "src/liblzma/simple/${SIMPLE_CODER}.c")
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE "src/liblzma/simple/${SIMPLE_CODER}.c")
+     endif()
+ endforeach()
+ 
+@@ -1196,7 +1201,7 @@ if(XZ_MICROLZMA_ENCODER)
+                             "MicroLZMA encoder")
+     endif()
+ 
+-    target_sources(liblzma PRIVATE src/liblzma/common/microlzma_encoder.c)
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/common/microlzma_encoder.c)
+ endif()
+ 
+ if(XZ_MICROLZMA_DECODER)
+@@ -1205,7 +1210,7 @@ if(XZ_MICROLZMA_DECODER)
+                             "MicroLZMA decoder")
+     endif()
+ 
+-    target_sources(liblzma PRIVATE src/liblzma/common/microlzma_decoder.c)
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/common/microlzma_decoder.c)
+ endif()
+ 
+ 
+@@ -1224,7 +1229,7 @@ if(XZ_LZIP_DECODER)
+ 
+     add_compile_definitions(HAVE_LZIP_DECODER)
+ 
+-    target_sources(liblzma PRIVATE
++    target_sources(${LZMA_LIBRARY_NAME} PRIVATE
+         src/liblzma/common/lzip_decoder.c
+         src/liblzma/common/lzip_decoder.h
+     )
+@@ -1233,9 +1238,9 @@ endif()
+ ###
+ 
+ # Put the tuklib functions under the lzma_ namespace.
+-target_compile_definitions(liblzma PRIVATE TUKLIB_SYMBOL_PREFIX=lzma_)
+-tuklib_cpucores(liblzma)
+-tuklib_physmem(liblzma)
++target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE TUKLIB_SYMBOL_PREFIX=lzma_)
++tuklib_cpucores(${LZMA_LIBRARY_NAME})
++tuklib_physmem(${LZMA_LIBRARY_NAME})
+ 
+ # While liblzma can be built without tuklib_cpucores or tuklib_physmem
+ # modules, the liblzma API functions lzma_cputhreads() and lzma_physmem()
+@@ -1267,7 +1272,7 @@ check_c_source_compiles("
+     "
+     HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR)
+ cmake_pop_check_state()
+-tuklib_add_definition_if(liblzma HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR)
++tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR)
+ 
+ # The Win95 threading lacks a thread-safe one-time initialization function.
+ # The one-time initialization is needed for crc32_small.c and crc64_small.c
+@@ -1284,12 +1289,12 @@ endif()
+ 
+ # cpuid.h
+ check_include_file(cpuid.h HAVE_CPUID_H)
+-tuklib_add_definition_if(liblzma HAVE_CPUID_H)
++tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_CPUID_H)
+ 
+ # immintrin.h:
+ check_include_file(immintrin.h HAVE_IMMINTRIN_H)
+ if(HAVE_IMMINTRIN_H)
+-    target_compile_definitions(liblzma PRIVATE HAVE_IMMINTRIN_H)
++    target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE HAVE_IMMINTRIN_H)
+ 
+     # SSE2 intrinsics:
+     check_c_source_compiles("
+@@ -1302,7 +1307,7 @@ if(HAVE_IMMINTRIN_H)
+             }
+         "
+         HAVE__MM_MOVEMASK_EPI8)
+-    tuklib_add_definition_if(liblzma HAVE__MM_MOVEMASK_EPI8)
++    tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE__MM_MOVEMASK_EPI8)
+ 
+     # CLMUL intrinsic:
+     option(XZ_CLMUL_CRC "Use carryless multiplication for CRC \
+@@ -1326,7 +1331,7 @@ calculation (with runtime detection) if supported by the compiler" ON)
+                 }
+             "
+             HAVE_USABLE_CLMUL)
+-        tuklib_add_definition_if(liblzma HAVE_USABLE_CLMUL)
++        tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_USABLE_CLMUL)
+     endif()
+ endif()
+ 
+@@ -1356,16 +1361,16 @@ if(XZ_ARM64_CRC32)
+         HAVE_ARM64_CRC32)
+ 
+     if(HAVE_ARM64_CRC32)
+-        target_compile_definitions(liblzma PRIVATE HAVE_ARM64_CRC32)
++        target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE HAVE_ARM64_CRC32)
+ 
+         # Check for ARM64 CRC32 instruction runtime detection.
+         # getauxval() is supported on Linux.
+         check_symbol_exists(getauxval sys/auxv.h HAVE_GETAUXVAL)
+-        tuklib_add_definition_if(liblzma HAVE_GETAUXVAL)
++        tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_GETAUXVAL)
+ 
+         # elf_aux_info() is supported on FreeBSD and OpenBSD >= 7.6.
+         check_symbol_exists(elf_aux_info sys/auxv.h HAVE_ELF_AUX_INFO)
+-        tuklib_add_definition_if(liblzma HAVE_ELF_AUX_INFO)
++        tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_ELF_AUX_INFO)
+ 
+         # sysctlbyname("hw.optional.armv8_crc32", ...) is supported on Darwin
+         # (macOS, iOS, etc.). Note that sysctlbyname() is supported on FreeBSD,
+@@ -1374,7 +1379,7 @@ if(XZ_ARM64_CRC32)
+         # defined(__APPLE__) before using
+         # sysctlbyname("hw.optional.armv8_crc32", ...).
+         check_symbol_exists(sysctlbyname sys/sysctl.h HAVE_SYSCTLBYNAME)
+-        tuklib_add_definition_if(liblzma HAVE_SYSCTLBYNAME)
++        tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_SYSCTLBYNAME)
+     endif()
+ endif()
+ 
+@@ -1399,7 +1404,7 @@ if(XZ_LOONGARCH_CRC32)
+             }
+         "
+         HAVE_LOONGARCH_CRC32)
+-    tuklib_add_definition_if(liblzma HAVE_LOONGARCH_CRC32)
++    tuklib_add_definition_if(${LZMA_LIBRARY_NAME} HAVE_LOONGARCH_CRC32)
+ endif()
+ 
+ 
+@@ -1425,23 +1430,23 @@ endif()
+ # 0e9f4bc00c6b26f254e74063e4026ac33b786513 in 2013.) This way we don't
+ # set HAVE_VISIBILITY to 1 when visibility isn't actually supported.
+ if(BUILD_SHARED_LIBS AND CMAKE_C_COMPILE_OPTIONS_VISIBILITY)
+-    set_target_properties(liblzma PROPERTIES C_VISIBILITY_PRESET hidden)
+-    target_compile_definitions(liblzma PRIVATE HAVE_VISIBILITY=1)
++    set_target_properties(${LZMA_LIBRARY_NAME} PROPERTIES C_VISIBILITY_PRESET hidden)
++    target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE HAVE_VISIBILITY=1)
+ else()
+-    target_compile_definitions(liblzma PRIVATE HAVE_VISIBILITY=0)
++    target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE HAVE_VISIBILITY=0)
+ endif()
+ 
+ if(WIN32 OR CYGWIN)
+     if(BUILD_SHARED_LIBS)
+         # Add the Windows resource file for liblzma.dll.
+-        target_sources(liblzma PRIVATE src/liblzma/liblzma_w32res.rc)
++        target_sources(${LZMA_LIBRARY_NAME} PRIVATE src/liblzma/liblzma_w32res.rc)
+ 
+         set_source_files_properties(src/liblzma/liblzma_w32res.rc PROPERTIES
+             OBJECT_DEPENDS "${W32RES_DEPENDENCIES}"
+         )
+ 
+         # Export the public API symbols with __declspec(dllexport).
+-        target_compile_definitions(liblzma PRIVATE DLL_EXPORT)
++        target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE DLL_EXPORT)
+ 
+         if(NOT MSVC AND NOT CYGWIN)
+             # Create a DEF file. The Autotools-based build creates a DEF file
+@@ -1450,25 +1455,25 @@ if(WIN32 OR CYGWIN)
+             #
+             # The linker puts the ordinal numbers in the DEF file
+             # too so the output from the linker isn't our final file.
+-            target_link_options(liblzma PRIVATE
+-                                "-Wl,--output-def,liblzma.def.in")
++            target_link_options(${LZMA_LIBRARY_NAME} PRIVATE
++                                "-Wl,--output-def,${LZMA_LIBRARY_NAME}.def.in")
+ 
+             # Remove the ordinal numbers from the DEF file so that
+             # no one will create an import library that links by ordinal
+             # instead of by name. We don't maintain a DEF file so the
+             # ordinal numbers aren't stable.
+-            add_custom_command(TARGET liblzma POST_BUILD
++            add_custom_command(TARGET ${LZMA_LIBRARY_NAME} POST_BUILD
+                 COMMAND "${CMAKE_COMMAND}"
+-                    -DINPUT_FILE=liblzma.def.in
+-                    -DOUTPUT_FILE=liblzma.def
++                    -DINPUT_FILE=${LZMA_LIBRARY_NAME}.def.in
++                    -DOUTPUT_FILE=${LZMA_LIBRARY_NAME}.def
+                     -P
+                     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/remove-ordinals.cmake"
+-                BYPRODUCTS "liblzma.def"
++                BYPRODUCTS "${LZMA_LIBRARY_NAME}.def"
+                 VERBATIM)
+         endif()
+     else()
+         # Disable __declspec(dllimport) when linking against static liblzma.
+-        target_compile_definitions(liblzma INTERFACE LZMA_API_STATIC)
++        target_compile_definitions(${LZMA_LIBRARY_NAME} INTERFACE LZMA_API_STATIC)
+     endif()
+ elseif(BUILD_SHARED_LIBS AND SYMBOL_VERSIONING STREQUAL "linux")
+     # Note that adding link options doesn't affect static builds
+@@ -1479,18 +1484,18 @@ elseif(BUILD_SHARED_LIBS AND SYMBOL_VERSIONING STREQUAL "linux")
+     #
+     # NOTE: Set it explicitly to 1 to make it clear that versioning is
+     # done unconditionally in the C files.
+-    target_compile_definitions(liblzma PRIVATE HAVE_SYMBOL_VERSIONS_LINUX=1)
+-    target_link_options(liblzma PRIVATE
++    target_compile_definitions(${LZMA_LIBRARY_NAME} PRIVATE HAVE_SYMBOL_VERSIONS_LINUX=1)
++    target_link_options(${LZMA_LIBRARY_NAME} PRIVATE
+         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma_linux.map"
+     )
+-    set_target_properties(liblzma PROPERTIES
++    set_target_properties(${LZMA_LIBRARY_NAME} PROPERTIES
+         LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma_linux.map"
+     )
+ elseif(BUILD_SHARED_LIBS AND SYMBOL_VERSIONING STREQUAL "generic")
+-    target_link_options(liblzma PRIVATE
++    target_link_options(${LZMA_LIBRARY_NAME} PRIVATE
+         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma_generic.map"
+     )
+-    set_target_properties(liblzma PROPERTIES
++    set_target_properties(${LZMA_LIBRARY_NAME} PROPERTIES
+         LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma_generic.map"
+     )
+ endif()
+@@ -1541,44 +1546,13 @@ math(EXPR LIBLZMA_MACHO_COMPATIBILITY_VERSION
+ set(LIBLZMA_MACHO_CURRENT_VERSION
+     "${LIBLZMA_MACHO_COMPATIBILITY_VERSION}.${xz_VERSION_PATCH}")
+ 
+-set_target_properties(liblzma PROPERTIES
++set_target_properties(${LZMA_LIBRARY_NAME} PROPERTIES
+     SOVERSION "${xz_VERSION_MAJOR}"
+     VERSION "${xz_VERSION}"
+     MACHO_COMPATIBILITY_VERSION "${LIBLZMA_MACHO_COMPATIBILITY_VERSION}"
+     MACHO_CURRENT_VERSION "${LIBLZMA_MACHO_CURRENT_VERSION}"
+-
+-    # The name liblzma a mess because in many places "lib" is just a prefix
+-    # and not part of the actual name. (Don't name a new library this way!)
+-    # Cygwin uses "cyg", MSYS2 uses "msys-", and some platforms use no prefix.
+-    # However, we want to avoid lzma.dll on Windows as that would conflict
+-    # with LZMA SDK. liblzma has been liblzma.dll on Windows since the
+-    # beginning so try to stick with it.
+-    #
+-    # Up to XZ Utils 5.6.2 we set PREFIX and IMPORT_PREFIX properties to ""
+-    # while keeping the default "liblzma" OUTPUT_NAME that was derived from
+-    # the target name. But this broke naming on Cygwin and MSYS2.
+-    #
+-    # Setting OUTPUT_NAME without the "lib" prefix means that CMake will add
+-    # the platform-specific prefix as needed. So on most systems CMake will
+-    # add "lib" but on Cygwin and MSYS2 the naming will be correct too.
+-    #
+-    # On Windows, CMake uses the "lib" prefix with MinGW-w64 but not with
+-    # other toolchains. Those need to be handled specially to get the DLL
+-    # file named liblzma.dll instead of lzma.dll.
+-    OUTPUT_NAME "lzma"
+ )
+ 
+-if(WIN32 AND NOT MINGW)
+-    # Up to XZ Utils 5.6.2 and building with MSVC, we produced liblzma.dll
+-    # and liblzma.lib. The downside of liblzma.lib is that it's not
+-    # compatible with pkgconf usage. liblzma.pc contains "-llzma" which
+-    # "pkgconf --msvc-syntax --libs liblzma" converts to "lzma.lib".
+-    # So as a compromise, we can keep the liblzma.dll name but the import
+-    # library and static liblzma need to be named lzma.lib so that pkgconf
+-    # can be used with MSVC. (MinGW-w64 finds both names with "-llzma".)
+-    set_target_properties(liblzma PROPERTIES RUNTIME_OUTPUT_NAME "liblzma")
+-endif()
+-
+ # Create liblzma-config-version.cmake.
+ #
+ # NOTE: SameMajorVersion is correct for stable releases but it is wrong
+@@ -1641,47 +1615,6 @@ endif()
+ 
+ configure_file(src/liblzma/liblzma.pc.in liblzma.pc @ONLY)
+ 
+-
+-# Install the library binary. The INCLUDES specifies the include path that
+-# is exported for other projects to use but it doesn't install any files.
+-install(TARGETS liblzma EXPORT liblzmaTargets
+-        RUNTIME  DESTINATION "${CMAKE_INSTALL_BINDIR}"
+-                 COMPONENT liblzma_Runtime
+-        LIBRARY  DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+-                 COMPONENT liblzma_Runtime
+-                 NAMELINK_COMPONENT liblzma_Development
+-        ARCHIVE  DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+-                 COMPONENT liblzma_Development
+-        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+-
+-# Install the liblzma API headers. These use a subdirectory so
+-# this has to be done as a separate step.
+-install(DIRECTORY src/liblzma/api/
+-        COMPONENT liblzma_Development
+-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+-        FILES_MATCHING PATTERN "*.h")
+-
+-# Install the CMake files that other packages can use to find liblzma.
+-set(XZ_INSTALL_CMAKEDIR
+-    "${CMAKE_INSTALL_LIBDIR}/cmake/liblzma"
+-    CACHE STRING "Path to liblzma's .cmake files")
+-
+-install(EXPORT liblzmaTargets
+-        NAMESPACE liblzma::
+-        FILE liblzma-targets.cmake
+-        DESTINATION "${XZ_INSTALL_CMAKEDIR}"
+-        COMPONENT liblzma_Development)
+-
+-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/liblzma-config.cmake"
+-              "${CMAKE_CURRENT_BINARY_DIR}/liblzma-config-version.cmake"
+-        DESTINATION "${XZ_INSTALL_CMAKEDIR}"
+-        COMPONENT liblzma_Development)
+-
+-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/liblzma.pc"
+-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
+-        COMPONENT liblzma_Development)
+-
+-
+ #############################################################################
+ # Helper functions for installing files
+ #############################################################################
+@@ -1748,7 +1681,7 @@ function(my_install_man COMPONENT SRC_FILE LINK_NAMES)
+     endif()
+ endfunction()
+ 
+-
++if(BUILD_TOOLS)
+ #############################################################################
+ # libgnu (getopt_long)
+ #############################################################################
+@@ -1959,7 +1892,7 @@ if(HAVE_DECODERS)
+             src/liblzma/api
+         )
+ 
+-        target_link_libraries("${XZDEC}" PRIVATE liblzma libgnu)
++        target_link_libraries("${XZDEC}" PRIVATE ${LZMA_LIBRARY_NAME} libgnu)
+ 
+         if(WIN32 OR CYGWIN)
+             # Add the Windows resource file for xzdec.exe or lzmadec.exe.
+@@ -1996,11 +1929,11 @@ if(HAVE_DECODERS)
+         # Also, if xzdec is disabled but lzmadec isn't, then the man page
+         # isn't installed at all. It could be done but it's not a typical
+         # situation so let's keep this simpler.
+-        if(XZ_TOOL_LZMADEC)
+-            my_install_man(xzdec_Documentation src/xzdec/xzdec.1 lzmadec)
+-        else()
+-            my_install_man(xzdec_Documentation src/xzdec/xzdec.1 "")
+-        endif()
++        # if(XZ_TOOL_LZMADEC)
++        #     my_install_man(xzdec_Documentation src/xzdec/xzdec.1 lzmadec)
++        # else()
++        #     my_install_man(xzdec_Documentation src/xzdec/xzdec.1 "")
++        # endif()
+     endif()
+ endif()
+ 
+@@ -2035,7 +1968,7 @@ if(XZ_TOOL_LZMAINFO AND HAVE_DECODERS)
+         src/liblzma/api
+     )
+ 
+-    target_link_libraries(lzmainfo PRIVATE liblzma libgnu)
++    target_link_libraries(lzmainfo PRIVATE ${LZMA_LIBRARY_NAME} libgnu)
+ 
+     if(WIN32 OR CYGWIN)
+         # Add the Windows resource file for lzmainfo.exe.
+@@ -2064,9 +1997,9 @@ if(XZ_TOOL_LZMAINFO AND HAVE_DECODERS)
+             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+                     COMPONENT lzmainfo_Runtime)
+ 
+-    if(UNIX)
+-        my_install_man(lzmainfo_Documentation src/lzmainfo/lzmainfo.1 "")
+-    endif()
++    # if(UNIX)
++    #     my_install_man(lzmainfo_Documentation src/lzmainfo/lzmainfo.1 "")
++    # endif()
+ endif()
+ 
+ 
+@@ -2137,7 +2070,7 @@ if(XZ_TOOL_XZ)
+         )
+     endif()
+ 
+-    target_link_libraries(xz PRIVATE liblzma libgnu)
++    target_link_libraries(xz PRIVATE ${LZMA_LIBRARY_NAME} libgnu)
+ 
+     if(USE_POSIX_THREADS)
+         # src/xz/signals.c uses mythread_sigmask() which with POSIX
+@@ -2312,11 +2245,10 @@ this many MiB of RAM if xz cannot determine the amount at runtime")
+ 
+         # Install the man pages and (optionally) their symlinks
+         # and translations.
+-        my_install_man(xz_Documentation src/xz/xz.1 "${XZ_LINKS}")
++        # my_install_man(xz_Documentation src/xz/xz.1 "${XZ_LINKS}")
+     endif()
+ endif()
+ 
+-
+ #############################################################################
+ # Scripts
+ #############################################################################
+@@ -2402,20 +2334,59 @@ xzdiff, xzgrep, xzmore, xzless, and their symlinks" ON)
+         my_install_symlinks(scripts_Runtime "${CMAKE_INSTALL_BINDIR}"
+                             xzless "" "${XZLESS_LINKS}")
+ 
+-        my_install_man(scripts_Documentation
+-                       src/scripts/xzdiff.1 "${XZDIFF_LINKS}")
++        # my_install_man(scripts_Documentation
++        #                src/scripts/xzdiff.1 "${XZDIFF_LINKS}")
+ 
+-        my_install_man(scripts_Documentation
+-                       src/scripts/xzgrep.1 "${XZGREP_LINKS}")
++        # my_install_man(scripts_Documentation
++        #                src/scripts/xzgrep.1 "${XZGREP_LINKS}")
+ 
+-        my_install_man(scripts_Documentation
+-                       src/scripts/xzmore.1 "${XZMORE_LINKS}")
++        # my_install_man(scripts_Documentation
++        #                src/scripts/xzmore.1 "${XZMORE_LINKS}")
+ 
+-        my_install_man(scripts_Documentation
+-                       src/scripts/xzless.1 "${XZLESS_LINKS}")
++        # my_install_man(scripts_Documentation
++        #                src/scripts/xzless.1 "${XZLESS_LINKS}")
+     endif()
+ endif()
++endif()
++
++# --- installing
+ 
++set(PROJECT_TARGETS_TO_INSTALL "lzma")
++set(PROJECT_NAMESPACE_FOR_PACKAGE "xz")
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
++
++# that works too, but it is a bit longer, and it will require renaming `api` to `xz` after installation
++#
++# function(add_includes_list HEADERS ROOT_DIR)
++#     foreach(header ${HEADERS})
++#         file(TO_CMAKE_PATH "${header}" FIXED_HEADER)
++#         file(RELATIVE_PATH header_file_path "${ROOT_DIR}" "${FIXED_HEADER}")
++#         get_filename_component(header_directory_path "${header_file_path}" DIRECTORY)
++#         install(
++#             FILES ${FIXED_HEADER}
++#             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${header_directory_path}"
++#         )
++#     endforeach()
++# endfunction()
++#
++# function(add_includes_glob GLOB ROOT_DIR)
++#     file(GLOB_RECURSE public_headers ${GLOB})
++#     add_includes_list("${public_headers}" "${ROOT_DIR}")
++# endfunction()
++#
++# add_includes_glob(
++#     "${PROJECT_SOURCE_DIR}/src/liblzma/api/*.h"
++#     "${PROJECT_SOURCE_DIR}/src/liblzma"
++# )
++
++foreach(header ${LIBLZMA_API_HEADERS})
++    file(RELATIVE_PATH rel_file_path "${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/api" "${header}")
++    get_filename_component(rel_path "${rel_file_path}" DIRECTORY)
++    install(
++        FILES "${header}"
++        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${rel_path}"
++    )
++endforeach()
+ 
+ #############################################################################
+ # Documentation
