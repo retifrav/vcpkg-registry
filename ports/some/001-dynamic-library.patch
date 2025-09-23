@@ -1,0 +1,133 @@
+diff --git a/internal-project/libraries/SomeLibrary/CMakeLists.txt b/internal-project/libraries/SomeLibrary/CMakeLists.txt
+index bfc772b..d451f63 100644
+--- a/internal-project/libraries/SomeLibrary/CMakeLists.txt
++++ b/internal-project/libraries/SomeLibrary/CMakeLists.txt
+@@ -1,21 +1,31 @@
+-cmake_minimum_required(VERSION 3.15)
++cmake_minimum_required(VERSION 3.22)
+ 
+ set(namespace "some")
+-project("SomeLibrary"
++project("some"
+     VERSION 0.9.1
+     DESCRIPTION "Some library"
+ )
+ 
+-if (NOT CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+-    message(STATUS "This project has a top-level one called [${CMAKE_PROJECT_NAME}]")
+-else()
+-    message(STATUS "This project is a top-level one")
++# where to find our CMake modules
++set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
++
++option(PRINT_SOME_SILLY_THING "Print a meaningless message" 0)
++
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
++if(PRINT_SOME_SILLY_THING)
++    message(
++        STATUS
++        "My name is Valentinez Alkalinella Xifax Sicidabohertz Gumbigobilla Blue Stradivari "
++        "Talentrent Pierre Andre Charton-Haymoss Ivanovicci Baldeus George Doitzel Kaiser.\n"
++        "Don't hesitate to call!"
++    )
+ endif()
+ 
+ set(CMAKE_CXX_STANDARD 11)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
++set(CMAKE_CXX_STANDARD_REQUIRED YES)
+ 
+-add_library(${PROJECT_NAME} STATIC)
++add_library(${PROJECT_NAME})
+ 
+ target_sources(${PROJECT_NAME}
+     PRIVATE
+@@ -33,36 +43,13 @@ target_include_directories(${PROJECT_NAME}
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+ )
+ 
+-# totally optional listing of include directories
+-get_property(inclds
+-    TARGET ${PROJECT_NAME}
+-    PROPERTY INCLUDE_DIRECTORIES
+-)
+-message(STATUS "Listing include directories for ${PROJECT_NAME}...")
+-# "dumb" listing with "raw" generator expressions on configuration
+-foreach(pth ${inclds})
+-    message(STATUS "  ${pth}")
+-endforeach()
+-# actually evaluated generator expressions printed to file on generation
+-string(JOIN "\n" includeDirectories ${inclds})
+-file(GENERATE
+-    OUTPUT "${CMAKE_BINARY_DIR}/include-directories.txt"
+-    CONTENT ${includeDirectories}
+-)
+-
+-# without it public headers won't get installed
+ set(public_headers
+     include/some.h
+ )
++set_target_properties(${PROJECT_NAME}
++    PROPERTIES
++        DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}"
++        PUBLIC_HEADER "${public_headers}"
++)
+ 
+-# not for MSVC
+-if(CMAKE_COMPILER_IS_GNUCXX)
+-    # compile options for this target only
+-    # treat warnings as errors
+-    target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
+-endif()
+-
+-# where to find our CMake modules
+-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+-#message(STATUS "CMake module path: ${CMAKE_MODULE_PATH}")
+ include(Installing)
+diff --git a/internal-project/libraries/SomeLibrary/include/some.h b/internal-project/libraries/SomeLibrary/include/some.h
+index e97da7a..d58ec32 100644
+--- a/internal-project/libraries/SomeLibrary/include/some.h
++++ b/internal-project/libraries/SomeLibrary/include/some.h
+@@ -1,11 +1,31 @@
+ #ifndef SOME_H
+ #define SOME_H
+ 
++#ifdef SomeLibrary_EXPORTS // CMake sets that when BUILD_SHARED_LIBS=1
++    #ifdef _MSC_VER // for MSVC
++        // export on compiling the DLL (when building)
++        #define DLLEXPORT __declspec(dllexport)
++    //#elif __GNUC__ >= 4 // for GCC
++    //    #define DLLEXPORT __attribute__ ((visibility("default")))
++    #endif // any other compilers require anything like that?
++#else
++    #ifdef _MSC_VER // for MSVC
++        // import on using the created DLL (when using in projects)
++        #define DLLEXPORT __declspec(dllimport)
++    //#elif __GNUC__ >= 4 // for GCC
++    //    // something here for GCC?
++    #endif // any other compilers require anything like that?
++#endif
++
++#ifndef DLLEXPORT
++    #define DLLEXPORT // so it doesn't fail being undefined
++#endif
++
+ namespace sm
+ {
+     namespace lbr
+     {
+-        void printSomething();
++        DLLEXPORT void printSomething();
+     }
+ }
+ 
+diff --git a/internal-project/libraries/SomeLibrary/src/some.cpp b/internal-project/libraries/SomeLibrary/src/some.cpp
+index 17b126f..4c1b3d8 100644
+--- a/internal-project/libraries/SomeLibrary/src/some.cpp
++++ b/internal-project/libraries/SomeLibrary/src/some.cpp
+@@ -1,4 +1,5 @@
+ #include <iostream>
++
+ #include "things.h"
+ 
+ namespace sm
