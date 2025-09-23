@@ -27,6 +27,14 @@
             "description": "Build C++ libtiffxx library",
             "supports": "!arm"
         },
+        "lzma":
+        {
+            "description": "Enable LZMA2 compression",
+            "dependencies":
+            [
+                "xz"
+            ]
+        },
         "zip":
         {
             "description": "Enable ZIP/deflate compression",

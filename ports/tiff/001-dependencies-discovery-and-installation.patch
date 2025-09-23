@@ -1,8 +1,23 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 31ae5f6..1f6d3f5 100644
+index 31ae5f6..281d425 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -133,9 +133,9 @@ include(WindowsSupport)
+@@ -42,12 +42,13 @@ project(tiff
+         VERSION "${LIBTIFF_VERSION}"
+         LANGUAGES C CXX)
+ 
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
+ if(NOT CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+   # libtiff is being included as a subproject of some other project.
+   set(TIFF_INSTALL_DEFAULT OFF)
+ else()
+   set(TIFF_INSTALL_DEFAULT ON)
+-  option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+ endif()
+ 
+ option(tiff-tools "build TIFF tools" ON)
+@@ -133,9 +134,9 @@ include(WindowsSupport)
  # Orthogonal features
  include(LibraryFeatures)
  
@@ -15,7 +30,7 @@ index 31ae5f6..1f6d3f5 100644
  
  # Release support
  include(Release)
-@@ -157,9 +157,6 @@ if(tiff-docs)
+@@ -157,9 +158,6 @@ if(tiff-docs)
    add_subdirectory(doc)
  endif()
  
@@ -83,7 +98,7 @@ index ad92218..dd42aba 100644
  if(NOT CMath_HAVE_LIBC_POW)
      set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
 diff --git a/cmake/LZMACodec.cmake b/cmake/LZMACodec.cmake
-index c51afe8..794cb44 100644
+index c51afe8..eb04c56 100644
 --- a/cmake/LZMACodec.cmake
 +++ b/cmake/LZMACodec.cmake
 @@ -23,12 +23,12 @@
@@ -100,9 +115,23 @@ index c51afe8..794cb44 100644
 -option(lzma "use liblzma (required for LZMA2 compression)" ${LIBLZMA_FOUND})
 -if (lzma AND LIBLZMA_FOUND)
 +if(lzma)
-+    find_package(lzma CONFIG REQUIRED)
++    find_package(xz CONFIG REQUIRED)
      set(LZMA_SUPPORT TRUE)
  endif()
+diff --git a/cmake/WindowsSupport.cmake b/cmake/WindowsSupport.cmake
+index a60bba9..4c7d0e4 100644
+--- a/cmake/WindowsSupport.cmake
++++ b/cmake/WindowsSupport.cmake
+@@ -24,9 +24,6 @@
+ # OF THIS SOFTWARE.
+ 
+ if(MSVC)
+-    # Debug postfix
+-    set(CMAKE_DEBUG_POSTFIX "d")
+-
+     # disable deprecation warnings
+     add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
+     # suppress deprecation warning for MSVC POSIX names
 diff --git a/cmake/ZSTDCodec.cmake b/cmake/ZSTDCodec.cmake
 index 3fac861..e4f626e 100644
 --- a/cmake/ZSTDCodec.cmake
@@ -200,7 +229,7 @@ index 74b2a02..bdf6d73 100644
  if(WEBP_SUPPORT AND EMSCRIPTEN)
    # Emscripten is pretty finnicky about linker flags.
 diff --git a/libtiff/CMakeLists.txt b/libtiff/CMakeLists.txt
-index a8aa0c3..97688f9 100644
+index a8aa0c3..9364e2a 100644
 --- a/libtiff/CMakeLists.txt
 +++ b/libtiff/CMakeLists.txt
 @@ -136,7 +136,7 @@ set(tiff_libs_private_list "") # cmake list
@@ -217,7 +246,7 @@ index a8aa0c3..97688f9 100644
  endif()
  if(LZMA_SUPPORT)
 -  target_link_libraries(tiff PRIVATE liblzma::liblzma)
-+  target_link_libraries(${PROJECT_NAME} PRIVATE lzma)
++  target_link_libraries(${PROJECT_NAME} PRIVATE xz::lzma)
    string(APPEND tiff_requires_private " liblzma")
  endif()
  if(ZSTD_SUPPORT)
@@ -323,6 +352,19 @@ index d57b1d2..8cf0569 100644
  #endif
  
  #if LIBDEFLATE_SUPPORT
+diff --git a/libtiff/tif_lzma.c b/libtiff/tif_lzma.c
+index db1c8b6..4e9e5e1 100644
+--- a/libtiff/tif_lzma.c
++++ b/libtiff/tif_lzma.c
+@@ -33,7 +33,7 @@
+  * The codec is derived from ZLIB codec (tif_zip.c).
+  */
+ 
+-#include "lzma.h"
++#include <xz/lzma.h>
+ #include "tif_predict.h"
+ 
+ #include <stdio.h>
 diff --git a/libtiff/tif_pixarlog.c b/libtiff/tif_pixarlog.c
 index 56cf416..82eedc1 100644
 --- a/libtiff/tif_pixarlog.c

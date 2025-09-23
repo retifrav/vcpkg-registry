@@ -2,6 +2,9 @@
 
 include(CMakeFindDependencyMacro)
 
+if(@LZMA_SUPPORT@)
+    find_dependency(xz CONFIG REQUIRED)
+endif()
 if(@ZIP_SUPPORT@)
     find_dependency(zlib CONFIG REQUIRED)
 endif()

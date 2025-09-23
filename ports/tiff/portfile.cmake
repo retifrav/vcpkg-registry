@@ -20,6 +20,7 @@ file(COPY
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         cxx cxx
+        lzma lzma
         zip zlib
         zstandard zstd
 )
@@ -33,7 +34,6 @@ vcpkg_cmake_configure(
         -Djpeg=0 # should be a feature
         -Dlerc=0
         -Dlibdeflate=0 # should be a feature
-        -Dlzma=0 # should be a feature
         -Dtiff-docs=0
         -Dtiff-tests=0
         -Dtiff-tools=0
