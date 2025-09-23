@@ -1,0 +1,9 @@
+{
+    "default-registry":
+    {
+        "kind": "git",
+        "repository": "git@github.com:retifrav/vcpkg-registry.git",
+        "baseline": "a30fec97daea20e2bb28624c0e15212db615c928"
+    },
+    "registries": []
+}
