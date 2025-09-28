@@ -7,6 +7,11 @@ vcpkg_from_git(
         002-chrono-in-vs-1713.patch # might need to make this Windows-specific
 )
 
+# not giving CPM a chance to interfere
+file(REMOVE
+    "${SOURCE_PATH}/cmake/CPM.cmake"
+)
+
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         on-demand TRACY_ON_DEMAND
