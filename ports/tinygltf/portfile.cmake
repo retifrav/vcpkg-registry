@@ -8,7 +8,14 @@ vcpkg_from_git(
     URL git@github.com:syoyo/tinygltf.git
     REF 4bfc1fc1807e2e2cf3d3111f67d6ebd957514c80
     PATCHES
-        dependencies-and-installation.patch
+        001-dependencies-and-installation.patch
+)
+
+# do not vendor 3rd-party dependencies
+file(REMOVE
+    "${SOURCE_PATH}/json.hpp"
+    "${SOURCE_PATH}/stb_image.h"
+    "${SOURCE_PATH}/stb_image_write.h"
 )
 
 file(COPY
