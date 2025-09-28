@@ -12,6 +12,17 @@ file(REMOVE_RECURSE
     "${SOURCE_PATH}/Xcode"
 )
 
+# dependencies should be found in CONFIG mode
+file(REMOVE
+    "${SOURCE_PATH}/cmake/CommonFindSDL2.cmake"
+    "${SOURCE_PATH}/cmake/FindPrivateSDL2.cmake"
+    "${SOURCE_PATH}/cmake/FindSDL2main.cmake"
+    "${SOURCE_PATH}/cmake/FindSDL2test.cmake"
+    "${SOURCE_PATH}/cmake/Findlibjxl.cmake"
+    "${SOURCE_PATH}/cmake/Findwebp.cmake"
+    "${SOURCE_PATH}/sdl2_image-config.cmake.in"
+)
+
 vcpkg_check_features(
     OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
