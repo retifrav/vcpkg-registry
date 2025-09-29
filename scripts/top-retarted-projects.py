@@ -14,7 +14,7 @@ argParser = argparse.ArgumentParser(
     description="".join((
         "-= %(prog)s =-\n\n",
         "Prints out a list of the most retarded ports (projects), where ",
-        "the criteria of retardiness is the total size of all the patches ",
+        "the criteria of retardiness is the total size\nof all the patches ",
         "that need to be applied to the original sources to make them ",
         "build or/and install properly.\n\n",
         f"Copyright (C) 2025-{datetime.now().year} ",
@@ -47,9 +47,9 @@ argParser.add_argument(
     help="size of patches (in bytes) to become retarded"
 )
 argParser.add_argument(
-    "--without-portfile",
+    "--with-portfile",
     action='store_true',
-    help="do not count the size of portfile.cmake"
+    help="count the size of portfile.cmake too"
 )
 argParser.add_argument(
     "--debug",
@@ -61,7 +61,7 @@ cliArgs = argParser.parse_args()
 registryPath: pathlib.Path = cliArgs.registryPath
 topListLength: int = cliArgs.top
 retartedThreshold: int = cliArgs.threshold
-withoutPortfile: bool = cliArgs.without_portfile
+withPortfile: bool = cliArgs.with_portfile
 debugMode: bool = cliArgs.debug
 
 if debugMode:
@@ -151,7 +151,7 @@ for p in ports:
                 logging.debug(f"- [{ptch.name}] size (in bytes): {patchSize}")
                 patchesSizeInBytes += patchSize
             andPortfile: str = ""
-            if not withoutPortfile:
+            if withPortfile:
                 portfileSize: int = portfile.stat().st_size
                 logging.debug(
                     f"- [{portfile.name}] size (in bytes): {portfileSize}"
@@ -173,7 +173,10 @@ for p in ports:
 
 logging.debug("-")
 logging.info(
-    f"Number of ports that have any patches: {len(patchesSizePerProject)}"
+    " ".join((
+        "Number of ports that have any patches at all:",
+        str(len(patchesSizePerProject))
+    ))
 )
 logging.debug(patchesSizePerProject)
 logging.info("-")
@@ -190,27 +193,30 @@ topRetardedProjects = {
     for key, value in projectsSortedByPatchesSize.items()
     if value > retartedThreshold
 }
-andPortfile: str = ""
-if not withoutPortfile:
-    andPortfile = " and portfile"
+andPortfileReport: str = ""
+if withPortfile:
+    andPortfileReport = " and portfile"
 if (len(topRetardedProjects) > 0):
     logging.info(
         " ".join((
             f"Top {topListLength} retarded projects (whose total",
-            f"patches{andPortfile} size is bigger than",
+            f"patches{andPortfileReport} size is bigger than",
             f"{bytesToHumanReadableSize(retartedThreshold)}):"
         ))
     )
     pstn: int = 1
     for rp in topRetardedProjects:
         logging.info(
-            f"({pstn}) {rp}, {bytesToHumanReadableSize(topRetardedProjects[rp])}"
+            " ".join((
+                f"({pstn}) {rp},",
+                bytesToHumanReadableSize(topRetardedProjects[rp])
+            ))
         )
         pstn += 1
 else:
     logging.info(
         " ".join((
-            f"Not a single port has the total size of patches{andPortfile}",
+            f"Not a single port has the total size of patches{andPortfileReport}",
             "bigger than the retarted threshold",
             f"({bytesToHumanReadableSize(retartedThreshold)}).",
             "That is simply too good to be true, so you probably provided",
