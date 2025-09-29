@@ -49,8 +49,13 @@ argParser.add_argument(
 argParser.add_argument(
     "--with-portfile",
     action='store_true',
-    help="count the size of portfile.cmake too"
+    help="count the size of portfile.cmake too (default: %(default)s)"
 )
+# argParser.add_argument(
+#     "--good-ones",
+#     action='store_true',
+#     help="reverse the list, so it's the top good ones (default: %(default)s)"
+# )
 argParser.add_argument(
     "--debug",
     action='store_true',
@@ -62,6 +67,7 @@ registryPath: pathlib.Path = cliArgs.registryPath
 topListLength: int = cliArgs.top
 retartedThreshold: int = cliArgs.threshold
 withPortfile: bool = cliArgs.with_portfile
+# listTheGoodOnes: bool = cliArgs.good_ones
 debugMode: bool = cliArgs.debug
 
 if debugMode:
@@ -117,6 +123,17 @@ if retartedThreshold < 0:
     )
     raise SystemExit(4)
 
+# if listTheGoodOnes:
+#     logging.info(
+#         " ".join((
+#             "Listing the good ones, so the size threshold will be set to 0",
+#             "and portfile.cmake will be counted in any case"
+#         ))
+#     )
+#     logging.info("-")
+#     retartedThreshold = 0
+#     withPortfile = True
+
 # ---
 
 
@@ -150,15 +167,23 @@ for p in ports:
                 patchSize: int = ptch.stat().st_size
                 logging.debug(f"- [{ptch.name}] size (in bytes): {patchSize}")
                 patchesSizeInBytes += patchSize
+
             andPortfile: str = ""
             if withPortfile:
                 portfileSize: int = portfile.stat().st_size
                 logging.debug(
                     f"- [{portfile.name}] size (in bytes): {portfileSize}"
                 )
-                if portfileSize > 2048:  # 2 KB "ought to be enough", innit
+                # if (
+                #     # listTheGoodOnes
+                #     # or
+                #     # 2 KB "ought to be enough" for a portfile, innit
+                #     portfileSize > 2048
+                # ):
+                if True:  # count any size of portfile.cmake
                     patchesSizeInBytes += portfileSize
                     andPortfile = " and portfile"
+
             # should probably also count all the other `*.cmake` files
             # aside from the `portfile.cmake`, as some ports do `include()`;
             # and there are also `Find*.cmake` modules too, which is almost
@@ -178,6 +203,7 @@ logging.info(
         str(len(patchesSizePerProject))
     ))
 )
+logging.debug("-")
 logging.debug(patchesSizePerProject)
 logging.info("-")
 
@@ -185,23 +211,35 @@ projectsSortedByPatchesSize = dict(
     sorted(
         patchesSizePerProject.items(),
         key=lambda i: i[1],
-        reverse=True
+        reverse=True  # reverse=(not listTheGoodOnes)
     )[:topListLength]
 )
+
 topRetardedProjects = {
     key: value
     for key, value in projectsSortedByPatchesSize.items()
     if value > retartedThreshold
 }
+
+projectsQuality: str = "retarded"
+# if listTheGoodOnes:
+#     projectsQuality: str = "good"
+
+sizeMetric: str = (
+    f"is bigger than {bytesToHumanReadableSize(retartedThreshold)}"
+)
+# if listTheGoodOnes:
+#     sizeMetric = "is reasonable"
+
 andPortfileReport: str = ""
 if withPortfile:
     andPortfileReport = " and portfile"
+
 if (len(topRetardedProjects) > 0):
     logging.info(
         " ".join((
-            f"Top {topListLength} retarded projects (whose total",
-            f"patches{andPortfileReport} size is bigger than",
-            f"{bytesToHumanReadableSize(retartedThreshold)}):"
+            f"Top {topListLength} {projectsQuality} projects (whose total",
+            f"patches{andPortfileReport} size {sizeMetric}):"
         ))
     )
     pstn: int = 1
@@ -216,11 +254,11 @@ if (len(topRetardedProjects) > 0):
 else:
     logging.info(
         " ".join((
-            f"Not a single port has the total size of patches{andPortfileReport}",
-            "bigger than the retarted threshold",
+            "Not a single port has the total size of",
+            f"patches{andPortfileReport} bigger than the retarted threshold",
             f"({bytesToHumanReadableSize(retartedThreshold)}).",
             "That is simply too good to be true, so you probably provided",
             "a way too high of a threshold. Or maybe your registry",
-            "actually doesn't have any retarded ports yet (lucky you)."
+            "actually doesn't have any retarded ports yet, you lucky bastard."
         ))
     )
