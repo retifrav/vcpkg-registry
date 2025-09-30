@@ -1,0 +1,83 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ca49824..04ec922 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,14 +1,17 @@
+-cmake_minimum_required(VERSION 3.10)
++cmake_minimum_required(VERSION 3.22)
++
++set(SPZ_VERSION "0.0.0" CACHE STRING "spz version")
+ 
+ project(spz
+   DESCRIPTION "A 3D Gaussians format"
+   LANGUAGES C CXX
+-  VERSION 1.1.0)
++  VERSION ${SPZ_VERSION}
++)
+ 
+-include(GNUInstallDirs)
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
+ 
+ # zlib is required to build the project
+-find_package(ZLIB REQUIRED)
++find_package(zlib CONFIG REQUIRED)
+ 
+ set(spz_sources
+   "${CMAKE_CURRENT_SOURCE_DIR}/src/cc/load-spz.cc"
+@@ -26,7 +29,7 @@ set(spz_headers
+ add_library(spz ${spz_sources})
+ add_library(spz::spz ALIAS spz)
+ 
+-target_link_libraries(spz PRIVATE ZLIB::ZLIB)
++target_link_libraries(spz PRIVATE zlib)
+ 
+ target_include_directories(spz
+   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/cc>
+@@ -41,33 +44,5 @@ set_target_properties(spz PROPERTIES
+ 
+ # Installation
+ 
+-## Install spzConfig.cmake spz::spz target can be found when calling find_package(spz)
+-include(CMakePackageConfigHelpers)
+-configure_package_config_file(
+-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/spzConfig.cmake.in"
+-  "${CMAKE_BINARY_DIR}/cmake/spzConfig.cmake"
+-  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/spz")
+-write_basic_package_version_file(
+-  "${CMAKE_BINARY_DIR}/cmake/spzConfigVersion.cmake"
+-  VERSION "${spz_VERSION}"
+-  COMPATIBILITY SameMajorVersion)
+-install(
+-  FILES
+-    "${CMAKE_BINARY_DIR}/cmake/spzConfig.cmake"
+-    "${CMAKE_BINARY_DIR}/cmake/spzConfigVersion.cmake"
+-  DESTINATION
+-    "${CMAKE_INSTALL_LIBDIR}/cmake/spz"
+-)
+-
+-install(TARGETS spz
+-  EXPORT spzTargets
+-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+-)
+-
+-install(EXPORT spzTargets
+-  NAMESPACE spz::
+-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/spz"
+-)
++set(PROJECT_NAMESPACE_FOR_PACKAGE "spz")
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
+diff --git a/src/cc/load-spz.cc b/src/cc/load-spz.cc
+index e028445..baea5c0 100644
+--- a/src/cc/load-spz.cc
++++ b/src/cc/load-spz.cc
+@@ -1,6 +1,6 @@
+ #include "load-spz.h"
+ 
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #ifdef ANDROID
+ #include <android/log.h>
