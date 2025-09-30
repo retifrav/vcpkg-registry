@@ -257,8 +257,9 @@ else:
             "Not a single port has the total size of",
             f"patches{andPortfileReport} bigger than the retarted threshold",
             f"({bytesToHumanReadableSize(retartedThreshold)}).",
-            "That is simply too good to be true, so you probably provided",
+            "That is simply too good to be true, so you have probably set",
             "a way too high of a threshold. Or maybe your registry",
-            "actually doesn't have any retarded ports yet, you lucky bastard."
+            "really doesn't have ports for any retarded projects (yet),",
+            "you lucky bastard."
         ))
     )
