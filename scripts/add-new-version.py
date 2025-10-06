@@ -5,9 +5,8 @@ import argparse
 import sys
 import re
 import json
-from typing import Optional
 
-from typing import List, Dict
+from typing import List, Dict, Optional, Any
 
 loggingLevel: int = logging.INFO
 loggingFormat: str = "[%(levelname)s] %(message)s"
@@ -93,6 +92,22 @@ logging.basicConfig(
 
 logging.debug(f"CLI arguments: {cliArgs}")
 logging.debug("-")
+
+# ---
+
+
+def formatJson(originalDictionary: Dict[str, Any], sortKeys: bool) -> str:
+    jsonString = json.dumps(originalDictionary, indent=4, sort_keys=sortKeys)
+    # no way to make json.dumps() put openning curly braces on new lines
+    # https://stackoverflow.com/a/46746660/1688203
+    jsonStringFormatted = re.sub(
+        r'^((\s*)".*?":)\s*([\[{])',
+        r'\1\n\2\3',
+        jsonString,
+        flags=re.MULTILINE
+    )
+    return jsonStringFormatted
+
 
 # --- do some checks first
 
@@ -218,16 +233,8 @@ if updatingBaseline:
                 currentVersion[portVersionKey] = newVersionPort
                 baselineVersions["default"][portName] = currentVersion
 
-            updatedBaseline = json.dumps(baselineVersions, indent=4, sort_keys=True)
-            # no way to make json.dumps() placing curly braces on new lines
-            updatedBaselineFormatted = re.sub(
-                r'^((\s*)".*?":)\s*([\[{])',
-                r'\1\n\2\3',
-                updatedBaseline,
-                flags=re.MULTILINE
-            )
             f.seek(0)
-            f.write(updatedBaselineFormatted)
+            f.write(formatJson(baselineVersions, sortKeys=True))
             f.write("\n")
             f.truncate()
 
@@ -286,15 +293,11 @@ with open(portVersionsPath, "r+", newline="") as f:
                 "git-tree": revParsedGitHash
             }
         )
-    updatedVersions = json.dumps(versions, indent=4, sort_keys=False)
-    # no way to make json.dumps() placing curly braces on new lines
-    updatedVersionsFormatted = re.sub(
-        r'^((\s*)".*?":)\s*([\[{])',
-        r'\1\n\2\3',
-        updatedVersions,
-        flags=re.MULTILINE
-    )
+
     f.seek(0)
-    f.write(updatedVersionsFormatted)
+    f.write(formatJson(versions, sortKeys=False))
     f.write("\n")
     f.truncate()
+
+logging.info(f"Updated the port to version {portVersion}")
+raise SystemExit(0)
