@@ -11,11 +11,6 @@ Although a good portion of the ports here are based on the ports from the [Micro
     - [Installing ports in a dummy project](#installing-ports-in-a-dummy-project)
     - [Resolving dependencies in an actual project](#resolving-dependencies-in-an-actual-project)
     - [Custom triplets](#custom-triplets)
-- [Scripts](#scripts)
-    - [check-versions-and-hashes](#check-versions-and-hashes)
-    - [install-vcpkg-artifacts](#install-vcpkg-artifacts)
-    - [vcpkg-assets-caching](#vcpkg-assets-caching)
-    - [license-based-todos](#license-based-todos)
 - [Branches](#branches)
 - [Non-development ports](#non-development-ports)
     - [reSL](#resl)
@@ -197,51 +192,6 @@ $ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DVCPKG_TARGET_TRIPLET="decovar-x64-windows-static-md-clang" \
     ..
 $ cmake --build .
-```
-
-## Scripts
-
-### check-versions-and-hashes
-
-Checks that declared rev-parse hashes in ports versions match their actual values:
-
-``` sh
-$ cd /path/to/vcpkg-registry
-$ pip install pandas pandera tabulate colorama
-$ python ./scripts/check-versions-and-hashes.py
-```
-
-More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#checking-versions-and-hashes).
-
-### install-vcpkg-artifacts
-
-Merges vcpkg installation with project installation:
-
-``` sh
-$ cd /path/to/project
-$ python /path/to/vcpkg-registry/scripts/install-vcpkg-artifacts.py \
-    --cmake-preset vcpkg-default-triplet \
-    --vcpkg-triplet arm64-osx \
-    --blacklist "vcpkg-cmake,json-nlohmann"
-```
-
-More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#distributing-your-project).
-
-### vcpkg-assets-caching
-
-Downloading/uploading vcpkg assets (*required build tools*) from/to a remote cache of HTTP type (*such as JFrog Artifactory*).
-
-More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vcpkg/#asset-caching).
-
-### license-based-todos
-
-To print a list of license-based ToDos:
-
-``` sh
-$ cd /path/to/vcpkg-registry
-$ python ./scripts/license-based-todos.py
-...
-[INFO] Ports that require publishing patches (total 1): datachannel
 ```
 
 ## Branches
