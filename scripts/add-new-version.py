@@ -64,14 +64,19 @@ argParser.add_argument(
     help="new version of the port"
 )
 argParser.add_argument(
+    "--ignore-version-from-manifest",
+    action='store_true',
+    help="ignore (potential) manifest version mismatch (default: %(default)s)"
+)
+argParser.add_argument(
     "--not-updating-baseline",
     action='store_true',
     help="do not update the baseline (default: %(default)s)"
 )
 argParser.add_argument(
-    "--ignore-version-from-manifest",
+    "--sorting-json",
     action='store_true',
-    help="ignore (potential) manifest version mismatch (default: %(default)s)"
+    help="sort JSON before writing to file (default: %(default)s)"
 )
 argParser.add_argument(
     "--debug",
@@ -85,6 +90,7 @@ portName: str = cliArgs.port_name
 portVersion: str = cliArgs.port_version
 ignoreVersionFromManifest: bool = cliArgs.ignore_version_from_manifest
 updatingBaseline: bool = not cliArgs.not_updating_baseline
+sortingJson: bool = cliArgs.sorting_json
 debugMode: bool = cliArgs.debug
 
 if debugMode:
@@ -280,7 +286,12 @@ if updatingBaseline:
                 baselineVersions["default"][portName] = currentVersion
 
             f.seek(0)
-            f.write(formatJson(baselineVersions, sortKeys=True))
+            f.write(
+                formatJson(
+                    baselineVersions,
+                    sortKeys=sortingJson
+                )
+            )
             f.write("\n")
             f.truncate()
 else:
@@ -343,7 +354,12 @@ with open(portVersionsPath, "r+", newline="") as f:
         )
 
     f.seek(0)
-    f.write(formatJson(versions, sortKeys=False))
+    f.write(
+        formatJson(
+            versions,
+            sortKeys=False  # should never sort these
+        )
+    )
     f.write("\n")
     f.truncate()
 
