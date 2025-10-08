@@ -53,18 +53,25 @@ argParser.add_argument(
     "--port-name",
     required=True,
     type=str,
-    metavar="some-thing"
+    metavar="some-thing",
+    help="name of the port"
 )
 argParser.add_argument(
     "--port-version",
     required=True,
     type=portVersionType,
-    metavar=versionFormat
+    metavar=versionFormat,
+    help="new version of the port"
 )
 argParser.add_argument(
     "--not-updating-baseline",
     action='store_true',
     help="do not update the baseline (default: %(default)s)"
+)
+argParser.add_argument(
+    "--ignore-version-from-manifest",
+    action='store_true',
+    help="ignore (potential) manifest version mismatch (default: %(default)s)"
 )
 argParser.add_argument(
     "--debug",
@@ -76,6 +83,7 @@ cliArgs = argParser.parse_args()
 registryPath: pathlib.Path = cliArgs.registryPath
 portName: str = cliArgs.port_name
 portVersion: str = cliArgs.port_version
+ignoreVersionFromManifest: bool = cliArgs.ignore_version_from_manifest
 updatingBaseline: bool = not cliArgs.not_updating_baseline
 debugMode: bool = cliArgs.debug
 
@@ -169,10 +177,48 @@ if versionMatches is None or len(versionMatches.groups()) < 2:
             f"is it in the correct format ({versionFormat})?"
         ))
     )
-    raise SystemExit(9)
+    raise SystemExit(12)
 else:
     newVersionMain = versionMatches.group(1)
     newVersionPort = int(versionMatches.group(2))
+
+if not ignoreVersionFromManifest:
+    portManifestPath: pathlib.Path = portsPath / portName / "vcpkg.json"
+    if not portManifestPath.is_file():
+        logging.error(
+            " ".join((
+                "The port manifest is missing, expected to find",
+                f"it here: {portManifestPath.resolve()}"
+            ))
+        )
+        raise SystemExit(6)
+    with open(portManifestPath, "r") as f:
+        manifest = json.load(f)
+        currentManifestVersion = manifest.get("version")
+        if currentManifestVersion is None:
+            logging.error(
+                f"Could not get the version from {portManifestPath.resolve()}"
+            )
+            raise SystemExit(7)
+        currentManifestPortVersion = manifest.get("port-version", 0)
+        currentManifestVersion = (
+            f"{currentManifestVersion}#{currentManifestPortVersion}"
+        )
+        logging.debug(
+            f"Parsed current manifest version: {currentManifestVersion}"
+        )
+        if currentManifestVersion != portVersion:
+            logging.error(
+                " ".join((
+                    f"The current version {currentManifestVersion}",
+                    "in the port manifest is different from the provided",
+                    f"version {portVersion} (you can ignore",
+                    "that with --ignore-version-from-manifest)"
+                ))
+            )
+            raise SystemExit(8)
+else:
+    logging.info("Not checking the version value in the port manifest")
 
 # ---
 
@@ -187,9 +233,9 @@ if updatingBaseline:
                     f"from {baselinePath.resolve()}"
                 ))
             )
-            raise SystemExit(6)
+            raise SystemExit(9)
         else:
-            logging.debug(f"Current port version values: {currentVersion}")
+            # logging.debug(f"Current baseline version values: {currentVersion}")
             baselineKey: str = "baseline"
             currentVersionBaseline: str = currentVersion.get(baselineKey)
             portVersionKey: str = "port-version"
@@ -202,13 +248,13 @@ if updatingBaseline:
                         f"for the [{portName}] port"
                     ))
                 )
-                raise SystemExit(7)
+                raise SystemExit(10)
             else:
                 parsedCurrentVersion: str = (
                     f"{currentVersionBaseline}#{currentVersionPort}"
                 )
                 logging.debug(
-                    f"Parsed current version: {parsedCurrentVersion}"
+                    f"Parsed current baseline version: {parsedCurrentVersion}"
                 )
                 if parsedCurrentVersion == portVersion:
                     logging.error(
@@ -217,7 +263,7 @@ if updatingBaseline:
                             f"is already {portVersion}"
                         ))
                     )
-                    raise SystemExit(8)
+                    raise SystemExit(11)
 
             # redundant check, because these are already checked with RegEx
             if newVersionMain is None or newVersionPort is None:
@@ -227,7 +273,7 @@ if updatingBaseline:
                         f"is it in the correct format ({versionFormat})?"
                     ))
                 )
-                raise SystemExit(9)
+                raise SystemExit(12)
             else:
                 currentVersion[baselineKey] = newVersionMain
                 currentVersion[portVersionKey] = newVersionPort
@@ -237,6 +283,8 @@ if updatingBaseline:
             f.write(formatJson(baselineVersions, sortKeys=True))
             f.write("\n")
             f.truncate()
+else:
+    logging.info("Not updating the baseline")
 
 with open(portVersionsPath, "r+", newline="") as f:
     versions = json.load(f)
@@ -245,7 +293,7 @@ with open(portVersionsPath, "r+", newline="") as f:
         logging.error(
             f"Could not get the versions from {portVersionsPath.resolve()}"
         )
-        raise SystemExit(10)
+        raise SystemExit(13)
 
     for v in currentVersions:
         versionKey: str = "version"
@@ -258,7 +306,7 @@ with open(portVersionsPath, "r+", newline="") as f:
                     f"the [{versionKey}] key"
                 ))
             )
-            raise SystemExit(11)
+            raise SystemExit(14)
         if (
             vrsn == newVersionMain
             and
@@ -271,7 +319,7 @@ with open(portVersionsPath, "r+", newline="") as f:
                     f"in {portVersionsPath.resolve()}"
                 ))
             )
-            raise SystemExit(12)
+            raise SystemExit(15)
 
     # git rev-parse HEAD:ports/some-thing
     revParsedGitHash: str = "REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH"
