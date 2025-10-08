@@ -99,7 +99,7 @@ index 21d0ea5..ade48ab 100644
 +        {
 +            "version": "1.2.3",
 +            "port-version": 4,
-+            "git-tree": "REPLACE-THAT-WITH-THE-ACTUAL-REV-PARSED-HASH"
++            "git-tree": "REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH"
 +        },
          {
              "version": "0.9.1",
@@ -125,8 +125,8 @@ sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\",$/\"version\": \"$newPortVe
 
 export GIT_AUTHOR_NAME='buildbot'
 export GIT_AUTHOR_EMAIL='buildbot@your.company'
-export GIT_COMMITTER_NAME='buildbot'
-export GIT_COMMITTER_EMAIL='buildbot@your.company'
+export GIT_COMMITTER_NAME=$GIT_AUTHOR_NAME
+export GIT_COMMITTER_EMAIL=$GIT_AUTHOR_EMAIL
 
 git add ./ports/$portName
 git commit -m "[$portName] version $newPortVersion"
@@ -135,7 +135,7 @@ revParsedHash=$(git rev-parse HEAD:ports/$portName)
 python ./scripts/add-new-version.py \
     --port-name $portName \
     --port-version "$newPortVersion#0"
-sed -i "s/REPLACE-THAT-WITH-THE-ACTUAL-REV-PARSED-HASH/$revParsedHash/" \
+sed -i "s/REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH/$revParsedHash/" \
     ./versions/${portName:0:1}-/$portName.json
 
 git add ./versions/baseline.json ./versions/${portName:0:1}-/$portName.json

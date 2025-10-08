@@ -274,7 +274,7 @@ with open(portVersionsPath, "r+", newline="") as f:
             raise SystemExit(12)
 
     # git rev-parse HEAD:ports/some-thing
-    revParsedGitHash: str = "REPLACE-THAT-WITH-THE-ACTUAL-REV-PARSED-HASH"
+    revParsedGitHash: str = "REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH"
 
     if newVersionPort == 0:
         versions["versions"].insert(
