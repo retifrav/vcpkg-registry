@@ -62,7 +62,7 @@ $ cd /path/to/your/registry/
 $ vcpkg x-add-version --vcpkg-root . --skip-formatting-check some
 ```
 
-But I didn't like the way `x-add-version` formats and sorts the JSON files, so I made this script instead. It isn't a fully functioning replacement yet, as it doesn't do the rev-parsing and just puts a placeholder for the `git-tree` value; but on the bright side, it does some more(?) checks and allows you to specify the version (*and also to skip updating the baseline*):
+But I didn't like the way `x-add-version` formats and sorts the JSON files, so I made this script instead. In addition to the JSON formatting that I like, it does some more(?) checks and allows you to specify the version (*and also to skip updating the baseline*):
 
 ``` sh
 $ python ./scripts/add-new-version.py --port-name some --port-version 1.2.3#4
@@ -99,14 +99,14 @@ index 21d0ea5..ade48ab 100644
 +        {
 +            "version": "1.2.3",
 +            "port-version": 4,
-+            "git-tree": "REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH"
++            "git-tree": "99548035005d6946463bec440b872e2907ca6684"
 +        },
          {
              "version": "0.9.1",
              "git-tree": "41efdeb379935af4f2cf2299be6aa1c0c73f257f"
 ```
 
-I usually do those modifications myself, so I actually don't need such a script, but it becomes a different story when you'll need to update the ports automatically in your CI/CD. Here's a crude example of how the entire process might look like in a Bash script:
+I usually do those modifications myself, so I don't really need such a script, but it becomes a different story when you need to update the ports automatically in your CI/CD. Here's a crude example of how the entire process might look like in a Bash script:
 
 ``` sh
 #!/bin/bash
@@ -123,23 +123,21 @@ sed -i 's/REF .*$/REF NEW-GIT-HASH-FROM-THE-ORIGINAL-REPOSITOR/' \
 sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\",$/\"version\": \"$newPortVersion\",/" \
     ./ports/$portName/vcpkg.json
 
+python ./scripts/add-new-version.py \
+    --port-name $portName \
+    --port-version "$newPortVersion#0"
+
 export GIT_AUTHOR_NAME='buildbot'
 export GIT_AUTHOR_EMAIL='buildbot@your.company'
 export GIT_COMMITTER_NAME=$GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL=$GIT_AUTHOR_EMAIL
 
-git add ./ports/$portName
-git commit -m "[$portName] version $newPortVersion"
-revParsedHash=$(git rev-parse HEAD:ports/$portName)
-
-python ./scripts/add-new-version.py \
-    --port-name $portName \
-    --port-version "$newPortVersion#0"
-sed -i "s/REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH/$revParsedHash/" \
+echo 'Staging ./ports/$portName might be redundant, if it is already staged/committed'
+git add \
+    ./ports/$portName \
+    ./versions/baseline.json \
     ./versions/${portName:0:1}-/$portName.json
-
-git add ./versions/baseline.json ./versions/${portName:0:1}-/$portName.json
-git commit --amend --no-edit
+git commit -m "[$portName] version $newPortVersion"
 
 git log -n2 --oneline
 

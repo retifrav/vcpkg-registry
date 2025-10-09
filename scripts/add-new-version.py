@@ -5,6 +5,7 @@ import argparse
 import sys
 import re
 import json
+import subprocess
 
 from typing import List, Dict, Optional, Any
 
@@ -13,6 +14,7 @@ loggingFormat: str = "[%(levelname)s] %(message)s"
 
 versionFormat: str = "1.2.3#4"
 portVersionRegEx = re.compile(r"^(\d+\.\d+\.\d+)#(\d+)$")
+gitTreePlaceholder: str = "REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH"
 
 
 def portVersionType(argumentValue):
@@ -74,6 +76,16 @@ argParser.add_argument(
     help="do not update the baseline (default: %(default)s)"
 )
 argParser.add_argument(
+    "--no-rev-parse",
+    action='store_true',
+    help=" ".join((
+        "don't try to get the actual tree/subfolder hash",
+        "for the git-tree property in the port versions file,",
+        f"use the \"{gitTreePlaceholder}\" placeholder instead",
+        "(default: %(default)s)"
+    ))
+)
+argParser.add_argument(
     "--sorting-json",
     action='store_true',
     help="sort JSON before writing to file (default: %(default)s)"
@@ -90,6 +102,7 @@ portName: str = cliArgs.port_name
 portVersion: str = cliArgs.port_version
 ignoreVersionFromManifest: bool = cliArgs.ignore_version_from_manifest
 updatingBaseline: bool = not cliArgs.not_updating_baseline
+withRevParse: bool = not cliArgs.no_rev_parse
 sortingJson: bool = cliArgs.sorting_json
 debugMode: bool = cliArgs.debug
 
@@ -121,6 +134,97 @@ def formatJson(originalDictionary: Dict[str, Any], sortKeys: bool) -> str:
         flags=re.MULTILINE
     )
     return jsonStringFormatted
+
+
+def executeShellCommand(args: List[str]) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(
+            args,
+            capture_output=True
+        )
+    except subprocess.CalledProcessError as ex:
+        logging.error(ex.output)
+        raise SystemExit(18)
+    except Exception as ex:
+        logging.error(ex)
+        raise SystemExit(18)
+
+
+def revParseSubfolder(subfolder: str) -> str:
+    # stage possible modifications in the port folder
+    # (for `git diff --cached` to reliably report the changes)
+    executeShellCommand(
+        [
+            "git",
+            "add",
+            subfolder
+        ]
+    )
+    # check whether there are any modifications in the port folder
+    portFilesModified = executeShellCommand(
+        [
+            "git",
+            "diff",
+            "--exit-code",
+            "--cached",
+            "--no-patch",
+            subfolder
+        ]
+    )
+    gitResult: Optional[subprocess.CompletedProcess] = None
+    if portFilesModified.returncode == 0:
+        logging.debug(
+            "No modifications in the port folder, will use rev-parse"
+        )
+        gitResult = executeShellCommand(
+            [
+                "git",
+                "rev-parse",
+                f"HEAD:{subfolder}"
+            ]
+        )
+    else:
+        logging.debug(
+            "There are modifications in the port folder, will use write-tree"
+        )
+        # https://stackoverflow.com/questions/23816330/compute-git-hash-of-all-uncommitted-code/48213033#48213033
+        # might want/need to use a temporary index via GIT_INDEX_FILE:
+        # ```
+        # $ cp .git/index /tmp/git_index
+        # $ export GIT_INDEX_FILE=/tmp/git_index
+        # $ git add ./ports/some
+        # $ git write-tree --prefix=ports/some
+        # $ unset GIT_INDEX_FILE
+        # ```
+        gitResult = executeShellCommand(
+            [
+                "git",
+                "write-tree",
+                "--prefix",
+                subfolder
+            ]
+        )
+        # unstage the port folder modifications (though that could have been
+        # staged before running this script, so unstaging them here is probably
+        # not desirable)
+        executeShellCommand(
+            [
+                "git",
+                "reset",
+                "--quiet",
+                subfolder
+            ]
+        )
+
+    if gitResult.returncode != 0:
+        logging.error(gitResult.stderr.decode().strip())
+        raise SystemExit(18)
+    else:
+        resultValue: str = gitResult.stdout.decode().strip()
+        logging.debug(
+            f"Tree/subfolder hash for the (updated) port: {resultValue}"
+        )
+        return resultValue
 
 
 # --- do some checks first
@@ -241,7 +345,9 @@ if updatingBaseline:
             )
             raise SystemExit(9)
         else:
-            # logging.debug(f"Current baseline version values: {currentVersion}")
+            # logging.debug(
+            #     f"Current baseline version values: {currentVersion}"
+            # )
             baselineKey: str = "baseline"
             currentVersionBaseline: str = currentVersion.get(baselineKey)
             portVersionKey: str = "port-version"
@@ -265,8 +371,9 @@ if updatingBaseline:
                 if parsedCurrentVersion == portVersion:
                     logging.error(
                         " ".join((
-                            f"The [{portName}] version in {baselinePath.resolve()}",
-                            f"is already {portVersion}"
+                            f"The version of [{portName}] port in",
+                            f"{baselinePath.resolve()} is",
+                            f"already {portVersion}"
                         ))
                     )
                     raise SystemExit(11)
@@ -298,6 +405,19 @@ else:
     logging.info("Not updating the baseline")
 
 with open(portVersionsPath, "r+", newline="") as f:
+    revParsedGitHash: str = gitTreePlaceholder
+    if withRevParse:
+        revParsedGitHash = revParseSubfolder(
+            portPath.relative_to(registryPath).as_posix()
+        )
+    else:
+        logging.info(
+            " ".join((
+                "Not trying to get the actual tree/subfolder hash,",
+                "will use a placeholder instead"
+            ))
+        )
+
     versions = json.load(f)
     currentVersions = versions.get("versions")
     if currentVersions is None:
@@ -307,6 +427,7 @@ with open(portVersionsPath, "r+", newline="") as f:
         raise SystemExit(13)
 
     for v in currentVersions:
+        # verify that this version has not been already added before
         versionKey: str = "version"
         vrsn = v.get(versionKey)
         if vrsn is None:
@@ -331,9 +452,27 @@ with open(portVersionsPath, "r+", newline="") as f:
                 ))
             )
             raise SystemExit(15)
-
-    # git rev-parse HEAD:ports/some-thing
-    revParsedGitHash: str = "REPLACE-THAT-WITH-ACTUAL-REV-PARSED-HASH"
+        # also verify that none of the existing versions have the same
+        # tree/port hash (the one from `git rev-parse`/`git write-tree`)
+        gitTree: str = "git-tree"
+        gttr = v.get(gitTree)
+        if gttr is None:
+            logging.error(
+                " ".join((
+                    "One of the version values in",
+                    f"{portVersionsPath.resolve()} does not have",
+                    f"the [{gitTree}] key"
+                ))
+            )
+            raise SystemExit(16)
+        if (gttr == revParsedGitHash):
+            logging.error(
+                " ".join((
+                    f"The tree hash {revParsedGitHash} is already present",
+                    f"in {portVersionsPath.resolve()}"
+                ))
+            )
+            raise SystemExit(17)
 
     if newVersionPort == 0:
         versions["versions"].insert(
