@@ -156,6 +156,7 @@ def revParseSubfolder(subfolder: str) -> str:
     executeShellCommand(
         [
             "git",
+            "-C", registryPath.resolve(),
             "add",
             subfolder
         ]
@@ -164,6 +165,7 @@ def revParseSubfolder(subfolder: str) -> str:
     portFilesModified = executeShellCommand(
         [
             "git",
+            "-C", registryPath.resolve(),
             "diff",
             "--exit-code",
             "--cached",
@@ -179,6 +181,7 @@ def revParseSubfolder(subfolder: str) -> str:
         gitResult = executeShellCommand(
             [
                 "git",
+                "-C", registryPath.resolve(),
                 "rev-parse",
                 f"HEAD:{subfolder}"
             ]
@@ -199,6 +202,7 @@ def revParseSubfolder(subfolder: str) -> str:
         gitResult = executeShellCommand(
             [
                 "git",
+                "-C", registryPath.resolve(),
                 "write-tree",
                 "--prefix",
                 subfolder
@@ -210,6 +214,7 @@ def revParseSubfolder(subfolder: str) -> str:
         executeShellCommand(
             [
                 "git",
+                "-C", registryPath.resolve(),
                 "reset",
                 "--quiet",
                 subfolder
