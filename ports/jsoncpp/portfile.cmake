@@ -7,9 +7,9 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:open-source-parsers/jsoncpp.git
-    REF 5defb4ed1a4293b8e2bf641e16b156fb9de498cc
+    REF 89e2973c754a9c02a49974d839779b151e95afd6
     PATCHES
-        001-modern-cmake-version.patch
+        001-debug-postfix-dropped-policies.patch
 )
 
 if(NOT VCPKG_TARGET_IS_WINDOWS)
@@ -23,6 +23,7 @@ vcpkg_cmake_configure(
     OPTIONS
         -DJSONCPP_WITH_CMAKE_PACKAGE=1
         -DJSONCPP_WITH_TESTS=0
+        -DJSONCPP_WITH_POST_BUILD_UNITTEST=0
         -DJSONCPP_WITH_EXAMPLE=0
         -DJSONCPP_WITH_PKGCONFIG_SUPPORT=0
         -DBUILD_SHARED_LIBS=${JSONCPP_SHARED}
@@ -37,8 +38,4 @@ vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

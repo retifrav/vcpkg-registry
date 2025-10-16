@@ -1,8 +1,9 @@
 {
     "name": "jsoncpp",
-    "version": "1.9.5",
+    "version": "1.9.6",
     "description": "A C++ library for interacting with JSON",
     "homepage": "https://github.com/open-source-parsers/jsoncpp",
+    "license": "MIT",
     "dependencies":
     [
         {
