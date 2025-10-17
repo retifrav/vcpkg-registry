@@ -7,7 +7,7 @@ index 6cb82962..df809bfb 100644
  #cmakedefine RIGHT_SHIFT_IS_UNSIGNED 1
  
 +// other platforms need this too, at the very least Emscripten does
-+//typedef unsigned char boolean;
-+//#define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
++typedef unsigned char boolean;
++#define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
 +
  #endif
