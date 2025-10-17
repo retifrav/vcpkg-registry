@@ -83,7 +83,7 @@ index abb5a4c5a2..0a936f241d 100644
 -    endif ()
 +find_package(PROJ CONFIG REQUIRED) # has to be upper-cased `PROJ`, not `proj`
 +if(NOT BUILD_SHARED_LIBS)
-+    string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(proj CONFIG REQUIRED)\n")
++    string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ CONFIG REQUIRED)\n")
  endif()
  if (DEFINED PROJ_VERSION_STRING AND NOT DEFINED PROJ_VERSION)
      set(PROJ_VERSION ${PROJ_VERSION_STRING})
