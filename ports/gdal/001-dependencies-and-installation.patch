@@ -51,7 +51,7 @@ index ff2c510bda..639462187f 100644
  
  target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 diff --git a/cmake/helpers/CheckDependentLibraries.cmake b/cmake/helpers/CheckDependentLibraries.cmake
-index abb5a4c5a2..0a936f241d 100644
+index abb5a4c5a2..f3ba013678 100644
 --- a/cmake/helpers/CheckDependentLibraries.cmake
 +++ b/cmake/helpers/CheckDependentLibraries.cmake
 @@ -110,29 +110,9 @@ if (GDAL_USE_CRYPTOPP)
@@ -998,6 +998,19 @@ index f1850f94c2..afd5b22309 100644
  endif ()
  target_include_directories(
    gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gpkg
+diff --git a/frmts/mbtiles/mbtilesdataset.cpp b/frmts/mbtiles/mbtilesdataset.cpp
+index 80f64353f4..cbd9c838b1 100644
+--- a/frmts/mbtiles/mbtilesdataset.cpp
++++ b/frmts/mbtiles/mbtilesdataset.cpp
+@@ -27,7 +27,7 @@
+ #include "ogrsqlitevfs.h"
+ #include "ogrsqlitebase.h"
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #include "ogrlibjsonutils.h"
+ 
+ #include <math.h>
 diff --git a/frmts/mrf/CMakeLists.txt b/frmts/mrf/CMakeLists.txt
 index 596381e706..1c023cb282 100644
 --- a/frmts/mrf/CMakeLists.txt
@@ -1307,6 +1320,19 @@ index fb2e8053c4..70e276389b 100644
 -  gdal_target_link_libraries(infback9 PRIVATE ZLIB::ZLIB)
 +  gdal_target_link_libraries(infback9 PRIVATE zlib)
  endif ()
+diff --git a/frmts/zlib/contrib/infback9/minified_zutil.h b/frmts/zlib/contrib/infback9/minified_zutil.h
+index 78aacd5032..33a0924070 100644
+--- a/frmts/zlib/contrib/infback9/minified_zutil.h
++++ b/frmts/zlib/contrib/infback9/minified_zutil.h
+@@ -18,7 +18,7 @@
+ #  define ZLIB_INTERNAL
+ #endif
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ // Gentoo and derivatives change the OF() macro from upstream zlib's zconf.h
+ // to _Z_OF(), so define OF() if it isn't
 diff --git a/gcore/CMakeLists.txt b/gcore/CMakeLists.txt
 index 3fb967e422..77118e5ac7 100644
 --- a/gcore/CMakeLists.txt
@@ -1932,6 +1958,19 @@ index ec8859a263..d8fcc35f09 100644
  endif ()
  
  if (GDAL_USE_ARCHIVE)
+diff --git a/port/cpl_compressor.cpp b/port/cpl_compressor.cpp
+index f721868020..703bb2df96 100644
+--- a/port/cpl_compressor.cpp
++++ b/port/cpl_compressor.cpp
+@@ -22,7 +22,7 @@
+ #ifdef HAVE_LIBDEFLATE
+ #include "libdeflate.h"
+ #else
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ #endif
+ 
+ #ifdef HAVE_LZMA
 diff --git a/port/cpl_json_header.h b/port/cpl_json_header.h
 index 7d05f276cb..f3a4f6a501 100644
 --- a/port/cpl_json_header.h
@@ -1945,3 +1984,44 @@ index 7d05f276cb..f3a4f6a501 100644
  
  #ifdef _MSC_VER
  #pragma warning(pop)
+diff --git a/port/cpl_minizip_ioapi.cpp b/port/cpl_minizip_ioapi.cpp
+index 6314eeec45..e68cf08597 100644
+--- a/port/cpl_minizip_ioapi.cpp
++++ b/port/cpl_minizip_ioapi.cpp
+@@ -30,8 +30,8 @@
+ 
+ #include "cpl_minizip_ioapi.h"
+ #include "cpl_vsi.h"
+-#include "zconf.h"
+-#include "zlib.h"
++#include <zlib/zconf.h>
++#include <zlib/zlib.h>
+ 
+ static voidpf ZCALLBACK fopen_file_func(voidpf /* opaque */,
+                                         const char *filename, int mode)
+diff --git a/port/cpl_minizip_ioapi.h b/port/cpl_minizip_ioapi.h
+index e43e9e9c06..925fe4b2d3 100644
+--- a/port/cpl_minizip_ioapi.h
++++ b/port/cpl_minizip_ioapi.h
+@@ -22,7 +22,7 @@
+ #ifndef DOXYGEN_SKIP
+ 
+ #include "cpl_vsi.h"
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #define uLong64 vsi_l_offset
+ 
+diff --git a/port/cpl_zlib_header.h b/port/cpl_zlib_header.h
+index 3062fe9104..54bd20487a 100644
+--- a/port/cpl_zlib_header.h
++++ b/port/cpl_zlib_header.h
+@@ -17,7 +17,7 @@
+ #pragma GCC system_header
+ #endif
+ 
+-#include "zlib.h"
++#include <zlib/zlib.h>
+ 
+ #ifdef ENABLE_DEFLATE64
+ #include "infback9.h"
