@@ -1,13 +1,24 @@
 cmake_minimum_required(VERSION 3.22)
 
 project("pdqsort"
-    VERSION 2021.3.14
     DESCRIPTION "Pattern-defeating quicksort"
+    VERSION 2021.3.14
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(REQUIRED_CPP_STANDARD 11 CACHE STRING "Required C++ standard")
+
+if(DEFINED CMAKE_CXX_STANDARD)
+    if(CMAKE_CXX_STANDARD LESS ${REQUIRED_CPP_STANDARD})
+        message(FATAL_ERROR "This project requires at least C++${REQUIRED_CPP_STANDARD}")
+    endif()
+else()
+    set(CMAKE_CXX_STANDARD ${REQUIRED_CPP_STANDARD})
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
+    set(CMAKE_CXX_EXTENSIONS NO)
+endif()
 
 add_library(${PROJECT_NAME} INTERFACE)
 
@@ -22,6 +33,8 @@ target_include_directories(${PROJECT_NAME}
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+target_compile_features(${PROJECT_NAME} INTERFACE "cxx_std_${REQUIRED_CPP_STANDARD}")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 

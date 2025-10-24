@@ -3,6 +3,7 @@
     "version": "2021.3.14",
     "description": "Pattern-defeating quicksort",
     "homepage": "https://github.com/orlp/pdqsort",
+    "license": "Zlib",
     "dependencies":
     [
         {
