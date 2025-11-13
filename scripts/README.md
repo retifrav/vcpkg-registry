@@ -10,6 +10,16 @@
 
 <!-- /MarkdownTOC -->
 
+For executing Python scripts, the following packages are expected to be installed and available in your current environment:
+
+``` sh
+$ pip install \
+    colorama \
+    pandas \
+    pandera \
+    tabulate
+```
+
 ## check-versions-and-hashes
 
 Checks that declared rev-parse hashes in ports versions match their actual values:
