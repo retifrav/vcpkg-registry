@@ -1,8 +1,9 @@
 {
     "name": "assimp",
-    "version": "5.3.1",
+    "version": "6.0.2",
     "description": "Asset Importer",
     "homepage": "https://assimp.org/",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {
@@ -13,6 +14,8 @@
             "name": "vcpkg-cmake-config",
             "host": true
         },
+        "rapidjson",
+        "stb",
         "zlib"
     ],
     "default-features":

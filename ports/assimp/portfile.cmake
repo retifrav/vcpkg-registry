@@ -1,11 +1,19 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:assimp/assimp.git
-    REF 6a08c39e3a91ef385e76515cfad86aca4bfd57ff
+    REF fb375dd8c0a032106a2122815fb18dffe0283721
     PATCHES
-        dependencies-discovery-and-installation.patch
-        missing-include-algorithm.patch
-        missing-define-fopen64.patch
+        001-dependencies-and-installation.patch
+        #002-missing-include-algorithm.patch
+)
+
+# do not vendor 3rd-party dependencies
+file(REMOVE_RECURSE
+    "${SOURCE_PATH}/contrib/draco"
+    "${SOURCE_PATH}/contrib/rapidjson"
+    "${SOURCE_PATH}/contrib/stb"
+    "${SOURCE_PATH}/contrib/zlib"
+    # the rest of them should be deleted too and resolved with vcpkg
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -52,7 +60,9 @@ vcpkg_cmake_configure(
         -DASSIMP_BUILD_ASSIMP_TOOLS=0
         -DASSIMP_BUILD_SAMPLES=0
         -DASSIMP_BUILD_TESTS=0
+        -DASSIMP_HUNTER_ENABLED=0
         -DASSIMP_INSTALL_PDB=0
+        -DASSIMP_OPT_BUILD_PACKAGES=0
         -DASSIMP_WARNINGS_AS_ERRORS=0
 )
 
