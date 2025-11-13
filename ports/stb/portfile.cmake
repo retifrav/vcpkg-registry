@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:nothings/stb.git
-    REF ae721c50eaf761660b4f90cc590453cdb0c2acd0
+    REF f1c79c02822848a9bed4315b12c8c8f3761e1296
 )
 
 file(COPY
@@ -17,7 +17,11 @@ file(COPY
     DESTINATION "${SOURCE_PATH}"
 )
 
-vcpkg_cmake_configure(SOURCE_PATH "${SOURCE_PATH}")
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DSTB_VERSION="${VERSION}"
+)
 
 vcpkg_cmake_install()
 

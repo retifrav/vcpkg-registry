@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
+set(STB_VERSION "0.0.0" CACHE STRING "stb version")
+
 project("stb"
     DESCRIPTION "Single-file libraries for C/C++"
-    VERSION 2024.2.13
+    VERSION ${STB_VERSION}
 )
 
 add_library(${PROJECT_NAME} INTERFACE)
