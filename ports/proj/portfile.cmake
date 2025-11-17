@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:OSGeo/PROJ.git
-    REF 7c3d4a1fa9c1d5a3941b5eaee7c8d149f5936f54
+    REF b24cdfa5ecdcc26bf730a2d5a40fbaaf4e9bcc91
     PATCHES
         001-dependencies-and-installation.patch
 )
