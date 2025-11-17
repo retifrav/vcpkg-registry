@@ -223,7 +223,7 @@ index ebb353829f..05c8cfa79b 100644
    endif()
    if(NOT BUILD_SHARED_LIBS AND GDAL_USE_${key} AND _find_dependency)
 -    string(APPEND GDAL_IMPORT_DEPENDENCIES "${_find_dependency}")
-+    string(APPEND GDAL_IMPORT_DEPENDENCIES "$#{_find_dependency}")
++    string(APPEND GDAL_IMPORT_DEPENDENCIES "#${_find_dependency}")
    endif()
    unset(_find_dependency_args)
    unset(_find_dependency)
