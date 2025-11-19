@@ -1,0 +1,221 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 79f8bad..a0a5b93 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.10)
++cmake_minimum_required(VERSION 3.22)
+ 
+ # Default to a release build.
+ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+@@ -19,7 +19,7 @@ file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/libdeflate.h VERSION_STRING REGEX ${VER
+ string(REGEX REPLACE ${VERSION_REGEX} "\\1" VERSION_STRING "${VERSION_STRING}")
+ 
+ # Declare the project.
+-project(libdeflate
++project(deflate
+         LANGUAGES C
+         VERSION ${VERSION_STRING})
+ 
+@@ -29,8 +29,8 @@ include(CheckCCompilerFlag)
+ include(GNUInstallDirs)
+ 
+ # Declare the options, which can be overridden via 'cmake -DOPTION=VALUE'.
+-option(LIBDEFLATE_BUILD_STATIC_LIB "Build the static library" ON)
+-option(LIBDEFLATE_BUILD_SHARED_LIB "Build the shared library" ON)
++option(LIBDEFLATE_BUILD_STATIC_LIB "Build the static library" 1)
++option(LIBDEFLATE_BUILD_SHARED_LIB "Build the shared library" 0)
+ option(LIBDEFLATE_COMPRESSION_SUPPORT "Support compression" ON)
+ option(LIBDEFLATE_DECOMPRESSION_SUPPORT "Support decompression" ON)
+ option(LIBDEFLATE_ZLIB_SUPPORT "Support the zlib format" ON)
+@@ -41,13 +41,20 @@ option(LIBDEFLATE_FREESTANDING
+        need to provide a custom memory allocator." OFF)
+ option(LIBDEFLATE_BUILD_GZIP "Build the libdeflate-gzip program" ON)
+ option(LIBDEFLATE_BUILD_TESTS "Build the test programs" OFF)
+-option(LIBDEFLATE_USE_SHARED_LIB
+-       "Link the libdeflate-gzip and test programs to the shared library instead
+-       of the static library" OFF)
++
+ if(APPLE)
+     option(LIBDEFLATE_APPLE_FRAMEWORK "Build as Apple Framework" OFF)
+ endif()
+ 
++if(DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
++    set(LIBDEFLATE_BUILD_SHARED_LIB 1)
++    set(LIBDEFLATE_BUILD_STATIC_LIB 0)
++endif()
++
++if(NOT LIBDEFLATE_BUILD_STATIC_LIB AND NOT LIBDEFLATE_BUILD_SHARED_LIB)
++    message(FATAL_ERROR "Neither LIBDEFLATE_BUILD_STATIC_LIB nor LIBDEFLATE_BUILD_SHARED_LIB is set, you need to choose one")
++endif()
++
+ if(LIBDEFLATE_BUILD_TESTS)
+     enable_testing()
+ endif()
+@@ -58,11 +65,6 @@ if(NOT LIBDEFLATE_COMPRESSION_SUPPORT OR NOT LIBDEFLATE_DECOMPRESSION_SUPPORT
+     set(LIBDEFLATE_BUILD_GZIP OFF)
+ endif()
+ 
+-# If the static library isn't being built, we have to link to the shared one.
+-if(NOT LIBDEFLATE_BUILD_STATIC_LIB)
+-    set(LIBDEFLATE_USE_SHARED_LIB ON)
+-endif()
+-
+ # Set common C compiler flags for all targets (the library and the programs).
+ set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
+ set(CMAKE_C_STANDARD 99)
+@@ -257,113 +259,37 @@ if(LIBDEFLATE_APPLE_FRAMEWORK)
+     message(STATUS "Resource files: ${LIBDEFLATE_RESOURCES}")
+ endif()
+ 
+-# Build the static library.
+-if(LIBDEFLATE_BUILD_STATIC_LIB)
+-    add_library(libdeflate_static STATIC ${LIB_SOURCES})
++add_library(${PROJECT_NAME} ${LIB_SOURCES})
++add_library(deflate::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+ 
+-    # This alias allows third-party usage of the library with CMake to work the
+-    # same way with add_subdirectory() as with other ways.
+-    add_library(libdeflate::libdeflate_static ALIAS libdeflate_static)
++set_target_properties(${PROJECT_NAME}
++    PROPERTIES
++        PUBLIC_HEADER libdeflate.h
++)
+ 
+-    if(WIN32 AND NOT MINGW)
+-        set(STATIC_LIB_NAME deflatestatic)
+-    else()
+-        set(STATIC_LIB_NAME deflate)
+-    endif()
+-    set_target_properties(libdeflate_static PROPERTIES
+-                          OUTPUT_NAME ${STATIC_LIB_NAME}
+-                          PUBLIC_HEADER libdeflate.h)
+-    configure_framework(libdeflate_static)
+-    target_include_directories(libdeflate_static PUBLIC ${LIB_INCLUDE_DIRS})
+-    target_compile_definitions(libdeflate_static PRIVATE ${LIB_COMPILE_DEFINITIONS})
+-    target_compile_options(libdeflate_static PRIVATE ${LIB_COMPILE_OPTIONS})
+-    list(APPEND LIB_TARGETS libdeflate_static)
+-endif()
++target_include_directories(${PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})
+ 
+-# Build the shared library.
+-if(LIBDEFLATE_BUILD_SHARED_LIB)
+-    add_library(libdeflate_shared SHARED ${LIB_SOURCES})
++configure_framework(${PROJECT_NAME})
+ 
+-    # This alias allows third-party usage of the library with CMake to work the
+-    # same way with add_subdirectory() as with other ways.
+-    add_library(libdeflate::libdeflate_shared ALIAS libdeflate_shared)
++target_compile_definitions(${PROJECT_NAME} PRIVATE ${LIB_COMPILE_DEFINITIONS})
+ 
+-    set_target_properties(libdeflate_shared PROPERTIES
+-                          OUTPUT_NAME deflate
+-                          PUBLIC_HEADER libdeflate.h
+-                          C_VISIBILITY_PRESET hidden
+-                          SOVERSION 0)
+-    configure_framework(libdeflate_shared)
+-    target_include_directories(libdeflate_shared PUBLIC ${LIB_INCLUDE_DIRS})
+-    target_compile_definitions(libdeflate_shared PUBLIC LIBDEFLATE_DLL)
+-    target_compile_definitions(libdeflate_shared PRIVATE ${LIB_COMPILE_DEFINITIONS})
+-    target_compile_options(libdeflate_shared PRIVATE ${LIB_COMPILE_OPTIONS})
+-    target_link_libraries(libdeflate_shared PRIVATE ${LIB_LINK_LIBRARIES})
+-    list(APPEND LIB_TARGETS libdeflate_shared)
+-endif()
++target_compile_options(${PROJECT_NAME} PRIVATE ${LIB_COMPILE_OPTIONS})
+ 
+-# Install the static and/or shared library.
+-install(TARGETS ${LIB_TARGETS}
+-        EXPORT libdeflate_exported_targets
+-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-        FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime OPTIONAL
+-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++list(APPEND LIB_TARGETS ${PROJECT_NAME})
+ 
+-# Install resource files to Resources/ directory in the framework
+-if(LIBDEFLATE_APPLE_FRAMEWORK)
+-    install(FILES ${LIBDEFLATE_RESOURCES}
+-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/libdeflate_static.framework/Resources"
+-    )
+-endif()
+-
+-# Generate and install the pkg-config file.  (Don't confuse this with the CMake
+-# package config file, which is CMake-specific.)  Take care to define the
+-# include and lib directories in terms of the ${prefix} and ${exec_prefix}
+-# pkg-config variables when possible, since some pkg-config users expect to be
+-# able to override these variables to relocate packages.
+-if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+-    set(CMAKE_PKGCONFIG_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+-else()
+-    set(CMAKE_PKGCONFIG_INCLUDEDIR "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+-endif()
+-if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+-    set(CMAKE_PKGCONFIG_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+-else()
+-    set(CMAKE_PKGCONFIG_LIBDIR "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
++# Build the shared library.
++if(LIBDEFLATE_BUILD_SHARED_LIB)
++    set_target_properties(${PROJECT_NAME} PROPERTIES
++                          C_VISIBILITY_PRESET hidden
++                          SOVERSION 0)
++    target_compile_definitions(${PROJECT_NAME} PUBLIC LIBDEFLATE_DLL)
++    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LINK_LIBRARIES})
+ endif()
+-configure_file(libdeflate.pc.in libdeflate.pc @ONLY)
+-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libdeflate.pc
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+ 
+-# Generate a "libdeflate-targets.cmake" file in the build tree that can be
+-# included by outside projects to import targets from the build tree.
+-export(EXPORT libdeflate_exported_targets
+-       NAMESPACE libdeflate::
+-       FILE libdeflate-targets.cmake)
+-
+-# Generate and install a separate "libdeflate-targets.cmake" file that can be
+-# included by outside projects to import targets from the installation tree.
+-install(EXPORT libdeflate_exported_targets
+-        NAMESPACE libdeflate::
+-        FILE libdeflate-targets.cmake
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libdeflate)
+-
+-# Generate and install the CMake package version and config files.
+-write_basic_package_version_file(libdeflate-config-version.cmake
+-                                 VERSION ${PROJECT_VERSION}
+-                                 COMPATIBILITY AnyNewerVersion)
+-configure_package_config_file(
+-    ${CMAKE_CURRENT_SOURCE_DIR}/libdeflate-config.cmake.in
+-    libdeflate-config.cmake
+-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libdeflate)
+-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libdeflate-config.cmake
+-        ${CMAKE_CURRENT_BINARY_DIR}/libdeflate-config-version.cmake
+-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libdeflate)
++set(PROJECT_NAMESPACE_FOR_PACKAGE "${PROJECT_NAME}")
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
+ 
+ # Build the programs subdirectory if needed.
+ if(LIBDEFLATE_BUILD_GZIP OR LIBDEFLATE_BUILD_TESTS)
+     add_subdirectory(programs)
+-endif()
+\ No newline at end of file
++endif()
+diff --git a/programs/CMakeLists.txt b/programs/CMakeLists.txt
+index e707a25..e9ce8af 100644
+--- a/programs/CMakeLists.txt
++++ b/programs/CMakeLists.txt
+@@ -24,11 +24,9 @@ configure_file(config.h.in config.h)
+ add_library(libdeflate_prog_utils STATIC prog_util.c tgetopt.c ../common_defs.h)
+ set_target_properties(libdeflate_prog_utils PROPERTIES
+                       OUTPUT_NAME deflate_prog_utils)
+-if(LIBDEFLATE_USE_SHARED_LIB)
+-    target_link_libraries(libdeflate_prog_utils PUBLIC libdeflate_shared)
+-else()
+-    target_link_libraries(libdeflate_prog_utils PUBLIC libdeflate_static)
+-endif()
++
++target_link_libraries(libdeflate_prog_utils PUBLIC ${PROJECT_NAME})
++
+ target_include_directories(libdeflate_prog_utils PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+ target_compile_definitions(libdeflate_prog_utils PUBLIC HAVE_CONFIG_H)
+ if(WIN32)
