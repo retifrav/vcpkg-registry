@@ -6,11 +6,6 @@ vcpkg_from_git(
         001-dependencies-and-installation.patch
 )
 
-# should make a port for this one too
-file(RENAME
-    "${SOURCE_PATH}/frmts/zlib/contrib/infback9"
-    "${SOURCE_PATH}/frmts/infback9"
-)
 # do not vendor 3rd-party dependencies
 file(REMOVE_RECURSE
     "${SOURCE_PATH}/frmts/gtiff/libgeotiff"
@@ -19,6 +14,15 @@ file(REMOVE_RECURSE
     "${SOURCE_PATH}/frmts/png/libpng"
     "${SOURCE_PATH}/frmts/zlib"
     "${SOURCE_PATH}/ogr/ogrsf_frmts/geojson/libjson"
+)
+file(REMOVE
+    "${SOURCE_PATH}/cmake/modules/packages/FindCURL.cmake"
+    "${SOURCE_PATH}/cmake/modules/packages/FindDeflate.cmake"
+    "${SOURCE_PATH}/cmake/modules/packages/FindGeoTIFF.cmake"
+    "${SOURCE_PATH}/cmake/modules/packages/FindPROJ.cmake"
+    "${SOURCE_PATH}/cmake/modules/packages/FindSQLite3.cmake"
+    "${SOURCE_PATH}/cmake/modules/packages/FindWebP.cmake"
+    "${SOURCE_PATH}/cmake/modules/packages/FindZSTD.cmake"
 )
 
 # vcpkg_find_acquire_program(PYTHON3)
@@ -44,6 +48,7 @@ vcpkg_cmake_configure(
         -DBUILD_DOCS=0
         -DBUILD_PYTHON_BINDINGS=0
         -DBUILD_TESTING=0
+        -DENABLE_DEFLATE64=0
         -DENABLE_GNM=0
         -DENABLE_PAM=0
         -DGDAL_BUILD_OPTIONAL_DRIVERS=0

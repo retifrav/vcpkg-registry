@@ -199,7 +199,7 @@ index abb5a4c5a2..f3ba013678 100644
  # Checks that SQLite3 has RTree support
  # Called by ogr/ogrsf_frmts/sqlite/CMakeLists.txt and ogr/ogrsf_frmts/gpkg/CMakeLists.txt
 diff --git a/cmake/helpers/CheckDependentLibrariesCommon.cmake b/cmake/helpers/CheckDependentLibrariesCommon.cmake
-index ebb353829f..05c8cfa79b 100644
+index ebb353829f..1f2ee7da7c 100644
 --- a/cmake/helpers/CheckDependentLibrariesCommon.cmake
 +++ b/cmake/helpers/CheckDependentLibrariesCommon.cmake
 @@ -28,13 +28,9 @@ if(NOT GDAL_USE_INTERNAL_LIBS IN_LIST GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES)
@@ -1309,30 +1309,6 @@ index 9edace854d..3c3069824d 100644
 -  gdal_target_link_libraries(gdal_RIK PRIVATE ZLIB::ZLIB)
 +  gdal_target_link_libraries(gdal_RIK PRIVATE zlib)
  endif ()
-diff --git a/frmts/zlib/contrib/infback9/CMakeLists.txt b/frmts/zlib/contrib/infback9/CMakeLists.txt
-index fb2e8053c4..70e276389b 100644
---- a/frmts/zlib/contrib/infback9/CMakeLists.txt
-+++ b/frmts/zlib/contrib/infback9/CMakeLists.txt
-@@ -14,5 +14,5 @@ include(GdalDriverHelper)
- if (GDAL_USE_ZLIB_INTERNAL)
-   gdal_add_vendored_lib(infback9 libz)
- else()
--  gdal_target_link_libraries(infback9 PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(infback9 PRIVATE zlib)
- endif ()
-diff --git a/frmts/zlib/contrib/infback9/minified_zutil.h b/frmts/zlib/contrib/infback9/minified_zutil.h
-index 78aacd5032..33a0924070 100644
---- a/frmts/zlib/contrib/infback9/minified_zutil.h
-+++ b/frmts/zlib/contrib/infback9/minified_zutil.h
-@@ -18,7 +18,7 @@
- #  define ZLIB_INTERNAL
- #endif
- 
--#include "zlib.h"
-+#include <zlib/zlib.h>
- 
- // Gentoo and derivatives change the OF() macro from upstream zlib's zconf.h
- // to _Z_OF(), so define OF() if it isn't
 diff --git a/gcore/CMakeLists.txt b/gcore/CMakeLists.txt
 index 3fb967e422..77118e5ac7 100644
 --- a/gcore/CMakeLists.txt
@@ -1373,7 +1349,7 @@ index fcc21fb553..fda066aebb 100644
  #pragma clang diagnostic pop
  #endif
 diff --git a/gdal.cmake b/gdal.cmake
-index aa3128d202..c941a20353 100644
+index aa3128d202..455f772793 100644
 --- a/gdal.cmake
 +++ b/gdal.cmake
 @@ -239,9 +239,9 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
@@ -1393,7 +1369,7 @@ index aa3128d202..c941a20353 100644
  mark_as_advanced(ENABLE_DEFLATE64)
  if(ENABLE_DEFLATE64)
 -    add_subdirectory(frmts/zlib/contrib/infback9)
-+    add_subdirectory(frmts/infback9)
++    message(FATAL_ERROR "Vendored zlib/infback9 was removed, but no replacement has been added yet")
  endif()
  
  # Internal zlib and jsonc must be declared before
