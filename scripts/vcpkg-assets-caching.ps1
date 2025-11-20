@@ -6,13 +6,22 @@ param (
 
 # the original script is taken from https://github.com/microsoft/vcpkg/discussions/39901
 
-$baseurl = "https://artifactory.YOUR.HOST/artifactory/vcpkg-binary-caching/_assets"
-$token = "YOUR_ARTIFACTORY_ACCESS_TOKEN" # $env:YOUR_ARTIFACTORY_ACCESS_TOKEN
-$headers = @{ Authorization = "Bearer $token" }
-$contentype = "multipart/form-data"
+$baseurl = "https://gitea.YOUR.HOST/api/packages/YOUR-ORGANIZATION-NAME/generic/vcpkg-binary-caching/_assets"
+$token = "YOUR_GITEA_ACCESS_TOKEN" # $env:GITEA_ACCESS_TOKEN
+$headers = @{ Authorization = "token $token" }
+$contentype = "application/octet-stream"
+
+#$baseurl = "https://artifactory.YOUR.HOST/artifactory/vcpkg-binary-caching/_assets"
+#$token = "YOUR_ARTIFACTORY_ACCESS_TOKEN" # $env:YOUR_ARTIFACTORY_ACCESS_TOKEN
+#$headers = @{ Authorization = "Bearer $token" }
+#$contentype = "multipart/form-data"
+
 $filename = Split-Path -Path $Destination -Leaf
 $correctFilename = $filename -replace "\.\d+\.part$", ""
 $cacheurl = "$baseurl/$correctFilename"
+
+$ProgressPreferenceOriginal = $ProgressPreference
+$ProgressPreference = "SilentlyContinue"
 
 $downloadsfolder = Split-Path -Path "$Destination" -Parent
 if(-not (Test-Path $downloadsfolder))
@@ -66,12 +75,14 @@ catch
         }
         else
         {
+            $ProgressPreference = $ProgressPreferenceOriginal
             Write-Error "Download failed with status code: $statusCode"
             exit 1
         }
     }
     else
     {
+        $ProgressPreference = $ProgressPreferenceOriginal
         Write-Output "Download failed with error: $_"
         exit 1
     }
@@ -84,7 +95,7 @@ if (-not (Test-Path $Destination))
     try
     {
         $domainsThatRequireAuthentication = @(
-            "artifactory.YOUR.HOST" # yes, we already have credentials for it, as that's the same host that we are using for asset caching, but let's imagine it's a different one
+            "artifactory.some.host"
             "some.other.domain"
         )
         $downloadRequiresAuthentication = $false
@@ -122,8 +133,9 @@ if (-not (Test-Path $Destination))
                 #    #$response = Invoke-WebRequest -Uri $Url -OutFile $Destination [...]
                 #}
                 default {
+                    $ProgressPreference = $ProgressPreferenceOriginal
                     Write-Error "Authenticating with this host has not been implemented yet"
-                    exit 1
+                    exit 2
                 }
             }
         }
@@ -134,35 +146,57 @@ if (-not (Test-Path $Destination))
     }
     catch
     {
+        $ProgressPreference = $ProgressPreferenceOriginal
+
         if ($_.Exception.Response)
         {
             $statusCode = $_.Exception.Response.StatusCode
             if ($statusCode -eq "404")
             {
                 Write-Error "Unable to download from $Url"
-                exit 1
+                exit 2
             }
             else
             {
                 Write-Error "Download failed with status code: $statusCode"
-                exit 1
+                exit 2
             }
         }
         else
         {
             Write-Error "Download failed with error: $_"
-            exit 1
+            exit 2
         }
     }
 
     # verify the hash before uploading
     if (-not (Verify-SHA512 -File $Destination -ExpectedHash $ExpectedSHA512))
     {
-        exit 1
+        $ProgressPreference = $ProgressPreferenceOriginal
+        exit 2
     }
-    else
+
+    Write-Output "Uploading to $cacheurl"
+    try
     {
-        Write-Output "Uploading to $cacheurl"
         $response = Invoke-WebRequest -Uri $cacheurl -Method Put -Headers $headers -InFile $Destination -ContentType $contentype
     }
+    catch
+    {
+        $ProgressPreference = $ProgressPreferenceOriginal
+
+        if ($_.Exception.Response)
+        {
+            $statusCode = $_.Exception.Response.StatusCode
+            Write-Error "Download failed with status code: $statusCode"
+        }
+        else
+        {
+            Write-Error "Upload failed with error: $_"
+        }
+
+        exit 3
+    }
 }
+
+$ProgressPreference = $ProgressPreferenceOriginal
