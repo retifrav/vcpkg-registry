@@ -1,0 +1,20 @@
+{
+    "name": "dearimgui-glad-glfw-implot",
+    "version": "0",
+    "dependencies":
+    [
+        "glad",
+        "glfw",
+        {
+            "name": "dearimgui",
+            "features":
+            [
+                "backend-glfw-opengl"
+            ]
+        },
+        "implot"
+    ],
+    "overrides":
+    [
+    ]
+}

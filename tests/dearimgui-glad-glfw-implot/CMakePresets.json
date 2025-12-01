@@ -1,0 +1,82 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired":
+    {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets":
+    [
+        {
+            "name": "default",
+            "hidden": true,
+            "description": "Default configuration with all the options set to their default values",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables":
+            {
+                "CMAKE_BUILD_TYPE":
+                {
+                    "type": "STRING",
+                    "value": "Release"
+                }
+            }
+        },
+        {
+            "name": "vcpkg-default-triplet",
+            "inherits": "default",
+            "displayName": "vcpkg | default triplet",
+            "cacheVariables":
+            {
+                "CMAKE_TOOLCHAIN_FILE":
+                {
+                    "type": "FILEPATH",
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                },
+                "VCPKG_OVERLAY_TRIPLETS":
+                {
+                    "type": "FILEPATH",
+                    "value": "${sourceDir}/../../triplets"
+                },
+                "VCPKG_APPLOCAL_DEPS":
+                {
+                    "type": "BOOL",
+                    "value": true
+                }
+            }
+        },
+        {
+            "name": "vcpkg-windows-x64-static-md",
+            "inherits": "vcpkg-default-triplet",
+            "displayName": "vcpkg | Windows | x64 | static libraries | dynamic CRT",
+            "cacheVariables":
+            {
+                "VCPKG_TARGET_TRIPLET":
+                {
+                    "type": "STRING",
+                    "value": "decovar-x64-windows-static-md-v145"
+                },
+                "CRT_LINKAGE_STATIC":
+                {
+                    "type": "BOOL",
+                    "value": false
+                }
+            }
+        }
+    ],
+    "buildPresets":
+    [
+        {
+            "name": "vcpkg-default-triplet",
+            "configurePreset": "vcpkg-default-triplet",
+            "targets": "install"
+        },
+        {
+            "name": "vcpkg-windows-x64-static-md",
+            "configurePreset": "vcpkg-windows-x64-static-md",
+            "targets": "install"
+        }
+    ]
+}
