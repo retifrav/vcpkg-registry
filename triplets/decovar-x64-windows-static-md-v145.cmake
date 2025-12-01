@@ -2,8 +2,8 @@ set(VCPKG_TARGET_ARCHITECTURE x64)
 set(VCPKG_CRT_LINKAGE dynamic)
 set(VCPKG_LIBRARY_LINKAGE static)
 
-set(VCPKG_PLATFORM_TOOLSET v142)
-set(VCPKG_DEP_INFO_OVERRIDE_VARS v142)
+set(VCPKG_PLATFORM_TOOLSET v145)
+set(VCPKG_DEP_INFO_OVERRIDE_VARS v145)
 
 # without this the VCPKG_ROOT environment variable won't be available in the chainloaded toolchain
 set(VCPKG_ENV_PASSTHROUGH_UNTRACKED VCPKG_ROOT)

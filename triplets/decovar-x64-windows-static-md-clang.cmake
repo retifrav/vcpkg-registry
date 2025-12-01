@@ -6,9 +6,12 @@ set(VCPKG_PLATFORM_TOOLSET ClangCL)
 
 # otherwise these environment variables won't be available in the chainloaded toolchain
 set(VCPKG_ENV_PASSTHROUGH_UNTRACKED LLVMInstallDir LLVMToolsVersion)
+
 # finding and setting C/CXX compiler to Clang
-# this could do with a better path instead of ..
+#
+# this could probably do with a better path instead of `../`
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../toolchains/windows-clang.cmake)
+
 # on Windows VCPKG_CHAINLOAD_TOOLCHAIN_FILE deactivates automatic VS variables, so those need to be loaded again
 set(VCPKG_LOAD_VCVARS_ENV 1)
 
