@@ -1,8 +1,8 @@
 diff --git a/implot.h b/implot.h
-index ae1f600..f5822df 100644
+index 2ab2f40..bbe6163 100644
 --- a/implot.h
 +++ b/implot.h
-@@ -45,7 +45,7 @@
+@@ -46,7 +46,7 @@
  // [SECTION] Obsolete API
  
  #pragma once
@@ -12,10 +12,10 @@ index ae1f600..f5822df 100644
  
  //-----------------------------------------------------------------------------
 diff --git a/implot_internal.h b/implot_internal.h
-index bdebbd8..58886b9 100644
+index 46dfaa5..3d8e7aa 100644
 --- a/implot_internal.h
 +++ b/implot_internal.h
-@@ -37,7 +37,7 @@
+@@ -38,7 +38,7 @@
  
  #ifndef IMGUI_DISABLE
  #include <time.h>

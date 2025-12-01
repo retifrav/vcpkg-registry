@@ -188,7 +188,7 @@
         },
         "implot":
         {
-            "baseline": "2025.3.19",
+            "baseline": "0.17.0",
             "port-version": 0
         },
         "jpeg-turbo":

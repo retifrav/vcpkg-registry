@@ -1,6 +1,6 @@
 {
     "name": "implot",
-    "version": "2025.3.19",
+    "version": "0.17.0",
     "description": "Immediate mode plotting",
     "homepage": "https://github.com/epezent/implot",
     "license": "MIT",
@@ -20,7 +20,11 @@
         },
         {
             "name": "dearimgui",
-            "version>=": "1.92.2"
+            "version>=": "1.92.2",
+            "features":
+            [
+                "indices-x32"
+            ]
         }
     ],
     "default-features":

@@ -6,9 +6,9 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:epezent/implot.git
-    REF 3da8bd34299965d3b0ab124df743fe3e076fa222
+    REF 4707b245fbcd69075b1a8a74fa8d2435561b3134
     PATCHES
-        001-dear-imgui-headers-from-package.patch
+        001-dearimgui-headers.patch
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" DESTINATION  "${SOURCE_PATH}")

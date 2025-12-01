@@ -2,6 +2,11 @@
     "versions":
     [
         {
+            "version": "0.17.0",
+            "git-tree": "2595c0635a44986092200a456d8fcf21f155c0fa"
+        },
+        {
+            "$comment": "There were no new tags for a long time, had to use the date",
             "version": "2025.3.19",
             "git-tree": "847e9f5c7a6a9a5d1722060d8b67d10bc72f3cd5"
         },
