@@ -14,16 +14,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 add_library(${PROJECT_NAME})
 
 set(sources
-    ${CMAKE_CURRENT_SOURCE_DIR}/implot.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/implot_items.cpp
+    implot.cpp
+    implot_items.cpp
+    implot_demo.cpp
 )
 set(public_headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/implot.h
+    implot.h
 )
 
 if(WITH_INTERNAL)
     list(APPEND public_headers
-        ${CMAKE_CURRENT_SOURCE_DIR}/implot_internal.h
+        implot_internal.h
     )
 endif()
 
@@ -53,4 +54,4 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 set(PROJECT_NAMESPACE_FOR_PACKAGE "dearimgui")
-include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
+include("Installing.cmake")
