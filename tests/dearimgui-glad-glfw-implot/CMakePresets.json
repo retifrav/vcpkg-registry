@@ -43,7 +43,7 @@
                 "VCPKG_APPLOCAL_DEPS":
                 {
                     "type": "BOOL",
-                    "value": true
+                    "value": false
                 }
             }
         },

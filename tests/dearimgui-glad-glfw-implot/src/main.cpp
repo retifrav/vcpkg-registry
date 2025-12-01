@@ -138,6 +138,8 @@ bool initializeGLFW()
     glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 #endif
 
+    std::cout << "[DEBUG] HighDPI scaling factor: " << highDPIscaleFactor << std::endl;
+
     //const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     glfWindow = glfwCreateWindow(
@@ -317,13 +319,22 @@ void composeDearImGuiFrame()
         if ((controls_width /= 3) < 300) { controls_width = 300; }
 
         // position the controls widget in the top-right corner with some margin
-        ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(
+            ImVec2(
+                10 * highDPIscaleFactor,
+                10 * highDPIscaleFactor
+            ),
+            ImGuiCond_Always
+        );
         // here we set the calculated width and also make the height to be
         // be the height of the main window also with some margin
         ImGui::SetNextWindowSize(
-            ImVec2(static_cast<float>(controls_width), static_cast<float>(glfw_height - 20)),
+            ImVec2(
+                static_cast<float>(controls_width),
+                static_cast<float>(glfw_height - 15 * highDPIscaleFactor)
+            ),
             ImGuiCond_Always
-            );
+        );
 
         ImGui::SetNextWindowBgAlpha(0.7f);
         // create a window and append into it
@@ -381,9 +392,12 @@ void composeDearImGuiFrame()
         if (show_another_window)
         {
             ImGui::SetNextWindowSize(
-                ImVec2(300.0f, 200.0f),
+                ImVec2(
+                    300.0f * highDPIscaleFactor,
+                    200.0f * highDPIscaleFactor
+                ),
                 ImGuiCond_FirstUseEver // after first launch it will use values from imgui.ini
-                );
+            );
             // the window will have a closing button that will clear the bool variable
             ImGui::Begin("A custom window", &show_another_window);
 
@@ -406,7 +420,10 @@ void composeDearImGuiFrame()
         ImGui::Dummy(ImVec2(0.0f, 15.0f));
 
         // default Dear ImGui demo window
-        if (show_demo_window_dearimgui) { ImGui::ShowDemoWindow(&show_demo_window_dearimgui); }
+        if (show_demo_window_dearimgui)
+        {
+            ImGui::ShowDemoWindow(&show_demo_window_dearimgui);
+        }
         else
         {
             if (ImGui::Button("Open default Dear ImGui demo"))
@@ -416,7 +433,10 @@ void composeDearImGuiFrame()
         }
 
         // default ImPlot demo window
-        if (show_demo_window_implot) { ImPlot::ShowDemoWindow(&show_demo_window_implot); }
+        if (show_demo_window_implot)
+        {
+            ImPlot::ShowDemoWindow(&show_demo_window_implot);
+        }
         else
         {
             if (ImGui::Button("Open default ImPlot demo"))
