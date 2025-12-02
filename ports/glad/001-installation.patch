@@ -1,0 +1,119 @@
+diff --git a/cmake/CMakeLists.txt b/cmake/CMakeLists.txt
+index 690282b..5420b3a 100644
+--- a/cmake/CMakeLists.txt
++++ b/cmake/CMakeLists.txt
+@@ -1,8 +1,11 @@
+-#  configuration variables:
+-#    GLAD_SOURCES_DIR: path to the sources of glad (=python module)
++cmake_minimum_required(VERSION 3.22)
+ 
+-cmake_minimum_required(VERSION 3.12)
+-project(glad C)
++set(GLAD_VERSION "0.0.0" CACHE STRING "glad version")
++
++project(glad
++    LANGUAGES C
++    VERSION "${GLAD_VERSION}"
++)
+ 
+ set(
+     GLAD_CMAKE_DIR
+@@ -19,3 +22,20 @@ set(
+ mark_as_advanced(GLAD_CMAKE_DIR)
+ 
+ include(${GLAD_CMAKE_DIR}/GladConfig.cmake)
++
++glad_add_library(glad
++    #LANGUAGE "c" # the only(?) other option is `rust`
++    ${GLAD_LIBRARY_TYPE}
++    REPRODUCIBLE # specifications files are expected to be delivered by vcpkg (otherwise it will try to download the latest)
++    #LOADER # what is this for?
++    #MERGE # what does that do?
++    LOCATION "${CMAKE_CURRENT_BINARY_DIR}/generated" # has to be an absolute path
++    API "${GLAD_API}"
++)
++
++set(PROJECT_NAMESPACE_FOR_PACKAGE "glad")
++include("Installing.cmake")
++install(
++    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/generated/include/glad"
++    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++)
+diff --git a/cmake/GladConfig.cmake b/cmake/GladConfig.cmake
+index c16b75c..b8eb58e 100644
+--- a/cmake/GladConfig.cmake
++++ b/cmake/GladConfig.cmake
+@@ -177,8 +177,6 @@ endfunction()
+ # Create a glad library named "${TARGET}"
+ function(glad_add_library TARGET)
+     message(STATUS "Glad Library \'${TARGET}\'")
+-
+-    find_package(Python COMPONENTS Interpreter REQUIRED)
+     
+     cmake_parse_arguments(GG "MERGE;QUIET;REPRODUCIBLE;STATIC;SHARED;MODULE;INTERFACE;EXCLUDE_FROM_ALL" "LOCATION;LANGUAGE" "API;EXTENSIONS" ${ARGN})
+     
+@@ -245,7 +243,7 @@ function(glad_add_library TARGET)
+         COMMAND ${CMAKE_COMMAND} -E remove_directory ${GLAD_DIR}
+         COMMAND ${CMAKE_COMMAND} -E make_directory   ${GLAD_DIR}
+         COMMAND echo Generating with args ${GLAD_ARGS}
+-        COMMAND ${Python_EXECUTABLE} -m glad ${GLAD_ARGS}
++        COMMAND ${PYTHON_EXECUTABLE} -m glad ${GLAD_ARGS}
+         COMMAND echo Writing ${GLAD_ARGS_PATH}
+         COMMAND echo ${GLAD_ARGS} > ${GLAD_ARGS_PATH}
+         WORKING_DIRECTORY $<$<BOOL:${GLAD_SOURCES_DIR}>:${GLAD_SOURCES_DIR}>
+@@ -273,7 +271,7 @@ function(glad_add_library TARGET)
+         )
+ 
+     target_include_directories("${TARGET}"
+-        PUBLIC
++        PRIVATE
+             "${GLAD_DIR}/include"
+         )
+ 
+diff --git a/glad/__main__.py b/glad/__main__.py
+index 5403809..76cb1c5 100644
+--- a/glad/__main__.py
++++ b/glad/__main__.py
+@@ -147,9 +147,15 @@ def main(args=None):
+     config.validate()
+ 
+     if global_config['REPRODUCIBLE']:
++        logger.debug(
++            "This is meant to be a reproducible build, should not fetch any remote files"
++        )
+         opener = glad.files.StaticFileOpener()
+         gen_info_factory = lambda *a, **kw: GenerationInfo.create(when='-', *a, **kw)
+     else:
++        logger.debug(
++            "This is meant to be a regular build that will fetch remote files"
++        )
+         opener = URLOpener()
+         gen_info_factory = GenerationInfo.create
+ 
+diff --git a/glad/files/__init__.py b/glad/files/__init__.py
+index fe6216f..d375f0c 100644
+--- a/glad/files/__init__.py
++++ b/glad/files/__init__.py
+@@ -45,7 +45,21 @@ def open_local(name, *args, **kwargs):
+     local_path = os.path.normpath(os.path.join(BASE_PATH, os.path.join(name)))
+     if not local_path.startswith(BASE_PATH):
+         raise GladFileException('unsafe file path, won\'t open {!r}'.format(local_path))
+-    return open(local_path, *args, **kwargs)
++    localFile = None
++    try:
++        localFile = open(local_path, *args, **kwargs)
++    except FileNotFoundError as ex:
++        logger.error(
++            " ".join((
++                f"There doesn't seem to be this file on disk - {local_path} -",
++                "which probably means that you haven't installed",
++                "specifications/headers from the corresponding registry",
++                "(OpenGL, EGL, Vulkan, etc), which in case of vcpkg probably",
++                "means that you haven't added those ports to dependencies"
++            ))
++        )
++        raise ex
++    return localFile
+ 
+ 
+ class StaticFileOpener(object):

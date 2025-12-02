@@ -1,8 +1,9 @@
 {
     "name": "glad",
-    "version": "0.1.36",
+    "version": "2.0.8",
     "description": "Multi-Language Vulkan/GL/GLES/EGL/GLX/WGL Loader-Generator based on the official specs",
-    "homepage": "https://glad.dav1d.de/",
+    "homepage": "https://github.com/Dav1dde/glad",
+    "license": "MIT",
     "dependencies":
     [
         {
@@ -12,6 +13,91 @@
         {
             "name": "vcpkg-cmake-config",
             "host": true
+        },
+        {
+            "name": "vcpkg-get-python-packages",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
         }
-    ]
+    ],
+    "default-features":
+    [
+        "gl"
+    ],
+    "features":
+    {
+        "egl":
+        {
+            "description": "Add EGL",
+            "dependencies":
+            [
+                "egl-registry"
+            ]
+        },
+        "gl":
+        {
+            "description": "Add OpenGL",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        },
+        "gles1":
+        {
+            "description": "Add OpenGL ES 1.x",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        },
+        "gles2":
+        {
+            "description": "Add OpenGL ES 2.x",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        },
+        "glsc2":
+        {
+            "description": "Add OpenGL SC",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        },
+        "glx":
+        {
+            "description": "Add GLX",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        },
+        "vulkan":
+        {
+            "description": "Add Vulkan",
+            "dependencies":
+            [
+                "vulkan-headers"
+            ]
+        },
+        "wgl":
+        {
+            "description": "Add WGL",
+            "dependencies":
+            [
+                "egl-registry",
+                "opengl-registry"
+            ]
+        }
+    }
 }
