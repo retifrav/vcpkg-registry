@@ -42,7 +42,9 @@ set(GLAD_API "")
 # it will take `4.1` for `gl` and `1.3` for `vulkan` (so it actually ignores
 # non-existent (at the moment) version `1.4`, which would otherwise fail the build),
 # but then what should we do if someone wants not the latest version but one of the older ones,
-# or/and maybe `compatibility` profile instead of `core`?
+# or/and maybe `compatibility` profile instead of `core`? And actually, in case of the latest versions
+# it is not required to provide the version value, so for the latest OpenGL 4.6 providing `gl:core=4.6`
+# is the same as providing `gl:core=`
 if(
     "egl" IN_LIST FEATURES # this one seems to be required for the OpenGL ones too, so they belong together
     OR
@@ -71,25 +73,25 @@ if(
     )
 
     if("egl" IN_LIST FEATURES)
-        list(APPEND GLAD_API "egl=1.5")
+        list(APPEND GLAD_API "egl=") # egl=1.5
     endif()
     if("gl" IN_LIST FEATURES)
-        list(APPEND GLAD_API "gl:core=4.6")
+        list(APPEND GLAD_API "gl:core=") # gl:core=4.6
     endif()
     if("gles1" IN_LIST FEATURES)
-        list(APPEND GLAD_API "gles1=1.0")
+        list(APPEND GLAD_API "gles1=") # gles1=1.0
     endif()
     if("gles2" IN_LIST FEATURES)
-        list(APPEND GLAD_API "gles2=3.2")
+        list(APPEND GLAD_API "gles2=") # gles2=3.2
     endif()
     if("glsc2" IN_LIST FEATURES)
-        list(APPEND GLAD_API "glsc2=2.0")
+        list(APPEND GLAD_API "glsc2=") # glsc2=2.0
     endif()
     if("glx" IN_LIST FEATURES)
-        list(APPEND GLAD_API "glx=1.4")
+        list(APPEND GLAD_API "glx=") # glx=1.4
     endif()
     if("wgl" IN_LIST FEATURES)
-        list(APPEND GLAD_API "wgl=1.0")
+        list(APPEND GLAD_API "wgl=") # wgl=1.0
     endif()
 endif()
 
