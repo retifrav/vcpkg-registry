@@ -8,7 +8,7 @@ project("implot"
 
 option(WITH_INTERNAL "Using internal header(s)" 0)
 
-set(REQUIRED_CPP_STANDARD 17 CACHE STRING "Required C++ standard")
+set(REQUIRED_CPP_STANDARD 11 CACHE STRING "Required C++ standard")
 if(DEFINED CMAKE_CXX_STANDARD)
     if(CMAKE_CXX_STANDARD LESS ${REQUIRED_CPP_STANDARD})
         message(FATAL_ERROR "This project requires at least C++${REQUIRED_CPP_STANDARD}")
@@ -63,7 +63,7 @@ target_link_libraries(${PROJECT_NAME}
         dearimgui::dearimgui
 )
 
-target_compile_features(${PROJECT_NAME} INTERFACE "cxx_std_${REQUIRED_CPP_STANDARD}")
+target_compile_features(${PROJECT_NAME} PUBLIC "cxx_std_${REQUIRED_CPP_STANDARD}")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
