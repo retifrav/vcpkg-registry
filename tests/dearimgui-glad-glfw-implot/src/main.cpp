@@ -4,7 +4,7 @@
 #include <filesystem>
 
 // GLFW
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 // Dear ImGui
@@ -182,9 +182,11 @@ bool initializeGLFW()
 
 bool initializeGLAD()
 {
-    // load all OpenGL function pointers with glad
-    // without it not all the OpenGL functions will be available,
-    // such as glGetString(GL_RENDERER), and application might just segfault
+    // load all OpenGL function pointers with glad, as without it not all the OpenGL functions
+    // will be available, such as glGetString(GL_RENDERER), and application might even segfault
+
+    // old way (glad v0.1.36)
+    /*
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cerr << "[ERROR] Couldn't initialize GLAD" << std::endl;
@@ -199,6 +201,23 @@ bool initializeGLAD()
     std::cout << "[DEBUG] OpenGL from glad "
               << GLVersion.major << "." << GLVersion.minor
               << std::endl;
+    */
+
+    // new way (glad v2.0.8)
+    int version = gladLoadGL(glfwGetProcAddress);
+    if (version == 0)
+    {
+        std::cerr << "[ERROR] Failed to initialize OpenGL context with glad" << std::endl;
+        return false;
+    }
+    else
+    {
+        std::cout << "[DEBUG] OpenGL from glad: "
+                  << GLAD_VERSION_MAJOR(version)
+                  << "."
+                  << GLAD_VERSION_MINOR(version)
+                  << std::endl;
+    }
 
     return true;
 }
