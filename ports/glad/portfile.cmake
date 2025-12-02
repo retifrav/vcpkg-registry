@@ -121,7 +121,6 @@ vcpkg_cmake_configure(
         -DGLAD_VERSION="${VERSION}"
         -DGLAD_LIBRARY_TYPE="${GLAD_LIBRARY_TYPE}"
         -DGLAD_API="${GLAD_API_STRING}"
-        -DPYTHON_EXECUTABLE="${PYTHON3}"
 )
 
 vcpkg_cmake_install()
