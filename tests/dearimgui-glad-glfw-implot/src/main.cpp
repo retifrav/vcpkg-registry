@@ -23,9 +23,9 @@ std::string programName = "GLFW and Dear ImGui";
 int windowWidth = 1200,
     windowHeight = 800;
 float highDPIscaleFactor = 1.0;
-float backgroundR = 0.1f,
-      backgroundG = 0.3f,
-      backgroundB = 0.2f;
+float backgroundR = 170 / 255.0f,
+      backgroundG = 0 / 255.0f,
+      backgroundB = 255 / 255.0f;
 std::filesystem::path currentPath = ".";
 std::filesystem::path basePath = ".";
 std::string fontName = "JetBrainsMono-ExtraLight.ttf";
@@ -41,7 +41,10 @@ bool show_demo_window_dearimgui = false,
 
 static void glfw_error_callback(int error, const char *description)
 {
-    std::cerr << "[ERROR] GLFW error: " << error << ", " << description << std::endl;
+    std::cerr << "[ERROR] GLFW error: "
+              << error << ", "
+              << description
+              << std::endl;
 }
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
@@ -102,7 +105,11 @@ bool initializeGLFW()
 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef _WIN32
+#ifdef __APPLE__
+    // to prevent 1200x800 from becoming 2400x1600
+    // and some other weird resizings
+    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+#else
     // if it's a HighDPI monitor, try to scale everything
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     float xscale, yscale;
@@ -113,10 +120,6 @@ bool initializeGLFW()
         highDPIscaleFactor = xscale;
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
     }
-#elif __APPLE__
-    // to prevent 1200x800 from becoming 2400x1600
-    // and some other weird resizings
-    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 #endif
 
     std::cout << "[DEBUG] HighDPI scaling factor: " << highDPIscaleFactor << std::endl;
