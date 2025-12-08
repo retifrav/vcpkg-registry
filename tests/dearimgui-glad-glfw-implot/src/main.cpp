@@ -31,6 +31,8 @@ std::filesystem::path basePath = ".";
 std::string fontName = "JetBrainsMono-ExtraLight.ttf";
 
 GLFWwindow *glfWindow = NULL;
+// this will be adjusted depending on the supported OpenGL version
+std::string glsl_version = "";
 
 int counter = 0;
 
@@ -82,23 +84,22 @@ bool initializeGLFW()
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
-    // adjust these values depending on the OpenGL supported by your GPU driver
-    std::string glsl_version = "";
 #ifdef __APPLE__
     // GLSL 150 + GL 4.1
-    glsl_version = "#version 150";
+    glsl_version = "#version 410";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     // required on Mac OS
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#elif __linux__
-    // GLSL 150 + GL 4.3
-    glsl_version = "#version 150";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#elif _WIN32
+//#elif __linux__
+//    // GLSL 150 + GL 4.3
+//    glsl_version = "#version 430";
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//#elif _WIN32
+#else
     // GLSL 130 + GL 4.6
-    glsl_version = "#version 130";
+    glsl_version = "#version 460";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 #endif
@@ -224,7 +225,7 @@ bool initializeDearImGui()
 
     // setup platform/renderer bindings
     if (!ImGui_ImplGlfw_InitForOpenGL(glfWindow, true)) { return false; }
-    if (!ImGui_ImplOpenGL3_Init()) { return false; }
+    if (!ImGui_ImplOpenGL3_Init(glsl_version.c_str())) { return false; }
 
     return true;
 }

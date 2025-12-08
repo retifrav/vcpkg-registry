@@ -56,18 +56,18 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 )
 
 find_package(OpenGL REQUIRED)
-find_package(dearimgui CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
+find_package(dearimgui CONFIG REQUIRED)
 find_package(implot CONFIG REQUIRED)
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${OPENGL_gl_LIBRARY}
+        glfw
+        glad::glad
         dearimgui::dearimgui
         dearimgui::implot
-        glad::glad
-        glfw
 )
 
 
