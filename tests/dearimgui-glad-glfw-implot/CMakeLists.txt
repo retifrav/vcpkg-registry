@@ -18,6 +18,8 @@ if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
     set(CMAKE_CXX_EXTENSIONS NO)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
+
 set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 option(CRT_LINKAGE_STATIC "Link MSVC runtime statically" 0)
