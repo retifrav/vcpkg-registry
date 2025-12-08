@@ -20,11 +20,7 @@
         },
         {
             "name": "dearimgui",
-            "version>=": "1.92.2",
-            "features":
-            [
-                "indices-x32"
-            ]
+            "version>=": "1.92.2"
         }
     ],
     "default-features":

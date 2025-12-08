@@ -57,6 +57,10 @@ target_include_directories(${PROJECT_NAME}
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+# they say in their README that it is "HIGHLY" recommended to uncomment
+# `#define ImDrawIdx unsigned int` in Dear ImGui's `imconfig.h`,
+# but doing so (adding `dearimgui` port feature `indices-x32`)
+# results in the application crash, while without it everything works fine
 find_package(dearimgui CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
