@@ -46,7 +46,7 @@ index ff2c510bda..639462187f 100644
    target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_SQLITE3)
    target_include_directories(
 -      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
-+      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
++      gdal_unit_test PRIVATE $<TARGET_PROPERTY:sqlite3,INTERFACE_INCLUDE_DIRECTORIES>)
  endif()
  
  target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
@@ -187,11 +187,11 @@ index abb5a4c5a2..f3ba013678 100644
 -  endif ()
 -endif ()
 +if(GDAL_USE_SQLITE3)
-+    find_package(SQLite3 CONFIG REQUIRED)
++    find_package(sqlite3 CONFIG REQUIRED)
 +    if(NOT BUILD_SHARED_LIBS)
-+        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(SQLite3 CONFIG REQUIRED)\n")
++        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(sqlite3 CONFIG REQUIRED)\n")
 +    endif()
-+    message(STATUS "Found SQLite: ${SQLite3_DIR}")
++    message(STATUS "Found SQLite: ${sqlite3_DIR}")
 +    set(SQLite3_HAS_COLUMN_METADATA 0)
 +    set(SQLite3_HAS_MUTEX_ALLOC 1)
 +endif()
@@ -986,7 +986,7 @@ index f1850f94c2..afd5b22309 100644
  
  target_compile_definitions(gdal_MBTiles PRIVATE -DHAVE_SQLITE)
 -gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite::SQLite3)
-+gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite3)
++gdal_target_link_libraries(gdal_MBTiles PRIVATE sqlite3)
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_MBTiles PRIVATE ZLIB::ZLIB)
@@ -1707,7 +1707,7 @@ index 9316580f70..03f6016c45 100644
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(ogr_GML PRIVATE -DHAVE_SQLITE)
 -  gdal_target_link_libraries(ogr_GML PRIVATE SQLite::SQLite3)
-+  gdal_target_link_libraries(ogr_GML PRIVATE SQLite3)
++  gdal_target_link_libraries(ogr_GML PRIVATE sqlite3)
  endif ()
 diff --git a/ogr/ogrsf_frmts/gmlas/CMakeLists.txt b/ogr/ogrsf_frmts/gmlas/CMakeLists.txt
 index afac5d6bb3..108f44d219 100644
@@ -1731,7 +1731,7 @@ index ca3ddf5ec8..ef16167636 100644
                           ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/sqlite  $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
  
 -gdal_target_link_libraries(ogr_GeoPackage PRIVATE SQLite::SQLite3)
-+gdal_target_link_libraries(ogr_GeoPackage PRIVATE SQLite3)
++gdal_target_link_libraries(ogr_GeoPackage PRIVATE sqlite3)
  if (SQLite3_HAS_COLUMN_METADATA)
    target_compile_definitions(ogr_GeoPackage PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
  endif ()
@@ -1782,7 +1782,7 @@ index 5b88be85b3..49072d1fbc 100644
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(ogr_MVT PRIVATE -DHAVE_SQLITE)
 -  gdal_target_link_libraries(ogr_MVT PRIVATE SQLite::SQLite3)
-+  gdal_target_link_libraries(ogr_MVT PRIVATE SQLite3)
++  gdal_target_link_libraries(ogr_MVT PRIVATE sqlite3)
  endif ()
  
  add_executable(mvt_tile_test EXCLUDE_FROM_ALL mvt_tile_test.cpp)
@@ -1795,7 +1795,7 @@ index 113c119173..9941075c54 100644
  endif ()
  if (GDAL_USE_SQLITE3)
 -  gdal_target_link_libraries(ogr_OSM PRIVATE SQLite::SQLite3)
-+  gdal_target_link_libraries(ogr_OSM PRIVATE SQLite3)
++  gdal_target_link_libraries(ogr_OSM PRIVATE sqlite3)
  endif ()
  
  if (BROKEN)
@@ -1804,7 +1804,7 @@ index 113c119173..9941075c54 100644
    if (GDAL_USE_SQLITE3)
      target_sources(osm2osm PRIVATE ../sqlite/ogrsqlitevfs.cpp ../sqlite/ogrsqliteexecutesql.cpp)
 -    target_link_libraries(osm2osm PRIVATE SQLite::SQLite3)
-+    target_link_libraries(osm2osm PRIVATE SQLite3)
++    target_link_libraries(osm2osm PRIVATE sqlite3)
    endif ()
  endif ()
 diff --git a/ogr/ogrsf_frmts/pds/CMakeLists.txt b/ogr/ogrsf_frmts/pds/CMakeLists.txt
@@ -1838,7 +1838,7 @@ index eceb33a802..62a4322dfe 100644
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(ogr_PMTiles PRIVATE -DHAVE_SQLITE)
 -  gdal_target_link_libraries(ogr_PMTiles PRIVATE SQLite::SQLite3)
-+  gdal_target_link_libraries(ogr_PMTiles PRIVATE SQLite3)
++  gdal_target_link_libraries(ogr_PMTiles PRIVATE sqlite3)
  endif ()
 diff --git a/ogr/ogrsf_frmts/sqlite/CMakeLists.txt b/ogr/ogrsf_frmts/sqlite/CMakeLists.txt
 index 1e46967b32..8be075488f 100644
@@ -1849,7 +1849,7 @@ index 1e46967b32..8be075488f 100644
  
  target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
 -gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite::SQLite3)
-+gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite3)
++gdal_target_link_libraries(ogr_SQLite PRIVATE sqlite3)
  gdal_target_link_libraries(ogr_SQLite PRIVATE PROJ::proj)
  
  include(CMakePushCheckState)
@@ -1858,7 +1858,7 @@ index 1e46967b32..8be075488f 100644
  add_executable(test_load_virtual_ogr EXCLUDE_FROM_ALL test_load_virtual_ogr.c)
  gdal_standard_includes(test_load_virtual_ogr)
 -target_link_libraries(test_load_virtual_ogr PRIVATE SQLite::SQLite3)
-+target_link_libraries(test_load_virtual_ogr PRIVATE SQLite3)
++target_link_libraries(test_load_virtual_ogr PRIVATE sqlite3)
  if (GDAL_USE_SPATIALITE)
    target_include_directories(test_load_virtual_ogr PRIVATE ${SPATIALITE_INCLUDE_DIRS})
    target_compile_definitions(test_load_virtual_ogr PRIVATE -DHAVE_SPATIALITE)
@@ -1867,7 +1867,7 @@ index 1e46967b32..8be075488f 100644
                            SKIP_BUILD_RPATH YES
                            )
 -    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite::SQLite3)
-+    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite3)
++    target_link_libraries(my_test_sqlite3_ext PRIVATE sqlite3)
  endif()
 diff --git a/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp b/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
 index afa49ba65a..344e35ce50 100644
@@ -1891,7 +1891,7 @@ index 2d1045a787..8eea27aa6b 100644
  if (GDAL_USE_SQLITE3)
    target_include_directories(ogr_VFK PRIVATE ${SQLite3_INCLUDE_DIR})
 -  gdal_target_link_libraries(ogr_VFK PRIVATE SQLite::SQLite3)
-+  gdal_target_link_libraries(ogr_VFK PRIVATE SQLite3)
++  gdal_target_link_libraries(ogr_VFK PRIVATE sqlite3)
    target_compile_definitions(ogr_VFK PRIVATE -DHAVE_SQLITE)
  endif ()
  if (GDAL_USE_GEOS)
