@@ -221,6 +221,11 @@
             "baseline": "2025.5.11",
             "port-version": 0
         },
+        "lepcc":
+        {
+            "baseline": "2022.8.13",
+            "port-version": 0
+        },
         "logstalgia":
         {
             "baseline": "1.1.4",

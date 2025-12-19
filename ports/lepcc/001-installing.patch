@@ -1,0 +1,112 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b47da64..2734276 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,28 +1,75 @@
+-cmake_minimum_required(VERSION 3.6)
++cmake_minimum_required(VERSION 3.22)
+ 
+-project(LEPCC CXX C)
+-string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
++project(lepcc CXX C)
+ 
+-set(ROOT_DIR "${PROJECT_SOURCE_DIR}")
++set(REQUIRED_CPP_STANDARD 11 CACHE STRING "Required C++ standard")
++if(DEFINED CMAKE_CXX_STANDARD)
++    if(CMAKE_CXX_STANDARD LESS ${REQUIRED_CPP_STANDARD})
++        message(FATAL_ERROR "This project requires at least C++${REQUIRED_CPP_STANDARD}")
++    endif()
++else()
++    set(CMAKE_CXX_STANDARD ${REQUIRED_CPP_STANDARD})
++endif()
++set(CMAKE_CXX_STANDARD_REQUIRED YES)
++if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
++    set(CMAKE_CXX_EXTENSIONS NO)
++endif()
+ 
+-file(GLOB BASE_SRCS src/*.cpp)
+-set(CMAKE_CXX_STANDARD 11)
+-message(INFO "files ${BASE_SRCS}")
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
+ 
+-set(LEPCC_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/src/include")
+-message(INFO "LEPCC_INCLUDE_DIR ${LEPCC_INCLUDE_DIR}")
++option(LEPCC_BUILD_TESTS "Build tests" 0)
+ 
+-set(TEST_SRCS ${PROJECT_SOURCE_DIR}/src/Test_C_Api.cpp)
+-message(INFO "TEST_SRCS ${TEST_SRCS}")
++add_library(${PROJECT_NAME})
+ 
+-list(REMOVE_ITEM BASE_SRCS ${TEST_SRCS})
++set(sources
++    src/BitMask.cpp
++    src/BitStuffer2.cpp
++    src/ClusterRGB.cpp
++    src/Common.cpp
++    src/FlagBytes.cpp
++    src/Huffman.cpp
++    src/Intensity.cpp
++    src/LEPCC.cpp
++    src/lepcc_c_api_impl.cpp
++)
+ 
+-message(INFO "files ${BASE_SRCS}")
+-add_library(lepcc "${BASE_SRCS}")
++set(public_headers
++    src/include/lepcc_c_api.h
++    src/include/lepcc_tpl_api.h
++    src/include/lepcc_types.h
++)
+ 
+-target_include_directories(
+-  lepcc
+-  PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src/include")
++target_sources(${PROJECT_NAME}
++    PRIVATE
++        ${sources}
++)
+ 
+-add_executable(lepcctest ${TEST_SRCS})
+-target_link_libraries(lepcctest lepcc)
++target_include_directories(${PROJECT_NAME}
++    PRIVATE
++        # where the library itself will look for its internal headers
++        ${CMAKE_CURRENT_SOURCE_DIR}/src
++    PUBLIC
++        # where top-level project will look for the library's public headers
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
++        # where external projects will look for the library's public headers
++        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++)
++
++set_target_properties(${PROJECT_NAME}
++    PROPERTIES
++        PUBLIC_HEADER "${public_headers}"
++)
++
++target_compile_features(${PROJECT_NAME} PUBLIC "cxx_std_${REQUIRED_CPP_STANDARD}")
++
++if(LEPCC_BUILD_TESTS)
++    set(sources_tests
++        src/Test_C_Api.cpp
++    )
++
++    add_executable(lepcctest ${sources_tests})
++    target_link_libraries(lepcctest lepcc)
++endif()
++
++set(PROJECT_NAMESPACE_FOR_PACKAGE "LEPCC")
++include("Installing.cmake")
+diff --git a/src/include/lepcc_c_api.h b/src/include/lepcc_c_api.h
+index 890c7eb..662560e 100644
+--- a/src/include/lepcc_c_api.h
++++ b/src/include/lepcc_c_api.h
+@@ -33,7 +33,7 @@ Contributors:  Ronald Poirrier, Thomas Maurer
+ #if defined _WINDOWS || defined __CYGWIN__
+ #  if defined(LEPCC_STATIC)
+ #    define LEPCC_EXPORT
+-#  elif defined(LEPCC_EXPORTS)
++#  elif defined(lepcc_EXPORTS)
+ #    define LEPCC_EXPORT __declspec(dllexport)
+ //#  else
+ //#    define LEPCC_EXPORT __declspec(dllimport)

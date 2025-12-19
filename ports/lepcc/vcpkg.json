@@ -1,0 +1,22 @@
+{
+    "name": "lepcc",
+    "version": "2022.8.13",
+    "description": "Point Cloud Compression used in i3s Scene Layer Format",
+    "homepage": "https://github.com/Esri/lepcc",
+    "license": "Apache-2.0",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ]
+}
