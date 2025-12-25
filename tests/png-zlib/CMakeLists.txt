@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
-project("dearimgui-glad-glfw-implot"
-    DESCRIPTION "Testing vcpkg ports for Dear ImGui, glad, GLFW and ImPlot"
+project(
+    "png-zlib"
+    DESCRIPTION "Something that uses png (and zlib)"
+    VERSION 1.2.3
     LANGUAGES CXX
 )
 
@@ -18,11 +20,12 @@ if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
     set(CMAKE_CXX_EXTENSIONS NO)
 endif()
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 option(CRT_LINKAGE_STATIC "Link MSVC runtime statically" 0)
 option(INSTALL_DEPENDENCIES_TOO "Installing vcpkg-resolved dependencies" 0)
 
+# global debug postfix for libraries (executables still need to set it)
 set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CRT_LINKAGE_STATIC)
@@ -35,78 +38,34 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CRT_LINKAGE_STATIC)
     )
 endif()
 
+# here it's a top-level project for an executable, so CMAKE_PROJECT_NAME is fine
 add_executable(${CMAKE_PROJECT_NAME})
-
-set(sources
-    src/main.cpp
-    src/functions.cpp
-)
-
-set(resource_files
-    JetBrainsMono-ExtraLight.ttf
-)
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${sources}
-)
-
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        src
-)
-
-find_package(OpenGL REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
-find_package(dearimgui CONFIG REQUIRED)
-find_package(implot CONFIG REQUIRED)
-
-target_link_libraries(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${OPENGL_gl_LIBRARY}
-        glfw
-        glad::glad
-        dearimgui::dearimgui
-        dearimgui::implot
-)
-
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            "-framework Cocoa"
-            "-framework IOKit"
-            "-framework CoreVideo"
-    )
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    find_package(Threads REQUIRED)
-    find_package(X11 REQUIRED)
-
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            ${CMAKE_DL_LIBS}
-            ${CMAKE_THREAD_LIBS_INIT}
-            ${X11_LIBRARIES}
-    )
-endif()
 
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}"
 )
 
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        src/main.cpp
+)
+
+find_package(zlib CONFIG REQUIRED)
+find_package(png CONFIG REQUIRED)
+
+target_link_libraries(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        zlib
+        png
+)
+
 include(GNUInstallDirs)
 
-install(TARGETS ${CMAKE_PROJECT_NAME}
-    COMPONENT ${CMAKE_PROJECT_NAME}
-)
+install(TARGETS ${CMAKE_PROJECT_NAME})
 install(FILES
-    ${resource_files}
+    resources/some.png
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT ${CMAKE_PROJECT_NAME}
 )
 if(INSTALL_DEPENDENCIES_TOO)
     install(DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/"
