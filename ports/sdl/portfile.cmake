@@ -4,6 +4,7 @@ vcpkg_from_git(
     REF e11183ea6caa3ae4895f4bc54cad2bbb0e365417
     PATCHES
         001-installation.patch
+        002-correct-struct.patch # fixed in later versions
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" SDL_STATIC)
