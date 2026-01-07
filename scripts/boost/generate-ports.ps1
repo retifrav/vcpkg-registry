@@ -7,20 +7,22 @@ param (
 # boost-python is not supported on uwp. Update $suppressPlatformForDependency as needed,
 # don't blindly stage/commit changes containing platform expressions in dependencies.
     $portsDir = $null,
-    $vcpkg = $null
+    $debugOutput = $false
 )
 
 $ErrorActionPreference = 'Stop'
 
+$apiBaseURL = "https://api.github.com"
+$apiAccessToken = $env:API_ACCESS_TOKEN
+$apiHeaders = @{}
+if (-not [string]::IsNullOrEmpty($apiAccessToken))
+{
+    $apiHeaders.Add("Authorization", "Bearer $apiAccessToken")
+}
+
 $scriptsBoostDir = split-path -parent $MyInvocation.MyCommand.Definition
 if ($null -eq $portsDir) {
     $portsDir = "$scriptsBoostDir/../../ports"
-}
-if ($null -eq $vcpkg) {
-    $vcpkg = "$scriptsBoostDir/../../vcpkg"
-    if ($IsWindows) {
-        $vcpkg = "$vcpkg.exe"
-    }
 }
 
 # Beta builds contains a text in the version string
@@ -29,6 +31,28 @@ $semverVersion = ($version -replace "(\d+(\.\d+){1,3}).*", "`$1")
 # Clear this array when moving to a new boost version
 $defaultPortVersion = 0
 $portVersions = @{
+}
+
+$tagsCommits = @{}
+$tagsCommitsJsonPath = "$scriptsBoostDir/tags-commits-$version.json"
+$queryTagsCommits = $true
+if (Test-Path $tagsCommitsJsonPath)
+{
+    "Found a local dictionary of commits per tags, will try to use those instead of querying them from API"
+    try
+    {
+        $tagsCommitsJson = Get-Content -Raw -Path $tagsCommitsJsonPath
+        $tagsCommits = ConvertFrom-Json -InputObject $tagsCommitsJson -AsHashtable
+        $queryTagsCommits = $false
+    }
+    catch
+    {
+        Write-Warning "Could not read/parse the dictionary: $_.Exception.Message"
+    }
+}
+else
+{
+    "Did not find a local dictionary of commits per tags, will query them from API"
 }
 
 function Get-PortVersion {
@@ -214,7 +238,7 @@ function GeneratePortHash() {
   param (
       [string]$Archive
   )
-  $hash = & $vcpkg --x-wait-for-lock hash $Archive
+  $hash = & vcpkg --x-wait-for-lock hash $Archive
   # Remove prefix "Waiting to take filesystem lock on <path>/.vcpkg-root... "
   if ($hash -is [Object[]]) {
       $hash = $hash[1]
@@ -229,15 +253,15 @@ function GetPortHomepage() {
     $specicalHomepagePaths = @{
         "build"              = "https://github.com/boostorg/build";
         "cmake"              = "https://github.com/boostorg/cmake";
-        "interval"           = "https://www.boost.org/libs/numeric/interval";
-        "numeric_conversion" = "https://www.boost.org/libs/numeric/conversion";
-        "odeint"             = "https://www.boost.org/libs/numeric/odeint";
-        "ublas"              = "https://www.boost.org/libs/numeric/ublas";
+        "interval"           = "https://boost.org/libs/numeric/interval";
+        "numeric_conversion" = "https://boost.org/libs/numeric/conversion";
+        "odeint"             = "https://boost.org/libs/numeric/odeint";
+        "ublas"              = "https://boost.org/libs/numeric/ublas";
     }
     if ($specicalHomepagePaths.ContainsKey($Library)) {
         $homepagePath = $specicalHomepagePaths[$Library]
     } else {
-        $homepagePath = "https://www.boost.org/libs/" + $Library
+        $homepagePath = "https://boost.org/libs/" + $Library
     }
     return $homepagePath
 }
@@ -366,12 +390,13 @@ function GeneratePortManifest() {
 
     $manifest | ConvertTo-Json -Depth 10 -Compress `
     | Out-File -Encoding UTF8 "$portsDir/$PortName/vcpkg.json"
-    & $vcpkg format-manifest "$portsDir/$PortName/vcpkg.json"
+    & vcpkg format-manifest "$portsDir/$PortName/vcpkg.json"
 }
 
 function GeneratePort() {
     param (
         [string]$Library,
+        [string]$CommitHash,
         [string]$Archive,
         [bool]$NeedsBuild = $true,
         $Dependencies = @()
@@ -404,12 +429,10 @@ function GeneratePort() {
     }
 
     $portfileLines += @(
-        "vcpkg_from_github(",
+        "vcpkg_from_git(",
         "    OUT_SOURCE_PATH SOURCE_PATH",
-        "    REPO boostorg/$Library",
-        "    REF boost-`${VERSION}",
-        "    SHA512 $portHash",
-        "    HEAD_REF master"
+        "    URL git@github.com:boostorg/$Library.git",
+        "    REF $CommitHash"
     )
 
     [string[]]$patches = @()
@@ -470,7 +493,7 @@ if (!(Test-Path "$scriptsBoostDir/boost")) {
     "Cloning boost..."
     Push-Location $scriptsBoostDir
     try {
-        git clone https://github.com/boostorg/boost --branch boost-$version
+        git clone git@github.com:boostorg/boost --branch boost-$version
     }
     finally {
         Pop-Location
@@ -505,6 +528,7 @@ $foundLibraries += $tools
 $foundLibraries = $foundLibraries | Sort-Object
 
 $updateServicePorts = $false
+$generateEmptyParentPort = $false
 
 if ($libraries.Length -eq 0) {
     $libraries = $foundLibraries
@@ -518,7 +542,8 @@ $boostPortDependencies = @()
 
 foreach ($library in $libraries) {
     $archive = "$downloads/boostorg-$library-boost-$version.tar.gz"
-    "Handling boost/$library... $archive"
+    "`n[boost/$library] ..."
+    if ($debugOutput) { "Archive: $archive" }
     if (!(Test-Path $archive)) {
         "Downloading boost/$library..."
         Invoke-WebRequest -Uri "https://github.com/boostorg/$library/archive/boost-$version.tar.gz" -OutFile "$archive"
@@ -663,8 +688,11 @@ foreach ($library in $libraries) {
         } `
         | Group-Object -NoElement | ForEach-Object Name
 
-        "  [known] " + $($usedLibraries | Where-Object { $foundLibraries -contains $_ })
-        "[unknown] " + $($usedLibraries | Where-Object { $foundLibraries -notcontains $_ })
+        if ($debugOutput)
+        {
+            "[  known  ] " + $($usedLibraries | Where-Object { $foundLibraries -contains $_ })
+            "[ unknown ] " + $($usedLibraries | Where-Object { $foundLibraries -notcontains $_ })
+        }
 
         $deps = @($usedLibraries | Where-Object { $foundLibraries -contains $_ })
 
@@ -717,8 +745,65 @@ foreach ($library in $libraries) {
         $deps = $deps | Select-Object -Unique
         $deps = @($deps | ForEach-Object { GeneratePortDependency $_ -ForLibrary $library })
 
+        $commitHash = "COMMIT-HASH-HERE"
+        if (-not $queryTagsCommits -and $tagsCommits.ContainsKey($Library))
+        {
+            if ($debugOutput) { "Found commit hash in the local dictionary" }
+            $commitHash = $tagsCommits[$Library]
+        }
+        else
+        {
+            if ($debugOutput) { "No commit hash in the local dictionary, will query it from API" }
+            try
+            {
+                $rez = Invoke-RestMethod -Uri "$apiBaseURL/repos/boostorg/$library/git/ref/tags/boost-$version" -Headers $apiHeaders -Method Get
+                $commitHash = $($rez.object.sha)
+                $tagsCommits.Add($Library, $commitHash)
+            }
+            catch
+            {
+                if ($_.Exception.Response)
+                {
+                    $errorMsgQueryingCommit = "Querying for commit hash by tag failed"
+                    $statusCode = $_.Exception.Response.StatusCode
+                    $statusCodeValue = $_.Exception.Response.StatusCode.value__
+                    if ($statusCodeValue -eq 404)
+                    {
+                        Write-Error "$errorMsgQueryingCommit with 404, perhaps the query URL was malformed?"
+                        exit 1
+                    }
+                    elseif ($statusCodeValue -eq 403)
+                    {
+                        $errorMsgQueryingCommit403 = "$errorMsgQueryingCommit with 403, you might have exceeded the rate limit"
+                        if ($apiHeaders.ContainsKey("Authorization"))
+                        {
+                            Write-Error $errorMsgQueryingCommit403
+                        }
+                        else
+                        {
+                            Write-Error "$errorMsgQueryingCommit403, try to add Authorization header - https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting - authenticated requests have a bigger quota"
+                        }
+                        exit 1
+                    }
+                    else
+                    {
+                        Write-Error "$errorMsgQueryingCommit, status code: $statusCodeValue ($statusCode)"
+                        exit 1
+                    }
+                }
+                else
+                {
+                    $ProgressPreference = $ProgressPreferenceOriginal
+                    Write-Output "$errorMsgQueryingCommit with error: $_"
+                    exit 1
+                }
+            }
+        }
+        if ($debugOutput) { "Commit hash: $commitHash" }
+
         GeneratePort `
             -Library $library `
+            -CommitHash $commitHash `
             -Archive $archive `
             -NeedsBuild $needsBuild `
             -Dependencies $deps
@@ -728,23 +813,38 @@ foreach ($library in $libraries) {
     }
 }
 
-if ($updateServicePorts) {
-    # Generate manifest file for master boost port which depends on each individual library
-    GeneratePortManifest `
-        -PortName "boost" `
-        -Homepage "https://boost.org" `
-        -Description "Peer-reviewed portable C++ source libraries" `
-        -License "BSL-1.0" `
-        -Dependencies $boostPortDependencies
+if ($updateServicePorts)
+{
+    if ($generateEmptyParentPort)
+    {
+        # parent boost port that depends on every individual library
+        "`n[boost] ..."
+        GeneratePortManifest `
+            -PortName "boost" `
+            -Homepage "https://boost.org" `
+            -Description "Peer-reviewed portable C++ source libraries" `
+            -License "BSL-1.0" `
+            -Dependencies $boostPortDependencies
 
-    Set-Content -LiteralPath "$portsDir/boost/portfile.cmake" `
-        -Value "set(VCPKG_POLICY_EMPTY_PACKAGE enabled)`n" `
-        -Encoding UTF8 `
-        -NoNewline
+        Set-Content -LiteralPath "$portsDir/boost/portfile.cmake" `
+            -Value "set(VCPKG_POLICY_EMPTY_PACKAGE enabled)`n" `
+            -Encoding UTF8 `
+            -NoNewline
+    }
 
-    # Generate manifest files for boost-uninstall
+    # generate manifest files for boost-uninstall
+    "`n[boost-uninstall] ..."
     GeneratePortManifest `
         -PortName "boost-uninstall" `
         -Description "Internal vcpkg port used to uninstall Boost" `
         -License "MIT"
+}
+
+try
+{
+    $tagsCommits | ConvertTo-Json | Out-File -Path $tagsCommitsJsonPath -Encoding UTF8
+}
+catch
+{
+    Write-Warning "Could not save the dictionary to JSON: $_.Exception.Message"
 }

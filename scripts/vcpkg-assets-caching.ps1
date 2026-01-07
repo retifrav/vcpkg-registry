@@ -65,7 +65,7 @@ catch
     if ($_.Exception.Response)
     {
         $statusCode = $_.Exception.Response.StatusCode
-        if ($statusCode -eq "404")
+        if ($statusCode -eq "404") # `$statusCodeValue`?
         {
             Write-Warning "[$correctFilename] is not available in cache at $baseurl"
             if (Test-Path $Destination)
