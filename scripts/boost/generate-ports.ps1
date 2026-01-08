@@ -21,7 +21,8 @@ if (-not [string]::IsNullOrEmpty($apiAccessToken))
 }
 
 $scriptsBoostDir = split-path -parent $MyInvocation.MyCommand.Definition
-if ($null -eq $portsDir) {
+if ($null -eq $portsDir)
+{
     $portsDir = "$scriptsBoostDir/../../ports"
 }
 
@@ -55,15 +56,14 @@ else
     "Did not find a local dictionary of commits per tags, will query them from API"
 }
 
-function Get-PortVersion {
+function Get-PortVersion
+{
     param (
         [string]$PortName
     )
 
     $nonDefault = $portVersions[$PortName]
-    if ($null -ne $nonDefault) {
-        return $nonDefault
-    }
+    if ($null -ne $nonDefault) { return $nonDefault }
 
     return $defaultPortVersion
 }
@@ -227,29 +227,31 @@ $suppressPlatformForDependency = @{
     "boost-wave"                  = @("boost-filesystem");
 }
 
-function GeneratePortName() {
+function GeneratePortName()
+{
     param (
         [string]$Library
     )
     "boost-" + ($Library -replace "_", "-")
 }
 
-function GeneratePortHash() {
+function GeneratePortHash()
+{
   param (
       [string]$Archive
   )
   $hash = & vcpkg --x-wait-for-lock hash $Archive
   # Remove prefix "Waiting to take filesystem lock on <path>/.vcpkg-root... "
-  if ($hash -is [Object[]]) {
-      $hash = $hash[1]
-  }
+  if ($hash -is [Object[]]) { $hash = $hash[1] }
   return $hash
 }
 
-function GetPortHomepage() {
+function GetPortHomepage()
+{
     param (
         [string]$Library
     )
+
     $specicalHomepagePaths = @{
         "build"              = "https://github.com/boostorg/build";
         "cmake"              = "https://github.com/boostorg/cmake";
@@ -258,62 +260,69 @@ function GetPortHomepage() {
         "odeint"             = "https://boost.org/libs/numeric/odeint";
         "ublas"              = "https://boost.org/libs/numeric/ublas";
     }
-    if ($specicalHomepagePaths.ContainsKey($Library)) {
-        $homepagePath = $specicalHomepagePaths[$Library]
-    } else {
-        $homepagePath = "https://boost.org/libs/" + $Library
-    }
+
+    if ($specicalHomepagePaths.ContainsKey($Library)) { $homepagePath = $specicalHomepagePaths[$Library] }
+    else { $homepagePath = "https://boost.org/libs/" + $Library }
+
     return $homepagePath
 }
 
-function GeneratePortDependency() {
+function GeneratePortDependency()
+{
     param (
         [string]$Library = '',
         [string]$PortName = '',
         [string]$ForLibrary = ''
     )
-    if ($PortName -eq '') {
+    if ($PortName -eq '')
+    {
         $PortName = GeneratePortName $Library
     }
     $forPortName = GeneratePortName $ForLibrary
-    if ($suppressPlatformForDependency.Contains($forPortName) -and $suppressPlatformForDependency[$forPortName].Contains($PortName)) {
+    if ($suppressPlatformForDependency.Contains($forPortName) -and $suppressPlatformForDependency[$forPortName].Contains($PortName))
+    {
         $PortName
     }
-    elseif ($portData.Contains($PortName) -and $portData[$PortName].Contains('supports')) {
+    elseif ($portData.Contains($PortName) -and $portData[$PortName].Contains('supports'))
+    {
         @{name = $PortName; platform = $portData[$PortName]['supports'] }
     }
-    elseif ($ForLibrary -eq '' -and $suppressPlatformForDependency.Contains($PortName)) {
+    elseif ($ForLibrary -eq '' -and $suppressPlatformForDependency.Contains($PortName))
+    {
         # For 'boost'.
         $platform = $suppressPlatformForDependency[$PortName] `
         | ForEach-Object { (GeneratePortDependency -PortName $_).platform } `
         | Group-Object -NoElement `
         | Join-String -Property Name -Separator ' & '
-        if ($platform -ne '') {
+        if ($platform -ne '')
+        {
             @{name = $PortName; platform = $platform }
         }
-        else {
-            $PortName
-        }
+        else { $PortName }
     }
-    else {
-        $PortName
-    }
+    else { $PortName }
 }
 
-function AddBoostVersionConstraints() {
+function AddBoostVersionConstraints()
+{
     param (
         $Dependencies = @()
     )
 
     $updatedDependencies = @()
-    foreach ($dependency in $Dependencies) {
-        if ($dependency.Contains("name")) {
-            if ($dependency.name.StartsWith("boost")) {
+    foreach ($dependency in $Dependencies)
+    {
+        if ($dependency.Contains("name"))
+        {
+            if ($dependency.name.StartsWith("boost"))
+            {
                 $dependency["version>="] = $semverVersion
             }
         }
-        else {
-            if ($dependency.StartsWith("boost")) {
+        else
+        {
+            if ($dependency.StartsWith("boost"))
+            {
                 $dependency = @{
                     "name"       = $dependency
                     "version>="  = $semverVersion
@@ -325,7 +334,8 @@ function AddBoostVersionConstraints() {
     $updatedDependencies
 }
 
-function GeneratePortManifest() {
+function GeneratePortManifest()
+{
     param (
         [string]$PortName,
         [string]$Homepage,
@@ -339,52 +349,49 @@ function GeneratePortManifest() {
         "homepage"        = $Homepage
         "description"     = $Description
     }
-    if ($version -eq $semverVersion) {
+
+    if ($version -eq $semverVersion)
+    {
         $manifest["version"] = $version
     }
-    else {
+    else
+    {
         $manifest["version-string"] = $version
     }
-    if ($License) {
-        $manifest["license"] += $License
-    }
-    if ($portData.Contains($PortName)) {
-        $manifest += $portData[$PortName]
-    }
+
+    if ($License) { $manifest["license"] += $License }
+
+    if ($portData.Contains($PortName)) { $manifest += $portData[$PortName] }
+
     $thisPortVersion = Get-PortVersion $PortName
-    if ($thisPortVersion -ne 0) {
-        $manifest["port-version"] = $thisPortVersion
-    }
-    if ($Dependencies.Count -gt 0) {
-        $manifest["dependencies"] += $Dependencies
-    }
-    # Remove from the dependencies the ports that are included in the feature dependencies
-    if ($manifest.Contains('features') -and $manifest.Contains('dependencies')) {
-        foreach ($feature in $manifest.features.Keys) {
+    if ($thisPortVersion -ne 0) { $manifest["port-version"] = $thisPortVersion }
+
+    if ($Dependencies.Count -gt 0) { $manifest["dependencies"] += $Dependencies }
+
+    # remove from the dependencies the ports that are included in the feature dependencies
+    if ($manifest.Contains('features') -and $manifest.Contains('dependencies'))
+    {
+        foreach ($feature in $manifest.features.Keys)
+        {
             $feature_dependencies = $manifest.features.$feature["dependencies"]
-            foreach ($dependency in $feature_dependencies) {
-                if ($dependency.Contains("name")) {
-                    $dep_name = $dependency.name
-                }
-                else {
-                    $dep_name = $dependency
-                }
+            foreach ($dependency in $feature_dependencies)
+            {
+                if ($dependency.Contains("name")) { $dep_name = $dependency.name }
+                else { $dep_name = $dependency }
+
                 $manifest["dependencies"] = $manifest["dependencies"] `
                 | Where-Object {
-                    if ($_.Contains("name")) {
-                        $_.name -notmatch "$dep_name"
-                    }
-                    else {
-                        $_ -notmatch "$dep_name"
-                    }
+                    if ($_.Contains("name")) { $_.name -notmatch "$dep_name" }
+                    else { $_ -notmatch "$dep_name" }
                 }
             }
         }
     }
 
-    # Add version constraints to boost dependencies
+    # add version constraints to Boost dependencies
     $manifest["dependencies"] = @(AddBoostVersionConstraints $manifest["dependencies"])
-    foreach ($feature in $manifest.features.Keys) {
+    foreach ($feature in $manifest.features.Keys)
+    {
         $manifest.features.$feature["dependencies"] = @(AddBoostVersionConstraints $manifest.features.$feature["dependencies"])
     }
 
@@ -393,7 +400,8 @@ function GeneratePortManifest() {
     & vcpkg format-manifest "$portsDir/$PortName/vcpkg.json"
 }
 
-function GeneratePort() {
+function GeneratePort()
+{
     param (
         [string]$Library,
         [string]$CommitHash,
@@ -437,13 +445,16 @@ function GeneratePort() {
 
     [string[]]$patches = @()
     $patches += Get-ChildItem -Path "$portsDir/$portName/*" -Name -Include @('*.patch', '*.diff')
-    if (Test-Path "$scriptsBoostDir/patch-stubs/$Library.txt") {
+    if (Test-Path "$scriptsBoostDir/patch-stubs/$Library.txt")
+    {
         $patches += Get-Content "$scriptsBoostDir/patch-stubs/$Library.txt"
     }
 
-    if ($patches.Length -ne 0) {
+    if ($patches.Length -ne 0)
+    {
         $portfileLines += @("    PATCHES")
-        foreach ($patch in $patches) {
+        foreach ($patch in $patches)
+        {
             $portfileLines += "        $patch"
         }
     }
@@ -452,21 +463,25 @@ function GeneratePort() {
         ""
     )
 
-    if (Test-Path "$scriptsBoostDir/post-source-stubs/$Library.cmake") {
+    if (Test-Path "$scriptsBoostDir/post-source-stubs/$Library.cmake")
+    {
         $portfileLines += @(Get-Content "$scriptsBoostDir/post-source-stubs/$Library.cmake")
     }
 
-    if ($NeedsBuild) {
+    if ($NeedsBuild)
+    {
         $portfileLines += @(
             "set(FEATURE_OPTIONS `"`")"
         )
-        if (Test-Path "$portsDir/$portName/features.cmake") {
+        if (Test-Path "$portsDir/$portName/features.cmake")
+        {
             $portfileLines += @(
                 "include(`"`${CMAKE_CURRENT_LIST_DIR}/features.cmake`")"
             )
         }
 
-        if (Test-Path "$scriptsBoostDir/pre-build-stubs/$Library.cmake") {
+        if (Test-Path "$scriptsBoostDir/pre-build-stubs/$Library.cmake")
+        {
             $portfileLines += Get-Content "$scriptsBoostDir/pre-build-stubs/$Library.cmake"
         }
 
@@ -477,7 +492,8 @@ function GeneratePort() {
             ")"
         )
 
-        if (Test-Path "$scriptsBoostDir/post-build-stubs/$Library.cmake") {
+        if (Test-Path "$scriptsBoostDir/post-build-stubs/$Library.cmake")
+        {
             $portfileLines += @(Get-Content "$scriptsBoostDir/post-build-stubs/$Library.cmake")
         }
     }
@@ -489,37 +505,33 @@ function GeneratePort() {
         -NoNewline
 }
 
-if (!(Test-Path "$scriptsBoostDir/boost")) {
+if (!(Test-Path "$scriptsBoostDir/boost"))
+{
     "Cloning boost..."
     Push-Location $scriptsBoostDir
-    try {
-        git clone git@github.com:boostorg/boost --branch boost-$version
-    }
-    finally {
-        Pop-Location
-    }
+    try { git clone git@github.com:boostorg/boost --branch boost-$version }
+    finally { Pop-Location }
 }
-else {
+else
+{
     Push-Location $scriptsBoostDir/boost
-    try {
+    try
+    {
         git fetch
         git checkout -f boost-$version
     }
-    finally {
-        Pop-Location
-    }
+    finally { Pop-Location }
 }
 
 $foundLibraries = Get-ChildItem $scriptsBoostDir/boost/libs -directory | ForEach-Object name | ForEach-Object {
-    if ($_ -eq "numeric") {
+    if ($_ -eq "numeric")
+    {
         "numeric_conversion"
         "interval"
         "odeint"
         "ublas"
     }
-    else {
-        $_.ToString()
-    }
+    else { $_.ToString() }
 }
 
 $tools = @("build", "cmake")
@@ -530,7 +542,8 @@ $foundLibraries = $foundLibraries | Sort-Object
 $updateServicePorts = $false
 $generateEmptyParentPort = $false
 
-if ($libraries.Length -eq 0) {
+if ($libraries.Length -eq 0)
+{
     $libraries = $foundLibraries
     $updateServicePorts = $true
 }
@@ -540,30 +553,30 @@ New-Item -ItemType "Directory" $downloads -erroraction SilentlyContinue | out-nu
 
 $boostPortDependencies = @()
 
-foreach ($library in $libraries) {
+foreach ($library in $libraries)
+{
     $archive = "$downloads/boostorg-$library-boost-$version.tar.gz"
     "`n[boost/$library] ..."
     if ($debugOutput) { "Archive: $archive" }
-    if (!(Test-Path $archive)) {
+    if (!(Test-Path $archive))
+    {
         "Downloading boost/$library..."
         Invoke-WebRequest -Uri "https://github.com/boostorg/$library/archive/boost-$version.tar.gz" -OutFile "$archive"
         "Downloaded boost/$library..."
     }
 
     $unpacked = "$scriptsBoostDir/libs/$library-boost-$version"
-    if (!(Test-Path $unpacked)) {
+    if (!(Test-Path $unpacked))
+    {
         "Unpacking boost/$library..."
         New-Item -ItemType "Directory" $scriptsBoostDir/libs -erroraction SilentlyContinue | out-null
         Push-Location $scriptsBoostDir/libs
-        try {
-            cmake -E tar xf $archive
-        }
-        finally {
-            Pop-Location
-        }
+        try { cmake -E tar xf $archive }
+        finally { Pop-Location }
     }
     Push-Location $unpacked
-    try {
+    try
+    {
         $usedLibraries = Get-ChildItem -Recurse -Path include, src -File `
         | Where-Object { $_ -is [System.IO.FileInfo] } `
         | ForEach-Object {
@@ -724,15 +737,19 @@ foreach ($library in $libraries) {
 
         $needsBuild = $true
 
-        if ($tools -contains $library) {
+        if ($tools -contains $library)
+        {
             $needsBuild = $false
             $deps += @('uninstall')
         }
-        else {
+        else
+        {
             $deps += @('cmake')
-            if ($library -ne 'headers') {
+            if ($library -ne 'headers')
+            {
                 $deps += @("headers")
-                if ($library -ne 'config') {
+                if ($library -ne 'config')
+                {
                     # Note: CMake's built-in finder (FindBoost.cmake) looks for Boost header files (boost/version.h or boost/config.h)
                     # and stores the result in the Boost_INCLUDE_DIR variable. The files boost/version.h or boost/config.h are owned by the config library.
                     # Without these files, the Boost_INCLUDE_DIR variable will not be set and the Boost version will not be detected.
@@ -807,8 +824,14 @@ foreach ($library in $libraries) {
             -Archive $archive `
             -NeedsBuild $needsBuild `
             -Dependencies $deps
+
+        $portName = GeneratePortName $Library
+        # download https://raw.githubusercontent.com/boostorg/boost/refs/tags/boost-$version/LICENSE_1_0.txt
+        # and save it as `LICENSE.txt` ( or `LICENSE-$version.txt`, if you'd like to have a license per version)
+        Copy-Item "$scriptsBoostDir/LICENSE.txt" -Destination "$portsDir/$portName/LICENSE.txt"
     }
-    finally {
+    finally
+    {
         Pop-Location
     }
 }
