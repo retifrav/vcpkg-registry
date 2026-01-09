@@ -76,6 +76,11 @@ argParser.add_argument(
     help="do not update the baseline (default: %(default)s)"
 )
 argParser.add_argument(
+    "--not-creating-versions-file",
+    action='store_true',
+    help="do not create missing versions file (default: %(default)s)"
+)
+argParser.add_argument(
     "--no-rev-parse",
     action='store_true',
     help=" ".join((
@@ -102,6 +107,7 @@ portName: str = cliArgs.port_name
 portVersion: str = cliArgs.port_version
 ignoreVersionFromManifest: bool = cliArgs.ignore_version_from_manifest
 updatingBaseline: bool = not cliArgs.not_updating_baseline
+creatingVersionsFile: bool = not cliArgs.not_creating_versions_file
 withRevParse: bool = not cliArgs.no_rev_parse
 sortingJson: bool = cliArgs.sorting_json
 debugMode: bool = cliArgs.debug
@@ -274,13 +280,17 @@ portVersionsPath: pathlib.Path = (
     registryPath / "versions" / f"{portName[0]}-" / f"{portName}.json"
 )
 if not portVersionsPath.is_file():
-    logging.error(
-        " ".join((
-            "The port versions file is missing, expected to find",
-            f"it here: {portVersionsPath.resolve()}"
-        ))
-    )
-    raise SystemExit(5)
+    if creatingVersionsFile:
+        with open(portVersionsPath, "w", newline="") as f:
+            f.write("{\"versions\":[]}\n")
+    else:
+        logging.error(
+            " ".join((
+                "The port versions file is missing, expected to find",
+                f"it here: {portVersionsPath.resolve()}"
+            ))
+        )
+        raise SystemExit(5)
 
 newVersionMain: Optional[str] = None
 newVersionPort: Optional[int] = None
@@ -423,7 +433,12 @@ with open(portVersionsPath, "r+", newline="") as f:
             ))
         )
 
-    versions = json.load(f)
+    versions = None
+    try:
+        versions = json.load(f)
+    except Exception as ex:
+        logging.error(f"Could not read/parse the versions file: {ex}")
+        raise SystemExit(13)
     currentVersions = versions.get("versions")
     if currentVersions is None:
         logging.error(
