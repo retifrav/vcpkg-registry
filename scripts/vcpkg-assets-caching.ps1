@@ -83,7 +83,7 @@ catch
     else
     {
         $ProgressPreference = $ProgressPreferenceOriginal
-        Write-Output "Download failed with error: $_"
+        Write-Error "Download failed with error: $_"
         exit 1
     }
 }

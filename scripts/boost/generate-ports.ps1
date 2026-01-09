@@ -2,9 +2,9 @@
 param (
     $libraries = @(),
     $version = "1.90.0",
-# This script treats support statements as platform expressions. This is incorrect
+# the script treats support statements as platform expressions. This is incorrect
 # in a few cases e.g. boost-parameter-python not depending on boost-python for uwp since
-# boost-python is not supported on uwp. Update $suppressPlatformForDependency as needed,
+# boost-python is not supported on UWP. Update $suppressPlatformForDependency as needed,
 # don't blindly stage/commit changes containing platform expressions in dependencies.
     $portsDir = $null,
     $debugOutput = $false
@@ -21,15 +21,16 @@ if (-not [string]::IsNullOrEmpty($apiAccessToken))
 }
 
 $scriptsBoostDir = split-path -parent $MyInvocation.MyCommand.Definition
+$scriptsDir = "$scriptsBoostDir/.."
 if ($null -eq $portsDir)
 {
     $portsDir = "$scriptsBoostDir/../../ports"
 }
 
-# Beta builds contains a text in the version string
+# beta builds contains a text in the version string
 $semverVersion = ($version -replace "(\d+(\.\d+){1,3}).*", "`$1")
 
-# Clear this array when moving to a new boost version
+# clear this array when moving to a new Boost version
 $defaultPortVersion = 0
 $portVersions = @{
 }
@@ -209,8 +210,8 @@ $portData = @{
     "boost-wave"             = @{ "supports" = "!uwp" };
 }
 
-# For some dependent ports (LHS), the dependency's [RHS] "supports" is enough,
-# and no "platform" field shall be added to the dependency.
+# for some dependent ports (LHS), the dependency's [RHS] "supports" is enough,
+# and no `platform` field shall be added to the dependency
 $suppressPlatformForDependency = @{
     "boost-coroutine2"            = @("boost-context");
     "boost-dll"                   = @("boost-filesystem");
@@ -241,7 +242,7 @@ function GeneratePortHash()
       [string]$Archive
   )
   $hash = & vcpkg --x-wait-for-lock hash $Archive
-  # Remove prefix "Waiting to take filesystem lock on <path>/.vcpkg-root... "
+  # remove prefix "Waiting to take filesystem lock on <path>/.vcpkg-root..."
   if ($hash -is [Object[]]) { $hash = $hash[1] }
   return $hash
 }
@@ -289,7 +290,7 @@ function GeneratePortDependency()
     }
     elseif ($ForLibrary -eq '' -and $suppressPlatformForDependency.Contains($PortName))
     {
-        # For 'boost'.
+        # for `boost`
         $platform = $suppressPlatformForDependency[$PortName] `
         | ForEach-Object { (GeneratePortDependency -PortName $_).platform } `
         | Group-Object -NoElement `
@@ -416,7 +417,7 @@ function GeneratePort()
 
     New-Item -ItemType "Directory" "$portsDir/$portName" -erroraction SilentlyContinue | out-null
 
-    # Generate vcpkg.json
+    # generate `vcpkg.json`
     GeneratePortManifest `
         -PortName $portName `
         -Homepage $homepage `
@@ -507,13 +508,14 @@ function GeneratePort()
 
 if (!(Test-Path "$scriptsBoostDir/boost"))
 {
-    "Cloning boost..."
+    "No Boost repository found, cloning it anew..."
     Push-Location $scriptsBoostDir
     try { git clone git@github.com:boostorg/boost --branch boost-$version }
     finally { Pop-Location }
 }
 else
 {
+    "Found Boost repository, checking out the version branch (just in case)..."
     Push-Location $scriptsBoostDir/boost
     try
     {
@@ -587,12 +589,12 @@ foreach ($library in $libraries)
             $_ -match ' *# *include *[<"]boost\/'
         } `
         | ForEach-Object {
-            # Extract path from the line
+            # extract path from the line
             Write-Verbose "${library}: processing line: $_"
             $_ -replace " *# *include *[<`"]boost\/([a-zA-Z0-9\.\-_\/]*)[>`"].*", "`$1"
         }`
         | ForEach-Object {
-            # Map the path to the library name
+            # map the path to the library name
             Write-Verbose "${library}: processing path: $_"
             if ($_ -match "^detail\/winapi\/") { "winapi" }
             elseif ($_ -eq "detail/algorithm.hpp") { "graph" }
@@ -653,11 +655,11 @@ foreach ($library in $libraries)
             elseif ($_ -eq "utility/enable_if.hpp") { "core" }
             elseif ($_ -eq "utility/explicit_operator_bool.hpp") { "core" }
             elseif ($_ -eq "utility/swap.hpp") { "core" }
-            # Extract first directory name or file name from the path
+            # extract first directory name or file name from the path
             else { $_ -replace "([a-zA-Z0-9\.\-_]*).*", "`$1" }
         } `
         | ForEach-Object {
-            # Map directory/file name to the library name
+            # map directory/file name to the library name
             Write-Verbose "${library}: processing name: $_"
             if ($_ -eq "current_function.hpp") { "assert" }
             elseif ($_ -eq "memory_order.hpp") { "atomic" }
@@ -693,7 +695,7 @@ foreach ($library in $libraries)
             elseif ($_ -match "aligned_storage.hpp") { "type_traits" }
             elseif ($_ -match "unordered_map.hpp|unordered_set.hpp") { "unordered" }
             elseif ($_ -match "call_traits.hpp|compressed_pair.hpp|operators.hpp|operators_v1.hpp") { "utility" }
-            # By dafault use the name as is, just remove the file extension if available
+            # by default use the name as it is, but remove the file extension (if there is one)
             else { $_ -replace "\.hp?p?", "" }
         } `
         | Where-Object {
@@ -709,26 +711,26 @@ foreach ($library in $libraries)
 
         $deps = @($usedLibraries | Where-Object { $foundLibraries -contains $_ })
 
-        # Remove optional dependencies
+        # remove optional dependencies
         $deps = @($deps `
             | Where-Object {
                 # Boost.Filesystem only used for tests or examples
-                # See https://github.com/boostorg/gil#requirements
+                # according to https://github.com/boostorg/gil#requirements
                 -not ($library -eq 'gil' -and $_ -eq 'filesystem')
             } `
             | Where-Object {
                 # Note that Boost.Pfr is not listed because it's a peer dependency
-                # See CMakeLists.txt
+                # according to CMakeLists.txt
                 -not ($library -eq 'mysql' -and $_ -eq 'pfr')
             } `
             | Where-Object {
                 # Boost.Beast only used for MQTT connections over WebSocket
-                # See CMakeLists.txt
+                # according to CMakeLists.txt
                 -not ($library -eq 'mqtt5' -and $_ -eq 'beast')
             }
         )
 
-        # Remove cyclic dependencies
+        # remove cyclic dependencies
         $deps = @($deps `
             | Where-Object {
                 -not ($library -eq 'graph' -and $_ -eq 'geometry')
@@ -750,9 +752,11 @@ foreach ($library in $libraries)
                 $deps += @("headers")
                 if ($library -ne 'config')
                 {
-                    # Note: CMake's built-in finder (FindBoost.cmake) looks for Boost header files (boost/version.h or boost/config.h)
-                    # and stores the result in the Boost_INCLUDE_DIR variable. The files boost/version.h or boost/config.h are owned by the config library.
-                    # Without these files, the Boost_INCLUDE_DIR variable will not be set and the Boost version will not be detected.
+                    # CMake's built-in finder (FindBoost.cmake) looks for Boost header files
+                    # (boost/version.h or boost/config.h) and stores the result in the Boost_INCLUDE_DIR
+                    # variable, the files boost/version.h or boost/config.h are owned by the config library,
+                    # and without these files the Boost_INCLUDE_DIR variable will not be set
+                    # and the Boost version will not be detected
                     $deps += @('config')
                 }
             }
@@ -811,7 +815,7 @@ foreach ($library in $libraries)
                 else
                 {
                     $ProgressPreference = $ProgressPreferenceOriginal
-                    Write-Output "$errorMsgQueryingCommit with error: $_"
+                    Write-Error "$errorMsgQueryingCommit with error: $_"
                     exit 1
                 }
             }
@@ -826,9 +830,25 @@ foreach ($library in $libraries)
             -Dependencies $deps
 
         $portName = GeneratePortName $Library
+        #
+        if ($debugOutput) { "Placing license" }
         # download https://raw.githubusercontent.com/boostorg/boost/refs/tags/boost-$version/LICENSE_1_0.txt
         # and save it as `LICENSE.txt` ( or `LICENSE-$version.txt`, if you'd like to have a license per version)
         Copy-Item "$scriptsBoostDir/LICENSE.txt" -Destination "$portsDir/$portName/LICENSE.txt"
+        #
+        if ($debugOutput) { "Updating versions file" }
+        # not sure why it can't run `python`, so it has to be `python3`
+        # also `--not-updating-baseline` is only needed for the first ever time
+        & python3 "$scriptsDir/add-new-version.py" `
+            "$portsDir/.." `
+            --port-name "$portName" `
+            --port-version "$version#0" `
+            --not-updating-baseline
+        if (-not $LastExitCode -eq 0)
+        {
+            Write-Error "Failed to update/create versions file"
+            exit 2
+        }
     }
     finally
     {
