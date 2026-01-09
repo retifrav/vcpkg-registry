@@ -456,6 +456,11 @@
             "baseline": "0.9.5",
             "port-version": 0
         },
+        "vcpkg-boost":
+        {
+            "baseline": "2025-03-29",
+            "port-version": 0
+        },
         "vcpkg-cmake":
         {
             "baseline": "2023-05-04",
