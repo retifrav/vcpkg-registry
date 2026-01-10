@@ -7,11 +7,13 @@ param (
 # boost-python is not supported on UWP. Update $suppressPlatformForDependency as needed,
 # don't blindly stage/commit changes containing platform expressions in dependencies.
     $portsDir = $null,
+    $downloadInsteadOfCloning = $false,
     $debugOutput = $false
 )
 
 $ErrorActionPreference = 'Stop'
 
+$gitBaseURL = "git@github.com:boostorg"
 $apiBaseURL = "https://api.github.com"
 $apiAccessToken = $env:API_ACCESS_TOKEN
 $apiHeaders = @{}
@@ -32,15 +34,14 @@ $semverVersion = ($version -replace "(\d+(\.\d+){1,3}).*", "`$1")
 
 # clear this array when moving to a new Boost version
 $defaultPortVersion = 0
-$portVersions = @{
-}
+$portVersions = @{}
 
 $tagsCommits = @{}
 $tagsCommitsJsonPath = "$scriptsBoostDir/tags-commits-$version.json"
 $queryTagsCommits = $true
 if (Test-Path $tagsCommitsJsonPath)
 {
-    "Found a local dictionary of commits per tags, will try to use those instead of querying them from API"
+    "Found a local dictionary of commits per tags"
     try
     {
         $tagsCommitsJson = Get-Content -Raw -Path $tagsCommitsJsonPath
@@ -52,9 +53,14 @@ if (Test-Path $tagsCommitsJsonPath)
         Write-Warning "Could not read/parse the dictionary: $_.Exception.Message"
     }
 }
-else
+elseif ($downloadInsteadOfCloning)
 {
     "Did not find a local dictionary of commits per tags, will query them from API"
+}
+else
+{
+    $queryTagsCommits = $false
+    "Did not find a local dictionary of commits per tags, will get them from local repositories"
 }
 
 function Get-PortVersion
@@ -238,13 +244,14 @@ function GeneratePortName()
 
 function GeneratePortHash()
 {
-  param (
-      [string]$Archive
-  )
-  $hash = & vcpkg --x-wait-for-lock hash $Archive
-  # remove prefix "Waiting to take filesystem lock on <path>/.vcpkg-root..."
-  if ($hash -is [Object[]]) { $hash = $hash[1] }
-  return $hash
+    param (
+        [string]$Archive
+    )
+
+    $hash = & vcpkg --x-wait-for-lock hash $Archive
+    # remove prefix "Waiting to take filesystem lock on <path>/.vcpkg-root..."
+    if ($hash -is [Object[]]) { $hash = $hash[1] }
+    return $hash
 }
 
 function GetPortHomepage()
@@ -506,45 +513,79 @@ function GeneratePort()
         -NoNewline
 }
 
-if (!(Test-Path "$scriptsBoostDir/boost"))
+$tools = @("build", "cmake")
+
+$foundLibraries = @()
+$boostComponentsList = "$scriptsBoostDir/components.txt"
+if (Test-Path $boostComponentsList)
 {
-    "No Boost repository found, cloning it anew..."
-    Push-Location $scriptsBoostDir
-    try { git clone git@github.com:boostorg/boost --branch boost-$version }
-    finally { Pop-Location }
+    "Found a local list of Boost components, no need to clone the main repository"
+    try
+    {
+        $foundLibraries = Get-Content -Path $boostComponentsList
+    }
+    catch
+    {
+        Write-Error "Could not read the list of Boost components: $_.Exception.Message"
+        exit 1
+    }
 }
 else
 {
-    "Found Boost repository, checking out the version branch (just in case)..."
-    Push-Location $scriptsBoostDir/boost
-    try
+    "Did not find a local list of Boost components, will clone the main repository"
+    if (!(Test-Path "$scriptsBoostDir/boost"))
     {
-        git fetch
-        git checkout -f boost-$version
+        "No Boost repository found, cloning it anew..."
+        Push-Location $scriptsBoostDir
+        # shallow clone to save bandwidth/space, but then older versions/commits won't be reachable
+        try { git clone --depth 1 --branch boost-$version git@github.com:boostorg/boost }
+        finally { Pop-Location }
     }
-    finally { Pop-Location }
+    else
+    {
+        "Found Boost repository, checking out the version branch (just in case)..."
+        Push-Location $scriptsBoostDir/boost
+        try
+        {
+            git fetch
+            # if the clone is shallow, older versions/commits won't be reachable
+            git checkout --quiet --force boost-$version
+        }
+        finally { Pop-Location }
+    }
+
+    $foundLibraries = Get-ChildItem $scriptsBoostDir/boost/libs -directory | ForEach-Object name | ForEach-Object {
+        if ($_ -eq "numeric")
+        {
+            "numeric_conversion"
+            "interval"
+            "odeint"
+            "ublas"
+        }
+        else { $_.ToString() }
+    }
+
+    $foundLibraries += $tools
+    $foundLibraries = $foundLibraries | Sort-Object
+    $foundLibraries | Out-File -Encoding UTF8 "$scriptsBoostDir/components.txt"
 }
 
-$foundLibraries = Get-ChildItem $scriptsBoostDir/boost/libs -directory | ForEach-Object name | ForEach-Object {
-    if ($_ -eq "numeric")
-    {
-        "numeric_conversion"
-        "interval"
-        "odeint"
-        "ublas"
-    }
-    else { $_.ToString() }
-}
-
-$tools = @("build", "cmake")
-
-$foundLibraries += $tools
-$foundLibraries = $foundLibraries | Sort-Object
+$foundLibrariesCnt = $foundLibraries.Count
+"Number of discovered Boost components: $foundLibrariesCnt"
 
 $updateServicePorts = $false
 $generateEmptyParentPort = $false
 
-if ($libraries.Length -eq 0)
+$librariesCnt = $libraries.Count
+"Number of specified Boost components: $librariesCnt"
+
+if ($foundLibrariesCnt -eq 0 -and $librariesCnt -eq 0)
+{
+    Write-Error "All the lists are empty, no libraries to process"
+    exit 2
+}
+
+if ($librariesCnt -eq 0)
 {
     $libraries = $foundLibraries
     $updateServicePorts = $true
@@ -557,26 +598,62 @@ $boostPortDependencies = @()
 
 foreach ($library in $libraries)
 {
+    "`n[boost/$library]"
+
     $archive = "$downloads/boostorg-$library-boost-$version.tar.gz"
-    "`n[boost/$library] ..."
-    if ($debugOutput) { "Archive: $archive" }
-    if (!(Test-Path $archive))
+    $unpacked = "$scriptsBoostDir/libs/$library-boost-$version"
+
+    if ($downloadInsteadOfCloning)
     {
-        "Downloading boost/$library..."
-        Invoke-WebRequest -Uri "https://github.com/boostorg/$library/archive/boost-$version.tar.gz" -OutFile "$archive"
-        "Downloaded boost/$library..."
+        if ($debugOutput) { "Archive: $archive" }
+
+        if (!(Test-Path $archive))
+        {
+            if ($debugOutput) { "Downloading boost/$library..." }
+            Invoke-WebRequest -Uri "https://github.com/boostorg/$library/archive/boost-$version.tar.gz" -OutFile "$archive"
+        }
+
+        if (!(Test-Path $unpacked))
+        {
+            if ($debugOutput) { "Unpacking boost/$library..." }
+            New-Item -ItemType "Directory" $scriptsBoostDir/libs -erroraction SilentlyContinue | out-null
+            Push-Location $scriptsBoostDir/libs
+            try { cmake -E tar xf $archive }
+            finally { Pop-Location }
+        }
+    }
+    else
+    {
+        $unpacked = "$scriptsBoostDir/repositories/$library"
+
+        if (Test-Path $unpacked)
+        {
+            if ($debugOutput) { "Repository folder already exists, will reset it" }
+            & git -C $unpacked checkout --quiet --force boost-$version | out-null
+            if (-not $LastExitCode -eq 0)
+            {
+                Write-Error "Failed to reset the repository"
+                exit 3
+            }
+        }
+        else
+        {
+            if ($debugOutput) { "Repository folder does not exist, will make a new clone from $gitBaseURL/$library.git" }
+            & git clone --depth 1 --quiet --branch boost-$version `
+                -c advice.detachedHead=false `
+                $gitBaseURL/$library.git `
+                $unpacked `
+                | out-null
+            if (-not $LastExitCode -eq 0)
+            {
+                Write-Error "Failed to clone the repository"
+                exit 3
+            }
+        }
     }
 
-    $unpacked = "$scriptsBoostDir/libs/$library-boost-$version"
-    if (!(Test-Path $unpacked))
-    {
-        "Unpacking boost/$library..."
-        New-Item -ItemType "Directory" $scriptsBoostDir/libs -erroraction SilentlyContinue | out-null
-        Push-Location $scriptsBoostDir/libs
-        try { cmake -E tar xf $archive }
-        finally { Pop-Location }
-    }
     Push-Location $unpacked
+
     try
     {
         $usedLibraries = Get-ChildItem -Recurse -Path include, src -File `
@@ -719,7 +796,7 @@ foreach ($library in $libraries)
                 -not ($library -eq 'gil' -and $_ -eq 'filesystem')
             } `
             | Where-Object {
-                # Note that Boost.Pfr is not listed because it's a peer dependency
+                # Boost.Pfr is not listed because it is a peer dependency
                 # according to CMakeLists.txt
                 -not ($library -eq 'mysql' -and $_ -eq 'pfr')
             } `
@@ -741,11 +818,13 @@ foreach ($library in $libraries)
 
         if ($tools -contains $library)
         {
+            if ($debugOutput) { "List of tools contains $library, so it does/should not need boost_configure_and_install()" }
             $needsBuild = $false
             $deps += @('uninstall')
         }
         else
         {
+            if ($debugOutput) { "List of tools does not contain $library, so it will need boost_configure_and_install()" }
             $deps += @('cmake')
             if ($library -ne 'headers')
             {
@@ -772,7 +851,7 @@ foreach ($library in $libraries)
             if ($debugOutput) { "Found commit hash in the local dictionary" }
             $commitHash = $tagsCommits[$Library]
         }
-        else
+        elseif ($downloadInsteadOfCloning)
         {
             if ($debugOutput) { "No commit hash in the local dictionary, will query it from API" }
             try
@@ -791,7 +870,7 @@ foreach ($library in $libraries)
                     if ($statusCodeValue -eq 404)
                     {
                         Write-Error "$errorMsgQueryingCommit with 404, perhaps the query URL was malformed?"
-                        exit 1
+                        exit 4
                     }
                     elseif ($statusCodeValue -eq 403)
                     {
@@ -804,21 +883,26 @@ foreach ($library in $libraries)
                         {
                             Write-Error "$errorMsgQueryingCommit403, try to add Authorization header - https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting - authenticated requests have a bigger quota"
                         }
-                        exit 1
+                        exit 4
                     }
                     else
                     {
                         Write-Error "$errorMsgQueryingCommit, status code: $statusCodeValue ($statusCode)"
-                        exit 1
+                        exit 4
                     }
                 }
                 else
                 {
                     $ProgressPreference = $ProgressPreferenceOriginal
                     Write-Error "$errorMsgQueryingCommit with error: $_"
-                    exit 1
+                    exit 4
                 }
             }
+        }
+        else
+        {
+            if ($debugOutput) { "No commit hash in the local dictionary, will get it from local repository" }
+            $commitHash = & git rev-parse --verify "boost-$version^0"
         }
         if ($debugOutput) { "Commit hash: $commitHash" }
 
@@ -838,7 +922,6 @@ foreach ($library in $libraries)
         #
         if ($debugOutput) { "Updating versions file" }
         # not sure why it can't run `python`, so it has to be `python3`
-        # also `--not-updating-baseline` is only needed for the first ever time
         & python3 "$scriptsDir/add-new-version.py" `
             "$portsDir/.." `
             --port-name "$portName" `
@@ -847,7 +930,7 @@ foreach ($library in $libraries)
         if (-not $LastExitCode -eq 0)
         {
             Write-Error "Failed to update/create versions file"
-            exit 2
+            exit 5
         }
     }
     finally
@@ -861,7 +944,7 @@ if ($updateServicePorts)
     if ($generateEmptyParentPort)
     {
         # parent boost port that depends on every individual library
-        "`n[boost] ..."
+        "`n[boost]"
         GeneratePortManifest `
             -PortName "boost" `
             -Homepage "https://boost.org" `
@@ -876,18 +959,21 @@ if ($updateServicePorts)
     }
 
     # generate manifest files for boost-uninstall
-    "`n[boost-uninstall] ..."
+    "`n[boost-uninstall]"
     GeneratePortManifest `
         -PortName "boost-uninstall" `
         -Description "Internal vcpkg port used to uninstall Boost" `
         -License "MIT"
 }
 
-try
+if ($downloadInsteadOfCloning)
 {
-    $tagsCommits | ConvertTo-Json | Out-File -Path $tagsCommitsJsonPath -Encoding UTF8
-}
-catch
-{
-    Write-Warning "Could not save the dictionary to JSON: $_.Exception.Message"
+    try
+    {
+        $tagsCommits | ConvertTo-Json | Out-File -Path $tagsCommitsJsonPath -Encoding UTF8
+    }
+    catch
+    {
+        Write-Warning "Could not save the dictionary to JSON: $_.Exception.Message"
+    }
 }
