@@ -64,8 +64,8 @@ catch
 {
     if ($_.Exception.Response)
     {
-        $statusCode = $_.Exception.Response.StatusCode
-        if ($statusCode -eq "404") # `$statusCodeValue`?
+        $statusCode = $_.Exception.Response.StatusCode.Value__
+        if ($statusCode -eq 404)
         {
             Write-Warning "[$correctFilename] is not available in cache at $baseurl"
             if (Test-Path $Destination)
@@ -150,8 +150,8 @@ if (-not (Test-Path $Destination))
 
         if ($_.Exception.Response)
         {
-            $statusCode = $_.Exception.Response.StatusCode
-            if ($statusCode -eq "404")
+            $statusCode = $_.Exception.Response.StatusCode.Value__
+            if ($statusCode -eq 404)
             {
                 Write-Error "Unable to download from $Url"
                 exit 2
@@ -187,7 +187,7 @@ if (-not (Test-Path $Destination))
 
         if ($_.Exception.Response)
         {
-            $statusCode = $_.Exception.Response.StatusCode
+            $statusCode = $_.Exception.Response.StatusCode.Value__
             Write-Error "Download failed with status code: $statusCode"
         }
         else
