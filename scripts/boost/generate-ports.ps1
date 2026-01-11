@@ -11,7 +11,14 @@ param (
     $debugOutput = $false
 )
 
-$ErrorActionPreference = 'Stop'
+#"Parameters summary:"
+#foreach ($k in $MyInvocation.MyCommand.Parameters.Keys)
+#{
+#    $v = (Get-Variable -Name $k).Value; # -ErrorAction SilentlyContinue;
+#    echo "- ${k}: $v"
+#}
+
+$ErrorActionPreference = "Stop"
 
 $gitBaseURL = "git@github.com:boostorg"
 $apiBaseURL = "https://api.github.com"
@@ -570,6 +577,8 @@ else
     $foundLibraries | Out-File -Encoding UTF8 "$scriptsBoostDir/components.txt"
 }
 
+"---"
+
 $foundLibrariesCnt = $foundLibraries.Count
 "Number of discovered Boost components: $foundLibrariesCnt"
 
@@ -782,8 +791,8 @@ foreach ($library in $libraries)
 
         if ($debugOutput)
         {
-            "[  known  ] " + $($usedLibraries | Where-Object { $foundLibraries -contains $_ })
-            "[ unknown ] " + $($usedLibraries | Where-Object { $foundLibraries -notcontains $_ })
+            "- known: " + $($usedLibraries | Where-Object { $foundLibraries -contains $_ })
+            "- unknown: " + $($usedLibraries | Where-Object { $foundLibraries -notcontains $_ })
         }
 
         $deps = @($usedLibraries | Where-Object { $foundLibraries -contains $_ })
