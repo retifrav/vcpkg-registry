@@ -454,7 +454,7 @@ function GeneratePort()
     $portfileLines += @(
         "vcpkg_from_git(",
         "    OUT_SOURCE_PATH SOURCE_PATH",
-        "    URL git@github.com:boostorg/$Library.git",
+        "    URL $gitBaseURL/$Library.git",
         "    REF $CommitHash"
     )
 
@@ -545,7 +545,7 @@ else
         "No Boost repository found, cloning it anew..."
         Push-Location $scriptsBoostDir
         # shallow clone to save bandwidth/space, but then older versions/commits won't be reachable
-        try { git clone --depth 1 --branch boost-$version git@github.com:boostorg/boost }
+        try { git clone --quiet --depth 1 --branch boost-$version -c advice.detachedHead=false $gitBaseURL/boost | out-null }
         finally { Pop-Location }
     }
     else
@@ -577,7 +577,7 @@ else
     $foundLibraries | Out-File -Encoding UTF8 "$scriptsBoostDir/components.txt"
 }
 
-"---"
+""
 
 $foundLibrariesCnt = $foundLibraries.Count
 "Number of discovered Boost components: $foundLibrariesCnt"
