@@ -424,3 +424,16 @@ index 08140dd44..eb7064fba 100644
  #endif
  
  #include "png.h"
+diff --git a/scripts/pnglibconf.dfa b/scripts/pnglibconf.dfa
+index f466da1a3..ce33dea69 100644
+--- a/scripts/pnglibconf.dfa
++++ b/scripts/pnglibconf.dfa
+@@ -343,7 +343,7 @@ option MIPS_MMI_CHECK disabled requires ALIGNED_MEMORY,
+ # The TEXT values are the defaults when writing compressed text (all forms)
+ 
+ # Include the zlib header so that the defaults below are known
+-@#  include <zlib.h>
++@#  include <zlib/zlib.h>
+ 
+ # The '@' here means to substitute the value when pnglibconf.h is built
+ setting Z_DEFAULT_COMPRESSION default @Z_DEFAULT_COMPRESSION
