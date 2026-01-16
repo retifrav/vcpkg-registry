@@ -78,10 +78,14 @@ vcpkg_cmake_configure(
         -DWITH_CUDA=0
         -DWITH_FFMPEG=0
         -DWITH_FLATBUFFERS=0
+        -DWITH_FRAMEBUFFER=0
+        -DWITH_FRAMEBUFFER_XVFB=0
         -DWITH_GDAL=0
         -DWITH_GDCM=0
         -DWITH_GPHOTO2=0
         -DWITH_GSTREAMER=0
+        -DWITH_GTK=0
+        -DWITH_GTK_2_X=0
         -DWITH_HALIDE=0
         -DWITH_HPX=0
         -DWITH_IMGCODEC_GIF=0
@@ -89,6 +93,7 @@ vcpkg_cmake_configure(
         -DWITH_IMGCODEC_PFM=0
         -DWITH_IMGCODEC_PXM=0
         -DWITH_IMGCODEC_SUNRASTER=0
+        -DWITH_IPP=0
         -DWITH_ITT=0
         -DWITH_JASPER=0
         -DWITH_JPEGXL=0
@@ -113,15 +118,22 @@ vcpkg_cmake_configure(
         -DWITH_PROTOBUF=0
         -DWITH_PTHREADS_PF=0
         -DWITH_PVAPI=0
+        -DWITH_PYTHON=0
         -DWITH_QT=0
         -DWITH_QUIRC=0
         -DWITH_SPNG=0
         -DWITH_TBB=0
         -DWITH_TIMVX=0
+        -DWITH_UEYE=0
+        -DWITH_V4L=0
+        -DWITH_VA=0
+        -DWITH_VA_INTEL=0
         -DWITH_VTK=0
         -DWITH_VULKAN=0
+        -DWITH_WAYLAND=0
         -DWITH_WEBNN=0
         -DWITH_XIMEA=0
+        -DWITH_XINE=0
         -DWITH_ZLIB_NG=0
 )
 
