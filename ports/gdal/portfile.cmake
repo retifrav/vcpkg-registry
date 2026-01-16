@@ -25,6 +25,9 @@ file(REMOVE
     "${SOURCE_PATH}/cmake/modules/packages/FindZSTD.cmake"
 )
 
+string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" GDAL_STATIC)
+#string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" GDAL_SHARED)
+
 # vcpkg_find_acquire_program(PYTHON3)
 # # if we want this Python to be available in the PATH
 # # get_filename_component(PYTHON_DIR ${PYTHON3} DIRECTORY)
@@ -142,6 +145,7 @@ vcpkg_cmake_configure(
         -DGDAL_USE_XERCESC=0
         -DGDAL_USE_ZLIB=1
         -DGDAL_USE_ZLIB_INTERNAL=0
+        -DZLIB_IS_STATIC=${GDAL_STATIC}
         -DGDAL_USE_ZSTD=0
         -DOGR_BUILD_OPTIONAL_DRIVERS=0
 )
