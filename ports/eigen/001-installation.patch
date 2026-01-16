@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index f3e69b845..1342c58fb 100644
+index f3e69b845..294763a69 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,5 +1,5 @@
@@ -9,7 +9,7 @@ index f3e69b845..1342c58fb 100644
  
  project(Eigen3)
  
-@@ -430,7 +430,7 @@ if(EIGEN_INCLUDE_INSTALL_DIR AND NOT INCLUDE_INSTALL_DIR)
+@@ -430,12 +430,12 @@ if(EIGEN_INCLUDE_INSTALL_DIR AND NOT INCLUDE_INSTALL_DIR)
        CACHE PATH "The directory relative to CMAKE_INSTALL_PREFIX where Eigen header files are installed")
  else()
    set(INCLUDE_INSTALL_DIR
@@ -18,6 +18,12 @@ index f3e69b845..1342c58fb 100644
        CACHE PATH "The directory relative to CMAKE_INSTALL_PREFIX where Eigen header files are installed"
        )
  endif()
+ set(CMAKEPACKAGE_INSTALL_DIR
+-    "${CMAKE_INSTALL_DATADIR}/eigen3/cmake"
++    "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake"
+     CACHE PATH "The directory relative to CMAKE_INSTALL_PREFIX where Eigen3Config.cmake is installed"
+     )
+ set(PKGCONFIG_INSTALL_DIR
 @@ -461,11 +461,6 @@ macro(ei_add_target_property target prop value)
    set_target_properties(${target} PROPERTIES ${prop} "${previous} ${value}")
  endmacro()

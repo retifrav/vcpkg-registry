@@ -31,9 +31,10 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
+set(EIGEN_PACKAGE_NAME "Eigen3")
 vcpkg_cmake_config_fixup(
-    PACKAGE_NAME "Eigen3"
-    CONFIG_PATH "share/eigen3/cmake"
+    PACKAGE_NAME "${EIGEN_PACKAGE_NAME}"
+    CONFIG_PATH "share/${EIGEN_PACKAGE_NAME}/cmake"
 )
 
 file(
