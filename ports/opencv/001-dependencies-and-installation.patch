@@ -1,0 +1,872 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fc99f04129..6651d8acd8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,29 +1,4 @@
+-# ----------------------------------------------------------------------------
+-#  Root CMake file for OpenCV
+-#
+-#    From the off-tree build directory, invoke:
+-#      $ cmake <PATH_TO_OPENCV_ROOT>
+-#
+-# ----------------------------------------------------------------------------
+-# Disable in-source builds to prevent source tree corruption.
+-if(" ${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
+-  message(FATAL_ERROR "
+-FATAL: In-source builds are not allowed.
+-       You should create a separate directory for build files.
+-")
+-endif()
+-
+-include(cmake/OpenCVMinDepVersions.cmake)
+-
+-if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+-  cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+-  #Required to resolve linker error issues due to incompatibility with CMake v3.0+ policies.
+-  #CMake fails to find _fseeko() which leads to subsequent linker error.
+-  #See details here: http://www.cmake.org/Wiki/CMake/Policies
+-  cmake_policy(VERSION 2.8)
+-else()
+-  cmake_minimum_required(VERSION "${MIN_VER_CMAKE}" FATAL_ERROR)
+-endif()
++cmake_minimum_required(VERSION 3.22)
+ 
+ #
+ # Configure CMake policies
+@@ -214,6 +189,7 @@ OCV_OPTION(BUILD_ITT                "Build Intel ITT from source"
+ 
+ # Optional 3rd party components
+ # ===================================================
++option(WITH_PYTHON "Enable Python support" 0)
+ OCV_OPTION(WITH_1394 "Include IEEE1394 support" OFF
+   VISIBLE_IF NOT ANDROID AND NOT IOS AND NOT XROS AND NOT WINRT
+   VERIFY HAVE_DC1394_2)
+@@ -600,19 +576,17 @@ if(ANDROID)
+   endif()
+ endif()
+ 
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++set(OPENCV_DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}")
++
+ if(WIN32)
+   # Postfix of DLLs:
+   ocv_update(OPENCV_DLLVERSION "${OPENCV_VERSION_MAJOR}${OPENCV_VERSION_MINOR}${OPENCV_VERSION_PATCH}")
+-  ocv_update(OPENCV_DEBUG_POSTFIX d)
+ else()
+   # Postfix of so's:
+   ocv_update(OPENCV_DLLVERSION "")
+-  ocv_update(OPENCV_DEBUG_POSTFIX "")
+ endif()
+ 
+-if(DEFINED CMAKE_DEBUG_POSTFIX)
+-  set(OPENCV_DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}")
+-endif()
+ 
+ if((INSTALL_CREATE_DISTRIB AND BUILD_SHARED_LIBS AND NOT DEFINED BUILD_opencv_world) OR APPLE_FRAMEWORK)
+   set(BUILD_opencv_world ON CACHE INTERNAL "")
+@@ -638,7 +612,7 @@ set(OPENCV_EXTRA_MODULES_PATH "" CACHE PATH "Where to look for additional OpenCV
+ ocv_cmake_hook(POST_CMAKE_BUILD_OPTIONS)
+ 
+ # --- Python Support ---
+-if(NOT IOS AND NOT XROS)
++if(WITH_PYTHON)
+   include(cmake/OpenCVDetectPython.cmake)
+   include(cmake/OpenCVDetectDLPack.cmake)
+ endif()
+@@ -703,6 +677,7 @@ endif()
+ #       CHECK FOR SYSTEM LIBRARIES, OPTIONS, ETC..
+ # ----------------------------------------------------------------------------
+ if(UNIX OR MINGW)
++  #find_package(PkgConfig REQUIRED)
+   if(NOT APPLE_FRAMEWORK OR OPENCV_ENABLE_PKG_CONFIG)
+     if(CMAKE_CROSSCOMPILING AND NOT DEFINED ENV{PKG_CONFIG_LIBDIR} AND NOT DEFINED ENV{PKG_CONFIG_SYSROOT_DIR}
+         AND NOT OPENCV_ENABLE_PKG_CONFIG
+@@ -1496,7 +1471,7 @@ status("  Media I/O: ")
+ if(WITH_ZLIB_NG OR HAVE_ZLIB_NG)
+   status("    ZLib-Ng:" "build (zlib ver ${ZLIB_VERSION_STRING}, zlib-ng ver ${ZLIBNG_VERSION_STRING})")
+ else()
+-  status("    ZLib:"   ZLIB_FOUND THEN "${ZLIB_LIBRARIES} (ver ${ZLIB_VERSION_STRING})" ELSE "build (ver ${ZLIB_VERSION_STRING})")
++  status("    zLib:"   ZLIB_FOUND THEN "${ZLIB_LIBRARY} (v${zlib_VERSION})" ELSE "build (ver ${ZLIB_VERSION_STRING})")
+ endif()
+ 
+ if(WITH_JPEG OR HAVE_JPEG)
+@@ -1515,12 +1490,12 @@ if(WITH_JPEG OR HAVE_JPEG)
+       status("      SIMD Support Request:" "NO")
+     endif()
+   else()
+-    status("    JPEG:" "${JPEG_LIBRARY} (ver ${JPEG_LIB_VERSION})")
++    status("    JPEG:" "${JPEG_LIBRARY} (v${jpeg-turbo_VERSION})")
+   endif()
+ endif()
+ 
+ if(WITH_WEBP OR HAVE_WEBP)
+-  status("    WEBP:" WEBP_FOUND THEN "${WEBP_LIBRARY} (ver ${WEBP_VERSION})" ELSE "build (ver ${WEBP_VERSION})")
++  status("    WEBP:" WEBP_FOUND THEN "${WEBP_LIBRARY} (v${WebP_VERSION})" ELSE "build (ver ${WEBP_VERSION})")
+ endif()
+ 
+ if(WITH_AVIF OR HAVE_AVIF)
+@@ -1538,7 +1513,7 @@ if(WITH_SPNG)
+     status("    PNG:" "${SPNG_LIBRARY} (ver ${SPNG_VERSION})")
+   endif()
+ elseif(WITH_PNG OR HAVE_PNG)
+-  status("    PNG:"  PNG_FOUND  THEN "${PNG_LIBRARY} (ver ${PNG_VERSION_STRING})" ELSE "build (ver ${PNG_VERSION_STRING})")
++  status("    PNG:"  PNG_FOUND  THEN "${PNG_LIBRARY} (v${png_VERSION})" ELSE "build (ver ${PNG_VERSION_STRING})")
+   if(BUILD_PNG AND PNG_HARDWARE_OPTIMIZATIONS)
+     status("      SIMD Support Request:" "YES")
+     if(PNG_INTEL_SSE)
+@@ -1568,7 +1543,7 @@ elseif(WITH_PNG OR HAVE_PNG)
+ endif()
+ 
+ if(WITH_TIFF OR HAVE_TIFF)
+-  status("    TIFF:" TIFF_FOUND THEN "${TIFF_LIBRARY} (ver ${TIFF_VERSION} / ${TIFF_VERSION_STRING})" ELSE "build (ver ${TIFF_VERSION} - ${TIFF_VERSION_STRING})")
++  status("    TIFF:" TIFF_FOUND THEN "${TIFF_LIBRARY} (v${tiff_VERSION})" ELSE "build (ver ${TIFF_VERSION} - ${TIFF_VERSION_STRING})")
+ endif()
+ 
+ if(WITH_JPEGXL OR HAVE_JPEGXL)
+@@ -1858,7 +1833,7 @@ if(BUILD_opencv_dnn AND OPENCV_DNN_BACKEND_DEFAULT)
+ endif()
+ 
+ if(WITH_EIGEN OR HAVE_EIGEN)
+-  status("    Eigen:"      HAVE_EIGEN       THEN "YES (ver ${EIGEN_WORLD_VERSION}.${EIGEN_MAJOR_VERSION}.${EIGEN_MINOR_VERSION})" ELSE NO)
++  status("    Eigen:"      HAVE_EIGEN       THEN "YES (v${Eigen3_VERSION})" ELSE NO)
+ endif()
+ 
+ if(WITH_OPENVX OR HAVE_OPENVX)
+diff --git a/cmake/OpenCVDetectDLPack.cmake b/cmake/OpenCVDetectDLPack.cmake
+index bed505ad4c..6db2c82c38 100644
+--- a/cmake/OpenCVDetectDLPack.cmake
++++ b/cmake/OpenCVDetectDLPack.cmake
+@@ -1,5 +1,3 @@
+-find_package(dlpack QUIET)
+-if (NOT dlpack_FOUND)
+-    ocv_include_directories("${OpenCV_SOURCE_DIR}/3rdparty/dlpack/include")
+-    ocv_install_3rdparty_licenses(dlpack "${OpenCV_SOURCE_DIR}/3rdparty/dlpack/LICENSE")
+-endif()
++find_package(dlpack CONFIG REQUIRED)
++# or is this header just supposed to be installed somewhere
++#target_link_libraries(WHICH-TARGET? PRIVATE dlpack::dlpack)
+diff --git a/cmake/OpenCVDownload.cmake b/cmake/OpenCVDownload.cmake
+index 40e48d7465..7dabb07734 100644
+--- a/cmake/OpenCVDownload.cmake
++++ b/cmake/OpenCVDownload.cmake
+@@ -206,6 +206,13 @@ function(ocv_download)
+   # Download
+   if(NOT EXISTS "${CACHE_CANDIDATE}")
+     ocv_download_log("#cmake_download \"${CACHE_CANDIDATE}\" \"${DL_URL}\"")
++
++    string(REPLACE "${OPENCV_DOWNLOAD_PATH}/" "opencv-cache/" CACHE_SUBPATH "${CACHE_CANDIDATE}")
++    message(FATAL_ERROR
++        "No vendored downloads are allowed, you'll need to pre-download the file "
++        "\"${CACHE_CANDIDATE}\" with vcpkg (in the portfile.cmake):\n    vcpkg_download_distfile(OCV_DOWNLOAD\n        URLS \"${DL_URL}\"\n        FILENAME \"${CACHE_SUBPATH}\"\n        SHA512 0\n    )"
++        "\nor, better yet, make a proper port for this dependency (if applicable).")
++
+     foreach(try ${OPENCV_DOWNLOAD_TRIES_LIST})
+       ocv_download_log("#try ${try}")
+       file(DOWNLOAD "${DL_URL}" "${CACHE_CANDIDATE}"
+diff --git a/cmake/OpenCVFindLibsGrfmt.cmake b/cmake/OpenCVFindLibsGrfmt.cmake
+index c3c358f6fc..4a6f852c45 100644
+--- a/cmake/OpenCVFindLibsGrfmt.cmake
++++ b/cmake/OpenCVFindLibsGrfmt.cmake
+@@ -3,6 +3,7 @@
+ # ----------------------------------------------------------------------------
+ 
+ # --- zlib (required) ---
++
+ if(WITH_ZLIB_NG)
+   ocv_clear_vars(ZLIB_LIBRARY ZLIB_LIBRARIES ZLIB_INCLUDE_DIR)
+   set(ZLIB_LIBRARY zlib CACHE INTERNAL "")
+@@ -16,217 +17,58 @@ if(WITH_ZLIB_NG)
+ 
+   set(HAVE_ZLIB_NG YES)
+ else()
+-  if(BUILD_ZLIB)
+-    ocv_clear_vars(ZLIB_FOUND)
+-  else()
+-    ocv_clear_internal_cache_vars(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
+-  if(ANDROID)
+-    set(_zlib_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+-    set(CMAKE_FIND_LIBRARY_SUFFIXES .so)
+-  endif()
+-  if(QNX)
+-    set(ZLIB_FOUND TRUE)
+-    set(ZLIB_LIBRARY z)
+-    set(ZLIB_LIBRARIES z)
+-  else()
+-    find_package(ZLIB "${MIN_VER_ZLIB}")
+-  endif()
+-  if(ANDROID)
+-    set(CMAKE_FIND_LIBRARY_SUFFIXES ${_zlib_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
+-    unset(_zlib_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES)
+-  endif()
+-  if(ZLIB_FOUND AND ANDROID)
+-    if(ZLIB_LIBRARY MATCHES "/usr/lib.*/libz.so$")
+-      set(ZLIB_LIBRARY z)
+-      set(ZLIB_LIBRARIES z)
+-      set(ZLIB_LIBRARY_RELEASE z)
+-    endif()
+-  endif()
+-  endif()
+-
+-  if(NOT ZLIB_FOUND)
+-    ocv_clear_vars(ZLIB_LIBRARY ZLIB_LIBRARIES ZLIB_INCLUDE_DIR)
+-
+-    set(ZLIB_LIBRARY zlib CACHE INTERNAL "")
+-    add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/zlib")
+-    set(ZLIB_INCLUDE_DIR "${${ZLIB_LIBRARY}_SOURCE_DIR}" "${${ZLIB_LIBRARY}_BINARY_DIR}" CACHE INTERNAL "")
+-    set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
+-    set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
+-
+-    ocv_parse_header_version(ZLIB "${${ZLIB_LIBRARY}_SOURCE_DIR}/zlib.h" ZLIB_VERSION)
+-  endif()
++  ocv_clear_internal_cache_vars(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
++  find_package(zlib CONFIG REQUIRED)
++  set(ZLIB_LIBRARY zlib)
++  set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
++  set(ZLIB_FOUND YES)
+ endif()
+ 
+ # --- libavif (optional) ---
+ 
+ if(WITH_AVIF)
+   ocv_clear_internal_cache_vars(AVIF_LIBRARY AVIF_INCLUDE_DIR)
+-  include(cmake/OpenCVFindAVIF.cmake)
+-  if(AVIF_FOUND)
+-    set(HAVE_AVIF 1)
+-  endif()
++  find_package(avif CONFIG REQUIRED)
++  set(AVIF_LIBRARY avif)
++  set(AVIF_FOUND YES)
++  set(HAVE_AVIF YES)
+ endif()
+ 
+ # --- libjpeg (optional) ---
+-if(WITH_JPEG)
+-  if(BUILD_JPEG)
+-    ocv_clear_vars(JPEG_FOUND)
+-  else()
+-    ocv_clear_internal_cache_vars(JPEG_LIBRARY JPEG_INCLUDE_DIR)
+-    if(QNX)
+-      set(JPEG_LIBRARY jpeg)
+-      set(JPEG_LIBRARIES jpeg)
+-      set(JPEG_FOUND TRUE)
+-    else()
+-      include(FindJPEG)
+-    endif()
+-  endif()
+ 
+-  if(NOT JPEG_FOUND)
+-    ocv_clear_vars(JPEG_LIBRARY JPEG_INCLUDE_DIR)
+-
+-    if(NOT BUILD_JPEG_TURBO_DISABLE)
+-      set(JPEG_LIBRARY libjpeg-turbo CACHE INTERNAL "")
+-      set(JPEG_LIBRARIES ${JPEG_LIBRARY})
+-      add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libjpeg-turbo")
+-      set(JPEG_INCLUDE_DIR "${${JPEG_LIBRARY}_SOURCE_DIR}/src" CACHE INTERNAL "")
+-    else()
+-      set(JPEG_LIBRARY libjpeg CACHE INTERNAL "")
+-      set(JPEG_LIBRARIES ${JPEG_LIBRARY})
+-      add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libjpeg")
+-      set(JPEG_INCLUDE_DIR "${${JPEG_LIBRARY}_SOURCE_DIR}" CACHE INTERNAL "")
+-    endif()
+-    set(JPEG_INCLUDE_DIRS "${JPEG_INCLUDE_DIR}")
+-  endif()
+-
+-  macro(ocv_detect_jpeg_version header_file)
+-    if(NOT DEFINED JPEG_LIB_VERSION AND EXISTS "${header_file}")
+-      ocv_parse_header("${header_file}" JPEG_VERSION_LINES JPEG_LIB_VERSION)
+-    endif()
+-  endmacro()
+-  ocv_detect_jpeg_version("${JPEG_INCLUDE_DIR}/jpeglib.h")
+-  if(DEFINED CMAKE_CXX_LIBRARY_ARCHITECTURE)
+-    ocv_detect_jpeg_version("${JPEG_INCLUDE_DIR}/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/jconfig.h")
+-  endif()
+-  # no needed for strict platform check here, both files 64/32 should contain the same version
+-  ocv_detect_jpeg_version("${JPEG_INCLUDE_DIR}/jconfig-64.h")
+-  ocv_detect_jpeg_version("${JPEG_INCLUDE_DIR}/jconfig-32.h")
+-  ocv_detect_jpeg_version("${JPEG_INCLUDE_DIR}/jconfig.h")
+-  ocv_detect_jpeg_version("${${JPEG_LIBRARY}_BINARY_DIR}/jconfig.h")
+-  if(NOT DEFINED JPEG_LIB_VERSION)
+-    set(JPEG_LIB_VERSION "unknown")
+-  endif()
++if(WITH_JPEG)
++  ocv_clear_internal_cache_vars(JPEG_LIBRARY JPEG_INCLUDE_DIR)
++  find_package(jpeg-turbo CONFIG REQUIRED)
++  set(JPEG_LIBRARY jpeg-turbo::turbojpeg)
++  set(JPEG_LIBRARIES ${JPEG_LIBRARY})
++  set(JPEG_FOUND YES)
+   set(HAVE_JPEG YES)
+ endif()
+ 
+ # --- libtiff (optional, should be searched after zlib and libjpeg) ---
+-if(WITH_TIFF)
+-  if(BUILD_TIFF)
+-    ocv_clear_vars(TIFF_FOUND)
+-  else()
+-    ocv_clear_internal_cache_vars(TIFF_LIBRARY TIFF_INCLUDE_DIR)
+-    if(QNX)
+-      set(TIFF_LIBRARY tiff)
+-      set(TIFF_LIBRARIES tiff)
+-      set(TIFF_FOUND TRUE)
+-    else()
+-      include(FindTIFF)
+-    endif()
+-    if(TIFF_FOUND)
+-      ocv_parse_header("${TIFF_INCLUDE_DIR}/tiff.h" TIFF_VERSION_LINES TIFF_VERSION_CLASSIC TIFF_VERSION_BIG TIFF_VERSION TIFF_BIGTIFF_VERSION)
+-    endif()
+-  endif()
+-
+-  if(NOT TIFF_FOUND)
+-    ocv_clear_vars(TIFF_LIBRARY TIFF_LIBRARIES TIFF_INCLUDE_DIR)
+-
+-    set(TIFF_LIBRARY libtiff CACHE INTERNAL "")
+-    set(TIFF_LIBRARIES ${TIFF_LIBRARY})
+-    add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libtiff")
+-    set(TIFF_INCLUDE_DIR "${${TIFF_LIBRARY}_SOURCE_DIR}" "${${TIFF_LIBRARY}_BINARY_DIR}" CACHE INTERNAL "")
+-    ocv_parse_header("${${TIFF_LIBRARY}_SOURCE_DIR}/tiff.h" TIFF_VERSION_LINES TIFF_VERSION_CLASSIC TIFF_VERSION_BIG TIFF_VERSION TIFF_BIGTIFF_VERSION)
+-  endif()
+-
+-  if(TIFF_VERSION_CLASSIC AND NOT TIFF_VERSION)
+-    set(TIFF_VERSION ${TIFF_VERSION_CLASSIC})
+-  endif()
+-
+-  if(TIFF_BIGTIFF_VERSION AND NOT TIFF_VERSION_BIG)
+-    set(TIFF_VERSION_BIG ${TIFF_BIGTIFF_VERSION})
+-  endif()
+-
+-  if(NOT TIFF_VERSION_STRING AND TIFF_INCLUDE_DIR)
+-    foreach(_TIFF_INCLUDE_DIR IN LISTS TIFF_INCLUDE_DIR)
+-      if(EXISTS "${_TIFF_INCLUDE_DIR}/tiffvers.h")
+-        file(STRINGS "${_TIFF_INCLUDE_DIR}/tiffvers.h" tiff_version_str REGEX "^#define[\t ]+TIFFLIB_VERSION_STR[\t ]+\"LIBTIFF, Version .*")
+-        string(REGEX REPLACE "^#define[\t ]+TIFFLIB_VERSION_STR[\t ]+\"LIBTIFF, Version +([^ \\n]*).*" "\\1" TIFF_VERSION_STRING "${tiff_version_str}")
+-        unset(tiff_version_str)
+-      endif()
+-    endforeach()
+-  endif()
+ 
++if(WITH_TIFF)
++  ocv_clear_internal_cache_vars(TIFF_LIBRARY TIFF_INCLUDE_DIR)
++  find_package(tiff CONFIG REQUIRED)
++  set(TIFF_LIBRARY TIFF::tiff)
++  set(TIFF_LIBRARIES ${TIFF_LIBRARY})
++  set(TIFF_FOUND YES)
+   set(HAVE_TIFF YES)
+ endif()
+ 
+ # --- libwebp (optional) ---
+ 
+ if(WITH_WEBP)
+-  if(BUILD_WEBP)
+-    ocv_clear_vars(WEBP_FOUND WEBP_LIBRARY WEBP_LIBRARIES WEBP_INCLUDE_DIR)
+-  else()
+-    ocv_clear_internal_cache_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
+-    include(cmake/OpenCVFindWebP.cmake)
+-    if(WEBP_FOUND)
+-      set(HAVE_WEBP 1)
+-    endif()
+-  endif()
+-endif()
+-
+-# --- Add libwebp to 3rdparty/libwebp and compile it if not available ---
+-if(WITH_WEBP AND NOT WEBP_FOUND
+-    AND (NOT ANDROID OR HAVE_CPUFEATURES)
+-)
+-  ocv_clear_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
+-  set(WEBP_LIBRARY libwebp CACHE INTERNAL "")
++  ocv_clear_internal_cache_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
++  find_package(WebP CONFIG REQUIRED)
++  set(WEBP_LIBRARY WebP::webp)
+   set(WEBP_LIBRARIES ${WEBP_LIBRARY})
+-
+-  add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libwebp")
+-  set(WEBP_INCLUDE_DIR "${${WEBP_LIBRARY}_SOURCE_DIR}/src" CACHE INTERNAL "")
+-  set(HAVE_WEBP 1)
+-endif()
+-
+-if(NOT WEBP_VERSION AND WEBP_INCLUDE_DIR)
+-  if(EXISTS "${WEBP_INCLUDE_DIR}/webp/encode.h")
+-    file(STRINGS "${WEBP_INCLUDE_DIR}/webp/encode.h" WEBP_ENCODER_ABI_VERSION REGEX "#define[ \t]+WEBP_ENCODER_ABI_VERSION[ \t]+([x0-9a-f]+)" )
+-    if(WEBP_ENCODER_ABI_VERSION MATCHES "#define[ \t]+WEBP_ENCODER_ABI_VERSION[ \t]+([x0-9a-f]+)")
+-        set(WEBP_ENCODER_ABI_VERSION "${CMAKE_MATCH_1}")
+-    else()
+-      unset(WEBP_ENCODER_ABI_VERSION)
+-    endif()
+-  endif()
+-
+-  if(EXISTS "${WEBP_INCLUDE_DIR}/webp/decode.h")
+-    file(STRINGS "${WEBP_INCLUDE_DIR}/webp/decode.h" WEBP_DECODER_ABI_VERSION REGEX "#define[ \t]+WEBP_DECODER_ABI_VERSION[ \t]+([x0-9a-f]+)" )
+-    if(WEBP_DECODER_ABI_VERSION MATCHES "#define[ \t]+WEBP_DECODER_ABI_VERSION[ \t]+([x0-9a-f]+)")
+-        set(WEBP_DECODER_ABI_VERSION "${CMAKE_MATCH_1}")
+-    else()
+-      unset(WEBP_DECODER_ABI_VERSION)
+-    endif()
+-  endif()
+-
+-  if(EXISTS "${WEBP_INCLUDE_DIR}/webp/demux.h")
+-    file(STRINGS "${WEBP_INCLUDE_DIR}/webp/demux.h" WEBP_DEMUX_ABI_VERSION REGEX "#define[ \t]+WEBP_DEMUX_ABI_VERSION[ \t]+([x0-9a-f]+)" )
+-    if(WEBP_DEMUX_ABI_VERSION MATCHES "#define[ \t]+WEBP_DEMUX_ABI_VERSION[ \t]+([x0-9a-f]+)")
+-        set(WEBP_DEMUX_ABI_VERSION "${CMAKE_MATCH_1}")
+-    else()
+-      unset(WEBP_DEMUX_ABI_VERSION)
+-    endif()
+-  endif()
+-
+-set(WEBP_VERSION "decoder: ${WEBP_DECODER_ABI_VERSION}, encoder: ${WEBP_ENCODER_ABI_VERSION}, demux: ${WEBP_DEMUX_ABI_VERSION}")
++  set(WEBP_FOUND YES)
++  set(HAVE_WEBP YES)
+ endif()
+ 
+ # --- libjxl (optional) ---
++
+ if(WITH_JPEGXL)
+   ocv_clear_vars(HAVE_JPEGXL)
+   ocv_clear_internal_cache_vars(JPEGXL_INCLUDE_PATHS JPEGXL_LIBRARIES JPEGXL_VERSION)
+@@ -238,6 +80,7 @@ if(WITH_JPEGXL)
+ endif()
+ 
+ # --- libopenjp2 (optional, check before libjasper) ---
++
+ if(WITH_OPENJPEG)
+   if(BUILD_OPENJPEG)
+     ocv_clear_vars(OpenJPEG_FOUND)
+@@ -267,6 +110,7 @@ if(WITH_OPENJPEG)
+ endif()
+ 
+ # --- libjasper (optional, should be searched after libjpeg) ---
++
+ if(WITH_JASPER AND NOT HAVE_OPENJPEG)
+   if(BUILD_JASPER)
+     ocv_clear_vars(JASPER_FOUND)
+@@ -329,30 +173,18 @@ if(WITH_SPNG)
+ endif()
+ 
+ # --- libpng (optional, should be searched after zlib) ---
+-if(NOT HAVE_SPNG AND WITH_PNG)
+-  if(BUILD_PNG)
+-    ocv_clear_vars(PNG_FOUND)
+-  else()
+-    ocv_clear_internal_cache_vars(PNG_LIBRARY PNG_INCLUDE_DIR)
+-    find_package(PNG QUIET)
+-  endif()
+-
+-  if(NOT PNG_FOUND)
+-    ocv_clear_vars(PNG_LIBRARY PNG_LIBRARIES PNG_INCLUDE_DIR PNG_DEFINITIONS)
+-
+-    set(PNG_LIBRARY libpng CACHE INTERNAL "")
+-    set(PNG_LIBRARIES ${PNG_LIBRARY})
+-    add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libpng")
+-    set(PNG_INCLUDE_DIR "${${PNG_LIBRARY}_SOURCE_DIR}" CACHE INTERNAL "")
+-    set(PNG_DEFINITIONS "")
+-    ocv_parse_header_version(PNG "${PNG_INCLUDE_DIR}/png.h" PNG_LIBPNG_VER_STRING)
+-  endif()
+ 
++if(NOT HAVE_SPNG AND WITH_PNG)
++  ocv_clear_internal_cache_vars(PNG_LIBRARY PNG_INCLUDE_DIR)
++  find_package(png CONFIG REQUIRED)
++  set(PNG_LIBRARY png CACHE INTERNAL "")
++  set(PNG_LIBRARIES ${PNG_LIBRARY})
++  set(PNG_FOUND YES)
+   set(HAVE_PNG YES)
+ endif()
+ 
+-
+ # --- OpenEXR (optional) ---
++
+ if(WITH_OPENEXR)
+   ocv_clear_vars(HAVE_OPENEXR)
+   if(NOT BUILD_OPENEXR)
+@@ -376,6 +208,7 @@ if(WITH_OPENEXR)
+ endif()
+ 
+ # --- GDAL (optional) ---
++
+ if(WITH_GDAL)
+     find_package(GDAL QUIET)
+ 
+diff --git a/cmake/OpenCVFindLibsPerf.cmake b/cmake/OpenCVFindLibsPerf.cmake
+index 861a39c47f..f527309174 100644
+--- a/cmake/OpenCVFindLibsPerf.cmake
++++ b/cmake/OpenCVFindLibsPerf.cmake
+@@ -55,79 +55,9 @@ endif(WITH_CUDA)
+ 
+ # --- Eigen ---
+ if(WITH_EIGEN AND NOT HAVE_EIGEN)
+-  if((OPENCV_FORCE_EIGEN_FIND_PACKAGE_CONFIG
+-      OR NOT (CMAKE_VERSION VERSION_LESS "3.0.0")  # Eigen3Targets.cmake required CMake 3.0.0+
+-      ) AND NOT OPENCV_SKIP_EIGEN_FIND_PACKAGE_CONFIG
+-  )
+-    find_package(Eigen3 CONFIG QUIET)  # Ceres 2.0.0 CMake scripts doesn't work with CMake's FindEigen3.cmake module (due to missing EIGEN3_VERSION_STRING)
+-  endif()
+-  if(NOT Eigen3_FOUND)
+-    find_package(Eigen3 QUIET)
+-  endif()
+-
+-  if(Eigen3_FOUND)
+-    if(TARGET Eigen3::Eigen)
+-      # Use Eigen3 imported target if possible
+-      list(APPEND OPENCV_LINKER_LIBS Eigen3::Eigen)
+-      set(HAVE_EIGEN 1)
+-    else()
+-      if(DEFINED EIGEN3_INCLUDE_DIRS)
+-        set(EIGEN_INCLUDE_PATH ${EIGEN3_INCLUDE_DIRS})
+-        set(HAVE_EIGEN 1)
+-      elseif(DEFINED EIGEN3_INCLUDE_DIR)
+-        set(EIGEN_INCLUDE_PATH ${EIGEN3_INCLUDE_DIR})
+-        set(HAVE_EIGEN 1)
+-      endif()
+-    endif()
+-    if(HAVE_EIGEN)
+-      if(DEFINED EIGEN3_WORLD_VERSION)  # CMake module
+-        set(EIGEN_WORLD_VERSION ${EIGEN3_WORLD_VERSION})
+-        set(EIGEN_MAJOR_VERSION ${EIGEN3_MAJOR_VERSION})
+-        set(EIGEN_MINOR_VERSION ${EIGEN3_MINOR_VERSION})
+-      elseif(DEFINED Eigen3_VERSION_MAJOR) # Recommended package config variables
+-        # see https://github.com/opencv/opencv/issues/27530
+-        set(EIGEN_WORLD_VERSION ${Eigen3_VERSION_MAJOR})
+-        set(EIGEN_MAJOR_VERSION ${Eigen3_VERSION_MINOR})
+-        set(EIGEN_MINOR_VERSION ${Eigen3_VERSION_PATCH})
+-      else()  # Deprecated package config variables
+-        # Removed on master at https://gitlab.com/libeigen/eigen/-/commit/f2984cd0778dd0a1d7e74216d826eaff2bc6bfab
+-        set(EIGEN_WORLD_VERSION ${EIGEN3_VERSION_MAJOR})
+-        set(EIGEN_MAJOR_VERSION ${EIGEN3_VERSION_MINOR})
+-        set(EIGEN_MINOR_VERSION ${EIGEN3_VERSION_PATCH})
+-      endif()
+-    endif()
+-  endif()
+-
+-  if(NOT HAVE_EIGEN)
+-    if(NOT EIGEN_INCLUDE_PATH OR NOT EXISTS "${EIGEN_INCLUDE_PATH}")
+-      set(__find_paths "")
+-      set(__find_path_extra_options "")
+-      if(NOT CMAKE_CROSSCOMPILING)
+-        list(APPEND __find_paths /opt)
+-      endif()
+-      if(DEFINED ENV{EIGEN_ROOT})
+-        set(__find_paths "$ENV{EIGEN_ROOT}/include")
+-        list(APPEND __find_path_extra_options NO_DEFAULT_PATH)
+-      else()
+-        set(__find_paths ENV ProgramFiles ENV ProgramW6432)
+-      endif()
+-      find_path(EIGEN_INCLUDE_PATH "Eigen/Core"
+-                PATHS ${__find_paths}
+-                PATH_SUFFIXES include/eigen3 include/eigen2 Eigen/include/eigen3 Eigen/include/eigen2
+-                DOC "The path to Eigen3/Eigen2 headers"
+-                ${__find_path_extra_options}
+-      )
+-    endif()
+-    if(EIGEN_INCLUDE_PATH AND EXISTS "${EIGEN_INCLUDE_PATH}")
+-      ocv_parse_header("${EIGEN_INCLUDE_PATH}/Eigen/src/Core/util/Macros.h" EIGEN_VERSION_LINES EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
+-      set(HAVE_EIGEN 1)
+-    endif()
+-  endif()
+-endif()
+-if(HAVE_EIGEN)
+-  if(EIGEN_INCLUDE_PATH AND EXISTS "${EIGEN_INCLUDE_PATH}")
+-    ocv_include_directories(SYSTEM ${EIGEN_INCLUDE_PATH})
+-  endif()
++  find_package(Eigen3 CONFIG REQUIRED)
++  list(APPEND OPENCV_LINKER_LIBS Eigen3::Eigen)
++  set(HAVE_EIGEN 1)
+ endif()
+ 
+ # --- Clp ---
+diff --git a/cmake/OpenCVGenConfig.cmake b/cmake/OpenCVGenConfig.cmake
+index c5b7ab13df..d2030544c0 100644
+--- a/cmake/OpenCVGenConfig.cmake
++++ b/cmake/OpenCVGenConfig.cmake
+@@ -131,23 +131,4 @@ function(ocv_gen_config TMP_DIR NESTED_PATH ROOT_NAME)
+   endif()
+ endfunction()
+ 
+-if((CMAKE_HOST_SYSTEM_NAME MATCHES "Linux" OR UNIX) AND NOT ANDROID)
+-  ocv_gen_config("${CMAKE_BINARY_DIR}/unix-install" "" "")
+-endif()
+-
+-if(ANDROID)
+-  ocv_gen_config("${CMAKE_BINARY_DIR}/unix-install" "abi-${ANDROID_NDK_ABI_NAME}" "OpenCVConfig.root-ANDROID.cmake.in")
+-endif()
+-
+-# --------------------------------------------------------------------------------------------
+-#  Part 3/3: ${BIN_DIR}/win-install/OpenCVConfig.cmake  -> For use within binary installers/packages
+-# --------------------------------------------------------------------------------------------
+-if(WIN32)
+-  if(CMAKE_HOST_SYSTEM_NAME MATCHES Windows AND NOT OPENCV_SKIP_CMAKE_ROOT_CONFIG)
+-    ocv_gen_config("${CMAKE_BINARY_DIR}/win-install"
+-                   "${OPENCV_INSTALL_BINARIES_PREFIX}${OPENCV_INSTALL_BINARIES_SUFFIX}"
+-                   "OpenCVConfig.root-WIN32.cmake.in")
+-  else()
+-    ocv_gen_config("${CMAKE_BINARY_DIR}/win-install" "" "")
+-  endif()
+-endif()
++ocv_gen_config("${CMAKE_BINARY_DIR}/unix-install" "" "")
+diff --git a/cmake/OpenCVInstallLayout.cmake b/cmake/OpenCVInstallLayout.cmake
+index 25aede72c5..d145539a52 100644
+--- a/cmake/OpenCVInstallLayout.cmake
++++ b/cmake/OpenCVInstallLayout.cmake
+@@ -1,100 +1,24 @@
+ # message(STATUS "Initial install layout:")
+ # ocv_cmake_dump_vars("OPENCV_.*_INSTALL_PATH")
+ 
+-if(ANDROID)
+-
+-  ocv_update(OPENCV_BIN_INSTALL_PATH            "sdk/native/bin/${ANDROID_NDK_ABI_NAME}")
+-  ocv_update(OPENCV_TEST_INSTALL_PATH           "${OPENCV_BIN_INSTALL_PATH}")
+-  ocv_update(OPENCV_SAMPLES_BIN_INSTALL_PATH    "sdk/native/samples/${ANDROID_NDK_ABI_NAME}")
+-  ocv_update(OPENCV_LIB_INSTALL_PATH            "sdk/native/libs/${ANDROID_NDK_ABI_NAME}")
+-  ocv_update(OPENCV_LIB_ARCHIVE_INSTALL_PATH    "sdk/native/staticlibs/${ANDROID_NDK_ABI_NAME}")
+-  ocv_update(OPENCV_3P_LIB_INSTALL_PATH         "sdk/native/3rdparty/libs/${ANDROID_NDK_ABI_NAME}")
+-  ocv_update(OPENCV_CONFIG_INSTALL_PATH         "sdk/native/jni")
+-  ocv_update(OPENCV_INCLUDE_INSTALL_PATH        "sdk/native/jni/include")
+-  ocv_update(OPENCV_OTHER_INSTALL_PATH          "sdk/etc")
+-  ocv_update(OPENCV_SAMPLES_SRC_INSTALL_PATH    "samples/native")
+-  ocv_update(OPENCV_LICENSES_INSTALL_PATH       "${OPENCV_OTHER_INSTALL_PATH}/licenses")
+-  ocv_update(OPENCV_TEST_DATA_INSTALL_PATH      "${OPENCV_OTHER_INSTALL_PATH}/testdata")
+-  ocv_update(OPENCV_DOC_INSTALL_PATH            "doc")
+-  ocv_update(OPENCV_JAR_INSTALL_PATH            ".")
+-  ocv_update(OPENCV_JNI_INSTALL_PATH            "${OPENCV_LIB_INSTALL_PATH}")
+-  ocv_update(OPENCV_JNI_BIN_INSTALL_PATH        "${OPENCV_JNI_INSTALL_PATH}")
+-
+-elseif(WIN32 AND CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
+-
+-  if(DEFINED OpenCV_RUNTIME AND DEFINED OpenCV_ARCH)
+-    ocv_update(OPENCV_INSTALL_BINARIES_PREFIX "${OpenCV_ARCH}/${OpenCV_RUNTIME}/")
+-  else()
+-    message(STATUS "Can't detect runtime and/or arch")
+-    ocv_update(OPENCV_INSTALL_BINARIES_PREFIX "")
+-  endif()
+-  if(OpenCV_STATIC)
+-    ocv_update(OPENCV_INSTALL_BINARIES_SUFFIX "staticlib")
+-  else()
+-    ocv_update(OPENCV_INSTALL_BINARIES_SUFFIX "lib")
+-  endif()
+-  if(INSTALL_CREATE_DISTRIB)
+-    set(_jni_suffix "/${OpenCV_ARCH}")
+-  else()
+-    set(_jni_suffix "")
+-  endif()
+-
+-  ocv_update(OPENCV_BIN_INSTALL_PATH           "${OPENCV_INSTALL_BINARIES_PREFIX}bin")
+-  ocv_update(OPENCV_TEST_INSTALL_PATH          "${OPENCV_BIN_INSTALL_PATH}")
+-  ocv_update(OPENCV_SAMPLES_BIN_INSTALL_PATH   "${OPENCV_INSTALL_BINARIES_PREFIX}samples")
+-  ocv_update(OPENCV_LIB_INSTALL_PATH           "${OPENCV_INSTALL_BINARIES_PREFIX}${OPENCV_INSTALL_BINARIES_SUFFIX}")
+-  ocv_update(OPENCV_LIB_ARCHIVE_INSTALL_PATH   "${OPENCV_LIB_INSTALL_PATH}")
+-  ocv_update(OPENCV_3P_LIB_INSTALL_PATH        "${OPENCV_INSTALL_BINARIES_PREFIX}staticlib")
+-  ocv_update(OPENCV_CONFIG_INSTALL_PATH        ".")
+-  ocv_update(OPENCV_INCLUDE_INSTALL_PATH       "include")
+-  ocv_update(OPENCV_OTHER_INSTALL_PATH         "etc")
+-  ocv_update(OPENCV_SAMPLES_SRC_INSTALL_PATH   "samples")
+-  ocv_update(OPENCV_LICENSES_INSTALL_PATH      "${OPENCV_OTHER_INSTALL_PATH}/licenses")
+-  ocv_update(OPENCV_TEST_DATA_INSTALL_PATH     "testdata")
+-  ocv_update(OPENCV_DOC_INSTALL_PATH           "doc")
+-  ocv_update(OPENCV_JAR_INSTALL_PATH           "java")
+-  ocv_update(OPENCV_JNI_INSTALL_PATH           "java${_jni_suffix}")
+-  ocv_update(OPENCV_JNI_BIN_INSTALL_PATH       "${OPENCV_JNI_INSTALL_PATH}")
+-
+-elseif(QNX)
+-  ocv_update(OPENCV_BIN_INSTALL_PATH         "${CPUVARDIR}/usr/bin")
+-  ocv_update(OPENCV_TEST_INSTALL_PATH        "${OPENCV_BIN_INSTALL_PATH}")
+-  ocv_update(OPENCV_SAMPLES_BIN_INSTALL_PATH "${OPENCV_BIN_INSTALL_PATH}")
+-  ocv_update(OPENCV_LIB_INSTALL_PATH         "${CPUVARDIR}/usr/lib")
+-  ocv_update(OPENCV_LIB_ARCHIVE_INSTALL_PATH "${OPENCV_LIB_INSTALL_PATH}")
+-  ocv_update(OPENCV_3P_LIB_INSTALL_PATH      "${CPUVARDIR}/usr/lib")
+-  ocv_update(OPENCV_CONFIG_INSTALL_PATH      "${CPUVARDIR}/usr/share/OpenCV")
+-  ocv_update(OPENCV_INCLUDE_INSTALL_PATH     "usr/include/OpenCV/opencv4")
+-  ocv_update(OPENCV_OTHER_INSTALL_PATH       "usr/share/OpenCV")
+-  ocv_update(OPENCV_SAMPLES_SRC_INSTALL_PATH "samples/native")
+-  ocv_update(OPENCV_LICENSES_INSTALL_PATH    "${OPENCV_OTHER_INSTALL_PATH}/licenses")
+-  ocv_update(OPENCV_TEST_DATA_INSTALL_PATH   "${OPENCV_OTHER_INSTALL_PATH}/testdata")
+-  ocv_update(OPENCV_DOC_INSTALL_PATH         "doc")
+-  ocv_update(OPENCV_JAR_INSTALL_PATH         "${CMAKE_INSTALL_DATAROOTDIR}/java/opencv4")
+-  ocv_update(OPENCV_JNI_INSTALL_PATH         "${OPENCV_JAR_INSTALL_PATH}")
+-  ocv_update(OPENCV_JNI_BIN_INSTALL_PATH     "${OPENCV_JNI_INSTALL_PATH}")
+-
+-else() # UNIX
+-
+-  include(GNUInstallDirs)
+-  ocv_update(OPENCV_BIN_INSTALL_PATH           "bin")
+-  ocv_update(OPENCV_TEST_INSTALL_PATH          "${OPENCV_BIN_INSTALL_PATH}")
+-  ocv_update(OPENCV_SAMPLES_BIN_INSTALL_PATH   "${OPENCV_BIN_INSTALL_PATH}")
+-  ocv_update(OPENCV_LIB_INSTALL_PATH           "${CMAKE_INSTALL_LIBDIR}")
+-  ocv_update(OPENCV_LIB_ARCHIVE_INSTALL_PATH   "${OPENCV_LIB_INSTALL_PATH}")
+-  ocv_update(OPENCV_3P_LIB_INSTALL_PATH        "${OPENCV_LIB_INSTALL_PATH}/opencv4/3rdparty")
+-  ocv_update(OPENCV_CONFIG_INSTALL_PATH        "${OPENCV_LIB_INSTALL_PATH}/cmake/opencv4")
+-  ocv_update(OPENCV_INCLUDE_INSTALL_PATH       "${CMAKE_INSTALL_INCLUDEDIR}/opencv4")
+-  ocv_update(OPENCV_OTHER_INSTALL_PATH         "${CMAKE_INSTALL_DATAROOTDIR}/opencv4")
+-  ocv_update(OPENCV_SAMPLES_SRC_INSTALL_PATH   "${OPENCV_OTHER_INSTALL_PATH}/samples")
+-  ocv_update(OPENCV_LICENSES_INSTALL_PATH      "${CMAKE_INSTALL_DATAROOTDIR}/licenses/opencv4")
+-  ocv_update(OPENCV_TEST_DATA_INSTALL_PATH     "${OPENCV_OTHER_INSTALL_PATH}/testdata")
+-  ocv_update(OPENCV_DOC_INSTALL_PATH           "${CMAKE_INSTALL_DATAROOTDIR}/doc/opencv4")
+-  ocv_update(OPENCV_JAR_INSTALL_PATH           "${CMAKE_INSTALL_DATAROOTDIR}/java/opencv4")
+-  ocv_update(OPENCV_JNI_INSTALL_PATH           "${OPENCV_JAR_INSTALL_PATH}")
+-  ocv_update(OPENCV_JNI_BIN_INSTALL_PATH       "${OPENCV_JNI_INSTALL_PATH}")
+-
+-endif()
++include(GNUInstallDirs)
++
++ocv_update(OPENCV_BIN_INSTALL_PATH           "${CMAKE_INSTALL_BINDIR}")
++ocv_update(OPENCV_TEST_INSTALL_PATH          "${OPENCV_BIN_INSTALL_PATH}")
++ocv_update(OPENCV_SAMPLES_BIN_INSTALL_PATH   "${OPENCV_BIN_INSTALL_PATH}")
++ocv_update(OPENCV_LIB_INSTALL_PATH           "${CMAKE_INSTALL_LIBDIR}")
++ocv_update(OPENCV_LIB_ARCHIVE_INSTALL_PATH   "${OPENCV_LIB_INSTALL_PATH}")
++ocv_update(OPENCV_3P_LIB_INSTALL_PATH        "${OPENCV_LIB_INSTALL_PATH}/opencv4/3rdparty")
++ocv_update(OPENCV_CONFIG_INSTALL_PATH        "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}")
++ocv_update(OPENCV_INCLUDE_INSTALL_PATH       "${CMAKE_INSTALL_INCLUDEDIR}/opencv4")
++ocv_update(OPENCV_OTHER_INSTALL_PATH         "${OPENCV_CONFIG_INSTALL_PATH}")
++ocv_update(OPENCV_SAMPLES_SRC_INSTALL_PATH   "${OPENCV_OTHER_INSTALL_PATH}/samples")
++ocv_update(OPENCV_LICENSES_INSTALL_PATH      "${OPENCV_CONFIG_INSTALL_PATH}/licenses")
++ocv_update(OPENCV_TEST_DATA_INSTALL_PATH     "${OPENCV_OTHER_INSTALL_PATH}/testdata")
++ocv_update(OPENCV_DOC_INSTALL_PATH           "${OPENCV_CONFIG_INSTALL_PATH}/doc/opencv4")
++ocv_update(OPENCV_JAR_INSTALL_PATH           "${OPENCV_CONFIG_INSTALL_PATH}/java/opencv4")
++ocv_update(OPENCV_JNI_INSTALL_PATH           "${OPENCV_JAR_INSTALL_PATH}")
++ocv_update(OPENCV_JNI_BIN_INSTALL_PATH       "${OPENCV_JNI_INSTALL_PATH}")
+ 
+ ocv_update(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${OPENCV_LIB_INSTALL_PATH}")
+ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+diff --git a/cmake/OpenCVUtils.cmake b/cmake/OpenCVUtils.cmake
+index 5ca7fab808..064c62065f 100644
+--- a/cmake/OpenCVUtils.cmake
++++ b/cmake/OpenCVUtils.cmake
+@@ -979,12 +979,6 @@ macro(ocv_finalize_status)
+       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENCV_BUILD_INFO_FILE}" "${OPENCV_MODULE_opencv_core_BINARY_DIR}/version_string.inc" OUTPUT_QUIET)
+     endif()
+   endif()
+-
+-  if(UNIX)
+-    install(FILES "${OpenCV_SOURCE_DIR}/platforms/scripts/valgrind.supp"
+-                  "${OpenCV_SOURCE_DIR}/platforms/scripts/valgrind_3rdparty.supp"
+-            DESTINATION "${OPENCV_OTHER_INSTALL_PATH}" COMPONENT "dev")
+-  endif()
+ endmacro()
+ 
+ 
+diff --git a/cmake/templates/OpenCVConfig.cmake.in b/cmake/templates/OpenCVConfig.cmake.in
+index c642863e9a..e49928200d 100644
+--- a/cmake/templates/OpenCVConfig.cmake.in
++++ b/cmake/templates/OpenCVConfig.cmake.in
+@@ -123,6 +123,31 @@ foreach(d ${__OpenCV_INCLUDE_DIRS})
+ endforeach()
+ unset(__d)
+ 
++# ---
++
++include(CMakeFindDependencyMacro)
++
++find_dependency(zlib CONFIG REQUIRED)
++if(@WITH_AVIF@)
++    find_dependency(avif CONFIG REQUIRED)
++endif()
++if(@WITH_JPEG@)
++    find_dependency(jpeg-turbo CONFIG REQUIRED)
++endif()
++if(@WITH_TIFF@)
++    find_dependency(tiff CONFIG REQUIRED)
++endif()
++if(@WITH_WEBP@)
++    find_dependency(WebP CONFIG REQUIRED)
++endif()
++if(NOT @WITH_SPNG@ AND @WITH_PNG@)
++    find_dependency(png CONFIG REQUIRED)
++endif()
++if(@WITH_EIGEN@)
++    find_dependency(Eigen3 CONFIG REQUIRED)
++endif()
++
++# ---
+ 
+ if(NOT TARGET opencv_core)
+   include(${CMAKE_CURRENT_LIST_DIR}/OpenCVModules${OpenCV_MODULES_SUFFIX}.cmake)
+diff --git a/data/CMakeLists.txt b/data/CMakeLists.txt
+index 1f0d720084..c9318cdddd 100644
+--- a/data/CMakeLists.txt
++++ b/data/CMakeLists.txt
+@@ -1,8 +1,8 @@
+ file(GLOB HAAR_CASCADES haarcascades/*.xml)
+ file(GLOB LBP_CASCADES lbpcascades/*.xml)
+ 
+-install(FILES ${HAAR_CASCADES} DESTINATION ${OPENCV_OTHER_INSTALL_PATH}/haarcascades COMPONENT libs)
+-install(FILES ${LBP_CASCADES}  DESTINATION ${OPENCV_OTHER_INSTALL_PATH}/lbpcascades  COMPONENT libs)
++#install(FILES ${HAAR_CASCADES} DESTINATION ${OPENCV_OTHER_INSTALL_PATH}/haarcascades COMPONENT libs)
++#install(FILES ${LBP_CASCADES}  DESTINATION ${OPENCV_OTHER_INSTALL_PATH}/lbpcascades  COMPONENT libs)
+ 
+ if(INSTALL_TESTS AND OPENCV_TEST_DATA_PATH)
+   install(DIRECTORY "${OPENCV_TEST_DATA_PATH}/" DESTINATION "${OPENCV_TEST_DATA_INSTALL_PATH}" COMPONENT "tests")
+diff --git a/modules/core/CMakeLists.txt b/modules/core/CMakeLists.txt
+index a341c6a837..a182220531 100644
+--- a/modules/core/CMakeLists.txt
++++ b/modules/core/CMakeLists.txt
+@@ -216,9 +216,6 @@ endif()
+ ocv_add_accuracy_tests(${test_libs})
+ ocv_add_perf_tests()
+ 
+-ocv_install_3rdparty_licenses(SoftFloat "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SoftFloat/COPYING.txt")
+-
+-
+ # generate data (samples data) config file
+ set(OPENCV_DATA_CONFIG_FILE "${OPENCV_CONFIG_FILE_INCLUDE_DIR}/opencv_data_config.hpp")
+ set(OPENCV_DATA_CONFIG_STR "")
+diff --git a/modules/core/include/opencv2/core/eigen.hpp b/modules/core/include/opencv2/core/eigen.hpp
+index d4b1774cf9..43182ac282 100644
+--- a/modules/core/include/opencv2/core/eigen.hpp
++++ b/modules/core/include/opencv2/core/eigen.hpp
+@@ -62,7 +62,7 @@
+ 
+ #if !defined(OPENCV_DISABLE_EIGEN_TENSOR_SUPPORT)
+ #if EIGEN_WORLD_VERSION == 3 && EIGEN_MAJOR_VERSION >= 3
+-#include <unsupported/Eigen/CXX11/Tensor>
++#include <Eigen/unsupported/CXX11/Tensor>
+ #define OPENCV_EIGEN_TENSOR_SUPPORT 1
+ #endif  // EIGEN_WORLD_VERSION == 3 && EIGEN_MAJOR_VERSION >= 3
+ #endif  // !defined(OPENCV_DISABLE_EIGEN_TENSOR_SUPPORT)
+diff --git a/modules/core/misc/python/pyopencv_core.hpp b/modules/core/misc/python/pyopencv_core.hpp
+index 8c190b696b..914ae08876 100644
+--- a/modules/core/misc/python/pyopencv_core.hpp
++++ b/modules/core/misc/python/pyopencv_core.hpp
+@@ -3,7 +3,7 @@
+ 
+ #ifdef HAVE_OPENCV_CORE
+ 
+-#include "dlpack/dlpack.h"
++#include <dlpack/dlpack.h>
+ 
+ static PyObject* pycvMakeType(PyObject* , PyObject* args, PyObject* kw) {
+     const char *keywords[] = { "depth", "channels", NULL };
+diff --git a/modules/core/src/persistence.hpp b/modules/core/src/persistence.hpp
+index 55ccd51254..dd6a0356b7 100644
+--- a/modules/core/src/persistence.hpp
++++ b/modules/core/src/persistence.hpp
+@@ -19,7 +19,7 @@
+ #  ifndef _FILE_OFFSET_BITS
+ #    define _FILE_OFFSET_BITS 0
+ #  endif
+-#  include <zlib.h>
++#  include <zlib/zlib.h>
+ #else
+ typedef void* gzFile;
+ #endif
+diff --git a/modules/imgcodecs/src/grfmt_png.hpp b/modules/imgcodecs/src/grfmt_png.hpp
+index 6094139baf..c5a292cacf 100644
+--- a/modules/imgcodecs/src/grfmt_png.hpp
++++ b/modules/imgcodecs/src/grfmt_png.hpp
+@@ -47,8 +47,8 @@
+ 
+ #include "grfmt_base.hpp"
+ #include "bitstrm.hpp"
+-#include <png.h>
+-#include <zlib.h>
++#include <png/png.h>
++#include <zlib/zlib.h>
+ #include <vector>
+ 
+ namespace cv
+diff --git a/modules/imgcodecs/src/grfmt_spng.cpp b/modules/imgcodecs/src/grfmt_spng.cpp
+index 852db5f2f5..445bcc1840 100644
+--- a/modules/imgcodecs/src/grfmt_spng.cpp
++++ b/modules/imgcodecs/src/grfmt_spng.cpp
+@@ -20,7 +20,7 @@
+ #endif
+ 
+ #include <spng.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "grfmt_spng.hpp"
+ #include <opencv2/core/utils/logger.hpp>
