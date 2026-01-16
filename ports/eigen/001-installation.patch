@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index f3e69b845..86cd7427b 100644
+index f3e69b845..1342c58fb 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,5 +1,5 @@
@@ -38,16 +38,7 @@ index f3e69b845..86cd7427b 100644
  option(EIGEN_BUILD_DOC "Enable creation of Eigen documentation" ON)
  if(EIGEN_BUILD_DOC)
    add_subdirectory(doc EXCLUDE_FROM_ALL)
-@@ -533,8 +527,6 @@ if(EIGEN_TEST_SYCL)
-   endif()
- endif()
- 
--add_subdirectory(unsupported)
--
- add_subdirectory(demos EXCLUDE_FROM_ALL)
- 
- # must be after test and unsupported, for configuring buildtests.in
-@@ -639,7 +631,7 @@ export (PACKAGE Eigen3)
+@@ -639,7 +633,7 @@ export (PACKAGE Eigen3)
  
  install (EXPORT Eigen3Targets NAMESPACE Eigen3:: DESTINATION ${CMAKEPACKAGE_INSTALL_DIR})
  
@@ -85,3 +76,33 @@ index 0a1ac61c9..f83ace570 100644
 -set (EIGEN3_VERSION_MINOR  "@EIGEN_VERSION_MINOR@")
 -set (EIGEN3_VERSION_PATCH  "@EIGEN_VERSION_PATCH@")
 +include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+diff --git a/unsupported/Eigen/CMakeLists.txt b/unsupported/Eigen/CMakeLists.txt
+index 631a06014..14bdfbbe3 100644
+--- a/unsupported/Eigen/CMakeLists.txt
++++ b/unsupported/Eigen/CMakeLists.txt
+@@ -24,9 +24,9 @@ set(Eigen_HEADERS
+ 
+ install(FILES
+   ${Eigen_HEADERS}
+-  DESTINATION ${INCLUDE_INSTALL_DIR}/unsupported/Eigen COMPONENT Devel
++  DESTINATION ${INCLUDE_INSTALL_DIR}/Eigen/unsupported COMPONENT Devel
+   )
+ 
+-install(DIRECTORY src DESTINATION ${INCLUDE_INSTALL_DIR}/unsupported/Eigen COMPONENT Devel FILES_MATCHING PATTERN "*.h")
++install(DIRECTORY src DESTINATION ${INCLUDE_INSTALL_DIR}/Eigen/unsupported COMPONENT Devel FILES_MATCHING PATTERN "*.h")
+ 
+ add_subdirectory(CXX11)
+diff --git a/unsupported/Eigen/CXX11/CMakeLists.txt b/unsupported/Eigen/CXX11/CMakeLists.txt
+index 385ed240c..6c7ee892b 100644
+--- a/unsupported/Eigen/CXX11/CMakeLists.txt
++++ b/unsupported/Eigen/CXX11/CMakeLists.txt
+@@ -2,7 +2,7 @@ set(Eigen_CXX11_HEADERS Tensor TensorSymmetry ThreadPool)
+ 
+ install(FILES
+   ${Eigen_CXX11_HEADERS}
+-  DESTINATION ${INCLUDE_INSTALL_DIR}/unsupported/Eigen/CXX11 COMPONENT Devel
++  DESTINATION ${INCLUDE_INSTALL_DIR}/Eigen/unsupported/CXX11 COMPONENT Devel
+   )
+ 
+-install(DIRECTORY src DESTINATION ${INCLUDE_INSTALL_DIR}/unsupported/Eigen/CXX11 COMPONENT Devel FILES_MATCHING PATTERN "*.h")
++install(DIRECTORY src DESTINATION ${INCLUDE_INSTALL_DIR}/Eigen/unsupported/CXX11 COMPONENT Devel FILES_MATCHING PATTERN "*.h")
