@@ -1,0 +1,49 @@
+{
+    "name": "wolfssl",
+    "version": "5.8.4",
+    "description": "Small, fast, portable implementation of TLS/SSL for embedded devices to the cloud",
+    "homepage": "https://wolfssl.com",
+    "license": "GPL-3.0-or-later",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-get-vars",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ],
+    "features":
+    {
+        "asio":
+        {
+            "description": "Enable ASIO support"
+        },
+        "curve25519":
+        {
+            "description": "Enable Curve25519 support"
+        },
+        "dtls":
+        {
+            "description": "Enable DTLS support"
+        },
+        "quic":
+        {
+            "description": "Enable QUIC support"
+        },
+        "secret-callback":
+        {
+            "description": "Enable callback to provide TLS keys for debugging"
+        }
+    }
+}
