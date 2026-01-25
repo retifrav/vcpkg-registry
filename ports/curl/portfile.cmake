@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:curl/curl.git
-    REF fdb8a789d2b446b77bd7cdd2eff95f6cbc814cf4
+    REF 2eebc58c4b8d68c98c8344381a9f6df4cca838fd
     PATCHES
         001-dependencies-and-installation.patch
 )
@@ -14,37 +14,26 @@ file(COPY
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        brotli    CURL_BROTLI
-        openssl   CURL_USE_OPENSSL
-        schannel  CURL_USE_SCHANNEL
-        sectransp CURL_USE_SECTRANSP
-        ssl       CURL_ENABLE_SSL
-        sspi      CURL_WINDOWS_SSPI
-        tool      BUILD_CURL_EXE
-        zlib      CURL_ZLIB
-        zstd      CURL_ZSTD
+        brotli      CURL_BROTLI
+        openssl     CURL_CA_FALLBACK
+        openssl     CURL_USE_OPENSSL
+        ssls-export USE_SSLS_EXPORT
+        sspi        CURL_WINDOWS_SSPI
+        tool        BUILD_CURL_EXE
+        wolfssl     CURL_USE_WOLFSSL
+        zlib        CURL_ZLIB
+        zstd        CURL_ZSTD
 )
 
 if(
-    VCPKG_TARGET_IS_OSX
+    "ssl" IN_LIST FEATURES
     AND
-    "tool" IN_LIST FEATURES
+    NOT "http3" IN_LIST FEATURES
     AND
-    "openssl" IN_LIST FEATURES
-)
-    message(
-        WARNING
-            "Enabling OpenSSL on Mac OS might not succeed, because it can get a mess "
-            "of OpenSSL resolved via vcpkg and OpenSSL package from Homebrew prefix, "
-            "which might then fail on linking, so it is probably advisable to remove "
-            "`openssl` from the list of enabled features"
-    )
-endif()
-
-if("sectransp" IN_LIST FEATURES)
+    # `(windows & !uwp) | mingw` to match curl[ssl] platform
+    ((VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_UWP) OR VCPKG_TARGET_IS_MINGW))
     list(APPEND FEATURE_OPTIONS
-        -DCURL_CA_PATH=none
-        -DCURL_CA_BUNDLE=none
+        -DCURL_USE_SCHANNEL=1
     )
 endif()
 
@@ -56,7 +45,9 @@ if(VCPKG_TARGET_IS_UWP)
 endif()
 
 if(VCPKG_TARGET_IS_WINDOWS)
-    list(APPEND FEATURE_OPTIONS -DENABLE_UNICODE=1)
+    list(APPEND FEATURE_OPTIONS
+        -DENABLE_UNICODE=1
+    )
 endif()
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" CURL_STATIC)
@@ -66,16 +57,17 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
-        -DBUILD_SHARED_LIBS=${CURL_SHARED}
-        -DBUILD_STATIC_LIBS=${CURL_STATIC}
-        -DBUILD_STATIC_CURL=${CURL_STATIC}
         -DBUILD_LIBCURL_DOCS=0
+        -DBUILD_MISC_DOCS=0
+        -DBUILD_SHARED_LIBS=${CURL_SHARED}
+        -DBUILD_STATIC_CURL=${CURL_STATIC}
+        -DBUILD_STATIC_LIBS=${CURL_STATIC}
         -DBUILD_TESTING=0
-        -DCURL_CA_FALLBACK=1
         -DCURL_USE_LIBPSL=0
         -DCURL_USE_PKGCONFIG=0
         -DENABLE_CURL_MANUAL=0
         -DHTTP_ONLY=1
+        -DSHARE_LIB_OBJECT=0
 )
 
 vcpkg_cmake_install()

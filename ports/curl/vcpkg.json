@@ -1,6 +1,6 @@
 {
     "name": "curl",
-    "version": "8.14.1",
+    "version": "8.18.0",
     "description": "Library for transferring data with URL syntax",
     "homepage": "https://curl.se/",
     "license": "curl AND ISC AND BSD-3-Clause",
@@ -42,64 +42,59 @@
                 "openssl"
             ]
         },
-        "schannel":
+        "ssl":
         {
-            "description": "Enable Secure Channel security support provider (SSL support)",
-            "supports": "windows & !uwp",
+            "description": "Default SSL/TLS backend",
             "dependencies":
             [
                 {
+                    "$comment": "Defaults to Schannel on Windows, unless http3 is also enabled",
                     "name": "curl",
                     "default-features": false,
                     "features":
                     [
                         "sspi"
-                    ]
-                }
-            ]
-        },
-        "sectransp":
-        {
-            "description": "Enable sectransp (SSL support)",
-            "supports": "osx | ios"
-        },
-        "sspi":
-        {
-            "description": "Enable Security Support Provider Interface (SSL support)",
-            "supports": "windows & !uwp"
-        },
-        "ssl":
-        {
-            "description": "Default SSL backend",
-            "dependencies":
-            [
-                {
-                    "name": "curl",
-                    "default-features": false,
-                    "features":
-                    [
-                        "sectransp"
-                    ],
-                    "platform": "osx | ios"
-                },
-                {
-                    "name": "curl",
-                    "default-features": false,
-                    "features":
-                    [
-                        "schannel"
                     ],
                     "platform": "(windows & !uwp) | mingw"
                 },
                 {
+                    "$comment": "Otherwise, defaults to OpenSSL",
                     "name": "curl",
                     "default-features": false,
                     "features":
                     [
                         "openssl"
                     ],
-                    "platform": "(uwp | !windows) & !(osx | ios) & !mingw"
+                    "platform": "(uwp | !windows) & !mingw"
                 }
+            ]
+        },
+        "ssls-export":
+        {
+            "description": "SSL session import/export",
+            "dependencies":
+            [
+                {
+                    "name": "curl",
+                    "default-features": false,
+                    "features":
+                    [
+                        "ssl"
+                    ]
+                }
+            ]
+        },
+        "sspi":
+        {
+            "description": "Security Support Provider Interface (SSPI) support",
+            "supports": "(windows & !uwp) | mingw"
+        },
+        "wolfssl":
+        {
+            "description": "SSL support (wolfSSL)",
+            "dependencies":
+            [
+                "wolfssl"
             ]
         },
         "zlib":

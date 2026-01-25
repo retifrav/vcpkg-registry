@@ -858,7 +858,7 @@
         },
         "curl":
         {
-            "baseline": "8.14.1",
+            "baseline": "8.18.0",
             "port-version": 0
         },
         "datachannel":
