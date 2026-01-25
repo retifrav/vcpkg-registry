@@ -39,7 +39,11 @@
             "description": "Enable OpenSSL backend (SSL support)",
             "dependencies":
             [
-                "openssl"
+                {
+                    "$comment": "Older versions do not have `SSL_get0_group_name()`, which was added in 3.2.0",
+                    "name": "openssl",
+                    "version>=": "3.6.0"
+                }
             ]
         },
         "ssl":
