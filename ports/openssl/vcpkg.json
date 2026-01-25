@@ -1,8 +1,9 @@
 {
     "name": "openssl",
-    "version": "3.1.4",
-    "description": "TLS/SSL and crypto library",
+    "version": "3.6.0",
+    "description": "Toolkit for Transport Layer Security (TLS) and Secure Sockets Layer (SSL) protocols and a general-purpose cryptography library",
     "homepage": "https://openssl.org/",
+    "license": "Apache-2.0",
     "dependencies":
     [
         {
@@ -24,6 +25,14 @@
         {
             "description": "Enable FIPS",
             "supports": "!static"
+        },
+        "ssl3":
+        {
+            "description": "Enable SSL3"
+        },
+        "weak-ssl-ciphers":
+        {
+            "description": "Enable weak SSL ciphers"
         },
         "tools":
         {

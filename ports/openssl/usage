@@ -1,6 +1,6 @@
 To use OpenSSL in your project:
 
-    find_package(OpenSSL REQUIRED) # no CONFIG, unfortunately
+    find_package(OpenSSL CONFIG REQUIRED)
     target_link_libraries(main
         PRIVATE
             OpenSSL::SSL
