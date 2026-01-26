@@ -164,7 +164,7 @@ index 40e48d7465..7dabb07734 100644
        ocv_download_log("#try ${try}")
        file(DOWNLOAD "${DL_URL}" "${CACHE_CANDIDATE}"
 diff --git a/cmake/OpenCVFindLibsGrfmt.cmake b/cmake/OpenCVFindLibsGrfmt.cmake
-index c3c358f6fc..4a6f852c45 100644
+index c3c358f6fc..6ee3b72bb4 100644
 --- a/cmake/OpenCVFindLibsGrfmt.cmake
 +++ b/cmake/OpenCVFindLibsGrfmt.cmake
 @@ -3,6 +3,7 @@
@@ -253,10 +253,10 @@ index c3c358f6fc..4a6f852c45 100644
 -      include(FindJPEG)
 -    endif()
 -  endif()
- 
+-
 -  if(NOT JPEG_FOUND)
 -    ocv_clear_vars(JPEG_LIBRARY JPEG_INCLUDE_DIR)
--
+ 
 -    if(NOT BUILD_JPEG_TURBO_DISABLE)
 -      set(JPEG_LIBRARY libjpeg-turbo CACHE INTERNAL "")
 -      set(JPEG_LIBRARIES ${JPEG_LIBRARY})
@@ -474,14 +474,37 @@ index c3c358f6fc..4a6f852c45 100644
  if(WITH_OPENEXR)
    ocv_clear_vars(HAVE_OPENEXR)
    if(NOT BUILD_OPENEXR)
-@@ -376,6 +208,7 @@ if(WITH_OPENEXR)
+@@ -376,26 +208,11 @@ if(WITH_OPENEXR)
  endif()
  
  # --- GDAL (optional) ---
-+
- if(WITH_GDAL)
-     find_package(GDAL QUIET)
+-if(WITH_GDAL)
+-    find_package(GDAL QUIET)
  
+-    if(NOT GDAL_FOUND)
+-        set(HAVE_GDAL NO)
+-        ocv_clear_vars(GDAL_VERSION GDAL_LIBRARIES)
+-    else()
+-        set(HAVE_GDAL YES)
+-        ocv_include_directories(${GDAL_INCLUDE_DIR})
+-
+-        # GDAL_VERSION requires CMake 3.14 or later, if not found, GDAL_RELEASE_NAME is used instead.
+-        # See https://cmake.org/cmake/help/latest/module/FindGDAL.html
+-        if(NOT GDAL_VERSION)
+-            if(EXISTS "${GDAL_INCLUDE_DIR}/gdal_version.h")
+-                file(STRINGS "${GDAL_INCLUDE_DIR}/gdal_version.h" gdal_version_str REGEX "^#[\t ]+define[\t ]+GDAL_RELEASE_NAME[\t ]*")
+-                string(REGEX REPLACE "^#\[\t ]+define[\t ]+GDAL_RELEASE_NAME[\t ]+\"([^ \\n]*)\"" "\\1" GDAL_VERSION "${gdal_version_str}")
+-                unset(gdal_version_str)
+-            endif()
+-        endif()
+-    endif()
++if(WITH_GDAL)
++    find_package(GDAL CONFIG REQUIRED)
++    set(HAVE_GDAL YES)
++    set(GDAL_LIBRARY GDAL::GDAL)
+ endif()
+ 
+ if(WITH_GDCM)
 diff --git a/cmake/OpenCVFindLibsPerf.cmake b/cmake/OpenCVFindLibsPerf.cmake
 index 861a39c47f..f527309174 100644
 --- a/cmake/OpenCVFindLibsPerf.cmake
@@ -739,10 +762,10 @@ index 5ca7fab808..064c62065f 100644
  
  
 diff --git a/cmake/templates/OpenCVConfig.cmake.in b/cmake/templates/OpenCVConfig.cmake.in
-index c642863e9a..e49928200d 100644
+index c642863e9a..3406c04000 100644
 --- a/cmake/templates/OpenCVConfig.cmake.in
 +++ b/cmake/templates/OpenCVConfig.cmake.in
-@@ -123,6 +123,31 @@ foreach(d ${__OpenCV_INCLUDE_DIRS})
+@@ -123,6 +123,36 @@ foreach(d ${__OpenCV_INCLUDE_DIRS})
  endforeach()
  unset(__d)
  
@@ -751,11 +774,18 @@ index c642863e9a..e49928200d 100644
 +include(CMakeFindDependencyMacro)
 +
 +find_dependency(zlib CONFIG REQUIRED)
++#
 +if(@WITH_AVIF@)
 +    find_dependency(avif CONFIG REQUIRED)
 +endif()
++if(@WITH_GDAL@)
++    find_dependency(GDAL CONFIG REQUIRED)
++endif()
 +if(@WITH_JPEG@)
 +    find_dependency(jpeg-turbo CONFIG REQUIRED)
++endif()
++if(NOT @WITH_SPNG@ AND @WITH_PNG@)
++    find_dependency(png CONFIG REQUIRED)
 +endif()
 +if(@WITH_TIFF@)
 +    find_dependency(tiff CONFIG REQUIRED)
@@ -763,9 +793,7 @@ index c642863e9a..e49928200d 100644
 +if(@WITH_WEBP@)
 +    find_dependency(WebP CONFIG REQUIRED)
 +endif()
-+if(NOT @WITH_SPNG@ AND @WITH_PNG@)
-+    find_dependency(png CONFIG REQUIRED)
-+endif()
++#
 +if(@WITH_EIGEN@)
 +    find_dependency(Eigen3 CONFIG REQUIRED)
 +endif()
@@ -842,6 +870,48 @@ index 55ccd51254..dd6a0356b7 100644
  #else
  typedef void* gzFile;
  #endif
+diff --git a/modules/imgcodecs/CMakeLists.txt b/modules/imgcodecs/CMakeLists.txt
+index c322645b20..ee756d17b0 100644
+--- a/modules/imgcodecs/CMakeLists.txt
++++ b/modules/imgcodecs/CMakeLists.txt
+@@ -90,7 +90,6 @@ if(HAVE_PNG OR HAVE_TIFF OR HAVE_OPENEXR OR HAVE_SPNG OR HAVE_JPEGXL)
+ endif()
+ 
+ if(HAVE_GDAL)
+-  include_directories(SYSTEM ${GDAL_INCLUDE_DIR})
+   list(APPEND GRFMT_LIBS ${GDAL_LIBRARY})
+ endif()
+ 
+diff --git a/modules/imgcodecs/src/grfmt_gdal.hpp b/modules/imgcodecs/src/grfmt_gdal.hpp
+index 47b360f855..2edcea6e6b 100644
+--- a/modules/imgcodecs/src/grfmt_gdal.hpp
++++ b/modules/imgcodecs/src/grfmt_gdal.hpp
+@@ -52,9 +52,9 @@
+ #include <iostream>
+ 
+ /// Geospatial Data Abstraction Library
+-#include <cpl_conv.h>
+-#include <gdal_priv.h>
+-#include <gdal.h>
++#include <gdal/cpl_conv.h>
++#include <gdal/gdal_priv.h>
++#include <gdal/gdal.h>
+ 
+ 
+ /// Start of CV Namespace
+diff --git a/modules/imgcodecs/src/grfmt_jpeg.cpp b/modules/imgcodecs/src/grfmt_jpeg.cpp
+index 499036cedf..6760469718 100644
+--- a/modules/imgcodecs/src/grfmt_jpeg.cpp
++++ b/modules/imgcodecs/src/grfmt_jpeg.cpp
+@@ -74,7 +74,7 @@ typedef unsigned char boolean;
+ #undef TRUE
+ 
+ extern "C" {
+-#include "jpeglib.h"
++#include <jpeg/jpeglib.h>
+ }
+ 
+ #ifndef CV_MANUAL_JPEG_STD_HUFF_TABLES
 diff --git a/modules/imgcodecs/src/grfmt_png.hpp b/modules/imgcodecs/src/grfmt_png.hpp
 index 6094139baf..c5a292cacf 100644
 --- a/modules/imgcodecs/src/grfmt_png.hpp
@@ -870,3 +940,18 @@ index 852db5f2f5..445bcc1840 100644
  
  #include "grfmt_spng.hpp"
  #include <opencv2/core/utils/logger.hpp>
+diff --git a/modules/imgcodecs/src/grfmt_tiff.cpp b/modules/imgcodecs/src/grfmt_tiff.cpp
+index 902e061e31..d1625335cd 100644
+--- a/modules/imgcodecs/src/grfmt_tiff.cpp
++++ b/modules/imgcodecs/src/grfmt_tiff.cpp
+@@ -55,8 +55,8 @@
+ #include <string>
+ #include <cstdarg>
+ 
+-#include "tiff.h"
+-#include "tiffio.h"
++#include <tiff/tiff.h>
++#include <tiff/tiffio.h>
+ 
+ #ifdef TIFFLIB_AT_LEAST
+ #if TIFFLIB_AT_LEAST(4, 5, 0)

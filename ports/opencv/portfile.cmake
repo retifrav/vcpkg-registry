@@ -18,20 +18,30 @@ set(OPENCV_PACKAGE_NAME "OpenCV")
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        # these should probably set depending on enabled modules (which should be features instead)
         with-eigen WITH_EIGEN
-        with-jpeg WITH_JPEG
-        with-png WITH_PNG
-        with-tiff WITH_TIFF
-        with-webp WITH_WEBP
+        imgcodecs  WITH_GDAL
+        imgcodecs  WITH_JPEG
+        imgcodecs  WITH_PNG
+        imgcodecs  WITH_TIFF
+        imgcodecs  WITH_WEBP
 )
+
+set(OPENCV_BUILD_LIST "core")
+foreach(OPENCV_MODULE_NAME
+    "imgproc"
+    "imgcodecs"
+)
+   if("${OPENCV_MODULE_NAME}" IN_LIST FEATURES)
+       string(APPEND OPENCV_BUILD_LIST ",${OPENCV_MODULE_NAME}")
+   endif()
+endforeach()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
         #
-        -DBUILD_LIST="core" # should probably compose this list from features
+        -DBUILD_LIST="${OPENCV_BUILD_LIST}"
         #
         -DBUILD_SHARED_LIBS=${OPENCV_BUILD_DYNAMIC}
         -DBUILD_WITH_STATIC_CRT=${OPENCV_CRT_STATIC}
@@ -80,7 +90,6 @@ vcpkg_cmake_configure(
         -DWITH_FLATBUFFERS=0
         -DWITH_FRAMEBUFFER=0
         -DWITH_FRAMEBUFFER_XVFB=0
-        -DWITH_GDAL=0
         -DWITH_GDCM=0
         -DWITH_GPHOTO2=0
         -DWITH_GSTREAMER=0

@@ -18,44 +18,28 @@
     ],
     "features":
     {
+        "imgcodecs":
+        {
+            "description": "Enable imgcodecs module",
+            "dependencies":
+            [
+                "gdal",
+                "jpeg-turbo",
+                "png",
+                "tiff",
+                "webp"
+            ]
+        },
+        "imgproc":
+        {
+            "description": "Enable imgproc module"
+        },
         "with-eigen":
         {
             "description": "Enable Eigen support",
             "dependencies":
             [
                 "eigen"
-            ]
-        },
-        "with-jpeg":
-        {
-            "description": "Enable JPEG support",
-            "dependencies":
-            [
-                "jpeg-turbo"
-            ]
-        },
-        "with-png":
-        {
-            "description": "Enable PNG support",
-            "dependencies":
-            [
-                "png"
-            ]
-        },
-        "with-tiff":
-        {
-            "description": "Enable TIFF support",
-            "dependencies":
-            [
-                "tiff"
-            ]
-        },
-        "with-webp":
-        {
-            "description": "Enable WebP support",
-            "dependencies":
-            [
-                "webp"
             ]
         }
     }
