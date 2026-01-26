@@ -7,7 +7,7 @@ if(@CURL_BROTLI@)
 endif()
 
 if(@CURL_USE_OPENSSL@)
-    find_dependency(OpenSSL REQUIRED) # no CONFIG, unfortunately
+    find_dependency(OpenSSL CONFIG REQUIRED)
 endif()
 
 if(@CURL_USE_WOLFSSL@)
