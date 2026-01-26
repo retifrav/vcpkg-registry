@@ -23,7 +23,8 @@ vcpkg_from_git(
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        enable-simd WEBP_ENABLE_SIMD
+        simd    WEBP_ENABLE_SIMD
+        webpmux WEBP_BUILD_LIBWEBPMUX
 )
 
 vcpkg_cmake_configure(
@@ -37,7 +38,6 @@ vcpkg_cmake_configure(
         -DWEBP_BUILD_FUZZTEST=0
         -DWEBP_BUILD_GIF2WEBP=0
         -DWEBP_BUILD_IMG2WEBP=0
-        -DWEBP_BUILD_LIBWEBPMUX=0
         -DWEBP_BUILD_VWEBP=0
         -DWEBP_BUILD_WEBP_JS=0
         -DWEBP_BUILD_WEBPINFO=0

@@ -1304,7 +1304,7 @@
         "webp":
         {
             "baseline": "1.5.0",
-            "port-version": 0
+            "port-version": 1
         },
         "wolfssl":
         {
