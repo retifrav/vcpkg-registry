@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d7e8963f..da07a738 100644
+index 39d3d8f6..2910bb84 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -6,11 +6,7 @@
@@ -9,13 +9,13 @@ index d7e8963f..da07a738 100644
 -if(APPLE)
 -  cmake_minimum_required(VERSION 3.17)
 -else()
--  cmake_minimum_required(VERSION 3.7)
+-  cmake_minimum_required(VERSION 3.16)
 -endif()
 +cmake_minimum_required(VERSION 3.22)
  
- if(POLICY CMP0072)
-   cmake_policy(SET CMP0072 NEW)
-@@ -24,6 +20,7 @@ if(BUILD_SHARED_LIBS)
+ project(WebP C)
+ 
+@@ -20,6 +16,7 @@ if(BUILD_SHARED_LIBS)
  else()
    set(WEBP_LINK_STATIC_DEFAULT ON)
  endif()
@@ -23,7 +23,7 @@ index d7e8963f..da07a738 100644
  option(WEBP_LINK_STATIC
         "Link using static libraries. If OFF, use dynamic libraries."
         ${WEBP_LINK_STATIC_DEFAULT})
-@@ -156,14 +153,6 @@ endif()
+@@ -161,14 +158,6 @@ endif()
  set(PTHREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
  set(INSTALLED_LIBRARIES)
  
@@ -38,7 +38,7 @@ index d7e8963f..da07a738 100644
  if(NOT WIN32)
    set(CMAKE_C_VISIBILITY_PRESET hidden)
  endif()
-@@ -344,12 +333,7 @@ install(
+@@ -349,12 +338,7 @@ install(
    TARGETS sharpyuv
    EXPORT ${PROJECT_NAME}Targets
    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/webp/sharpyuv
@@ -52,7 +52,7 @@ index d7e8963f..da07a738 100644
  
  if(MSVC)
    # avoid security warnings for e.g., fopen() used in the examples.
-@@ -785,11 +769,7 @@ install(
+@@ -790,11 +774,7 @@ install(
    TARGETS ${INSTALLED_LIBRARIES}
    EXPORT ${PROJECT_NAME}Targets
    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/webp

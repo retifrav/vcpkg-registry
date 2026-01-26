@@ -14,8 +14,8 @@ endif()
 
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
-    URL git@github.com:webmproject/libwebp.git
-    REF a4d7a715337ded4451fec90ff8ce79728e04126c
+    URL https://chromium.googlesource.com/webm/libwebp
+    REF 4fa21912338357f89e4fd51cf2368325b59e9bd9
     PATCHES
         001-installation.patch
         #002-simd.patch # not sure if this is needed

@@ -1,7 +1,6 @@
 {
     "name": "webp",
-    "version": "1.5.0",
-    "port-version": 1,
+    "version": "1.6.0",
     "description": "Encode and decode images in WebP format",
     "homepage": "https://chromium.googlesource.com/webm/libwebp",
     "license": "BSD-3-Clause",
