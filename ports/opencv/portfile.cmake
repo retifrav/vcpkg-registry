@@ -24,24 +24,40 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         imgcodecs  WITH_PNG
         imgcodecs  WITH_TIFF
         imgcodecs  WITH_WEBP
+        #videoio    WITH_FFMPEG
+        #videoio    WITH_SOME_MORE_BACKENDS?
 )
 
 set(OPENCV_BUILD_LIST "core")
 foreach(OPENCV_MODULE_NAME
-    "imgproc"
+    "flann"
     "imgcodecs"
+    "imgproc"
+    "video"
+    "videoio"
 )
    if("${OPENCV_MODULE_NAME}" IN_LIST FEATURES)
-       string(APPEND OPENCV_BUILD_LIST ",${OPENCV_MODULE_NAME}")
+       list(APPEND OPENCV_BUILD_LIST "${OPENCV_MODULE_NAME}")
    endif()
 endforeach()
+list(JOIN OPENCV_BUILD_LIST "," OPENCV_BUILD_LIST_STRING)
+
+set(OPENCV_VIDEOIO_PLUGIN_LIST "")
+# if("videoio" IN_LIST FEATURES)
+#     list(APPEND OPENCV_VIDEOIO_PLUGIN_LIST
+#         "ffmpeg"
+#         # will we need more backends?
+#     )
+# endif()
+list(JOIN OPENCV_VIDEOIO_PLUGIN_LIST "," OPENCV_VIDEOIO_PLUGIN_LIST_STRING)
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
         #
-        -DBUILD_LIST="${OPENCV_BUILD_LIST}"
+        -DBUILD_LIST="${OPENCV_BUILD_LIST_STRING}"
+        -DVIDEOIO_PLUGIN_LIST="${OPENCV_VIDEOIO_PLUGIN_LIST_STRING}"
         #
         -DBUILD_SHARED_LIBS=${OPENCV_BUILD_DYNAMIC}
         -DBUILD_WITH_STATIC_CRT=${OPENCV_CRT_STATIC}
@@ -73,6 +89,7 @@ vcpkg_cmake_configure(
         -DENABLE_PIC=0
         -DINSTALL_BIN_EXAMPLES=0
         -DINSTALL_TO_MANGLED_PATHS=0
+        -DOPENCV_FFMPEG_SKIP_DOWNLOAD=1
         -DOPENCV_GENERATE_PKGCONFIG=0
         -DOPENCV_GENERATE_SETUPVARS=0
         -DWITH_1394=0
@@ -86,7 +103,7 @@ vcpkg_cmake_configure(
         -DWITH_CAROTENE=0
         -DWITH_CLP=0
         -DWITH_CUDA=0
-        -DWITH_FFMPEG=0
+        -DWITH_FFMPEG=0 # should be controlled with `videoio` feature
         -DWITH_FLATBUFFERS=0
         -DWITH_FRAMEBUFFER=0
         -DWITH_FRAMEBUFFER_XVFB=0

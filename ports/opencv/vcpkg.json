@@ -18,6 +18,10 @@
     ],
     "features":
     {
+        "flann":
+        {
+            "description": "Enable flann module"
+        },
         "imgcodecs":
         {
             "description": "Enable imgcodecs module",
@@ -33,6 +37,14 @@
         "imgproc":
         {
             "description": "Enable imgproc module"
+        },
+        "video":
+        {
+            "description": "Enable video module"
+        },
+        "videoio":
+        {
+            "description": "Enable videoio module"
         },
         "with-eigen":
         {
