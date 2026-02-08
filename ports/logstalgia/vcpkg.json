@@ -1,9 +1,11 @@
 {
     "name": "logstalgia",
     "version": "1.1.4",
+    "port-version": 1,
     "description": "Website traffic visualization that replays or streams web-server access logs as a pong-like battle between the web server and an never ending torrent of requests",
     "homepage": "https://logstalgia.io/",
     "license": "GPL-3.0-or-later",
+    "$comment": "https://decovar.dev/blog/2019/08/17/logstalgia-windows-build/",
     "dependencies":
     [
         {
@@ -14,7 +16,10 @@
             "name": "vcpkg-cmake-config",
             "host": true
         },
-        "boost",
+        "boost-algorithm",
+        "boost-assign",
+        "boost-filesystem",
+        "boost-format",
         "freetype",
         "glew",
         "glm",
