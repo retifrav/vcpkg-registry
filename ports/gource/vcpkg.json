@@ -1,6 +1,7 @@
 {
     "name": "gource",
     "version": "0.55.0",
+    "port-version": 1,
     "description": "Visualization tool for source control repositories",
     "homepage": "https://gource.io/",
     "license": "GPL-3.0-or-later",
@@ -18,7 +19,10 @@
             "name": "decovar-vcpkg-cmake",
             "host": true
         },
-        "boost",
+        "boost-algorithm",
+        "boost-assign",
+        "boost-filesystem",
+        "boost-format",
         "freetype",
         "glew",
         "glm",
