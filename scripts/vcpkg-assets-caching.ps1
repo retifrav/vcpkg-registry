@@ -58,7 +58,7 @@ function Verify-SHA512 {
 try
 {
     Write-Output "Downloading $cacheurl"
-    $response = Invoke-WebRequest -Uri $cacheurl -Headers $headers -OutFile $Destination -ContentType $contentype
+    $response = Invoke-WebRequest -Uri $cacheurl -Headers $headers -SkipCertificateCheck -OutFile $Destination -ContentType $contentype
 }
 catch
 {
@@ -125,12 +125,12 @@ if (-not (Test-Path $Destination))
                     # or you might want to read them from some common credentials file, such as that very same .netrc
                     $password = ConvertTo-SecureString "YOUR-ARTIFACTORY-API-KEY" -AsPlainText -Force
                     $downloadCredentials = New-Object System.Management.Automation.PSCredential("YOUR-ARTIFACTORY-LOGIN", $password)
-                    $response = Invoke-WebRequest -Uri $Url -OutFile $Destination -Authentication Basic -Credential $downloadCredentials
+                    $response = Invoke-WebRequest -Uri $Url -SkipCertificateCheck -OutFile $Destination -Authentication Basic -Credential $downloadCredentials
                     # could probably also do this with `-Headers` and `X-JFrog-Art-Api` instead
                 }
                 #"some.other.domain" {
                 #    #$downloadCredentials = [...]
-                #    #$response = Invoke-WebRequest -Uri $Url -OutFile $Destination [...]
+                #    #$response = Invoke-WebRequest -Uri $Url -SkipCertificateCheck -OutFile $Destination [...]
                 #}
                 default {
                     $ProgressPreference = $ProgressPreferenceOriginal
@@ -141,7 +141,7 @@ if (-not (Test-Path $Destination))
         }
         else # no authentication, just a regular download
         {
-            $response = Invoke-WebRequest -Uri $Url -OutFile $Destination
+            $response = Invoke-WebRequest -Uri $Url -SkipCertificateCheck -OutFile $Destination
         }
     }
     catch
@@ -179,7 +179,7 @@ if (-not (Test-Path $Destination))
     Write-Output "Uploading to $cacheurl"
     try
     {
-        $response = Invoke-WebRequest -Uri $cacheurl -Method Put -Headers $headers -InFile $Destination -ContentType $contentype
+        $response = Invoke-WebRequest -Uri $cacheurl -Method Put -Headers $headers -SkipCertificateCheck -InFile $Destination -ContentType $contentype
     }
     catch
     {
