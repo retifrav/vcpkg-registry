@@ -63,11 +63,16 @@ vcpkg_cmake_configure(
         -DBUILD_STATIC_CURL=${CURL_STATIC}
         -DBUILD_STATIC_LIBS=${CURL_STATIC}
         -DBUILD_TESTING=0
-        -DCURL_USE_LIBPSL=0
+        -DCURL_USE_LIBPSL=0 # should be a feature?
+        -DCURL_USE_LIBSSH2=0 # should be a feature
+        -DCURL_USE_LIBSSH=0 # should be a feature
         -DCURL_USE_PKGCONFIG=0
         -DENABLE_CURL_MANUAL=0
         -DHTTP_ONLY=1
         -DSHARE_LIB_OBJECT=0
+        -DUSE_APPLE_IDN=0 # should be a feature?
+        -DUSE_LIBIDN2=0 # should be a feature?
+        -DUSE_NGHTTP2=0 # should be a feature?
 )
 
 vcpkg_cmake_install()

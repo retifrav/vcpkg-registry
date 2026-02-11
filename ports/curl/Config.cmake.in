@@ -22,6 +22,24 @@ if(@CURL_ZSTD@)
     find_dependency(zstd CONFIG REQUIRED)
 endif()
 
+#if(@HAVE_IDN2@)
+#    find_dependency(idn2 CONFIG REQUIRED)
+#endif()
+#
+#if(@USE_SSH@)
+#    find_dependency(ssh CONFIG REQUIRED)
+#endif()
+#
+#if(@USE_SSH2@)
+#    find_dependency(ssh2 CONFIG REQUIRED)
+#endif()
+#
+#if(@USE_NGHTTP2@)
+#    find_dependency(NGHTTP2 CONFIG REQUIRED)
+#endif()
+#
+# ...
+
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME_LOWER@Targets.cmake")
 
 check_required_components(@PROJECT_NAME@)
