@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
 
 if(NOT VCPKG_OUTPUT_FILE)
     message(FATAL_ERROR "VCPKG_OUTPUT_FILE is required to be defined")
@@ -23,7 +23,7 @@ function(escaped out_var value)
     set(${out_var} "${value}" PARENT_SCOPE)
 endfunction()
 
-# build default checklists
+# Build default checklists
 list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK
     CMAKE_CROSSCOMPILING
     CMAKE_SYSTEM_NAME
@@ -32,6 +32,7 @@ list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK
     CMAKE_SYSTEM_PROCESSOR
     CMAKE_HOST_SYSTEM_PROCESSOR
     CMAKE_SIZEOF_VOID_P
+    CMAKE_LIBRARY_PATH_FLAG
     MSVC
     MSVC_VERSION
 )
@@ -47,7 +48,7 @@ if(ANDROID)
         CMAKE_ANDROID_NDK_VERSION
         CMAKE_ANDROID_STL_TYPE
     )
-    # forward legacy variables from older NDKs
+    # Forward legacy variables from older NDKs
     if("${CMAKE_ANDROID_ARCH}" STREQUAL "")
         set(CMAKE_ANDROID_ARCH "${ANDROID_ARCH_NAME}")
     endif()
@@ -65,8 +66,8 @@ if(APPLE)
     )
 endif()
 
-# programs to check
-set(PROGLIST AR RANLIB STRIP NM OBJDUMP DLLTOOL MT LINKER)
+# Programs to check
+set(PROGLIST AR DLLTOOL LINKER MT NM OBJCOPY OBJDUMP RANLIB STRIP)
 foreach(prog IN LISTS PROGLIST)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${prog})
 endforeach()
@@ -74,10 +75,11 @@ set(COMPILERS ${VCPKG_LANGUAGES} RC)
 foreach(prog IN LISTS COMPILERS)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${prog}_COMPILER)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${prog}_COMPILER_ID)
+    list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${prog}_COMPILER_VERSION)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${prog}_COMPILER_FRONTEND_VARIANT)
 endforeach()
 
-# variables to check
+# Variables to check
 foreach(_lang IN LISTS VCPKG_LANGUAGES)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_STANDARD_INCLUDE_DIRECTORIES)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_STANDARD_LIBRARIES)
@@ -85,33 +87,39 @@ foreach(_lang IN LISTS VCPKG_LANGUAGES)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_COMPILE_FEATURES)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_EXTENSION)
     list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_COMPILER_TARGET)
-    # probably never required since implicit
-    #list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
-    #list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_INCLUDE_DIRECTORIES)
-    #list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_LINK_DIRECTORIES)
-    #list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_LINK_LIBRARIES)
+    list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES)
+    list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_INCLUDE_DIRECTORIES)
+    list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_LINK_DIRECTORIES)
+    list(APPEND VCPKG_DEFAULT_VARS_TO_CHECK CMAKE_${_lang}_IMPLICIT_LINK_LIBRARIES)
 endforeach()
 list(REMOVE_DUPLICATES VCPKG_DEFAULT_VARS_TO_CHECK)
 
-# environment variables to check
-list(APPEND VCPKG_DEFAULT_ENV_VARS_TO_CHECK PATH INCLUDE C_INCLUDE_PATH CPLUS_INCLUDE_PATH LIB LIBPATH LIBRARY_PATH LD_LIBRARY_PATH)
+# Environment variables to check
+list(APPEND VCPKG_DEFAULT_ENV_VARS_TO_CHECK PATH
+    INCLUDE
+    C_INCLUDE_PATH
+    CPLUS_INCLUDE_PATH
+    LIB
+    LIBPATH
+    LIBRARY_PATH
+    LD_LIBRARY_PATH
+)
 list(REMOVE_DUPLICATES VCPKG_DEFAULT_ENV_VARS_TO_CHECK)
 
-# flags to check
-# these are a bit special, since they are configuration aware
+# Flags to check (these are a bit special since they are configuration aware)
 set(FLAGS ${VCPKG_LANGUAGES} RC SHARED_LINKER STATIC_LINKER EXE_LINKER)
 foreach(flag IN LISTS FLAGS)
     list(APPEND VCPKG_DEFAULT_FLAGS_TO_CHECK CMAKE_${flag}_FLAGS)
 endforeach()
 list(REMOVE_DUPLICATES VCPKG_DEFAULT_FLAGS_TO_CHECK)
 
-# language-specific flags
+# Language-specific flags
 foreach(_lang IN LISTS VCPKG_LANGUAGES)
     list(APPEND VCPKG_LANG_FLAGS CMAKE_${_lang}_FLAGS)
 endforeach()
 list(REMOVE_DUPLICATES VCPKG_LANG_FLAGS)
 
-# TODO, if ever necessary: properties to check
+# Properties to check (if ever necessary)
 
 set(VCPKG_VAR_PREFIX "VCPKG_DETECTED" CACHE STRING "Variable prefix to use for detected flags")
 set(VCPKG_VARS_TO_CHECK "${VCPKG_DEFAULT_VARS_TO_CHECK}" CACHE STRING "Variables to check. If not given there is a list of defaults")
@@ -151,7 +159,7 @@ endif()
 set(target_param "")
 list(GET VCPKG_LANGUAGES 0 lang)
 if(CMAKE_${lang}_COMPILER_TARGET)
-    if (CMAKE_${lang}_COMPILER_ID STREQUAL Clang)
+    if(CMAKE_${lang}_COMPILER_ID STREQUAL Clang)
         set(target_param "${CMAKE_${lang}_COMPILE_OPTIONS_TARGET}${CMAKE_${lang}_COMPILER_TARGET}")
     elseif(CMAKE_${lang}_COMPILE_OPTIONS_TARGET)
         set(target_param "${CMAKE_${lang}_COMPILE_OPTIONS_TARGET} ${CMAKE_${lang}_COMPILER_TARGET}")
@@ -164,12 +172,37 @@ if(CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN)
         string(APPEND EXTRA_FLAGS " ${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN} \"${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}\"")
     endif()
 endif()
-if(CMAKE_SYSROOT AND CMAKE_CXX_COMPILE_OPTIONS_SYSROOT)
-    string(APPEND EXTRA_FLAGS " \"${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT}\"")
+
+set(extra_flags_compile "")
+set(extra_flags_link "")
+if(CMAKE_CXX_COMPILE_OPTIONS_SYSROOT)
+    if(CMAKE_SYSROOT_COMPILE)
+        string(APPEND extra_flags_compile " \"${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT_COMPILE}\"")
+    elseif(CMAKE_SYSROOT)
+        string(APPEND extra_flags_compile " \"${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT}\"")
+    endif()
+
+    if(CMAKE_SYSROOT_LINK)
+        string(APPEND extra_flags_link " \"${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT_LINK}\"")
+    elseif(CMAKE_SYSROOT)
+        string(APPEND extra_flags_link " \"${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT}\"")
+    endif()
 endif()
 
-foreach(flags ${VCPKG_LANGUAGES} SHARED_LINKER EXE_LINKER STATIC_LINKER MODULE_LINKER)
+set(flags_to_add_target_compile "${VCPKG_LANGUAGES}")
+set(flags_to_add_target_link SHARED_LINKER EXE_LINKER STATIC_LINKER MODULE_LINKER)
+
+foreach(flags IN LISTS flags_to_add_target_compile flags_to_add_target_link)
     set(${flags}_FLAGS "${target_param} ${CMAKE_${flags}_FLAGS} ${CMAKE_${flags}_FLAGS_${VCPKG_CONFIGS}} ${EXTRA_FLAGS}")
+endforeach()
+
+foreach(flags IN LISTS flags_to_add_target_compile)
+    string(APPEND ${flags}_FLAGS " ${extra_flags_compile}")
+    string(STRIP ${flags}_FLAGS "${${flags}_FLAGS}")
+endforeach()
+
+foreach(flags IN LISTS flags_to_add_target_link)
+    string(APPEND ${flags}_FLAGS " ${extra_flags_link}")
     string(STRIP ${flags}_FLAGS "${${flags}_FLAGS}")
 endforeach()
 
@@ -187,12 +220,11 @@ foreach(incdir IN LISTS CMAKE_C_STANDARD_INCLUDE_DIRECTORIES)
 endforeach()
 
 foreach(flag ${VCPKG_LANGUAGES} SHARED_LINKER EXE_LINKER STATIC_LINKER MODULE_LINKER RC)
-    # when using MSVC, maybe transform /flags to -flags
-    #
+    # when using MSVC, maybe transform /flags to -flags,
     # when cross compiling, "/flags" may be an absolute path starting with /, so don't transform,
     # otherwise, transform to improve compatibility with scripts interpreting "/flags" as a path
     if(MSVC AND "${CMAKE_HOST_SYSTEM_NAME}" MATCHES "Windows")
-        # this implementation is imperfect, because it fails on directories with trailing spaces,
+        # This implementation is imperfect because it fails on directories with trailing spaces,
         # but those are rare
         string(REGEX REPLACE "(^| )/" "\\1-" ${flag}_FLAGS "${${flag}_FLAGS}")
         if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
@@ -207,8 +239,7 @@ endforeach()
 
 file(WRITE "${VCPKG_OUTPUT_FILE}" "${OUTPUT_STRING}")
 
-# programs
-#
+# Programs:
 # CMAKE_AR
 # CMAKE_<LANG>_COMPILER_AR (Wrapper)
 # CMAKE_RANLIB
@@ -223,14 +254,13 @@ file(WRITE "${VCPKG_OUTPUT_FILE}" "${OUTPUT_STRING}")
 # CMAKE_CXX_COMPILER
 # CMAKE_RC_COMPILER
 
-# program details
-#
+# Program details:
 # CMAKE_<LANG>_COMPILER_ID
+# CMAKE_<LANG>_COMPILER_VERSION
 # MSVC
 # MSVC_VERSION
 
-# flags
-#
+# Flags:
 # CMAKE_<LANG>_FLAGS
 # CMAKE_<LANG>_FLAGS_<CONFIG>
 # CMAKE_RC_FLAGS
@@ -241,8 +271,7 @@ file(WRITE "${VCPKG_OUTPUT_FILE}" "${OUTPUT_STRING}")
 # CMAKE_EXE_LINKER_FLAGS
 # CMAKE_EXE_LINKER_FLAGS_<CONFIG>
 
-# additional information
-#
+# Additional information:
 # CMAKE_SIZEOF_VOID_P
 # CMAKE_CROSSCOMPILING
 # CMAKE_SYSTEM_NAME
