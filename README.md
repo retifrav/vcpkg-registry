@@ -11,7 +11,6 @@ Although a good portion of the ports here are based on the ports from the [Micro
     - [Installing ports in a dummy project](#installing-ports-in-a-dummy-project)
     - [Resolving dependencies in an actual project](#resolving-dependencies-in-an-actual-project)
     - [Custom triplets](#custom-triplets)
-- [Branches](#branches)
 - [Non-development ports](#non-development-ports)
     - [reSL](#resl)
     - [Logstalgia](#logstalgia)
@@ -193,11 +192,6 @@ $ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     ..
 $ cmake --build .
 ```
-
-## Branches
-
-- `master` - ready to use, tested ports;
-- `experimental` - drafts, scraps and experiments, ports from this branch are not done and are unlikely to work.
 
 ## Non-development ports
 
