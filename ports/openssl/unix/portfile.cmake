@@ -29,11 +29,38 @@ if(NOT perl_ipc_cmd_result STREQUAL "0")
     message(FATAL_ERROR "\nPerl cannot find IPC::Cmd. Install it through your system package manager\n")
 endif()
 
+#message(STATUS "Z_VCPKG_CMAKE_GET_VARS_FILE_LAST_LOADED: ${Z_VCPKG_CMAKE_GET_VARS_FILE_LAST_LOADED}")
+#unset(Z_VCPKG_CMAKE_GET_VARS_FILE_LAST_LOADED CACHE)
+#message(STATUS "Z_VCPKG_CMAKE_GET_VARS_FILE_LAST_LOADED: ${Z_VCPKG_CMAKE_GET_VARS_FILE_LAST_LOADED}")
+#
+#set(languages C CXX ${arg_ADDITIONAL_LANGUAGES})
+#list(SORT languages)
+#list(REMOVE_DUPLICATES languages)
+#string(MAKE_C_IDENTIFIER "_${languages}" configuration_suffix)
+#message(STATUS "Z_VCPKG_CMAKE_GET_VARS_FILE${configuration_suffix}: ${Z_VCPKG_CMAKE_GET_VARS_FILE${configuration_suffix}}")
+#unset(Z_VCPKG_CMAKE_GET_VARS_FILE${configuration_suffix} CACHE)
+#message(STATUS "Z_VCPKG_CMAKE_GET_VARS_FILE${configuration_suffix}: ${Z_VCPKG_CMAKE_GET_VARS_FILE${configuration_suffix}}")
+#
 # ideally, OpenSSL should use `CC` from vcpkg as is (absolute path),
 # but in reality OpenSSL expects to locate the compiler via `PATH`,
 # and it makes its own choices e.g. for Android
 vcpkg_cmake_get_vars(cmake_vars_file)
+message(STATUS "cmake_vars_file: ${cmake_vars_file}")
 include("${cmake_vars_file}")
+if(
+    NEED_TO_PRODUCE_UNIVERSAL_BINARY_FOR_APPLE
+    AND
+    VCPKG_DETECTED_CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$"
+    AND
+    VCPKG_TARGET_ARCHITECTURE MATCHES "^(x64|arm64|riscv64|ppc64le)$"
+)
+    if(NOT "enable-ec_nistp_64_gcc_128" IN_LIST CONFIGURE_OPTIONS)
+        message(STATUS "enable-ec_nistp_64_gcc_128 was not in CONFIGURE_OPTIONS, adding it")
+        vcpkg_list(APPEND CONFIGURE_OPTIONS enable-ec_nistp_64_gcc_128)
+    else()
+        message(STATUS "enable-ec_nistp_64_gcc_128 was already in CONFIGURE_OPTIONS, no need to add it again")
+    endif()
+endif()
 cmake_path(GET VCPKG_DETECTED_CMAKE_C_COMPILER PARENT_PATH compiler_path)
 cmake_path(GET VCPKG_DETECTED_CMAKE_C_COMPILER FILENAME compiler_name)
 find_program(compiler_in_path NAMES "${compiler_name}" PATHS ENV PATH NO_DEFAULT_PATH)
@@ -120,6 +147,12 @@ else()
     message(FATAL_ERROR "Unknown platform")
 endif()
 
+message(STATUS "MAKEFILE_OPTIONS: ${MAKEFILE_OPTIONS}")
+message(STATUS "INTERPRETER: ${INTERPRETER}")
+message(STATUS "SOURCE_PATH: ${SOURCE_PATH}/Configure")
+message(STATUS "OPENSSL_ARCH: ${OPENSSL_ARCH}")
+message(STATUS "CONFIGURE_OPTIONS: ${CONFIGURE_OPTIONS}")
+
 file(MAKE_DIRECTORY "${SOURCE_PATH}/vcpkg")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/configure" DESTINATION "${SOURCE_PATH}/vcpkg")
 vcpkg_configure_make(
@@ -172,3 +205,15 @@ if(NOT engines STREQUAL "")
     file(COPY ${engines} DESTINATION "${CURRENT_PACKAGES_DIR}/debug/bin")
     file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/lib/ossl-modules")
 endif()
+
+# if(NEED_TO_PRODUCE_UNIVERSAL_BINARY_FOR_APPLE)
+#     message(STATUS "Deleting cmake-vars files")
+#     file(GLOB CMAKE_GET_VARS_FILES
+#         #"${CURRENT_BUILDTREES_DIR}/cmake-vars*.log"
+#         "${CURRENT_BUILDTREES_DIR}/cmake-get-vars*.log"
+#         #"${CURRENT_BUILDTREES_DIR}/get-cmake-vars*.log"
+#     )
+#     file(REMOVE ${CMAKE_GET_VARS_FILES})
+# else()
+#     message(STATUS "No(?) need to deleting cmake-vars files")
+# endif()
