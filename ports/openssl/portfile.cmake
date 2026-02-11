@@ -13,12 +13,11 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:openssl/openssl.git
-    REF 7b371d80d959ec9ab4139d09d78e83c090de9779 # "openssl-${VERSION}"
+    REF c9a9e5b10105ad850b6e4d1122c645c67767c341 # "openssl-${VERSION}"
     PATCHES
         cmake-config.patch
         command-line-length.patch
         script-prefix.patch
-        aes_cfb128_vaes_encdec_wrapper.diff # https://github.com/openssl/openssl/issues/28745
         windows/install-layout.patch
         windows/install-pdbs.patch
         windows/install-programs.diff # https://github.com/openssl/openssl/issues/28744
