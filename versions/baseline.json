@@ -1311,6 +1311,11 @@
             "baseline": "1.6.0",
             "port-version": 0
         },
+        "websocketpp":
+        {
+            "baseline": "0.8.2",
+            "port-version": 0
+        },
         "wolfssl":
         {
             "baseline": "5.8.4",
