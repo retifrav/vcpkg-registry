@@ -1,0 +1,49 @@
+{
+    "name": "asio",
+    "version": "1.32.0",
+    "description": "Network and low-level I/O programming that provides developers with a consistent asynchronous model using a modern C++ approach",
+    "homepage": "https://think-async.com/Asio/",
+    "license": "BSL-1.0",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ],
+    "features":
+    {
+        "coroutine":
+        {
+            "description": "Enable launching coroutines with spawn()",
+            "dependencies":
+            [
+                "boost-coroutine"
+            ]
+        },
+        "ssl":
+        {
+            "description": "Enabled SSL support",
+            "dependencies":
+            [
+                "openssl"
+            ]
+        },
+        "regex":
+        {
+            "description": "Enable using read_until() or async_read_until() overloads with regular expressions",
+            "dependencies":
+            [
+                "boost-regex"
+            ]
+        }
+    }
+}
