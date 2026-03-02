@@ -15,6 +15,7 @@ For executing Python scripts, the following packages are expected to be installe
 ``` sh
 $ pip install \
     colorama \
+    license-expression \
     pandas \
     pandera \
     tabulate
@@ -54,13 +55,11 @@ More details [here](https://decovar.dev/blog/2022/10/30/cpp-dependencies-with-vc
 
 ## license-based-todos
 
-To print a list of license-based ToDos:
+To get an overview of license-related issues and tasks:
 
 ``` sh
 $ cd /path/to/vcpkg-registry
 $ python ./scripts/license-based-todos.py
-...
-[INFO] Ports that require publishing patches (total 1): datachannel
 ```
 
 ## add-new-version
