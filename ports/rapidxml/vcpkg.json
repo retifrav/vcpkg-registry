@@ -3,6 +3,7 @@
     "version": "1.13.0",
     "description": "An attempt to create the fastest XML parser possible, while retaining usability, portability and reasonable W3C compatibility",
     "homepage": "https://sourceforge.net/projects/rapidxml/",
+    "license": "MIT OR BSL-1.0",
     "dependencies":
     [
         {
