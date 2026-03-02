@@ -3,6 +3,7 @@
     "version": "1.5.6",
     "description": "Fast real-time compression algorithm",
     "homepage": "https://facebook.github.io/zstd/",
+    "license": "BSD-3-Clause OR GPL-2.0-only",
     "dependencies":
     [
         {
