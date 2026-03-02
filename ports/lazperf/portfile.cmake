@@ -7,7 +7,7 @@ vcpkg_from_git(
 )
 
 file(REMOVE
-    "${SOURCE_PATH}/cmake/install"
+    "${SOURCE_PATH}/cmake/install.cmake"
     "${SOURCE_PATH}/cpp/lazperf/lazperf_user_base.hpp"
 )
 
