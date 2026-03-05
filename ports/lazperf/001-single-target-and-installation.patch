@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0a1b236..099f1b6 100644
+index 0a1b236..0e70351 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,31 +1,38 @@
+@@ -1,31 +1,48 @@
 -cmake_minimum_required(VERSION 3.13)
 +cmake_minimum_required(VERSION 3.22)
  
@@ -19,14 +19,25 @@ index 0a1b236..099f1b6 100644
  set(ROOT_DIR ${PROJECT_SOURCE_DIR})
  include(${ROOT_DIR}/cmake/common.cmake NO_POLICY_SCOPE)
 -include(${ROOT_DIR}/cmake/gtest.cmake)
-+
+ 
+-set(CMAKE_CXX_STANDARD 17)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 +if(WITH_TESTS)
 +    include(${ROOT_DIR}/cmake/gtest.cmake)
 +endif()
- 
- set(CMAKE_CXX_STANDARD 17)
--set(CMAKE_CXX_STANDARD_REQUIRED ON)
++
++set(REQUIRED_CPP_STANDARD 17 CACHE STRING "Required C++ standard")
++if(DEFINED CMAKE_CXX_STANDARD)
++    if(CMAKE_CXX_STANDARD LESS ${REQUIRED_CPP_STANDARD})
++        message(FATAL_ERROR "This project requires at least C++${REQUIRED_CPP_STANDARD}")
++    endif()
++else()
++    set(CMAKE_CXX_STANDARD ${REQUIRED_CPP_STANDARD})
++endif()
 +set(CMAKE_CXX_STANDARD_REQUIRED YES)
++if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
++    set(CMAKE_CXX_EXTENSIONS NO)
++endif()
  
  # Allow advanced users to generate Makefiles printing detailed commands
  mark_as_advanced(CMAKE_VERBOSE_MAKEFILE)
@@ -106,10 +117,13 @@ index 497213f..a947652 100644
          -DWIN32_LEAN_AND_MEAN)
      if (MSVC)
 diff --git a/cpp/CMakeLists.txt b/cpp/CMakeLists.txt
-index 60da7f3..02f4ed9 100644
+index 60da7f3..910182d 100644
 --- a/cpp/CMakeLists.txt
 +++ b/cpp/CMakeLists.txt
-@@ -4,37 +4,28 @@ file(GLOB SRCS
+@@ -1,40 +1,47 @@
+-
+ file(GLOB SRCS
+     lazperf/*.cpp
      lazperf/detail/*.cpp
  )
  
@@ -135,7 +149,23 @@ index 60da7f3..02f4ed9 100644
 -        lazperf/writers.hpp
 -    DESTINATION
 -        include/lazperf
--)
++
++include(GenerateExportHeader)
++generate_export_header(${PROJECT_NAME}
++    # overwrite the default handicapped header
++    EXPORT_FILE_NAME "${CMAKE_CURRENT_SOURCE_DIR}/lazperf/lazperf_base.hpp"
++)
++
++target_include_directories(${PROJECT_NAME}
++    PRIVATE
++        # where the library itself will look for its internal headers
++        ${CMAKE_CURRENT_SOURCE_DIR}/lazperf
++    PUBLIC
++        # where top-level project will look for the library's public headers
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
++        # where external projects will look for the library's public headers
++        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+ )
 -install(
 -    FILES
 -        lazperf/lazperf_user_base.hpp
@@ -166,10 +196,12 @@ index 60da7f3..02f4ed9 100644
      add_subdirectory(emscripten)
  endif()
  
-@@ -44,3 +35,7 @@ if (WITH_TESTS)
+@@ -44,3 +51,9 @@ if (WITH_TESTS)
      add_subdirectory(examples)
  endif()
  
++target_compile_features(${PROJECT_NAME} PUBLIC "cxx_std_${REQUIRED_CPP_STANDARD}")
++
 +set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 +
 +set(PROJECT_NAMESPACE_FOR_PACKAGE "LAZPERF")
@@ -214,50 +246,6 @@ index f422e39..473a8b7 100644
  	SET_TARGET_PROPERTIES(point10 PROPERTIES SUFFIX .js)
  	SET_TARGET_PROPERTIES(readlaz PROPERTIES SUFFIX .js)
  endif()
-diff --git a/cpp/lazperf/lazperf_base.hpp b/cpp/lazperf/lazperf_base.hpp
-index f57fa6f..94633d9 100644
---- a/cpp/lazperf/lazperf_base.hpp
-+++ b/cpp/lazperf/lazperf_base.hpp
-@@ -1,18 +1,24 @@
-+#ifndef LAZPERF_BASE_HPP
-+#define LAZPERF_BASE_HPP
- 
--#pragma once
--
--#define LAZPERF_MAJOR_VERSION 3
--#define LAZPERF_MINOR_VERSION 2
--#define LAZPERF_REVISION 0
--#define LAZPERF_VERSION 3.2.0
--
--#ifndef LAZPERF_VENDORED
--#ifdef _WIN32
--#define LAZPERF_EXPORT __declspec(dllexport)
--#else
--// This may not be necessary. The GCC doc says it take __declspec((dllexport))
--#define LAZPERF_EXPORT __attribute__((visibility ("default")))
-+#ifdef lazperf_EXPORTS // CMake sets that when BUILD_SHARED_LIBS=1
-+    #ifdef _MSC_VER // or `_WIN32`?
-+        // export on compiling the DLL (when building)
-+        #define LAZPERF_EXPORT __declspec(dllexport)
-+    //#elif __GNUC__ >= 4 // for GCC
-+    //    #define LAZPERF_EXPORT __attribute__ ((visibility("default")))
-+    #endif // any other compilers require anything like that?
-+// #else // these are failing when building a static variant with the error `definition of dllimport static data member not allowed`
-+//     #ifdef _MSC_VER // or `_WIN32`?
-+//         // import on using the created DLL (when using in projects)
-+//         #define LAZPERF_EXPORT __declspec(dllimport)
-+//     //#elif __GNUC__ >= 4 // for GCC
-+//     //    // something here for GCC?
-+//     #endif // any other compilers require anything like that?
- #endif
--#else
--#define LAZPERF_EXPORT 
-+
-+#ifndef LAZPERF_EXPORT
-+    #define LAZPERF_EXPORT // so it doesn't fail being undefined
- #endif
-+
-+#endif // LAZPERF_BASE_HPP
 diff --git a/cpp/test/CMakeLists.txt b/cpp/test/CMakeLists.txt
 index a907a8c..3e6dc33 100644
 --- a/cpp/test/CMakeLists.txt
