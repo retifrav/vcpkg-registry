@@ -79,6 +79,9 @@ macro(decovar_vcpkg_cmake_git_clone_sparse_checkout
             )
         endif()
     else()
+        # note that if you'll make changes in `SPARSE_CLONE_CHECKOUT_PATHS`,
+        # then they won't be reflected here, as it resets an existing repository,
+        # so you'll need to actually delete it
         message(STATUS "There is already a local clone of the repository, will reset and clean it up")
         #
         message(STATUS "+ resetting")
