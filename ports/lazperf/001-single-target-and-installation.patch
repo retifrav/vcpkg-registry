@@ -63,7 +63,7 @@ index b94f4eb..e6dc146 100644
 -    endif()
  endfunction()
 diff --git a/cmake/unix_compiler_options.cmake b/cmake/unix_compiler_options.cmake
-index fa85a8d..953e906 100644
+index fa85a8d..118032e 100644
 --- a/cmake/unix_compiler_options.cmake
 +++ b/cmake/unix_compiler_options.cmake
 @@ -1,6 +1,4 @@
@@ -73,6 +73,25 @@ index fa85a8d..953e906 100644
      if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
          #
          # VERSION_GREATER_EQUAL doesn't come until cmake 3.7
+@@ -46,11 +44,12 @@ endfunction()
+ 
+ function(lazperf_library_compile_settings lib type)
+     lazperf_target_compile_settings(${lib})
+-    if (${type} STREQUAL "SHARED")
+-        target_compile_options(${lib} PRIVATE
+-            -fvisibility=hidden
+-            -fvisibility-inlines-hidden
+-        )
+-    endif()
++    # wtf
++    #if (${type} STREQUAL "SHARED")
++    #    target_compile_options(${lib} PRIVATE
++    #        -fvisibility=hidden
++    #        -fvisibility-inlines-hidden
++    #    )
++    #endif()
+ endfunction()
+ 
 diff --git a/cmake/win32_compiler_options.cmake b/cmake/win32_compiler_options.cmake
 index 497213f..a947652 100644
 --- a/cmake/win32_compiler_options.cmake
