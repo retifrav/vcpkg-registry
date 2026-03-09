@@ -123,6 +123,10 @@ if("in-memory-vfs" IN_LIST FEATURES)
     #
     # might need to come up with a better(?) way of compiling this source file
     # in the consuming project, perhaps it should be built together with SQLite sources?
+    #
+    # Or perhaps there should be an INTERFACE target with this source file? Or add it to the main
+    # target with INTERFACE_SOURCES?
+    # https://discourse.cmake.org/t/best-way-to-have-a-library-package-install-a-main-cpp-and-run-add-executable-in-context-of-user-project-when-it-calls-my-cmake-function/11200/4
     file(
         INSTALL "${MEMVFS_FILE_DOWNLOADED}"
         DESTINATION "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
