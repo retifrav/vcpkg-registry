@@ -1,6 +1,7 @@
 {
     "name": "curl",
     "version": "8.18.0",
+    "port-version": 1,
     "description": "Library for transferring data with URL syntax",
     "homepage": "https://curl.se/",
     "license": "curl AND ISC AND BSD-3-Clause",
@@ -21,8 +22,9 @@
     ],
     "default-features":
     [
-        "ssl",
-        "zlib"
+        "wolfssl",
+        "zlib",
+        "zstd"
     ],
     "features":
     {
