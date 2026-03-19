@@ -1,0 +1,44 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2296a0e41..6358c68bf 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -17,6 +17,10 @@ cmake_minimum_required(VERSION 3.22)
+ # Defer enabling C and CXX languages.
+ project(BoringSSL NONE)
+ 
++option(BUILD_TOOLS "Build BoringSSL tool(s)" 0)
++
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
+ # Don't install BoringSSL to system directories by default; it has no stable
+ # ABI. Instead, default to an "install" directory under the source.
+ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+@@ -765,8 +769,10 @@ if(FIPS)
+   target_link_libraries(entropy_modulewrapper crypto)
+ endif()
+ 
+-add_executable(bssl ${BSSL_SOURCES})
+-target_link_libraries(bssl ssl crypto)
++if(BUILD_TOOLS)
++    add_executable(bssl ${BSSL_SOURCES})
++    target_link_libraries(bssl ssl crypto)
++endif()
+ 
+ if(FUZZ)
+   # TODO(crbug.com/42290412): Drive this build with build.json and flatten.
+@@ -860,11 +866,14 @@ endif()
+ 
+ if(INSTALL_ENABLED)
+   install(TARGETS crypto ssl EXPORT OpenSSLTargets)
+-  install(TARGETS bssl)
+   install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+   install(EXPORT OpenSSLTargets
+           FILE OpenSSLTargets.cmake
+           NAMESPACE OpenSSL::
+           DESTINATION lib/cmake/OpenSSL)
+   install(FILES cmake/OpenSSLConfig.cmake DESTINATION lib/cmake/OpenSSL)
++
++  if(BUILD_TOOLS)
++    install(TARGETS bssl CONFIGURATIONS Release)
++  endif()
+ endif()

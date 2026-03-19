@@ -831,6 +831,11 @@
             "baseline": "1.90.0",
             "port-version": 0
         },
+        "boringssl":
+        {
+            "baseline": "2026.2.11",
+            "port-version": 0
+        },
         "brotli":
         {
             "baseline": "1.1.0",
