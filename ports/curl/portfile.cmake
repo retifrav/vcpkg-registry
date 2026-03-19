@@ -1,3 +1,11 @@
+# BoringSSL is a replacement for OpenSSL with the same targets and headers
+if("boringssl" IN_LIST FEATURES AND "openssl" IN_LIST FEATURES)
+    message(
+        FATAL_ERROR
+            "Can't have both BoringSSL and OpenSSL, you need to choose one"
+    )
+endif()
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:curl/curl.git
@@ -14,6 +22,7 @@ file(COPY
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
+        boringssl   HAVE_BORINGSSL
         brotli      CURL_BROTLI
         openssl     CURL_CA_FALLBACK
         openssl     CURL_USE_OPENSSL
@@ -31,9 +40,28 @@ if(
     NOT "http3" IN_LIST FEATURES
     AND
     # `(windows & !uwp) | mingw` to match curl[ssl] platform
-    ((VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_UWP) OR VCPKG_TARGET_IS_MINGW))
+    (
+        (VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_UWP)
+        OR
+        VCPKG_TARGET_IS_MINGW
+    )
+)
     list(APPEND FEATURE_OPTIONS
         -DCURL_USE_SCHANNEL=1
+    )
+endif()
+
+# since both `boringssl` and `openssl` features are already guarded for,
+# it means that `openssl`-specific options are explicitly set to `OFF` in `vcpkg_check_features()`,
+# so now we need them set to `ON`/`1`
+if("boringssl" IN_LIST FEATURES)
+    list(REMOVE_ITEM FEATURE_OPTIONS
+        -DCURL_CA_FALLBACK=OFF
+        -DCURL_USE_OPENSSL=OFF
+    )
+    list(APPEND FEATURE_OPTIONS
+        "-DCURL_CA_FALLBACK=1" # should this be here too or only for `openssl`?
+        "-DCURL_USE_OPENSSL=1"
     )
 endif()
 
@@ -73,6 +101,8 @@ vcpkg_cmake_configure(
         -DUSE_APPLE_IDN=0 # should be a feature?
         -DUSE_LIBIDN2=0 # should be a feature?
         -DUSE_NGHTTP2=0 # should be a feature?
+    MAYBE_UNUSED_VARIABLES
+        HAVE_BORINGSSL
 )
 
 vcpkg_cmake_install()

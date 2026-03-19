@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8e5383ac98..26e8adcebf 100644
+index 8e5383ac98..8ca43f630c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -22,7 +22,7 @@
@@ -99,7 +99,30 @@ index 8e5383ac98..26e8adcebf 100644
  
  # Lib flavour selected for example and test programs.
  if(BUILD_SHARED_LIBS)
-@@ -819,10 +814,10 @@ if(CURL_USE_MBEDTLS)
+@@ -746,7 +741,7 @@ if(_use_core_foundation_and_core_services)
+ endif()
+ 
+ if(CURL_USE_OPENSSL)
+-  find_package(OpenSSL REQUIRED)
++  find_package(OpenSSL CONFIG REQUIRED)
+   set(_ssl_enabled ON)
+   set(USE_OPENSSL ON)
+ 
+@@ -774,7 +769,12 @@ if(CURL_USE_OPENSSL)
+   cmake_pop_check_state()
+ 
+   if(HAVE_BORINGSSL OR HAVE_AWSLC)
+-    if(OPENSSL_USE_STATIC_LIBS AND CMAKE_C_COMPILER_ID MATCHES "Clang")
++    #if(OPENSSL_USE_STATIC_LIBS AND CMAKE_C_COMPILER_ID MATCHES "Clang")
++    # BoringSSL expects C++ runtime environment:
++    # https://mailman.nginx.org/pipermail/nginx/2024-February/5N5IXG7BI66D5AIKORCYPVVVJTZYMUR6.html
++    # but is it the same for AWS-LC?
++    get_target_property(BORINGSSL_TARGET_TYPE OpenSSL::SSL TYPE)
++    if(BORINGSSL_TARGET_TYPE STREQUAL "STATIC_LIBRARY")
+       list(APPEND CURL_LIBS "stdc++")
+       list(APPEND CMAKE_REQUIRED_LIBRARIES "stdc++")
+     endif()
+@@ -819,10 +819,10 @@ if(CURL_USE_MBEDTLS)
  endif()
  
  if(CURL_USE_WOLFSSL)
@@ -112,7 +135,7 @@ index 8e5383ac98..26e8adcebf 100644
  
    if(CURL_DEFAULT_SSL_BACKEND AND CURL_DEFAULT_SSL_BACKEND STREQUAL "wolfssl")
      set(_valid_default_ssl_backend TRUE)
-@@ -886,32 +881,35 @@ endif()
+@@ -886,32 +886,35 @@ endif()
  # Keep ZLIB detection after TLS detection,
  # and before calling curl_openssl_check_exists().
  
@@ -174,7 +197,7 @@ index 8e5383ac98..26e8adcebf 100644
  endif()
  
  # Check function in an OpenSSL-like TLS backend.
-@@ -921,16 +919,16 @@ macro(curl_openssl_check_exists)
+@@ -921,16 +924,16 @@ macro(curl_openssl_check_exists)
      list(APPEND CMAKE_REQUIRED_LIBRARIES OpenSSL::SSL OpenSSL::Crypto)
      list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DOPENSSL_SUPPRESS_DEPRECATED")  # for SSL_CTX_set_srp_username deprecated since 3.0.0
      if(HAVE_LIBZ)
@@ -194,7 +217,7 @@ index 8e5383ac98..26e8adcebf 100644
      endif()
      list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DHAVE_UINTPTR_T")  # to pull in stdint.h (as of wolfSSL v5.5.4)
    endif()
-@@ -1799,7 +1797,7 @@ endif()
+@@ -1799,7 +1802,7 @@ endif()
  # before dependencies detected via curl's custom Find modules, and breaks
  # linkers sensitive to lib order. There must be a better solution to this.
  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -203,7 +226,7 @@ index 8e5383ac98..26e8adcebf 100644
      if(TARGET "${_lib}")
        add_library(CURL::${_lib} INTERFACE IMPORTED)
        get_target_property(_libname "${_lib}" LOCATION)
-@@ -1854,14 +1852,6 @@ function(curl_transform_makefile_inc _input_file _output_file)
+@@ -1854,14 +1857,6 @@ function(curl_transform_makefile_inc _input_file _output_file)
    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_input_file}")
  endfunction()
  
@@ -218,7 +241,7 @@ index 8e5383ac98..26e8adcebf 100644
  option(BUILD_TESTING "Build tests" ON)
  if(BUILD_TESTING AND Perl_FOUND)
    set(CURL_BUILD_TESTING ON)
-@@ -2033,372 +2023,18 @@ if(CURL_DEFAULT_SSL_BACKEND)
+@@ -2033,372 +2028,18 @@ if(CURL_DEFAULT_SSL_BACKEND)
    message(STATUS "Default SSL backend: ${CURL_DEFAULT_SSL_BACKEND}")
  endif()
  

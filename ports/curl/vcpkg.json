@@ -28,6 +28,14 @@
     ],
     "features":
     {
+        "boringssl":
+        {
+            "description": "SSL/TLS support via BoringSSL",
+            "dependencies":
+            [
+                "boringssl"
+            ]
+        },
         "brotli":
         {
             "description": "Use brotli",
@@ -38,7 +46,7 @@
         },
         "openssl":
         {
-            "description": "Enable OpenSSL backend (SSL support)",
+            "description": "SSL/TLS support via OpenSSL",
             "dependencies":
             [
                 {
@@ -97,7 +105,7 @@
         },
         "wolfssl":
         {
-            "description": "SSL support (wolfSSL)",
+            "description": "SSL/TLS support via wolfSSL",
             "dependencies":
             [
                 "wolfssl"
