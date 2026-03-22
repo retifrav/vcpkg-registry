@@ -1,5 +1,7 @@
-# for $ENV{VCPKG_ROOT} to work the triplet should contain `set(VCPKG_ENV_PASSTHROUGH_UNTRACKED VCPKG_ROOT)`
-include("$ENV{VCPKG_ROOT}/scripts/toolchains/ios.cmake")
+include(${CMAKE_CURRENT_LIST_DIR}/_set-vcpkg-registry-path.cmake)
+set_vcpkg_registry_path() # should set `VCPKG_TOOL_PARENT_PATH`
+include("${VCPKG_TOOL_PARENT_PATH}/scripts/toolchains/ios.cmake")
+unset(VCPKG_TOOL_PARENT_PATH) # just in case
 
 # to make a Mach-O combined/fat/universal binary, one needs to set both architectures,
 # either here with `CMAKE_OSX_ARCHITECTURES` or in the triplet with `VCPKG_OSX_ARCHITECTURES`

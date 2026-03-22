@@ -1,10 +1,9 @@
-# seems redundant and weird to include the same toolchain that has been just used upper in the chain,
-# but without it CMAKE_CXX_FLAGS_RELEASE and CMAKE_C_FLAGS_RELEASE won't get populated
-# (unless there is a better way to get their values, since being cache variables
-# they must have been set somewhere?)
-#
-# for $ENV{VCPKG_ROOT} to work the triplet should contain `set(VCPKG_ENV_PASSTHROUGH_UNTRACKED VCPKG_ROOT)`
-include("$ENV{VCPKG_ROOT}/scripts/toolchains/windows.cmake")
+# without loading vcpkg's toolchain first, the CMAKE_CXX_FLAGS_RELEASE and CMAKE_C_FLAGS_RELEASE
+# won't get populated, and to load the vcpkg's toolchain we need to know path to vcpkg registry
+include(${CMAKE_CURRENT_LIST_DIR}/_set-vcpkg-registry-path.cmake)
+set_vcpkg_registry_path() # should set `VCPKG_TOOL_PARENT_PATH`
+include("${VCPKG_TOOL_PARENT_PATH}/scripts/toolchains/windows.cmake")
+unset(VCPKG_TOOL_PARENT_PATH) # just in case
 
 string(REPLACE "/Z7" ""
     CMAKE_C_FLAGS_RELEASE_WITHOUT_Z7

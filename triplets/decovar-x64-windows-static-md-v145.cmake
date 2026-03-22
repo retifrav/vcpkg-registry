@@ -5,9 +5,6 @@ set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_PLATFORM_TOOLSET v145)
 set(VCPKG_DEP_INFO_OVERRIDE_VARS v145)
 
-# without this the VCPKG_ROOT environment variable won't be available in the chainloaded toolchain
-set(VCPKG_ENV_PASSTHROUGH_UNTRACKED VCPKG_ROOT)
-
 # overriding default flags to remove /Z7 from Release builds, because no one (except Microsoft)
 # needs Debug stuff in Release binaries, so it makes them explode in size for no good reason
 #
