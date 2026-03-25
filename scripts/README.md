@@ -27,7 +27,6 @@ Checks that declared rev-parse hashes in ports versions match their actual value
 
 ``` sh
 $ cd /path/to/vcpkg-registry
-$ pip install pandas pandera tabulate colorama
 $ python ./scripts/check-versions-and-hashes.py
 ```
 
