@@ -201,7 +201,12 @@ for p in sorted([p.name for p in portsPath.iterdir() if p.is_dir()]):
         else:
             versionsFileContent: typing.Dict[str, typing.Any] = {}
             with open(versionsFile, "r") as f:
-                versionsFileContent = json.load(f)
+                try:
+                    versionsFileContent = json.load(f)
+                except Exception as ex:
+                    problematicPorts.add(p)
+                    logging.error(ex)
+                    continue
 
             for v in versionsFileContent["versions"]:
                 versionsFileVersion: str = v.get("version")
