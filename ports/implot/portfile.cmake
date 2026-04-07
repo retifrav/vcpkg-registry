@@ -6,7 +6,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:epezent/implot.git
-    REF 4707b245fbcd69075b1a8a74fa8d2435561b3134
+    REF 524f9fcd48d76c13fdf94c5ffbba8787a1ff7e39
     PATCHES
         001-dearimgui-headers.patch
 )
