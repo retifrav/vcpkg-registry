@@ -18,8 +18,9 @@ vcpkg_from_git(
         002-boolean-typedef.patch
 )
 
+set(JPEGTURBO_SIMD -DWITH_SIMD=1)
 if(VCPKG_TARGET_ARCHITECTURE STREQUAL "wasm32")
-    set(LIBJPEGTURBO_SIMD -DWITH_SIMD=0)
+    set(JPEGTURBO_SIMD -DWITH_SIMD=0)
 elseif(
    VCPKG_TARGET_ARCHITECTURE STREQUAL "arm"
    OR VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64"
@@ -28,9 +29,11 @@ elseif(
         AND NOT VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore"
     )
 )
-    set(JPEGTURBO_SIMD -DWITH_SIMD=1 -DNEON_INTRINSICS=1)
+    set(JPEGTURBO_SIMD
+        -DWITH_SIMD=1
+        -DNEON_INTRINSICS=1
+    )
 else()
-    set(JPEGTURBO_SIMD -DWITH_SIMD=1)
     vcpkg_find_acquire_program(NASM)
     get_filename_component(NASM_EXE_PATH ${NASM} DIRECTORY)
     set(ENV{PATH} "$ENV{PATH};${NASM_EXE_PATH}")
