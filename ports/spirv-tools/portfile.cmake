@@ -7,7 +7,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Tools.git
-    REF 33e02568181e3312f49a3cf33df470bf96ef293a
+    REF fbe4f3ad913c44fe8700545f8ffe35d1382b7093 # vulkan-sdk-1.4.341.0
     PATCHES
         001-single-target-dependencies-and-installation.patch
 )

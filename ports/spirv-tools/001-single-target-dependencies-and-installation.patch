@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8c6fe41e..75b5a7df 100644
+index b69ec9fb..641aa81c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -14,7 +14,11 @@
@@ -23,7 +23,7 @@ index 8c6fe41e..75b5a7df 100644
  set(SPIRV_TOOLS "SPIRV-Tools")
  
  include(GNUInstallDirs)
-@@ -161,20 +164,51 @@ endif()
+@@ -167,20 +170,51 @@ endif()
  #
  # Ideally, all of these will go away - see https://github.com/KhronosGroup/SPIRV-Tools/issues/3909.
  option(ENABLE_EXCEPTIONS_ON_MSVC "Build SPIRV-TOOLS with c++ exceptions enabled in MSVC" ON)
@@ -44,27 +44,27 @@ index 8c6fe41e..75b5a7df 100644
 +
 +option(SPIRV_TOOLS_BUILD_STATIC "Build ${SPIRV_TOOLS} as STATIC library" YES)
 +
-+if(
-+    CMAKE_SYSTEM_NAME STREQUAL "Windows"
-+    AND
-+    (
-+        (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
-+        OR
-+        NOT SPIRV_TOOLS_BUILD_STATIC
-+    )
-+)
-+    message(FATAL_ERROR
-+        "Even though the project attempts to support building SHARED libraries, "
-+        "they are doing it in a twisted way of building both STATIC and SHARED variants, "
-+        "and in such configuration things do seem to work, however in a proper "
-+        "single-type configuration the SPIRV-Tools-opt target fails on Windows with either "
-+        "\"inconsistent dll linkage\" errors, or with \"definition of dllimport function "
-+        "not allowed\" errors, or with \"unresolved external symbol\" errors, "
-+        "so we just as well can consider this project to be a STATIC-only for the time being. "
-+        "Or exclude SPIRV-Tools-opt target from the build, as without it the SPIRV-Tools target "
-+        "builds fine both as STATIC and SHARED (but it might be not as useful without SPIRV-Tools-opt)."
-+    )
-+endif()
++#if(
++#    CMAKE_SYSTEM_NAME STREQUAL "Windows"
++#    AND
++#    (
++#        (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
++#        OR
++#        NOT SPIRV_TOOLS_BUILD_STATIC
++#    )
++#)
++#    message(FATAL_ERROR
++#        "Even though the project attempts to support building SHARED libraries, "
++#        "they are doing it in a twisted way of building both STATIC and SHARED variants, "
++#        "and in such configuration things do seem to work, however in a proper "
++#        "single-type configuration the SPIRV-Tools-opt target fails on Windows with either "
++#        "\"inconsistent dll linkage\" errors, or with \"definition of dllimport function "
++#        "not allowed\" errors, or with \"unresolved external symbol\" errors, "
++#        "so we just as well can consider this project to be a STATIC-only for the time being. "
++#        "Or exclude SPIRV-Tools-opt target from the build, as without it the SPIRV-Tools target "
++#        "builds fine both as STATIC and SHARED (but it might be not as useful without SPIRV-Tools-opt)."
++#    )
++#endif()
 +
 +if(DEFINED BUILD_SHARED_LIBS)
 +    if(BUILD_SHARED_LIBS AND SPIRV_TOOLS_BUILD_STATIC)
@@ -89,7 +89,7 @@ index 8c6fe41e..75b5a7df 100644
  
  function(spvtools_default_compile_options TARGET)
    target_compile_options(${TARGET} PRIVATE ${SPIRV_WARNINGS})
-@@ -226,19 +260,8 @@ function(spvtools_default_compile_options TARGET)
+@@ -232,19 +266,8 @@ function(spvtools_default_compile_options TARGET)
    endif()
  endfunction()
  
@@ -110,7 +110,7 @@ index 8c6fe41e..75b5a7df 100644
  
  # Check type annotations in Perl code. Assumes mypy.
  add_custom_target(spirv-tools-check-python-types
-@@ -273,20 +296,23 @@ else()
+@@ -279,20 +302,23 @@ else()
    endmacro()
  endif()
  
@@ -140,7 +140,18 @@ index 8c6fe41e..75b5a7df 100644
        "find_dependency(${SPIRV_TOOLS})\n"
        "include(\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake)\n"
        "set(${TARGET}_LIBRARIES ${TARGET})\n"
-@@ -363,6 +389,31 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+@@ -357,8 +383,8 @@ endif()
+ add_subdirectory(source)
+ add_subdirectory(tools)
+ 
+-add_subdirectory(test)
+-add_subdirectory(examples)
++#add_subdirectory(test)
++#add_subdirectory(examples)
+ 
+ if(ENABLE_SPIRV_TOOLS_INSTALL)
+   install(
+@@ -369,6 +395,30 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
        ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/linker.hpp
      DESTINATION
        ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/)
@@ -168,11 +179,10 @@ index 8c6fe41e..75b5a7df 100644
 +        ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/
 +    )
 +  endif()
-+
  endif(ENABLE_SPIRV_TOOLS_INSTALL)
  
  if (NOT "${SPIRV_SKIP_TESTS}")
-@@ -370,46 +421,3 @@ if (NOT "${SPIRV_SKIP_TESTS}")
+@@ -376,46 +426,3 @@ if (NOT "${SPIRV_SKIP_TESTS}")
             COMMAND Python3::Interpreter utils/check_copyright.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
  endif()
@@ -220,10 +230,10 @@ index 8c6fe41e..75b5a7df 100644
 -      ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 -endif()
 diff --git a/external/CMakeLists.txt b/external/CMakeLists.txt
-index d8c72665..fef1ee47 100644
+index eb4e69e5..0dba9f0a 100644
 --- a/external/CMakeLists.txt
 +++ b/external/CMakeLists.txt
-@@ -66,28 +66,6 @@ if (SPIRV_TOOLS_USE_MIMALLOC)
+@@ -72,28 +72,6 @@ if (SPIRV_TOOLS_USE_MIMALLOC)
    pop_variable(MI_BUILD_TESTS)
  endif()
  
@@ -252,58 +262,8 @@ index d8c72665..fef1ee47 100644
  if (NOT ${SPIRV_SKIP_TESTS})
    # Find gmock if we can. If it's not already configured, then try finding
    # it in external/googletest.
-diff --git a/include/spirv-tools/libspirv.h b/include/spirv-tools/libspirv.h
-index a2a032a0..7ff10a26 100644
---- a/include/spirv-tools/libspirv.h
-+++ b/include/spirv-tools/libspirv.h
-@@ -26,26 +26,26 @@ extern "C" {
- #include <stddef.h>
- #include <stdint.h>
- 
--#if defined(SPIRV_TOOLS_SHAREDLIB)
--#if defined(_WIN32)
--#if defined(SPIRV_TOOLS_IMPLEMENTATION)
--#define SPIRV_TOOLS_EXPORT __declspec(dllexport)
-+#if defined(SPIRV_TOOLS_SHAREDLIB) // SPIRV_Tools_EXPORTS // CMake sets that when BUILD_SHARED_LIBS=1
-+    #if defined(_WIN32)
-+        #if defined(SPIRV_TOOLS_IMPLEMENTATION)
-+            #define SPIRV_TOOLS_EXPORT __declspec(dllexport)
-+        #else
-+            #define SPIRV_TOOLS_EXPORT __declspec(dllimport)
-+        #endif
-+        #define SPIRV_TOOLS_LOCAL
-+    #else
-+        #if defined(SPIRV_TOOLS_IMPLEMENTATION)
-+            #define SPIRV_TOOLS_EXPORT __attribute__((visibility("default")))
-+            #define SPIRV_TOOLS_LOCAL __attribute__((visibility("hidden")))
-+        #else
-+            #define SPIRV_TOOLS_EXPORT
-+            #define SPIRV_TOOLS_LOCAL
-+        #endif
-+    #endif
- #else
--#define SPIRV_TOOLS_EXPORT __declspec(dllimport)
--#endif
--#define SPIRV_TOOLS_LOCAL
--#else
--#if defined(SPIRV_TOOLS_IMPLEMENTATION)
--#define SPIRV_TOOLS_EXPORT __attribute__((visibility("default")))
--#define SPIRV_TOOLS_LOCAL __attribute__((visibility("hidden")))
--#else
--#define SPIRV_TOOLS_EXPORT
--#define SPIRV_TOOLS_LOCAL
--#endif
--#endif
--#else
--#define SPIRV_TOOLS_EXPORT
--#define SPIRV_TOOLS_LOCAL
-+    #define SPIRV_TOOLS_EXPORT
-+    #define SPIRV_TOOLS_LOCAL
- #endif
- 
- // Helpers
 diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
-index fd2d963d..d21cecbc 100644
+index 6f169339..87b5821a 100644
 --- a/source/CMakeLists.txt
 +++ b/source/CMakeLists.txt
 @@ -12,6 +12,13 @@
@@ -320,7 +280,7 @@ index fd2d963d..d21cecbc 100644
  set(VIMSYNTAX_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/vim/generate_syntax.py")
  set(XML_REGISTRY_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_registry_tables.py")
  set(LANG_HEADER_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_language_headers.py")
-@@ -162,13 +169,6 @@ set_source_files_properties(
+@@ -164,13 +171,6 @@ set_source_files_properties(
    ${CMAKE_CURRENT_SOURCE_DIR}/pch_source.cpp
    PROPERTIES OBJECT_DEPENDS "${PCH_DEPENDS}")
  
@@ -334,7 +294,7 @@ index fd2d963d..d21cecbc 100644
  set(SPIRV_SOURCES
    ${spirv-tools_SOURCE_DIR}/include/spirv-tools/libspirv.h
  
-@@ -336,48 +336,35 @@ function(spirv_tools_default_target_options target)
+@@ -340,51 +340,35 @@ function(spirv_tools_default_target_options target)
    add_dependencies(${target} spirv-tools-build-version core_tables extinst_tables)
  endfunction()
  
@@ -363,6 +323,9 @@ index fd2d963d..d21cecbc 100644
 -
 -if(SPIRV_TOOLS_BUILD_STATIC)
 -  add_library(${SPIRV_TOOLS}-static STATIC ${SPIRV_SOURCES})
+-  if (SPIRV_TOOLS_USE_MIMALLOC AND SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD)
+-    target_link_libraries(${SPIRV_TOOLS}-shared PRIVATE mimalloc-static)
+-  endif()
 -  spirv_tools_default_target_options(${SPIRV_TOOLS}-static)
 -  # The static target does not have the '-static' suffix.
 -  set_target_properties(${SPIRV_TOOLS}-static PROPERTIES OUTPUT_NAME "${SPIRV_TOOLS}")
@@ -405,8 +368,8 @@ index fd2d963d..d21cecbc 100644
      endforeach()
    endif()
  endif()
-@@ -386,14 +373,19 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
-   if (SPIRV_TOOLS_USE_MIMALLOC AND NOT SPIRV_TOOLS_BUILD_STATIC)
+@@ -393,14 +377,19 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+   if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
      list(APPEND SPIRV_TOOLS_TARGETS mimalloc-static)
    endif()
 -  install(TARGETS ${SPIRV_TOOLS_TARGETS} EXPORT ${SPIRV_TOOLS}Targets)
@@ -427,34 +390,32 @@ index fd2d963d..d21cecbc 100644
      "if(TARGET ${SPIRV_TOOLS})\n"
      "    set(${SPIRV_TOOLS}_LIBRARIES ${SPIRV_TOOLS})\n"
 diff --git a/source/diff/CMakeLists.txt b/source/diff/CMakeLists.txt
-index d2882616..b2f248a0 100644
+index 2bd61060..f6556b5d 100644
 --- a/source/diff/CMakeLists.txt
 +++ b/source/diff/CMakeLists.txt
-@@ -22,7 +22,7 @@ if (SPIRV_TOOLS_USE_MIMALLOC AND NOT SPIRV_TOOLS_BUILD_STATIC)
+@@ -22,7 +22,7 @@ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_US
    list(APPEND SPIRV_TOOLS_DIFF_SOURCES ${spirv-tools_SOURCE_DIR}/source/mimalloc.cpp)
  endif()
  
 -add_library(SPIRV-Tools-diff ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_TOOLS_DIFF_SOURCES})
 +add_library(SPIRV-Tools-diff ${SPIRV_TOOLS_DIFF_SOURCES})
  
- if (SPIRV_TOOLS_USE_MIMALLOC AND NOT SPIRV_TOOLS_BUILD_STATIC)
+ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
    target_link_libraries(SPIRV-Tools-diff PRIVATE mimalloc-static)
-@@ -38,7 +38,9 @@ target_include_directories(SPIRV-Tools-diff
+@@ -38,7 +38,7 @@ target_include_directories(SPIRV-Tools-diff
  )
  # We need the assembling and disassembling functionalities in the main library.
  target_link_libraries(SPIRV-Tools-diff
 -  PUBLIC ${SPIRV_TOOLS_FULL_VISIBILITY})
-+    PUBLIC
-+        ${SPIRV_TOOLS}
-+)
++    PUBLIC ${SPIRV_TOOLS})
  # We need the internals of spirv-opt.
  target_link_libraries(SPIRV-Tools-diff
    PUBLIC SPIRV-Tools-opt)
 diff --git a/source/fuzz/CMakeLists.txt b/source/fuzz/CMakeLists.txt
-index d067bd48..a07b065f 100644
+index a3e03957..bd341b49 100644
 --- a/source/fuzz/CMakeLists.txt
 +++ b/source/fuzz/CMakeLists.txt
-@@ -469,7 +469,7 @@ if(SPIRV_BUILD_FUZZER)
+@@ -464,7 +464,7 @@ if(SPIRV_BUILD_FUZZER)
  
    # The fuzzer reuses a lot of functionality from the SPIRV-Tools library.
    target_link_libraries(SPIRV-Tools-fuzz
@@ -513,7 +474,7 @@ index f6ab5c84..6342ea80 100644
  
  #endif  // SOURCE_LATEST_VERSION_SPIRV_HEADER_H_
 diff --git a/source/link/CMakeLists.txt b/source/link/CMakeLists.txt
-index a35b9a58..90a60f1c 100644
+index 5fd89c38..f20b2900 100644
 --- a/source/link/CMakeLists.txt
 +++ b/source/link/CMakeLists.txt
 @@ -11,7 +11,7 @@
@@ -522,65 +483,50 @@ index a35b9a58..90a60f1c 100644
  # limitations under the License.
 -add_library(SPIRV-Tools-link ${SPIRV_TOOLS_LIBRARY_TYPE}
 +add_library(SPIRV-Tools-link
+   fnvar.cpp
    linker.cpp
  )
- 
 diff --git a/source/lint/CMakeLists.txt b/source/lint/CMakeLists.txt
-index 4704beb1..9858351b 100644
+index c2636ae5..003e76ad 100644
 --- a/source/lint/CMakeLists.txt
 +++ b/source/lint/CMakeLists.txt
-@@ -25,7 +25,7 @@ if(MSVC AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")))
-   add_definitions(/MP4)
- endif()
+@@ -20,7 +20,7 @@ set(SPIRV_TOOLS_LINT_SOURCES
+   lint_divergent_derivatives.cpp
+ )
  
 -add_library(SPIRV-Tools-lint ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_TOOLS_LINT_SOURCES})
 +add_library(SPIRV-Tools-lint ${SPIRV_TOOLS_LINT_SOURCES})
  
  spvtools_default_compile_options(SPIRV-Tools-lint)
  target_include_directories(SPIRV-Tools-lint
-@@ -37,7 +37,9 @@ target_include_directories(SPIRV-Tools-lint
+@@ -32,7 +32,7 @@ target_include_directories(SPIRV-Tools-lint
  )
  # We need the assembling and disassembling functionalities in the main library.
  target_link_libraries(SPIRV-Tools-lint
 -  PUBLIC ${SPIRV_TOOLS_FULL_VISIBILITY})
-+  PUBLIC
-+      ${SPIRV_TOOLS}
-+)
++  PUBLIC ${SPIRV_TOOLS})
  # We need the internals of spirv-opt.
  target_link_libraries(SPIRV-Tools-lint
    PUBLIC SPIRV-Tools-opt)
 diff --git a/source/opt/CMakeLists.txt b/source/opt/CMakeLists.txt
-index 7cba4a03..ab565c94 100644
+index ff32dfaa..db80b4d8 100644
 --- a/source/opt/CMakeLists.txt
 +++ b/source/opt/CMakeLists.txt
-@@ -255,18 +255,13 @@ set(SPIRV_TOOLS_OPT_SOURCES
-   wrap_opkill.cpp
- )
- 
--if(MSVC AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")))
--  # Enable parallel builds across four cores for this lib
--  add_definitions(/MP4)
--endif()
--
- spvtools_pch(SPIRV_TOOLS_OPT_SOURCES pch_source_opt)
- 
- if (SPIRV_TOOLS_USE_MIMALLOC AND NOT SPIRV_TOOLS_BUILD_STATIC)
+@@ -263,7 +263,7 @@ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_US
    list(APPEND SPIRV_TOOLS_OPT_SOURCES ${spirv-tools_SOURCE_DIR}/source/mimalloc.cpp)
  endif()
  
 -add_library(SPIRV-Tools-opt ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_TOOLS_OPT_SOURCES})
 +add_library(SPIRV-Tools-opt ${SPIRV_TOOLS_OPT_SOURCES})
  
- if (SPIRV_TOOLS_USE_MIMALLOC AND NOT SPIRV_TOOLS_BUILD_STATIC)
+ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
    target_link_libraries(SPIRV-Tools-opt PRIVATE mimalloc-static)
-@@ -282,7 +277,9 @@ target_include_directories(SPIRV-Tools-opt
+@@ -279,7 +279,7 @@ target_include_directories(SPIRV-Tools-opt
  )
  # We need the assembling and disassembling functionalities in the main library.
  target_link_libraries(SPIRV-Tools-opt
 -  PUBLIC ${SPIRV_TOOLS_FULL_VISIBILITY})
-+    PUBLIC
-+        ${SPIRV_TOOLS}
-+)
++  PUBLIC ${SPIRV_TOOLS})
  
  set_property(TARGET SPIRV-Tools-opt PROPERTY FOLDER "SPIRV-Tools libraries")
  spvtools_check_symbol_exports(SPIRV-Tools-opt)
@@ -611,7 +557,7 @@ index f985e4c2..829467c0 100644
  namespace spvtools {
  namespace opt {
 diff --git a/source/opt/graphics_robust_access_pass.cpp b/source/opt/graphics_robust_access_pass.cpp
-index e765c397..39b199f6 100644
+index 15076ec0..b18ff390 100644
 --- a/source/opt/graphics_robust_access_pass.cpp
 +++ b/source/opt/graphics_robust_access_pass.cpp
 @@ -151,7 +151,7 @@
@@ -623,11 +569,37 @@ index e765c397..39b199f6 100644
  #include "type_manager.h"
  #include "types.h"
  
+diff --git a/source/opt/resolve_binding_conflicts_pass.cpp b/source/opt/resolve_binding_conflicts_pass.cpp
+index 18ea2e59..8f5b4481 100644
+--- a/source/opt/resolve_binding_conflicts_pass.cpp
++++ b/source/opt/resolve_binding_conflicts_pass.cpp
+@@ -24,7 +24,7 @@
+ #include "source/opt/instruction.h"
+ #include "source/opt/ir_builder.h"
+ #include "source/opt/ir_context.h"
+-#include "spirv/unified1/spirv.h"
++#include <spirv/unified1/spirv.h>
+ 
+ namespace spvtools {
+ namespace opt {
+diff --git a/source/opt/split_combined_image_sampler_pass.cpp b/source/opt/split_combined_image_sampler_pass.cpp
+index b5d3d654..328b1905 100644
+--- a/source/opt/split_combined_image_sampler_pass.cpp
++++ b/source/opt/split_combined_image_sampler_pass.cpp
+@@ -25,7 +25,7 @@
+ #include "source/opt/types.h"
+ #include "source/util/make_unique.h"
+ #include "source/util/string_utils.h"
+-#include "spirv/unified1/spirv.h"
++#include <spirv/unified1/spirv.h>
+ 
+ namespace spvtools {
+ namespace opt {
 diff --git a/source/reduce/CMakeLists.txt b/source/reduce/CMakeLists.txt
-index 9ebe4183..6fc53971 100644
+index b631e9d0..0ed79da2 100644
 --- a/source/reduce/CMakeLists.txt
 +++ b/source/reduce/CMakeLists.txt
-@@ -82,7 +82,7 @@ endif()
+@@ -77,7 +77,7 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
  
  spvtools_pch(SPIRV_TOOLS_REDUCE_SOURCES pch_source_reduce)
  
@@ -636,7 +608,7 @@ index 9ebe4183..6fc53971 100644
  
  spvtools_default_compile_options(SPIRV-Tools-reduce)
  target_include_directories(SPIRV-Tools-reduce
-@@ -94,7 +94,7 @@ target_include_directories(SPIRV-Tools-reduce
+@@ -89,7 +89,7 @@ target_include_directories(SPIRV-Tools-reduce
  )
  # The reducer reuses a lot of functionality from the SPIRV-Tools library.
  target_link_libraries(SPIRV-Tools-reduce
@@ -645,11 +617,24 @@ index 9ebe4183..6fc53971 100644
    PUBLIC SPIRV-Tools-opt)
  
  set_property(TARGET SPIRV-Tools-reduce PROPERTY FOLDER "SPIRV-Tools libraries")
+diff --git a/source/val/validate_builtins.cpp b/source/val/validate_builtins.cpp
+index 130d5fba..4f5313c1 100644
+--- a/source/val/validate_builtins.cpp
++++ b/source/val/validate_builtins.cpp
+@@ -32,7 +32,7 @@
+ #include "source/val/instruction.h"
+ #include "source/val/validate.h"
+ #include "source/val/validation_state.h"
+-#include "spirv/unified1/spirv.hpp11"
++#include <spirv/unified1/spirv.hpp11>
+ 
+ namespace spvtools {
+ namespace val {
 diff --git a/source/val/validate_extensions.cpp b/source/val/validate_extensions.cpp
-index 58aaf527..4460ee70 100644
+index c6d99fcf..bb987b95 100644
 --- a/source/val/validate_extensions.cpp
 +++ b/source/val/validate_extensions.cpp
-@@ -29,7 +29,7 @@
+@@ -30,7 +30,7 @@
  #include "source/val/instruction.h"
  #include "source/val/validate.h"
  #include "source/val/validation_state.h"
@@ -659,10 +644,10 @@ index 58aaf527..4460ee70 100644
  namespace spvtools {
  namespace val {
 diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
-index acd51162..a5080ba7 100644
+index d7f60b50..97b98b03 100644
 --- a/test/CMakeLists.txt
 +++ b/test/CMakeLists.txt
-@@ -168,18 +168,18 @@ spvtools_pch(TEST_SOURCES pch_test)
+@@ -169,18 +169,18 @@ spvtools_pch(TEST_SOURCES pch_test)
  add_spvtools_unittest(
    TARGET spirv_unit_tests
    SRCS ${TEST_SOURCES}
@@ -685,7 +670,7 @@ index acd51162..a5080ba7 100644
  
  add_spvtools_unittest(
    TARGET cpp_interface
-@@ -190,7 +190,7 @@ if (${SPIRV_TIMER_ENABLED})
+@@ -191,7 +191,7 @@ if (${SPIRV_TIMER_ENABLED})
  add_spvtools_unittest(
    TARGET timer
    SRCS timer_test.cpp
@@ -707,6 +692,32 @@ index 222f44f6..046cd471 100644
  
  namespace spvtools {
  namespace {
+diff --git a/test/ext_inst.arm_motion_engine_test.cpp b/test/ext_inst.arm_motion_engine_test.cpp
+index a4fa7be4..e22641cf 100644
+--- a/test/ext_inst.arm_motion_engine_test.cpp
++++ b/test/ext_inst.arm_motion_engine_test.cpp
+@@ -16,7 +16,7 @@
+ 
+ #include "gmock/gmock.h"
+ #include "source/util/string_utils.h"
+-#include "spirv/unified1/ArmMotionEngine.100.h"
++#include <spirv/unified1/ArmMotionEngine.100.h>
+ #include "test/test_fixture.h"
+ #include "test/unit_spirv.h"
+ 
+diff --git a/test/ext_inst.tosa_test.cpp b/test/ext_inst.tosa_test.cpp
+index 2a506bd6..a471dc23 100644
+--- a/test/ext_inst.tosa_test.cpp
++++ b/test/ext_inst.tosa_test.cpp
+@@ -16,7 +16,7 @@
+ 
+ #include "gmock/gmock.h"
+ #include "source/util/string_utils.h"
+-#include "spirv/unified1/TOSA.001000.1.h"
++#include <spirv/unified1/TOSA.001000.1.h>
+ #include "test/test_fixture.h"
+ #include "test/unit_spirv.h"
+ 
 diff --git a/test/fuzzers/CMakeLists.txt b/test/fuzzers/CMakeLists.txt
 index e1fe516a..2d442f45 100644
 --- a/test/fuzzers/CMakeLists.txt
@@ -759,10 +770,10 @@ index 46fae21a..3b4980a7 100644
 +    LIBS ${SPIRV_TOOLS} SPIRV-Tools-opt
    DEFINES TESTING=1)
 diff --git a/test/val/CMakeLists.txt b/test/val/CMakeLists.txt
-index d481b60c..afb5e7d8 100644
+index 8932b0e0..c309528b 100644
 --- a/test/val/CMakeLists.txt
 +++ b/test/val/CMakeLists.txt
-@@ -51,21 +51,21 @@ add_spvtools_unittest(TARGET val_abcde
+@@ -54,21 +54,21 @@ add_spvtools_unittest(TARGET val_abcde
         val_ext_inst_test.cpp
         val_ext_inst_debug_test.cpp
         ${VAL_TEST_COMMON_SRCS}
@@ -787,7 +798,7 @@ index d481b60c..afb5e7d8 100644
    PCH_FILE pch_test_val
  )
  
-@@ -87,7 +87,7 @@ add_spvtools_unittest(TARGET val_fghijklmnop
+@@ -93,7 +93,7 @@ add_spvtools_unittest(TARGET val_fghijklmnop
         val_opencl_test.cpp
         val_primitives_test.cpp
         ${VAL_TEST_COMMON_SRCS}
@@ -796,7 +807,7 @@ index d481b60c..afb5e7d8 100644
    PCH_FILE pch_test_val
  )
  
-@@ -105,6 +105,6 @@ add_spvtools_unittest(TARGET val_rstuvw
+@@ -111,6 +111,6 @@ add_spvtools_unittest(TARGET val_rstuvw
         val_validation_state_test.cpp
         val_version_test.cpp
         ${VAL_TEST_COMMON_SRCS}
@@ -805,7 +816,7 @@ index d481b60c..afb5e7d8 100644
    PCH_FILE pch_test_val
  )
 diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
-index f5e830f5..919f7039 100644
+index b1fad95c..705b6914 100644
 --- a/tools/CMakeLists.txt
 +++ b/tools/CMakeLists.txt
 @@ -51,20 +51,20 @@ endfunction()

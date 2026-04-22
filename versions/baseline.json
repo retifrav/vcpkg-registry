@@ -1203,7 +1203,7 @@
         },
         "spirv-tools":
         {
-            "baseline": "2025.6.23",
+            "baseline": "2026.1.22",
             "port-version": 0
         },
         "spz":
