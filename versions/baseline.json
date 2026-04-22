@@ -1,14 +1,14 @@
 {
     "default":
     {
-        "abseil":
-        {
-            "baseline": "2025.6.17",
-            "port-version": 0
-        },
         "alsa":
         {
             "baseline": "1.2.12",
+            "port-version": 0
+        },
+        "abseil":
+        {
+            "baseline": "2025.6.17",
             "port-version": 0
         },
         "asio":
