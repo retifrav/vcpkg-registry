@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/Vulkan-Utility-Libraries.git
-    REF ec329e2721921f79743b90307ee047d08e057788
+    REF a663eca87ba71294dd4b74ba9d3e64a72d725453 # vulkan-sdk-1.4.341.0
     PATCHES
         001-dependencies-discovery.patch
 )
