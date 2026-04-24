@@ -1,8 +1,6 @@
 # they do attempt to support building as SHARED too, but it is done in a twisted way,
 # which does not work when only one type of library is built at a time
-if(VCPKG_TARGET_IS_WINDOWS)
-    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
-endif()
+vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
