@@ -878,8 +878,8 @@
         },
         "dawn":
         {
-            "baseline": "2024.11.21",
-            "port-version": 2
+            "baseline": "2026.4.19",
+            "port-version": 0
         },
         "dearimgui":
         {

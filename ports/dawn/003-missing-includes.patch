@@ -1,0 +1,12 @@
+diff --git a/src/dawn/wire/client/Device.h b/src/dawn/wire/client/Device.h
+index 3d2f6ad182..5d6c5f4b4f 100644
+--- a/src/dawn/wire/client/Device.h
++++ b/src/dawn/wire/client/Device.h
+@@ -32,6 +32,7 @@
+ 
+ #include <memory>
+ #include <optional>
++#include <variant>
+ 
+ #include "dawn/common/LinkedList.h"
+ #include "dawn/common/RefCountedWithExternalCount.h"

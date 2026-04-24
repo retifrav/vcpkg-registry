@@ -1,9 +1,9 @@
 {
     "name": "dawn",
-    "version": "2024.11.21",
-    "port-version": 2,
+    "version": "2026.4.19",
     "description": "An implementation of the WebGPU standard",
     "homepage": "https://dawn.googlesource.com/dawn",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {
@@ -21,12 +21,12 @@
         "abseil",
         {
             "name": "spirv-headers",
-            "version>=": "2025.2.5"
+            "version>=": "2026.1.21"
         },
         {
             "name": "spirv-tools",
             "features": [ "with-source-headers" ],
-            "version>=": "2025.2.25"
+            "version>=": "2026.1.22"
         }
     ],
     "default-features":
@@ -58,9 +58,19 @@
             "description": "Enable Vulkan backend",
             "dependencies":
             [
-                "vulkan-headers",
-                "vulkan-utility-libraries"
+                {
+                    "name": "vulkan-headers",
+                    "version>=": "2026.1.23"
+                },
+                {
+                    "name": "vulkan-utility-libraries",
+                    "version>=": "2026.1.23"
+                }
             ]
+        },
+        "monolithic":
+        {
+            "description": "All the Dawn (not tint?) libraries bundled into one or something, probably don't use this"
         },
         "spv-reader":
         {
