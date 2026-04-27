@@ -1,7 +1,7 @@
 To use Dawn/tint in your project:
 
     find_package(Dawn CONFIG REQUIRED)
-    target_link_libraries(main
+    target_link_libraries(${PROJECT_NAME}
         PRIVATE
             # Dawn targets, if you haven't disabled it with `skip-building-dawn` feature
             dawn::dawncpp_headers
@@ -14,3 +14,16 @@ To use Dawn/tint in your project:
             # there are more Dawn/tint targets available, but you'll have to find out
             # yourself whichever of those you actually need in your project
     )
+
+    # also, if you are targeting WebAssembly with WebGPU
+    # https://dawn.googlesource.com/dawn/+/refs/heads/chromium/7802/src/emdawnwebgpu/pkg/README.md#targeting-web-only
+    if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten") # AND YOUR_PROJECT_ENABLE_WEBGPU
+        target_compile_options(${PROJECT_NAME}
+            PUBLIC # PRIVATE?
+                "--use-port=emdawnwebgpu"
+        )
+        target_link_options(${PROJECT_NAME}
+            PUBLIC # PRIVATE?
+                "--use-port=emdawnwebgpu"
+        )
+    endif()
