@@ -104,9 +104,9 @@
         {
             "description": "Build fuzzers"
         },
-        "with-emscripten-tools":
+        "skip-building-dawn":
         {
-            "description": "Fetching Emscripten tools"
+            "description": "Not building Dawn, only building tint (might be preferable when building for WebAssembly)"
         }
     }
 }

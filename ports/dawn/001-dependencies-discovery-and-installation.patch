@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index a7009ba47a..9b4815029a 100644
+index a7009ba47a..5624ef7901 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -26,27 +26,28 @@
@@ -35,16 +35,19 @@ index a7009ba47a..9b4815029a 100644
  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
  
  set(IS_DEBUG_BUILD 0)
-@@ -132,7 +133,7 @@ if (DAWN_SUPPORTS_GLFW_FOR_WINDOWING)
+@@ -131,8 +132,10 @@ if (DAWN_SUPPORTS_GLFW_FOR_WINDOWING)
+     set(BUILD_SAMPLES ON)
  endif()
  
++option(SKIP_BUILDING_DAWN "Do not build Dawn, build only tint" 0)
++
  option(DAWN_ENABLE_ASAN "Enable address sanitizer" OFF)
 -option(DAWN_ENABLE_INSTALL "Enable install step for Dawn libraries" OFF)
 +option(DAWN_ENABLE_INSTALL "Enable install step for Dawn libraries" ON)
  option(DAWN_ENABLE_TSAN "Enable thread sanitizer" OFF)
  option(DAWN_ENABLE_MSAN "Enable memory sanitizer" OFF)
  option(DAWN_ENABLE_UBSAN "Enable undefined behaviour sanitizer" OFF)
-@@ -180,30 +181,20 @@ set_if_not_defined(LLVM_SOURCE_DIR "${Dawn_LLVM_SOURCE_DIR}" "Directory to an LL
+@@ -180,30 +183,33 @@ set_if_not_defined(LLVM_SOURCE_DIR "${Dawn_LLVM_SOURCE_DIR}" "Directory to an LL
  
  set_if_not_defined(DAWN_THIRD_PARTY_DIR "${Dawn_SOURCE_DIR}/third_party" "Directory in which to find third-party dependencies.")
  
@@ -82,10 +85,23 @@ index a7009ba47a..9b4815029a 100644
 +    )
 +    set(DAWN_BUILD_MONOLITHIC_LIBRARY "OFF")
 +endif()
++
++if(
++    DAWN_BUILD_MONOLITHIC_LIBRARY # any non-"OFF" value
++    AND
++    SKIP_BUILDING_DAWN
++)
++    message(
++        FATAL_ERROR
++            "DAWN_BUILD_MONOLITHIC_LIBRARY and SKIP_BUILDING_DAWN cannot both be set, "
++            "as you cannot build Dawn as a monolithic library and at the same time intend "
++            "to skip building it in the same configuration"
++    )
++endif()
  
  string(TOUPPER "${DAWN_BUILD_MONOLITHIC_LIBRARY}" _option_upper)
  if(NOT _option_upper STREQUAL "OFF" AND
-@@ -211,9 +202,10 @@ if(NOT _option_upper STREQUAL "OFF" AND
+@@ -211,9 +217,10 @@ if(NOT _option_upper STREQUAL "OFF" AND
     NOT _option_upper STREQUAL "STATIC")
      message(FATAL_ERROR "DAWN_BUILD_MONOLITHIC_LIBRARY must be SHARED, STATIC, or OFF, but was \"${DAWN_BUILD_MONOLITHIC_LIBRARY}\".")
  endif()
@@ -99,7 +115,7 @@ index a7009ba47a..9b4815029a 100644
  option(DAWN_FETCH_DEPENDENCIES "Use fetch_dawn_dependencies.py as an alternative to using depot_tools" OFF)
  
  if (DAWN_ENABLE_OPENGLES OR DAWN_ENABLE_DESKTOP_GL)
-@@ -264,12 +256,6 @@ option(TINT_ENABLE_BREAK_IN_DEBUGGER "Enable tint::debugger::Break()" OFF)
+@@ -264,12 +271,6 @@ option(TINT_ENABLE_BREAK_IN_DEBUGGER "Enable tint::debugger::Break()" OFF)
  option(TINT_CHECK_CHROMIUM_STYLE "Check for [chromium-style] issues during build" OFF)
  option(TINT_RANDOMIZE_HASHES "Randomize the hash seed value to detect non-deterministic output" OFF)
  
@@ -112,7 +128,7 @@ index a7009ba47a..9b4815029a 100644
  message(STATUS "Build type...........: ${CMAKE_BUILD_TYPE}")
  message(STATUS "C++ compiler.........: ${CMAKE_CXX_COMPILER}")
  message(STATUS "CMake generator......: ${CMAKE_GENERATOR}")
-@@ -342,28 +328,6 @@ message(STATUS "Tint randomize hashes: ${TINT_RANDOMIZE_HASHES}")
+@@ -342,28 +343,6 @@ message(STATUS "Tint randomize hashes: ${TINT_RANDOMIZE_HASHES}")
  message(STATUS "Tint build Mesa: ${TINT_BUILD_MESA}")
  message(STATUS "")
  
@@ -141,7 +157,7 @@ index a7009ba47a..9b4815029a 100644
  if (TINT_BUILD_FUZZER_VULKAN_SUPPORT AND NOT TINT_BUILD_FUZZERS)
      message(FATAL_ERROR "Cannot enable TINT_BUILD_FUZZER_VULKAN_SUPPORT without enabling TINT_BUILD_FUZZERS")
  endif()
-@@ -390,9 +354,9 @@ target_include_directories(dawn_public_config INTERFACE
+@@ -390,9 +369,9 @@ target_include_directories(dawn_public_config INTERFACE
  # The internal config contains additional path but includes the dawn_public_config include paths
  add_library(dawn_internal_config INTERFACE)
  target_include_directories(dawn_internal_config INTERFACE
@@ -154,7 +170,7 @@ index a7009ba47a..9b4815029a 100644
  )
  target_link_libraries(dawn_internal_config INTERFACE dawn_public_config)
  
-@@ -468,24 +432,57 @@ endif()
+@@ -468,32 +447,67 @@ endif()
  set(TINT_LIB_FUZZING_ENGINE_LINK_OPTIONS "" CACHE STRING "Used by OSS-Fuzz to control, via link options, which fuzzing engine should be used")
  
  set(TINT_ROOT_SOURCE_DIR   ${PROJECT_SOURCE_DIR})
@@ -218,7 +234,19 @@ index a7009ba47a..9b4815029a 100644
  
  if (DAWN_ENABLE_D3D11 OR DAWN_ENABLE_D3D12 OR DAWN_ENABLE_METAL OR DAWN_ENABLE_NULL OR DAWN_ENABLE_DESKTOP_GL OR DAWN_ENABLE_OPENGLES OR DAWN_ENABLE_VULKAN OR EMSCRIPTEN)
      add_subdirectory(generator)
-@@ -529,13 +526,14 @@ if (DAWN_EMIT_COVERAGE)
+     # Note that we must add Emscripten directory first to ensure the correct
+     # headers will be exported upwards.
+     add_subdirectory(src/emdawnwebgpu)
+-    add_subdirectory(src/dawn)
+-    add_subdirectory(src/dawn/fuzzers)
++    if(NOT SKIP_BUILDING_DAWN)
++        add_subdirectory(src/dawn)
++        add_subdirectory(src/dawn/fuzzers)
++    endif()
+ endif()
+ 
+ ################################################################################
+@@ -529,13 +543,14 @@ if (DAWN_EMIT_COVERAGE)
      VERBATIM)
  endif()
  
@@ -235,7 +263,7 @@ index a7009ba47a..9b4815029a 100644
    export(EXPORT DawnTargets
      FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/DawnTargets.cmake"
        NAMESPACE dawn::
-@@ -548,12 +546,278 @@ if (DAWN_BUILD_MONOLITHIC_LIBRARY AND DAWN_ENABLE_INSTALL)
+@@ -548,12 +563,289 @@ if (DAWN_BUILD_MONOLITHIC_LIBRARY AND DAWN_ENABLE_INSTALL)
    # Configure config file
    configure_package_config_file("${CMAKE_CURRENT_LIST_DIR}/src/cmake/DawnConfig.cmake.in"
      "${CMAKE_CURRENT_BINARY_DIR}/DawnConfig.cmake"
@@ -364,17 +392,30 @@ index a7009ba47a..9b4815029a 100644
 +        )
 +    endif()
 +    #
++    set(DAWN_TARGETS_THAT_MIGHT_BE_SKIPPED "")
++    if(NOT SKIP_BUILDING_DAWN)
++        list(APPEND DAWN_TARGETS_THAT_MIGHT_BE_SKIPPED
++            dawn_common
++            dawn_system_utils
++            partition_alloc
++        )
++    endif()
++    #
 +    set(DAWN_NON_EMSCRIPTEN_TARGETS "")
 +    set(DAWN_EMSCRIPTEN_TARGETS "")
 +    if(NOT EMSCRIPTEN) # non-Emscripten targets
++        if(NOT SKIP_BUILDING_DAWN)
++            list(APPEND DAWN_TARGETS_THAT_MIGHT_BE_SKIPPED
++                dawn_headers
++                dawn_native
++                dawn_native_objects
++                dawn_platform
++                dawn_proc
++                dawn_wire
++                dawncpp_headers
++            )
++        endif()
 +        list(APPEND DAWN_NON_EMSCRIPTEN_TARGETS
-+            dawn_headers
-+            dawn_native
-+            dawn_native_objects
-+            dawn_platform
-+            dawn_proc
-+            dawn_wire
-+            dawncpp_headers
 +            tint_lang_null_writer
 +            tint_lang_null_writer_raise
 +        )
@@ -388,14 +429,12 @@ index a7009ba47a..9b4815029a 100644
 +    #
 +    install( # a lot of these are internal targets, which actually shouldn't be exposed
 +        TARGETS
++            ${DAWN_TARGETS_THAT_MIGHT_BE_SKIPPED}
 +            ${DAWN_NON_EMSCRIPTEN_TARGETS}
 +            ${DAWN_EMSCRIPTEN_TARGETS}
-+            dawn_common
 +            dawn_internal_config
 +            dawn_public_config
 +            dawn_shared_utils
-+            dawn_system_utils
-+            partition_alloc
 +            tint_api
 +            tint_api_common
 +            #tint_api_options
@@ -474,7 +513,7 @@ index a7009ba47a..9b4815029a 100644
 +    #    "${PROJECT_BINARY_DIR}/gen/include/*.h"
 +    #    "${CMAKE_CURRENT_BINARY_DIR}/gen/include"
 +    #)
-+    if(NOT EMSCRIPTEN)
++    if(NOT EMSCRIPTEN AND NOT SKIP_BUILDING_DAWN)
 +        install(
 +            DIRECTORY
 +                "${PROJECT_BINARY_DIR}/gen/include/"

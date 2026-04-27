@@ -1,5 +1,14 @@
 # Maintainer notes
 
+<!-- MarkdownTOC -->
+
+- [Which commit to use for a new version](#which-commit-to-use-for-a-new-version)
+- [Dawn and tint relations](#dawn-and-tint-relations)
+    - [Skipping the Dawn build](#skipping-the-dawn-build)
+- [Figuring out features](#figuring-out-features)
+
+<!-- /MarkdownTOC -->
+
 ## Which commit to use for a new version
 
 It would probably be okay to just take the latest to the date commit from `main` branch, but just in case it is better to pick the lastest from one of the recent `chromium` branches. For example, on 2026-04-20 the most fresh branch was `chromium/7802`, from which the commit hash was `afd3d886e5dca11c148021ea7ccf0f221c3abb2e`.
@@ -9,6 +18,10 @@ It would probably be okay to just take the latest to the date commit from `main`
 It appears that on desktop one would like to build and link both Dawn and tint (*because debugging WebGPU in "native" environment is easier*). For web, however, one technically would only need the GLSL-to-WGSL transpiler (*which is tint*), because Dawn is already built into Chrome, and any WebGPU function called from Emscripten calls directly into Chrome and not Dawn.
 
 Even better would be to just have Dawn/WGPU (*Chrome/Firefox*) transpile shaders, so one would not need to include a transpiler in one's build, but that wasn't possible before (*and probably still isn't now*).
+
+### Skipping the Dawn build
+
+One might want to skip building Dawn (*so only build tint*) when targeting WebAssembly. That is controlled with the `skip-building-dawn` port feature.
 
 ## Figuring out features
 

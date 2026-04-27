@@ -67,7 +67,22 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         hlsl-writer TINT_BUILD_HLSL_WRITER
         msl-writer  TINT_BUILD_MSL_WRITER
         fuzzers     TINT_BUILD_FUZZERS
+        #
+        skip-building-dawn SKIP_BUILDING_DAWN
 )
+
+if(
+    "skip-building-dawn" IN_LIST FEATURES
+    AND
+    "monolithic" IN_LIST FEATURES
+)
+    message(
+        FATAL_ERROR
+            "The `skip-building-dawn` and `monolithic` features cannot both be set, "
+            "as you cannot build Dawn as a monolithic library and at the same time intend "
+            "to skip building it in the same configuration"
+    )
+endif()
 
 # can only be "SHARED", "STATIC" or "OFF"
 set(DAWN_MONOLITHIC_LIBRARY "OFF")
