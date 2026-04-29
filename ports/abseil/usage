@@ -1,7 +1,7 @@
 To use Abseil in your project:
 
     find_package(absl CONFIG REQUIRED)
-    target_link_libraries(main
+    target_link_libraries(${PROJECT_NAME}
         PRIVATE
             absl::any
             absl::log

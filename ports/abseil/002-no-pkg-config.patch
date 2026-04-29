@@ -1,0 +1,52 @@
+diff --git a/CMake/AbseilDll.cmake b/CMake/AbseilDll.cmake
+index 47d0efd5..de0458a7 100644
+--- a/CMake/AbseilDll.cmake
++++ b/CMake/AbseilDll.cmake
+@@ -882,21 +882,6 @@ function(absl_make_dll)
+   endforeach()
+   string(REPLACE ";" " " PC_LINKOPTS "${ABSL_CC_LIB_LINKOPTS}")
+ 
+-  FILE(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lib/pkgconfig/${_dll}.pc" CONTENT "\
+-prefix=${CMAKE_INSTALL_PREFIX}\n\
+-exec_prefix=\${prefix}\n\
+-libdir=${CMAKE_INSTALL_FULL_LIBDIR}\n\
+-includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}\n\
+-\n\
+-Name: ${_dll}\n\
+-Description: Abseil DLL library\n\
+-URL: https://abseil.io/\n\
+-Version: ${absl_VERSION}\n\
+-Libs: -L\${libdir} $<$<NOT:$<BOOL:${ABSL_CC_LIB_IS_INTERFACE}>>:-l${_dll}> ${PC_LINKOPTS}\n\
+-Cflags: -I\${includedir}${PC_CFLAGS}\n")
+-  INSTALL(FILES "${CMAKE_BINARY_DIR}/lib/pkgconfig/${_dll}.pc"
+-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+-
+   target_compile_definitions(
+     ${_dll}
+     PUBLIC
+diff --git a/CMake/AbseilHelpers.cmake b/CMake/AbseilHelpers.cmake
+index 61e1ae42..fee76620 100644
+--- a/CMake/AbseilHelpers.cmake
++++ b/CMake/AbseilHelpers.cmake
+@@ -208,21 +208,6 @@ function(absl_cc_library)
+       endif()
+     endforeach()
+     string(REPLACE ";" " " PC_LINKOPTS "${ABSL_CC_LIB_LINKOPTS}")
+-    FILE(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lib/pkgconfig/absl_${_NAME}.pc" CONTENT "\
+-prefix=${CMAKE_INSTALL_PREFIX}\n\
+-exec_prefix=\${prefix}\n\
+-libdir=${CMAKE_INSTALL_FULL_LIBDIR}\n\
+-includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}\n\
+-\n\
+-Name: absl_${_NAME}\n\
+-Description: Abseil ${_NAME} library\n\
+-URL: https://abseil.io/\n\
+-Version: ${PC_VERSION}\n\
+-Requires:${PC_DEPS}\n\
+-Libs: -L\${libdir} $<$<NOT:$<BOOL:${ABSL_CC_LIB_IS_INTERFACE}>>:${LNK_LIB}> ${PC_LINKOPTS}\n\
+-Cflags: -I\${includedir}${PC_CFLAGS}\n")
+-    INSTALL(FILES "${CMAKE_BINARY_DIR}/lib/pkgconfig/absl_${_NAME}.pc"
+-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+   endif()
+ 
+   if(NOT ABSL_CC_LIB_IS_INTERFACE)
