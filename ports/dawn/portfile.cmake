@@ -7,7 +7,7 @@ vcpkg_from_git(
     REF afd3d886e5dca11c148021ea7ccf0f221c3abb2e # chromium/7802
     PATCHES
         001-dependencies-discovery-and-installation.patch
-        002-string-view-type.patch # actually, the correct resolution here should be to build Abseil with C++17 and propagate the requirement
+        #002-string-view-type.patch # if Abseil was built with C++ standard lower than C++17
         003-missing-includes.patch
 )
 
