@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
+
+set(SQLITE_VERSION "0.0.0" CACHE STRING "Project version")
 
 project("sqlite3"
-    VERSION 3.49.1
+    VERSION ${SQLITE_VERSION}
     DESCRIPTION "Small, fast, self-contained, high-reliability, full-featured SQL database engine"
     LANGUAGES C
 )
@@ -37,12 +39,12 @@ add_library(${PROJECT_NAME})
 if(BUILD_SHARED_LIBS)
     if(WIN32)
         target_compile_definitions(${PROJECT_NAME}
-           PRIVATE
+           PUBLIC
                "SQLITE_API=__declspec(dllexport)"
         )
     else()
         target_compile_definitions(${PROJECT_NAME}
-           PRIVATE
+           PUBLIC
                "SQLITE_API=__attribute__((visibility(\"default\")))"
         )
     endif()

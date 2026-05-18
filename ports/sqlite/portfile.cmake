@@ -14,9 +14,9 @@
 #     "${SQLITE_VERSION_VALUE}"
 # )
 # what genius had the idea to put year into URL
-set(SQLITE_VERSION_YEAR "2025")
+set(SQLITE_VERSION_YEAR "2026")
 # is it the same genius who came up with this version string format
-set(SQLITE_VERSION_VALUE "3490100")
+set(SQLITE_VERSION_VALUE "3530100")
 
 vcpkg_download_distfile(
     ARCHIVE
@@ -24,7 +24,7 @@ vcpkg_download_distfile(
         "https://sqlite.org/${SQLITE_VERSION_YEAR}/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
         "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
     FILENAME "sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
-    SHA512 8124e78110122e2792f54924877d3f394776b36a69c4b5129404e04cd01972cc3d38ac21de222f64a2659f60768f424c9053b33ec16fbaf910020b5a73df554b
+    SHA512 8f35db4083c77a2f3ff355551556043bea82d5411d748cea35f577592b47dc9a45b41e5e5a054dcce29861f077d6e6b223ae3d161b575b4b4e708ee8470255c2
 )
 
 vcpkg_extract_source_archive(
@@ -70,6 +70,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DSQLITE_VERSION="${VERSION}"
     MAYBE_UNUSED_VARIABLES
         IN_MEMORY_VFS
 )
@@ -96,35 +97,48 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 if("in-memory-vfs" IN_LIST FEATURES)
     set(MEMVFS_FILE "memvfs.c")
-    # it isn't available in amalgamated source package, is it
+    # it is not available in amalgamated source package, so it had to be downloaded
+    # separately, but now isn't even a part of the repository anymore:
+    # - https://sqlite.org/src/timeline?c=eb79110dcac80dde&y=a
+    # - https://sqlite.org/src/info/2025-10-02T22:48Z
+    # - https://sqlite.org/forum/forumpost/8070243b9080180d
     vcpkg_download_distfile(
         MEMVFS_FILE_DOWNLOADED
         URLS
             # the hash doesn't seem to have anything to do with the version commit hash,
             # it just doesn't change if there were no changes in the file, so there is no point
             # in making it a variable
-            "https://sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=${MEMVFS_FILE}"
-            "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/${MEMVFS_FILE}"
+            #"https://sqlite.org/src/raw/7dffa8cc89c7f2d73da4bd4ccea1bcbd2bd283e3bb4cea398df7c372a197291b?at=${MEMVFS_FILE}"
+            #"https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/${MEMVFS_FILE}"
+            # last saved version was from v3.49.1
+            "https://files.decovar.dev/public/packages/sqlite/v3.49.1/src/${MEMVFS_FILE}"
         FILENAME "${MEMVFS_FILE}"
         SHA512 e47757db92a4dfb0ad305d19175ef300fc9b86467605d34ed2133e2f80320a4b98f4f519359fd7ab0f3cbeef8958aad45fede63641c54b77aa8ad4d950fdae4c
     )
-    if(VCPKG_TARGET_IS_WINDOWS)
-        message(
-            STATUS
-                "[WARNING] If you intend to compile ${MEMVFS_FILE} source file as a part of your project, "
-                "then you should be aware that for making a DLL it expects `sqlite3_EXPORTS` compile definition "
-                "to be set"
-        )
-    endif()
+    # this should not be needed, because that compile definition is PUBLIC
+    #if(
+    #    VCPKG_TARGET_IS_WINDOWS
+    #    AND
+    #    VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic"
+    #)
+    #    message(
+    #        STATUS
+    #            "[WARNING] If you intend to compile ${MEMVFS_FILE} source file as a part of your project, "
+    #            "then you should be aware that for making a DLL it expects `SQLITE_API=__declspec(dllexport)` "
+    #            "compile definition to be set"
+    #    )
+    #endif()
+
     # in general, this is needed for being able to serialize an SQLite database file
     # and then load it from VFS (virtual file system), which might be needed in cases
     # when database file cannot be loaded from local file system, such as in web-applications
     # with WebAssembly
     #
-    # might need to come up with a better(?) way of compiling this source file
-    # in the consuming project, perhaps it should be built together with SQLite sources?
+    # might need to come up with a better(?) way of compiling this source file in the consuming project,
+    # perhaps it should be built together with SQLite sources? But then consuming library would need
+    # to link to SQLite, which might not be desirable
     #
-    # Or perhaps there should be an INTERFACE target with this source file? Or add it to the main
+    # or perhaps there should be an INTERFACE target with this source file? Or add it to the main
     # target with INTERFACE_SOURCES?
     # https://discourse.cmake.org/t/best-way-to-have-a-library-package-install-a-main-cpp-and-run-add-executable-in-context-of-user-project-when-it-calls-my-cmake-function/11200/4
     file(
