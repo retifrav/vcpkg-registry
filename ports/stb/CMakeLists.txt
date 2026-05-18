@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
 
-set(STB_VERSION "0.0.0" CACHE STRING "stb version")
+set(STB_VERSION "0.0.0" CACHE STRING "Project version")
 
 project("stb"
     DESCRIPTION "Single-file libraries for C/C++"

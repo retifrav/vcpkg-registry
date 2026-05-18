@@ -1,6 +1,6 @@
 {
     "name": "stb",
-    "version": "2025.10.25",
+    "version": "2026.3.13",
     "description": "Single-file libraries for C/C++",
     "homepage": "https://github.com/nothings/stb",
     "license": "MIT OR CC-PDM-1.0",

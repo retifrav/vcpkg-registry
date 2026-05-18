@@ -1,7 +1,10 @@
+# it's a header-only library
+set(VCPKG_BUILD_TYPE release)
+
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:nothings/stb.git
-    REF f1c79c02822848a9bed4315b12c8c8f3761e1296
+    REF 904aa67e1e2d1dec92959df63e700b166d5c1022
 )
 
 file(COPY
@@ -26,8 +29,5 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
-
-# it's a header-only library
-file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug")
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
