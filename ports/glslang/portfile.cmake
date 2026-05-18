@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/glslang.git
-    REF 99ee11b0106b48f06fb9e2a324ba928b8316cc33
+    REF 275822a6261ee689aadb1da5f09a0ec2f058685c
     PATCHES
         001-threads-and-installation.patch
 )
