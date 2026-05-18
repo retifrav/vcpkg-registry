@@ -13,7 +13,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:openssl/openssl.git
-    REF c9a9e5b10105ad850b6e4d1122c645c67767c341 # "openssl-${VERSION}"
+    REF fe686e15d84334b284f883118ed92f64b409b3aa # "openssl-${VERSION}"
     PATCHES
         cmake-config.patch
         command-line-length.patch
