@@ -1,6 +1,6 @@
 {
     "name": "assimp",
-    "version": "6.0.2",
+    "version": "6.0.5",
     "description": "Asset Importer",
     "homepage": "https://assimp.org/",
     "license": "BSD-3-Clause",
@@ -134,7 +134,7 @@
         },
         "exporter-pbrt":
         {
-            "description": "Enable Pbrt exporter"
+            "description": "Enable pbrt exporter"
         },
         "exporter-assjson":
         {
@@ -142,7 +142,7 @@
         },
         "exporter-step":
         {
-            "description": "Enable Step exporter"
+            "description": "Enable STEP exporter"
         },
         "with-draco":
         {

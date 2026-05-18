@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:assimp/assimp.git
-    REF fb375dd8c0a032106a2122815fb18dffe0283721
+    REF 392a658f9c271be965271f45e7521a1b80ea4392
     PATCHES
         001-dependencies-and-installation.patch
         #002-missing-include-algorithm.patch
@@ -57,6 +57,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DASSIMP_VERSION="${VERSION}"
         -DASSIMP_BUILD_ASSIMP_TOOLS=0
         -DASSIMP_BUILD_SAMPLES=0
         -DASSIMP_BUILD_TESTS=0
@@ -68,7 +69,7 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-vcpkg_cmake_config_fixup()
+vcpkg_cmake_config_fixup(PACKAGE_NAME "Assimp")
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 

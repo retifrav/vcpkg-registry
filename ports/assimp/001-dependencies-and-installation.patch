@@ -1,17 +1,37 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index cd8f51537..3a8d00043 100644
+index a61cd4d9f..2a0313226 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -104,7 +104,7 @@ IF(ASSIMP_HUNTER_ENABLED)
+@@ -38,7 +38,7 @@ SET(CMAKE_POLICY_DEFAULT_CMP0012 NEW)
+ SET(CMAKE_POLICY_DEFAULT_CMP0074 NEW)
+ SET(CMAKE_POLICY_DEFAULT_CMP0092 NEW)
+ 
+-CMAKE_MINIMUM_REQUIRED( VERSION 3.22 )
++cmake_minimum_required(VERSION 3.28)
+ 
+ #================================================================================#
+ #                    Model formats not enabled by default
+@@ -82,7 +82,7 @@ if (NOT ASSIMP_BUILD_VRML_IMPORTER)
+ endif () # if (not ASSIMP_BUILD_VRML_IMPORTER)
+ #================================================================================#
+ 
+-option(ASSIMP_BUILD_USE_CCACHE "Use ccache to speed up compilation." on)
++option(ASSIMP_BUILD_USE_CCACHE "Use ccache to speed up compilation." 0)
+ 
+ IF(ASSIMP_BUILD_USE_CCACHE)
+   find_program(CCACHE_PATH ccache)
+@@ -104,7 +104,9 @@ IF(ASSIMP_HUNTER_ENABLED)
    ADD_DEFINITIONS(-DASSIMP_USE_HUNTER)
  ENDIF()
  
--PROJECT(Assimp VERSION 6.0.2
-+PROJECT(assimp VERSION 6.0.2
+-PROJECT(Assimp VERSION 6.0.5
++set(ASSIMP_VERSION "0.0.0" CACHE STRING "Project version")
++
++project(Assimp VERSION ${ASSIMP_VERSION}
    LANGUAGES C CXX
    DESCRIPTION "Open Asset Import Library (Assimp) is a library to import various well-known 3D model formats in a uniform manner."
  )
-@@ -113,7 +113,7 @@ PROJECT(Assimp VERSION 6.0.2
+@@ -113,7 +115,7 @@ PROJECT(Assimp VERSION 6.0.5
  
  OPTION( BUILD_SHARED_LIBS
    "Build package with shared libraries."
@@ -20,37 +40,41 @@ index cd8f51537..3a8d00043 100644
  )
  OPTION( ASSIMP_BUILD_FRAMEWORK
    "Build package as Mac OS X Framework bundle."
-@@ -181,18 +181,6 @@ OPTION ( ASSIMP_IGNORE_GIT_HASH
-    OFF
- )
- 
--IF (WIN32)
--  OPTION( ASSIMP_BUILD_ZLIB
--    "Build your zlib"
--    ON
--  )
--ELSE()
--  OPTION( ASSIMP_BUILD_ZLIB
--    "Build your zlib"
--    OFF
--  )
--ENDIF()
--
+@@ -184,12 +186,12 @@ OPTION ( ASSIMP_IGNORE_GIT_HASH
  IF (WIN32)
-   # Use a subset of Windows.h
-   ADD_DEFINITIONS( -DWIN32_LEAN_AND_MEAN )
-@@ -293,8 +281,8 @@ INCLUDE_DIRECTORIES( BEFORE
+   OPTION( ASSIMP_BUILD_ZLIB
+     "Build your zlib"
+-    ON
++    0
+   )
+ ELSE()
+   OPTION( ASSIMP_BUILD_ZLIB
+     "Build your zlib"
+-    OFF
++    0
+   )
+ ENDIF()
+ 
+@@ -248,7 +250,6 @@ ENDIF()
+ SET (ASSIMP_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+ SET (ASSIMP_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+ SET (ASSIMP_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+-SET (ASSIMP_VERSION ${ASSIMP_VERSION_MAJOR}.${ASSIMP_VERSION_MINOR}.${ASSIMP_VERSION_PATCH})
+ SET (ASSIMP_SOVERSION 6)
+ 
+ SET( ASSIMP_PACKAGE_VERSION "0" CACHE STRING "the package-specific version used for uploading the sources" )
+@@ -293,8 +294,8 @@ INCLUDE_DIRECTORIES( BEFORE
  )
  
  LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules" )
 -SET(LIBASSIMP_COMPONENT     "libassimp${ASSIMP_VERSION_MAJOR}.${ASSIMP_VERSION_MINOR}.${ASSIMP_VERSION_PATCH}" )
 -SET(LIBASSIMP-DEV_COMPONENT "libassimp${ASSIMP_VERSION_MAJOR}.${ASSIMP_VERSION_MINOR}.${ASSIMP_VERSION_PATCH}-dev" )
-+SET(LIBASSIMP_COMPONENT     "lib${PROJECT_NAME}")
-+SET(LIBASSIMP-DEV_COMPONENT "lib${PROJECT_NAME}-dev")
++set(LIBASSIMP_COMPONENT "lib${PROJECT_NAME}")
++set(LIBASSIMP-DEV_COMPONENT "lib${PROJECT_NAME}-dev")
  SET(CPACK_COMPONENTS_ALL assimp-bin ${LIBASSIMP_COMPONENT} ${LIBASSIMP-DEV_COMPONENT} assimp-dev)
  SET(ASSIMP_LIBRARY_SUFFIX "" CACHE STRING "Suffix to append to library names")
  
-@@ -343,19 +331,6 @@ ELSEIF(MSVC)
+@@ -354,18 +355,6 @@ ELSEIF(MSVC)
    ENDIF()
    # supress warning for double to float conversion if Double precision is activated
    ADD_COMPILE_OPTIONS(/wd4244)
@@ -62,15 +86,14 @@ index cd8f51537..3a8d00043 100644
 -  elseif((GENERATOR_IS_MULTI_CONFIG) OR (CMAKE_BUILD_TYPE MATCHES Release))
 -    message("-- MSVC PDB generation disabled. Release binary will not be debuggable.")
 -  endif()
--  if(NOT /utf-8 IN_LIST CMAKE_CXX_FLAGS)
+-  if(NOT CMAKE_CXX_FLAGS MATCHES "/utf-8")
 -    # Source code is encoded in UTF-8
 -    ADD_COMPILE_OPTIONS(/source-charset:utf-8)
--  endif ()
--
+-  endif()
  ELSEIF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
    IF(NOT ASSIMP_HUNTER_ENABLED)
      SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
-@@ -491,7 +466,7 @@ IF(ASSIMP_HUNTER_ENABLED)
+@@ -501,7 +490,7 @@ IF(ASSIMP_HUNTER_ENABLED)
    SET(VERSION_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
    SET(PROJECT_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}Config.cmake")
  ELSE()
@@ -79,7 +102,7 @@ index cd8f51537..3a8d00043 100644
    SET(CMAKE_CONFIG_TEMPLATE_FILE "cmake-modules/assimp-plain-config.cmake.in")
    string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWERCASE)
    SET(NAMESPACE "${PROJECT_NAME_LOWERCASE}::")
-@@ -533,58 +508,10 @@ IF( ASSIMP_BUILD_DOCS )
+@@ -543,58 +532,10 @@ IF( ASSIMP_BUILD_DOCS )
    ADD_SUBDIRECTORY(doc)
  ENDIF()
  
@@ -131,7 +154,7 @@ index cd8f51537..3a8d00043 100644
 -    SET(ASSIMP_BUILD_MINIZIP 1)
 -  ELSE()
 -    ADD_DEFINITIONS(-DASSIMP_BUILD_NO_OWN_ZLIB)
--    SET(ZLIB_LIBRARIES_LINKED -lz)
+-    SET(ZLIB_LIBRARIES_LINKED -l${ZLIB_LIBRARIES})
 -  ENDIF()
 -  INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
 -ENDIF()
@@ -142,7 +165,7 @@ index cd8f51537..3a8d00043 100644
  
  IF( NOT IOS )
    IF( NOT ASSIMP_BUILD_MINIZIP )
-@@ -685,104 +612,10 @@ ELSE ()
+@@ -695,104 +636,10 @@ ELSE ()
    ADD_DEFINITIONS( -DASSIMP_BUILD_NO_C4D_IMPORTER )
  ENDIF ()
  
@@ -251,7 +274,7 @@ index cd8f51537..3a8d00043 100644
  
  # Main assimp code
  ADD_SUBDIRECTORY( code/ )
-@@ -816,12 +649,6 @@ IF ( ASSIMP_BUILD_TESTS )
+@@ -826,12 +673,6 @@ IF ( ASSIMP_BUILD_TESTS )
    ADD_SUBDIRECTORY( test/ )
  ENDIF ()
  
@@ -264,7 +287,7 @@ index cd8f51537..3a8d00043 100644
  CONFIGURE_FILE(
    ${CMAKE_CURRENT_LIST_DIR}/include/assimp/revision.h.in
    ${CMAKE_CURRENT_BINARY_DIR}/include/assimp/revision.h
-@@ -882,54 +709,3 @@ IF ( ASSIMP_INSTALL )
+@@ -892,54 +733,3 @@ IF ( ASSIMP_INSTALL )
      INCLUDE(DebSourcePPA)
    ENDIF()
  ENDIF()
@@ -345,7 +368,7 @@ index 6551dcb68..71b65b10f 100644
 +
 +check_required_components(@PROJECT_NAME@)
 diff --git a/code/AssetLib/Assbin/AssbinFileWriter.cpp b/code/AssetLib/Assbin/AssbinFileWriter.cpp
-index d4e25e16b..6cfa14eac 100644
+index fd6b17002..32091cc2d 100644
 --- a/code/AssetLib/Assbin/AssbinFileWriter.cpp
 +++ b/code/AssetLib/Assbin/AssbinFileWriter.cpp
 @@ -50,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -358,33 +381,41 @@ index d4e25e16b..6cfa14eac 100644
  #include <ctime>
  
 diff --git a/code/AssetLib/Assbin/AssbinLoader.cpp b/code/AssetLib/Assbin/AssbinLoader.cpp
-index b0905298a..d23683da8 100644
+index 0b335b513..448374d96 100644
 --- a/code/AssetLib/Assbin/AssbinLoader.cpp
 +++ b/code/AssetLib/Assbin/AssbinLoader.cpp
-@@ -58,7 +58,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+@@ -57,11 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ #include <assimp/scene.h>
  #include <memory>
  
- #ifdef ASSIMP_BUILD_NO_OWN_ZLIB
+-#ifdef ASSIMP_BUILD_NO_OWN_ZLIB
 -#include <zlib.h>
+-#else
+-#include <contrib/zlib/zlib.h>
+-#endif
 +#include <zlib/zlib.h>
- #else
- #include <contrib/zlib/zlib.h>
- #endif
+ 
+ using namespace Assimp;
+ 
 diff --git a/code/AssetLib/Assxml/AssxmlFileWriter.cpp b/code/AssetLib/Assxml/AssxmlFileWriter.cpp
-index c6842f5c6..728500949 100644
+index 8a35f0aac..3d6cde5d2 100644
 --- a/code/AssetLib/Assxml/AssxmlFileWriter.cpp
 +++ b/code/AssetLib/Assxml/AssxmlFileWriter.cpp
-@@ -54,7 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+@@ -53,11 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
  #include <stdarg.h>
  
- #ifdef ASSIMP_BUILD_NO_OWN_ZLIB
+-#ifdef ASSIMP_BUILD_NO_OWN_ZLIB
 -#include <zlib.h>
+-#else
+-#include <contrib/zlib/zlib.h>
+-#endif
 +#include <zlib/zlib.h>
- #else
- #include <contrib/zlib/zlib.h>
- #endif
+ 
+ #include <stdio.h>
+ #include <time.h>
 diff --git a/code/AssetLib/Q3BSP/Q3BSPFileImporter.cpp b/code/AssetLib/Q3BSP/Q3BSPFileImporter.cpp
-index c4c1cbb3c..10f8d33f9 100644
+index f5bdb3684..5891c1a0a 100644
 --- a/code/AssetLib/Q3BSP/Q3BSPFileImporter.cpp
 +++ b/code/AssetLib/Q3BSP/Q3BSPFileImporter.cpp
 @@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -397,10 +428,19 @@ index c4c1cbb3c..10f8d33f9 100644
  #include <assimp/DefaultIOSystem.h>
  #include <assimp/StringComparison.h>
 diff --git a/code/CMakeLists.txt b/code/CMakeLists.txt
-index 8728188b7..c76963d94 100644
+index b7b08de3b..504f21796 100644
 --- a/code/CMakeLists.txt
 +++ b/code/CMakeLists.txt
-@@ -1285,29 +1285,12 @@ ELSE ()
+@@ -42,7 +42,7 @@
+ # 3) Add libassimp using the file lists (eliminates duplication of file names between
+ #    source groups and library command)
+ #
+-cmake_minimum_required( VERSION 3.22 )
++cmake_minimum_required(VERSION 3.28)
+ SET( HEADER_PATH ../include/assimp )
+ 
+ if(NOT ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
+@@ -1282,29 +1282,12 @@ ELSE ()
    #!TODO: off course is better to remove statistics timers from o3dgc codec. Or propose to choose what to use.
  ENDIF ()
  
@@ -431,7 +471,7 @@ index 8728188b7..c76963d94 100644
  ENDIF()
  
  # VC2010 fixes
-@@ -1371,7 +1354,6 @@ SET( assimp_src
+@@ -1365,7 +1348,6 @@ SET( assimp_src
    ${Tinyusdz_SRCS}
    ${Tinyusdz_DEP_SOURCES}
    ${Pugixml_SRCS}
@@ -439,7 +479,7 @@ index 8728188b7..c76963d94 100644
    # Necessary to show the headers in the project when using the VC++ generator:
  
    ${PUBLIC_HEADERS}
-@@ -1392,7 +1374,6 @@ IF (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
+@@ -1386,11 +1368,10 @@ IF (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
  ENDIF ()
  
  IF (ASSIMP_BUILD_DRACO)
@@ -447,25 +487,25 @@ index 8728188b7..c76963d94 100644
    ADD_DEFINITIONS( -DASSIMP_ENABLE_DRACO )
  ENDIF()
  
-@@ -1408,6 +1389,17 @@ ENDIF ()
+-ADD_LIBRARY( assimp ${assimp_src} )
++ADD_LIBRARY(assimp ${assimp_src})
+ ADD_LIBRARY(assimp::assimp ALIAS assimp)
+ 
+ # Add or remove dllexport tags depending on the library type.
+@@ -1402,6 +1383,12 @@ ENDIF ()
  
  TARGET_USE_COMMON_OUTPUT_DIRECTORY(assimp)
  
 +# RapidJSON
 +IF(ASSIMP_HUNTER_ENABLED)
 +  hunter_add_package(RapidJSON)
-+  find_package(RapidJSON CONFIG REQUIRED)
-+ELSE()
-+  find_package(RapidJSON CONFIG REQUIRED)
-+  target_compile_definitions(assimp
-+      PRIVATE RAPIDJSON_HAS_STDSTRING
-+  )
 +ENDIF()
++find_package(RapidJSON CONFIG REQUIRED)
 +
  add_compile_options(
    "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
  )
-@@ -1479,10 +1471,13 @@ ENDIF()
+@@ -1472,11 +1459,14 @@ ENDIF()
  # adds C_FLAGS required to compile zip.c on old GCC 4.x compiler
  TARGET_COMPILE_FEATURES(assimp PRIVATE c_std_99)
  
@@ -473,22 +513,29 @@ index 8728188b7..c76963d94 100644
 -  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
 -  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>
 -  $<INSTALL_INTERFACE:${ASSIMP_INCLUDE_INSTALL_DIR}>
-+TARGET_INCLUDE_DIRECTORIES(assimp
+-)
++target_include_directories(assimp
 +    PRIVATE
 +        ../contrib
 +    PUBLIC
 +        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
 +        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>
 +        $<INSTALL_INTERFACE:${ASSIMP_INCLUDE_INSTALL_DIR}>
- )
++ )
  
  IF(ASSIMP_HUNTER_ENABLED)
-@@ -1504,9 +1499,9 @@ IF(ASSIMP_HUNTER_ENABLED)
+   TARGET_LINK_LIBRARIES(assimp
+@@ -1497,9 +1487,14 @@ IF(ASSIMP_HUNTER_ENABLED)
      target_link_libraries(assimp PRIVATE ${draco_LIBRARIES})
    endif()
  ELSE()
 -  TARGET_LINK_LIBRARIES(assimp ${ZLIB_LIBRARIES} ${OPENDDL_PARSER_LIBRARIES})
-+  TARGET_LINK_LIBRARIES(assimp zlib ${OPENDDL_PARSER_LIBRARIES})
++  TARGET_LINK_LIBRARIES(assimp
++    zlib
++    ${OPENDDL_PARSER_LIBRARIES}
++    RapidJSON
++    stb
++  )
    if (ASSIMP_BUILD_DRACO)
 -    target_link_libraries(assimp ${draco_LIBRARIES})
 +    target_link_libraries(assimp draco::draco)
@@ -496,7 +543,7 @@ index 8728188b7..c76963d94 100644
    if(TARGET pugixml::pugixml)
      target_link_libraries(assimp pugixml::pugixml)
 diff --git a/code/Common/Compression.h b/code/Common/Compression.h
-index 1106315af..6d8f582bb 100644
+index bd73aee54..7bb0c671a 100644
 --- a/code/Common/Compression.h
 +++ b/code/Common/Compression.h
 @@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -550,16 +597,3 @@ index 5cfc9c627..b8df57b22 100644
  #endif
  
  #ifndef  _ZLIBIOAPI_H
-diff --git a/include/assimp/ZipArchiveIOSystem.h b/include/assimp/ZipArchiveIOSystem.h
-index 430e3203d..e03133222 100644
---- a/include/assimp/ZipArchiveIOSystem.h
-+++ b/include/assimp/ZipArchiveIOSystem.h
-@@ -53,7 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- 
- #include <assimp/IOStream.hpp>
- #include <assimp/IOSystem.hpp>
--#include <zlib.h>
-+#include <zlib/zlib.h>
- 
- namespace Assimp {
- 
