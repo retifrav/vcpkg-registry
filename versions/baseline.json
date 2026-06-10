@@ -1053,7 +1053,7 @@
         },
         "lzma":
         {
-            "baseline": "25.0.0",
+            "baseline": "26.1.0",
             "port-version": 0
         },
         "mach-siegbert-vogt-dxcsa":

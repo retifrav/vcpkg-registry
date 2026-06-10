@@ -1,11 +1,15 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
+
+set(LZMA_VERSION "0.0.0" CACHE STRING "Project version")
 
 project("lzma"
-    VERSION 25.0.0
+    VERSION "${LZMA_VERSION}"
 )
 
 option(ENABLE_AVX2 "Enable AVX2 intrinsics" 1)
 #option(ENABLE_AVX  "Enable AVX intrinsics"  0)
+
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 if(WIN32 AND ENABLE_AVX2)
     # without it compilation with Clang on Windows will fail
@@ -55,4 +59,5 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
+set(PROJECT_NAMESPACE_FOR_PACKAGE "7z")
 include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")

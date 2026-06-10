@@ -3,14 +3,14 @@ if(VCPKG_TARGET_IS_WINDOWS)
     vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 endif()
 
-set(FILE_TO_DOWNLOAD "lzma2500.7z")
+set(FILE_TO_DOWNLOAD "lzma2601.7z")
 vcpkg_download_distfile(
     ARCHIVE
     URLS
-        "https://7-zip.org/a/${FILE_TO_DOWNLOAD}" # 404 for some reason, probably removed from server (something wrong with that version?)
+        "https://7-zip.org/a/${FILE_TO_DOWNLOAD}"
         "https://files.decovar.dev/public/packages/lzma/v${VERSION}/src/${FILE_TO_DOWNLOAD}"
     FILENAME "${FILE_TO_DOWNLOAD}"
-    SHA512 6dde0dcf1989335524682a79003375c18a7ea74fa55a014ed8a705b749278375b55117c4e764181195e9775cd3e44eb5bed7d4d970e0dfb6d2ae20bdc352baac
+    SHA512 0dfe9182c74456ca9af4984ed7f2abe49f37b4b747db4c612c41816a4789964097fc43f3fcd6ba535bf5f96bda68306773360b6397ffcfe966c9305e2e354983
 )
 
 vcpkg_extract_source_archive(
@@ -42,6 +42,7 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        -DLZMA_VERSION="${VERSION}"
 )
 
 vcpkg_cmake_install()
