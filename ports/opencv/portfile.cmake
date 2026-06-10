@@ -7,8 +7,17 @@ vcpkg_from_git(
 )
 
 # do not vendor 3rd-party dependencies
-file(REMOVE_RECURSE
+file(RENAME
     "${SOURCE_PATH}/3rdparty"
+    "${SOURCE_PATH}/3rdparty_will_be_deleted"
+)
+file(MAKE_DIRECTORY "${SOURCE_PATH}/3rdparty")
+file(RENAME
+    "${SOURCE_PATH}/3rdparty_will_be_deleted/cpufeatures"
+    "${SOURCE_PATH}/3rdparty/cpufeatures"
+)
+file(REMOVE_RECURSE
+    "${SOURCE_PATH}/3rdparty_will_be_deleted"
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" OPENCV_BUILD_DYNAMIC)
