@@ -1,5 +1,5 @@
 diff --git a/alg/gdalapplyverticalshiftgrid.cpp b/alg/gdalapplyverticalshiftgrid.cpp
-index a7d044cb2a..bda7759232 100644
+index 0fcdf8ba00..d61effbc2c 100644
 --- a/alg/gdalapplyverticalshiftgrid.cpp
 +++ b/alg/gdalapplyverticalshiftgrid.cpp
 @@ -20,7 +20,7 @@
@@ -12,10 +12,10 @@ index a7d044cb2a..bda7759232 100644
  #include <cmath>
  #include <limits>
 diff --git a/apps/CMakeLists.txt b/apps/CMakeLists.txt
-index beca7896f0..7d5a8cb71f 100644
+index d9b156cd81..58ebe04520 100644
 --- a/apps/CMakeLists.txt
 +++ b/apps/CMakeLists.txt
-@@ -133,7 +133,7 @@ target_compile_definitions(appslib PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+@@ -196,7 +196,7 @@ endif()
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(appslib libjson)
  else ()
@@ -23,9 +23,18 @@ index beca7896f0..7d5a8cb71f 100644
 +  gdal_target_link_libraries(appslib PRIVATE json-c::json-c)
  endif ()
  
+ if (GDAL_USE_ZLIB_INTERNAL)
+@@ -206,7 +206,7 @@ else()
+   if (MSVC AND NOT ZLIB_IS_STATIC)
+     target_compile_definitions(appslib PRIVATE -DZLIB_DLL)
+   endif ()
+-  gdal_target_link_libraries(appslib PRIVATE ZLIB::ZLIB)
++  gdal_target_link_libraries(appslib PRIVATE zlib)
+ endif ()
+ 
  include(TargetPublicHeader)
 diff --git a/apps/gdalsrsinfo.cpp b/apps/gdalsrsinfo.cpp
-index 4b9afdc4d8..281ef27851 100644
+index 220d26f1ab..f62062d22d 100644
 --- a/apps/gdalsrsinfo.cpp
 +++ b/apps/gdalsrsinfo.cpp
 @@ -21,7 +21,7 @@
@@ -38,20 +47,20 @@ index 4b9afdc4d8..281ef27851 100644
  bool FindSRS(const char *pszInput, OGRSpatialReference &oSRS);
  CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
 diff --git a/autotest/cpp/CMakeLists.txt b/autotest/cpp/CMakeLists.txt
-index ff2c510bda..639462187f 100644
+index d71462e872..a5057b4be7 100644
 --- a/autotest/cpp/CMakeLists.txt
 +++ b/autotest/cpp/CMakeLists.txt
-@@ -122,7 +122,7 @@ target_include_directories(
+@@ -132,7 +132,7 @@ target_include_directories(
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_SQLITE3)
    target_include_directories(
--      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
-+      gdal_unit_test PRIVATE $<TARGET_PROPERTY:sqlite3,INTERFACE_INCLUDE_DIRECTORIES>)
+-      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite3::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
++      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
  endif()
  
  target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 diff --git a/cmake/helpers/CheckDependentLibraries.cmake b/cmake/helpers/CheckDependentLibraries.cmake
-index abb5a4c5a2..f3ba013678 100644
+index ca24b5479a..8f5caf8e3e 100644
 --- a/cmake/helpers/CheckDependentLibraries.cmake
 +++ b/cmake/helpers/CheckDependentLibraries.cmake
 @@ -110,29 +110,9 @@ if (GDAL_USE_CRYPTOPP)
@@ -199,7 +208,7 @@ index abb5a4c5a2..f3ba013678 100644
  # Checks that SQLite3 has RTree support
  # Called by ogr/ogrsf_frmts/sqlite/CMakeLists.txt and ogr/ogrsf_frmts/gpkg/CMakeLists.txt
 diff --git a/cmake/helpers/CheckDependentLibrariesCommon.cmake b/cmake/helpers/CheckDependentLibrariesCommon.cmake
-index ebb353829f..1f2ee7da7c 100644
+index 47675f0c90..460a31c4b0 100644
 --- a/cmake/helpers/CheckDependentLibrariesCommon.cmake
 +++ b/cmake/helpers/CheckDependentLibrariesCommon.cmake
 @@ -28,13 +28,9 @@ if(NOT GDAL_USE_INTERNAL_LIBS IN_LIST GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES)
@@ -218,7 +227,7 @@ index ebb353829f..1f2ee7da7c 100644
  endif()
  
  # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
-@@ -238,7 +234,7 @@ macro (gdal_check_package name purpose)
+@@ -240,7 +236,7 @@ macro (gdal_check_package name purpose)
      set(_find_dependency "find_dependency(${_find_dependency_args})\n")
    endif()
    if(NOT BUILD_SHARED_LIBS AND GDAL_USE_${key} AND _find_dependency)
@@ -244,7 +253,7 @@ index a2ab32b933..70707989fa 100644
 +    endif()
 +endif()
 diff --git a/cmake/helpers/CheckDependentLibrariesJpeg.cmake b/cmake/helpers/CheckDependentLibrariesJpeg.cmake
-index 8227c85fdd..5ebb7f10e3 100644
+index 8227c85fdd..d9a44edb3d 100644
 --- a/cmake/helpers/CheckDependentLibrariesJpeg.cmake
 +++ b/cmake/helpers/CheckDependentLibrariesJpeg.cmake
 @@ -1,17 +1,7 @@
@@ -286,11 +295,9 @@ index 8227c85fdd..5ebb7f10e3 100644
        int main()
        {
            jpeg_read_scanlines(0,0,0);
-@@ -35,6 +25,4 @@ if (GDAL_USE_JPEG AND TARGET JPEG::JPEG)
-       "
-       HAVE_JPEGTURBO_DUAL_MODE_8_12)
+@@ -37,4 +27,3 @@ if (GDAL_USE_JPEG AND TARGET JPEG::JPEG)
    cmake_pop_check_state()
--
+ 
  endif()
 -gdal_internal_library(JPEG)
 diff --git a/cmake/helpers/CheckDependentLibrariesZLIB.cmake b/cmake/helpers/CheckDependentLibrariesZLIB.cmake
@@ -381,7 +388,7 @@ index 0305899542..9838ceba6f 100644
  endif()
  include("${CMAKE_CURRENT_LIST_DIR}/GDAL-targets.cmake")
 diff --git a/frmts/cals/calsdataset.cpp b/frmts/cals/calsdataset.cpp
-index 48ad43ef73..7f0197aeb5 100644
+index a6a24705a0..efbf63c50b 100644
 --- a/frmts/cals/calsdataset.cpp
 +++ b/frmts/cals/calsdataset.cpp
 @@ -14,7 +14,7 @@
@@ -407,10 +414,10 @@ index d531229bb5..b3b25b0614 100644
  
  if (GDAL_ENABLE_DRIVER_EEDA_PLUGIN)
 diff --git a/frmts/georaster/CMakeLists.txt b/frmts/georaster/CMakeLists.txt
-index df02240b36..083bff28e9 100644
+index b1072b227a..a0dda9fe81 100644
 --- a/frmts/georaster/CMakeLists.txt
 +++ b/frmts/georaster/CMakeLists.txt
-@@ -49,11 +49,11 @@ endif ()
+@@ -52,11 +52,11 @@ endif ()
  # /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
  # that contains libjpeg 9e
  if (GDAL_ENABLE_DRIVER_JPEG AND (NOT GDAL_USE_JPEG_INTERNAL))
@@ -425,10 +432,10 @@ index df02240b36..083bff28e9 100644
 +  gdal_target_link_libraries(gdal_GEOR PRIVATE zlib)
  endif ()
 diff --git a/frmts/georaster/georaster_priv.h b/frmts/georaster/georaster_priv.h
-index ac69057c2e..12c0e161af 100644
+index 9912a3e951..ba4e2ba8c6 100644
 --- a/frmts/georaster/georaster_priv.h
 +++ b/frmts/georaster/georaster_priv.h
-@@ -34,7 +34,7 @@
+@@ -36,7 +36,7 @@
  
  #ifdef JPEG_SUPPORTED
  CPL_C_START
@@ -438,10 +445,10 @@ index ac69057c2e..12c0e161af 100644
  #endif
  
 diff --git a/frmts/grib/CMakeLists.txt b/frmts/grib/CMakeLists.txt
-index b047f95ccf..0488b289eb 100644
+index 2c17d1cfd2..3e59131e5a 100644
 --- a/frmts/grib/CMakeLists.txt
 +++ b/frmts/grib/CMakeLists.txt
-@@ -161,12 +161,12 @@ endif ()
+@@ -167,12 +167,12 @@ endif ()
  
  if (GDAL_USE_PNG AND NOT GDAL_USE_PNG_INTERNAL)
    target_compile_definitions(gdal_GRIB PRIVATE -DUSE_PNG)
@@ -483,10 +490,10 @@ index 2e49243d21..2e151c54c4 100644
  
  struct png_stream {
 diff --git a/frmts/gtiff/CMakeLists.txt b/frmts/gtiff/CMakeLists.txt
-index bb95feeadd..9074fa8a81 100644
+index 7171c951f6..0df84cbba6 100644
 --- a/frmts/gtiff/CMakeLists.txt
 +++ b/frmts/gtiff/CMakeLists.txt
-@@ -82,18 +82,18 @@ endif ()
+@@ -84,18 +84,18 @@ endif ()
  # /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
  # triggered by libtiff, that contains libjpeg 9e
  if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
@@ -508,7 +515,7 @@ index bb95feeadd..9074fa8a81 100644
  endif ()
  
  if (GDAL_USE_JXL)
-@@ -160,7 +160,7 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
+@@ -162,7 +162,7 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
        if (GDAL_USE_ZLIB_INTERNAL)
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libz>)
        else ()
@@ -517,7 +524,7 @@ index bb95feeadd..9074fa8a81 100644
        endif ()
        if (GDAL_USE_DEFLATE)
          target_link_libraries(generate_quant_table_md5sum PRIVATE Deflate::Deflate)
-@@ -168,7 +168,7 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
+@@ -170,7 +170,7 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
        if (GDAL_USE_JPEG_INTERNAL)
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libjpeg>)
        else ()
@@ -526,7 +533,7 @@ index bb95feeadd..9074fa8a81 100644
        endif ()
        if (GDAL_USE_JPEG12_INTERNAL)
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libjpeg12>)
-@@ -186,6 +186,6 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
+@@ -188,6 +188,6 @@ if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:lerc>)
        endif ()
      else ()
@@ -535,10 +542,10 @@ index bb95feeadd..9074fa8a81 100644
      endif ()
  endif()
 diff --git a/frmts/gtiff/cogdriver.cpp b/frmts/gtiff/cogdriver.cpp
-index de66b1c609..f634d39593 100644
+index 00e9abf99f..52f2e35718 100644
 --- a/frmts/gtiff/cogdriver.cpp
 +++ b/frmts/gtiff/cogdriver.cpp
-@@ -18,7 +18,7 @@
+@@ -23,7 +23,7 @@
  #include "gdal_utils.h"
  #include "gdalwarper.h"
  #include "cogdriver.h"
@@ -548,12 +555,12 @@ index de66b1c609..f634d39593 100644
  #include "tilematrixset.hpp"
  
 diff --git a/frmts/gtiff/geotiff.cpp b/frmts/gtiff/geotiff.cpp
-index 4e6caf2fb3..f78078ecdf 100644
+index 8dea072b42..f67bff00ac 100644
 --- a/frmts/gtiff/geotiff.cpp
 +++ b/frmts/gtiff/geotiff.cpp
-@@ -22,9 +22,9 @@
- #include "gdal.h"
+@@ -24,9 +24,9 @@
  #include "gdal_mdreader.h"  // RPC_xxx
+ #include "gdalsubdatasetinfo.h"
  #include "gtiffdataset.h"
 -#include "tiffio.h"
 +#include <tiff/tiffio.h>
@@ -607,7 +614,7 @@ index 67fae04881..7d4496f1e6 100644
  int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions);
  
 diff --git a/frmts/gtiff/gt_overview.cpp b/frmts/gtiff/gt_overview.cpp
-index 68e8afa48f..5f268c5f14 100644
+index a8864a8377..fc330f6223 100644
 --- a/frmts/gtiff/gt_overview.cpp
 +++ b/frmts/gtiff/gt_overview.cpp
 @@ -31,11 +31,11 @@
@@ -626,7 +633,7 @@ index 68e8afa48f..5f268c5f14 100644
  // TODO(schwehr): Explain why 128 and not 127.
  constexpr int knMaxOverviews = 128;
 diff --git a/frmts/gtiff/gt_overview.h b/frmts/gtiff/gt_overview.h
-index 9216aa22e4..d48e22c01f 100644
+index 9b94a5f10e..5a8acd18c0 100644
 --- a/frmts/gtiff/gt_overview.h
 +++ b/frmts/gtiff/gt_overview.h
 @@ -18,7 +18,7 @@
@@ -639,7 +646,7 @@ index 9216aa22e4..d48e22c01f 100644
  #include <utility>
  
 diff --git a/frmts/gtiff/gt_wkt_srs.cpp b/frmts/gtiff/gt_wkt_srs.cpp
-index 22eabfcd38..11dffbfe3e 100644
+index 9f409cc0c5..b29c4341d4 100644
 --- a/frmts/gtiff/gt_wkt_srs.cpp
 +++ b/frmts/gtiff/gt_wkt_srs.cpp
 @@ -33,18 +33,18 @@
@@ -696,7 +703,7 @@ index 38279d5482..f1e3dd7ee0 100644
  #if LIBGEOTIFF_VERSION >= 1600
  
 diff --git a/frmts/gtiff/gtiff.h b/frmts/gtiff/gtiff.h
-index cf75c04682..cc1780b32d 100644
+index 61783a9cb9..31b8839027 100644
 --- a/frmts/gtiff/gtiff.h
 +++ b/frmts/gtiff/gtiff.h
 @@ -19,8 +19,8 @@
@@ -711,10 +718,10 @@ index cf75c04682..cc1780b32d 100644
  CPL_C_START
  void CPL_DLL GTiffOneTimeInit();
 diff --git a/frmts/gtiff/gtiffdataset.cpp b/frmts/gtiff/gtiffdataset.cpp
-index 46be4d54c0..eec9545c97 100644
+index fc2fc114b8..befcac33b1 100644
 --- a/frmts/gtiff/gtiffdataset.cpp
 +++ b/frmts/gtiff/gtiffdataset.cpp
-@@ -32,7 +32,7 @@
+@@ -33,7 +33,7 @@
  #include "ogr_proj_p.h"  // OSRGetProjTLSContext()
  #include "tif_jxl.h"
  #include "tifvsi.h"
@@ -724,26 +731,26 @@ index 46be4d54c0..eec9545c97 100644
  static const GTIFFTag asTIFFTags[] = {
      {"TIFFTAG_DOCUMENTNAME", TIFFTAG_DOCUMENTNAME, GTIFFTAGTYPE_STRING},
 diff --git a/frmts/gtiff/gtiffdataset.h b/frmts/gtiff/gtiffdataset.h
-index e2babec772..cf059f7117 100644
+index 58dc03c1a5..7bd46c2652 100644
 --- a/frmts/gtiff/gtiffdataset.h
 +++ b/frmts/gtiff/gtiffdataset.h
-@@ -24,7 +24,7 @@
+@@ -25,7 +25,7 @@
  #include "fetchbufferdirectio.h"
  #include "gtiff.h"
  #include "gt_wkt_srs.h"  // GTIFFKeysFlavorEnum
 -#include "tiffio.h"      // TIFF*
 +#include <tiff/tiffio.h>      // TIFF*
  
- class GTiffJPEGOverviewDS;
- 
+ enum class GTiffProfile : GByte
+ {
 diff --git a/frmts/gtiff/gtiffdataset_read.cpp b/frmts/gtiff/gtiffdataset_read.cpp
-index 1f6c3f0ff0..980f9d37e0 100644
+index 4f5c96f084..771d5732e7 100644
 --- a/frmts/gtiff/gtiffdataset_read.cpp
 +++ b/frmts/gtiff/gtiffdataset_read.cpp
-@@ -37,11 +37,11 @@
- #include "cpl_worker_thread_pool.h"
+@@ -38,11 +38,11 @@
  #include "fetchbufferdirectio.h"
- #include "gdal_mdreader.h"    // MD_DOMAIN_RPC
+ #include "gdal_mdreader.h"  // MD_DOMAIN_RPC
+ #include "gdal_priv.h"
 -#include "geovalues.h"        // RasterPixelIsPoint
 +#include <geotiff/geovalues.h>        // RasterPixelIsPoint
  #include "gt_wkt_srs_priv.h"  // GDALGTIFKeyGetSHORT()
@@ -755,11 +762,11 @@ index 1f6c3f0ff0..980f9d37e0 100644
  #include "tiff_common.h"
  
 diff --git a/frmts/gtiff/gtiffdataset_write.cpp b/frmts/gtiff/gtiffdataset_write.cpp
-index 8ef643f274..10a85e8e50 100644
+index d052ca1a57..2215ee9ddd 100644
 --- a/frmts/gtiff/gtiffdataset_write.cpp
 +++ b/frmts/gtiff/gtiffdataset_write.cpp
-@@ -39,14 +39,14 @@
- #include "gdal_mdreader.h"          // GDALWriteRPCTXTFile()
+@@ -41,14 +41,14 @@
+ #include "gdal_priv.h"
  #include "gdal_priv_templates.hpp"  // GDALIsValueInRange<>
  #include "gdal_thread_pool.h"       // GDALGetGlobalThreadPool()
 -#include "geovalues.h"              // RasterPixelIsPoint
@@ -776,20 +783,20 @@ index 8ef643f274..10a85e8e50 100644
  #if LIFFLIB_VERSION > 20230908 || defined(INTERNAL_LIBTIFF)
  /* libtiff < 4.6.1 doesn't generate a LERC mask for multi-band contig configuration */
 diff --git a/frmts/gtiff/gtiffoddbitsband.cpp b/frmts/gtiff/gtiffoddbitsband.cpp
-index b718a11a1e..f142643eb6 100644
+index fa4e62353e..c7b0cb45a2 100644
 --- a/frmts/gtiff/gtiffoddbitsband.cpp
 +++ b/frmts/gtiff/gtiffoddbitsband.cpp
-@@ -15,7 +15,7 @@
- 
+@@ -16,7 +16,7 @@
+ #include "gdal_priv.h"
  #include "cpl_float.h"  // CPLFloatToHalf()
  #include "gtiffdataset.h"
 -#include "tiffio.h"
 +#include <tiff/tiffio.h>
  
  /************************************************************************/
- /*                           GTiffOddBitsBand()                         */
+ /*                          GTiffOddBitsBand()                          */
 diff --git a/frmts/gtiff/gtiffrgbaband.cpp b/frmts/gtiff/gtiffrgbaband.cpp
-index fdaed879a2..9e06620f81 100644
+index fc09a75f5d..49f4ce537b 100644
 --- a/frmts/gtiff/gtiffrgbaband.cpp
 +++ b/frmts/gtiff/gtiffrgbaband.cpp
 @@ -14,7 +14,7 @@
@@ -798,9 +805,9 @@ index fdaed879a2..9e06620f81 100644
  
 -#include "tiffio.h"
 +#include <tiff/tiffio.h>
+ #include "gdal_priv.h"
  
  /************************************************************************/
- /*                           GTiffRGBABand()                            */
 diff --git a/frmts/gtiff/tif_jxl.h b/frmts/gtiff/tif_jxl.h
 index 5edfe9da9e..b77b0861c9 100644
 --- a/frmts/gtiff/tif_jxl.h
@@ -815,10 +822,10 @@ index 5edfe9da9e..b77b0861c9 100644
  #ifndef COMPRESSION_JXL
  #define COMPRESSION_JXL                                                        \
 diff --git a/frmts/gtiff/tifvsi.cpp b/frmts/gtiff/tifvsi.cpp
-index a889f3cad5..dd6672cf52 100644
+index 3529a9966d..a1336f557e 100644
 --- a/frmts/gtiff/tifvsi.cpp
 +++ b/frmts/gtiff/tifvsi.cpp
-@@ -36,7 +36,7 @@
+@@ -33,7 +33,7 @@
  #include "gdal_libgeotiff_symbol_rename.h"
  #endif
  
@@ -840,11 +847,26 @@ index ed7dbaa26b..c49320782d 100644
  
  TIFF CPL_DLL *VSI_TIFFOpen(const char *name, const char *mode, VSILFILE *fp);
  TIFF *VSI_TIFFOpenChild(
+diff --git a/frmts/hdf5/s100.cpp b/frmts/hdf5/s100.cpp
+index 15a9b58ca1..e7516b515e 100644
+--- a/frmts/hdf5/s100.cpp
++++ b/frmts/hdf5/s100.cpp
+@@ -20,8 +20,8 @@
+ #include "hdf5dataset.h"
+ #include "gh5_convenience.h"
+ 
+-#include "proj.h"
+-#include "proj_experimental.h"
++#include <proj/proj.h>
++#include <proj/proj_experimental.h>
+ #include "proj_constants.h"
+ #include "ogr_proj_p.h"
+ 
 diff --git a/frmts/hfa/hfaopen.cpp b/frmts/hfa/hfaopen.cpp
-index 7229a33258..ecb4b48a2b 100644
+index 0d5d9e0513..842f0913bc 100644
 --- a/frmts/hfa/hfaopen.cpp
 +++ b/frmts/hfa/hfaopen.cpp
-@@ -45,7 +45,7 @@
+@@ -42,7 +42,7 @@
  #include "gdal_priv.h"
  #include "hfa.h"
  #include "ogr_proj_p.h"
@@ -854,7 +876,7 @@ index 7229a33258..ecb4b48a2b 100644
  constexpr double R2D = 180.0 / M_PI;
  
 diff --git a/frmts/idrisi/IdrisiDataset.cpp b/frmts/idrisi/IdrisiDataset.cpp
-index 0618a8bd59..9b6f4ff2e1 100644
+index bec6a90dcc..9fdc7d9496 100644
 --- a/frmts/idrisi/IdrisiDataset.cpp
 +++ b/frmts/idrisi/IdrisiDataset.cpp
 @@ -26,7 +26,7 @@
@@ -900,10 +922,10 @@ index 06a0137fef..55cce50793 100644
  
  # Breaks ODR
 diff --git a/frmts/jpeg/jpegdrivercore.cpp b/frmts/jpeg/jpegdrivercore.cpp
-index b2f325b316..b54ff610f6 100644
+index 0d0e0bbbfc..03a82d8ec3 100644
 --- a/frmts/jpeg/jpegdrivercore.cpp
 +++ b/frmts/jpeg/jpegdrivercore.cpp
-@@ -18,7 +18,7 @@
+@@ -21,7 +21,7 @@
  
  // So that D_LOSSLESS_SUPPORTED is visible if defined in jmorecfg of libjpeg-turbo >= 2.2
  #define JPEG_INTERNAL_OPTIONS
@@ -911,12 +933,12 @@ index b2f325b316..b54ff610f6 100644
 +#include <jpeg/jpeglib.h>
  
  /************************************************************************/
- /*                    JPEGDatasetIsJPEGLS()                             */
+ /*                        JPEGDatasetIsJPEGLS()                         */
 diff --git a/frmts/jpeg/jpgdataset.cpp b/frmts/jpeg/jpgdataset.cpp
-index 396ebabbc1..0251890606 100644
+index 85a20f3a6c..5b6a49a6ac 100644
 --- a/frmts/jpeg/jpgdataset.cpp
 +++ b/frmts/jpeg/jpgdataset.cpp
-@@ -54,7 +54,7 @@ CPL_C_START
+@@ -52,7 +52,7 @@ CPL_C_START
  #ifdef LIBJPEG_12_PATH
  #include LIBJPEG_12_PATH
  #else
@@ -926,10 +948,10 @@ index 396ebabbc1..0251890606 100644
  CPL_C_END
  #include "memdataset.h"
 diff --git a/frmts/jpeg/jpgdataset.h b/frmts/jpeg/jpgdataset.h
-index df026768c3..9447df78a1 100644
+index 00e3d295b7..c9926bb72a 100644
 --- a/frmts/jpeg/jpgdataset.h
 +++ b/frmts/jpeg/jpgdataset.h
-@@ -51,7 +51,7 @@ CPL_C_START
+@@ -49,7 +49,7 @@ CPL_C_START
  #ifdef LIBJPEG_12_PATH
  #include LIBJPEG_12_PATH
  #else
@@ -965,10 +987,10 @@ index 1e4b8132b4..574f5c51c8 100644
  CPL_C_END
  
 diff --git a/frmts/libertiff/CMakeLists.txt b/frmts/libertiff/CMakeLists.txt
-index 960839d3c7..12e6cc7f3d 100644
+index d01c412a28..24582813fb 100644
 --- a/frmts/libertiff/CMakeLists.txt
 +++ b/frmts/libertiff/CMakeLists.txt
-@@ -25,7 +25,7 @@ endif ()
+@@ -24,7 +24,7 @@ endif ()
  # Now external libraries
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
@@ -978,14 +1000,14 @@ index 960839d3c7..12e6cc7f3d 100644
  
  if (GDAL_USE_DEFLATE)
 diff --git a/frmts/mbtiles/CMakeLists.txt b/frmts/mbtiles/CMakeLists.txt
-index f1850f94c2..afd5b22309 100644
+index a96c44be7d..16c022801c 100644
 --- a/frmts/mbtiles/CMakeLists.txt
 +++ b/frmts/mbtiles/CMakeLists.txt
-@@ -17,13 +17,13 @@ if (GDAL_USE_GEOS)
+@@ -20,13 +20,13 @@ if (GDAL_USE_GEOS)
  endif ()
  
  target_compile_definitions(gdal_MBTiles PRIVATE -DHAVE_SQLITE)
--gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite::SQLite3)
+-gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite3::SQLite3)
 +gdal_target_link_libraries(gdal_MBTiles PRIVATE sqlite3)
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
@@ -1012,10 +1034,10 @@ index 80f64353f4..cbd9c838b1 100644
  
  #include <math.h>
 diff --git a/frmts/mrf/CMakeLists.txt b/frmts/mrf/CMakeLists.txt
-index 596381e706..1c023cb282 100644
+index fac692162e..f2d1cf9ea0 100644
 --- a/frmts/mrf/CMakeLists.txt
 +++ b/frmts/mrf/CMakeLists.txt
-@@ -83,15 +83,15 @@ endif ()
+@@ -85,15 +85,15 @@ endif ()
  # /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
  # triggered by libtiff, that contains libjpeg 9e
  if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
@@ -1035,7 +1057,7 @@ index 596381e706..1c023cb282 100644
  
  if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC)
 diff --git a/frmts/mrf/JPEG_band.cpp b/frmts/mrf/JPEG_band.cpp
-index b79f91b7fd..222eacbb48 100644
+index 0c434f092d..69e12ddb7d 100644
 --- a/frmts/mrf/JPEG_band.cpp
 +++ b/frmts/mrf/JPEG_band.cpp
 @@ -72,8 +72,8 @@
@@ -1050,7 +1072,7 @@ index b79f91b7fd..222eacbb48 100644
  
  #define PACKER
 diff --git a/frmts/mrf/JPNG_band.cpp b/frmts/mrf/JPNG_band.cpp
-index 5d1fcad0a0..5f100ba5c4 100644
+index f93e590286..296c7de3ff 100644
 --- a/frmts/mrf/JPNG_band.cpp
 +++ b/frmts/mrf/JPNG_band.cpp
 @@ -23,8 +23,8 @@
@@ -1065,23 +1087,23 @@ index 5d1fcad0a0..5f100ba5c4 100644
  
  NAMESPACE_MRF_START
 diff --git a/frmts/mrf/PNG_band.cpp b/frmts/mrf/PNG_band.cpp
-index da60e54bb0..caac1ae92a 100644
+index dc24c9a247..e0878ccd50 100644
 --- a/frmts/mrf/PNG_band.cpp
 +++ b/frmts/mrf/PNG_band.cpp
-@@ -58,7 +58,7 @@
- #include <algorithm>
+@@ -65,7 +65,7 @@
+ #endif
  
  CPL_C_START
 -#include <png.h>
 +#include <png/png.h>
  CPL_C_END
  
- NAMESPACE_MRF_START
+ #if defined(__clang__)
 diff --git a/frmts/mrsid/CMakeLists.txt b/frmts/mrsid/CMakeLists.txt
-index fa112278d7..46ab6459b6 100644
+index 5f068b86cf..d2ab48c6af 100644
 --- a/frmts/mrsid/CMakeLists.txt
 +++ b/frmts/mrsid/CMakeLists.txt
-@@ -43,5 +43,5 @@ endif ()
+@@ -46,5 +46,5 @@ endif ()
  if (GDAL_USE_GEOTIFF_INTERNAL)
    gdal_add_vendored_lib(gdal_MrSID geotiff)
  else ()
@@ -1089,10 +1111,10 @@ index fa112278d7..46ab6459b6 100644
 +  gdal_target_link_libraries(gdal_MrSID PRIVATE geotiff)
  endif ()
 diff --git a/frmts/nitf/CMakeLists.txt b/frmts/nitf/CMakeLists.txt
-index c287ea015e..9e1fc7089e 100644
+index a9eeb158fd..b4dc9a9347 100644
 --- a/frmts/nitf/CMakeLists.txt
 +++ b/frmts/nitf/CMakeLists.txt
-@@ -77,7 +77,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
+@@ -87,7 +87,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
    # /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
    # triggered by libtiff, that contains libjpeg 9e
    if (NOT GDAL_USE_JPEG_INTERNAL)
@@ -1101,7 +1123,7 @@ index c287ea015e..9e1fc7089e 100644
    endif ()
    if (GDAL_USE_JPEG12_INTERNAL)
      target_compile_definitions(gdal_NITF PRIVATE -DJPEG_DUAL_MODE_8_12)
-@@ -88,7 +88,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
+@@ -98,7 +98,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
  endif()
  
  if (GDAL_USE_TIFF AND NOT GDAL_USE_TIFF_INTERNAL)
@@ -1109,8 +1131,8 @@ index c287ea015e..9e1fc7089e 100644
 +  gdal_target_link_libraries(gdal_NITF PRIVATE TIFF::tiff)
  endif ()
  
- add_executable(nitfdump EXCLUDE_FROM_ALL nitfdump.c nitffile.c nitfimage.c rpftocfile.cpp nitfaridpcm.cpp mgrs.c nitfdes.c)
-@@ -101,7 +101,7 @@ if (GDAL_USE_TIFF_INTERNAL)
+ add_executable(nitfdump EXCLUDE_FROM_ALL nitfdump.c nitffile.cpp nitfimage.c rpftocfile.cpp nitfaridpcm.cpp mgrs.c nitfdes.c offsetpatcher.cpp rpfframewriter.cpp)
+@@ -111,7 +111,7 @@ if (GDAL_USE_TIFF_INTERNAL)
    if (GDAL_USE_ZLIB_INTERNAL)
      target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libz>)
    else ()
@@ -1119,7 +1141,7 @@ index c287ea015e..9e1fc7089e 100644
    endif ()
    if (GDAL_USE_DEFLATE)
      target_link_libraries(nitfdump PRIVATE Deflate::Deflate)
-@@ -113,7 +113,7 @@ if (GDAL_USE_TIFF_INTERNAL)
+@@ -123,7 +123,7 @@ if (GDAL_USE_TIFF_INTERNAL)
        if (GDAL_USE_JPEG_INTERNAL)
          target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libjpeg>)
        else ()
@@ -1128,8 +1150,8 @@ index c287ea015e..9e1fc7089e 100644
        endif ()
        if (GDAL_USE_JPEG12_INTERNAL)
          target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libjpeg12>)
-@@ -132,7 +132,7 @@ if (GDAL_USE_TIFF_INTERNAL)
-     target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:lerc>)
+@@ -144,7 +144,7 @@ if (GDAL_USE_TIFF_INTERNAL)
+     target_link_libraries(nitfdump PRIVATE LERC::LERC)
    endif ()
  elseif(GDAL_USE_TIFF AND GDAL_ENABLE_DRIVER_GTIFF)
 -  target_link_libraries(nitfdump PRIVATE TIFF::TIFF)
@@ -1154,7 +1176,7 @@ index 1734fcdfa7..2a8639785b 100644
  #include "tifvsi.h"
  
 diff --git a/frmts/nitf/nitfwritejpeg.cpp b/frmts/nitf/nitfwritejpeg.cpp
-index 2a70c522d4..e10d8431ae 100644
+index b6aacb1a85..a1d4631c77 100644
 --- a/frmts/nitf/nitfwritejpeg.cpp
 +++ b/frmts/nitf/nitfwritejpeg.cpp
 @@ -23,7 +23,7 @@ CPL_C_START
@@ -1167,10 +1189,10 @@ index 2a70c522d4..e10d8431ae 100644
  CPL_C_END
  
 diff --git a/frmts/pcidsk/CMakeLists.txt b/frmts/pcidsk/CMakeLists.txt
-index e2be93ad98..c723658813 100644
+index a799529bdb..81edcc6e2e 100644
 --- a/frmts/pcidsk/CMakeLists.txt
 +++ b/frmts/pcidsk/CMakeLists.txt
-@@ -24,5 +24,5 @@ add_subdirectory(sdk)
+@@ -27,5 +27,5 @@ add_subdirectory(sdk)
  target_compile_definitions(gdal_PCIDSK PRIVATE -DPCIDSK_INTERNAL)
  
  if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
@@ -1178,7 +1200,7 @@ index e2be93ad98..c723658813 100644
 +  gdal_target_link_libraries(gdal_PCIDSK PRIVATE jpeg-turbo::turbojpeg)
  endif ()
 diff --git a/frmts/pcidsk/sdk/core/libjpeg_io.cpp b/frmts/pcidsk/sdk/core/libjpeg_io.cpp
-index dcef15d356..d9f907deaa 100644
+index 004a31ddf9..d78dc4415a 100644
 --- a/frmts/pcidsk/sdk/core/libjpeg_io.cpp
 +++ b/frmts/pcidsk/sdk/core/libjpeg_io.cpp
 @@ -23,7 +23,7 @@ using namespace PCIDSK;
@@ -1191,18 +1213,20 @@ index dcef15d356..d9f907deaa 100644
  
  static void _DummyMgrMethod( j_compress_ptr /*pUnused*/ ) {}
 diff --git a/frmts/pdf/CMakeLists.txt b/frmts/pdf/CMakeLists.txt
-index b125eb851c..39c696c6ed 100644
+index 34e8925db8..77c9e3c37d 100644
 --- a/frmts/pdf/CMakeLists.txt
 +++ b/frmts/pdf/CMakeLists.txt
-@@ -98,7 +98,7 @@ if (GDAL_USE_PDFIUM)
+@@ -98,8 +98,8 @@ if (GDAL_USE_PDFIUM)
      gdal_target_link_libraries(
        gdal_PDF
        PRIVATE
 -      JPEG::JPEG
+-      PNG::PNG
 +      jpeg-turbo::turbojpeg
-       PNG::PNG
++      png
        ${OPENJPEG_LIBRARIES}
        Threads::Threads
+       ${LCMS2_LIBRARY})
 diff --git a/frmts/pds/CMakeLists.txt b/frmts/pds/CMakeLists.txt
 index 5dced5b9b6..4564f20e4f 100644
 --- a/frmts/pds/CMakeLists.txt
@@ -1226,7 +1250,7 @@ index 5dced5b9b6..4564f20e4f 100644
  endif ()
  
 diff --git a/frmts/pds/vicardataset.cpp b/frmts/pds/vicardataset.cpp
-index 9fb10c7d34..85f17c0f82 100644
+index 0aa99b7b44..69a84d5ec3 100644
 --- a/frmts/pds/vicardataset.cpp
 +++ b/frmts/pds/vicardataset.cpp
 @@ -30,9 +30,9 @@ constexpr double VICAR_NULL3 = -32768.0;
@@ -1253,10 +1277,10 @@ index ff7ca47643..ed215d6183 100644
 +  gdal_target_link_libraries(gdal_PLMOSAIC PRIVATE json-c::json-c)
  endif ()
 diff --git a/frmts/png/CMakeLists.txt b/frmts/png/CMakeLists.txt
-index 51a1452877..7603938776 100644
+index ec4976db78..b6981d8661 100644
 --- a/frmts/png/CMakeLists.txt
 +++ b/frmts/png/CMakeLists.txt
-@@ -13,13 +13,13 @@ gdal_standard_includes(gdal_PNG)
+@@ -14,13 +14,13 @@ gdal_standard_includes(gdal_PNG)
  if (GDAL_USE_PNG_INTERNAL)
    gdal_add_vendored_lib(gdal_PNG libpng)
  else ()
@@ -1273,20 +1297,20 @@ index 51a1452877..7603938776 100644
  
  if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
 diff --git a/frmts/png/pngdataset.cpp b/frmts/png/pngdataset.cpp
-index cfb6115058..ad25edbb0b 100644
+index 033d032e0f..8b9b00de15 100644
 --- a/frmts/png/pngdataset.cpp
 +++ b/frmts/png/pngdataset.cpp
-@@ -29,7 +29,7 @@
- #include "cpl_string.h"
- #include "gdal_frmts.h"
- #include "gdal_pam.h"
+@@ -36,7 +36,7 @@
+ #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+ #endif
+ 
 -#include "png.h"
 +#include <png/png.h>
  
- #include <csetjmp>
- 
+ #if defined(__clang__)
+ #pragma clang diagnostic pop
 diff --git a/frmts/png/pngdataset.h b/frmts/png/pngdataset.h
-index f51cfd4e34..dc1d52c1bf 100644
+index 7ab5dcce09..f45ca6a5f0 100644
 --- a/frmts/png/pngdataset.h
 +++ b/frmts/png/pngdataset.h
 @@ -38,7 +38,7 @@
@@ -1299,21 +1323,34 @@ index f51cfd4e34..dc1d52c1bf 100644
  #include <csetjmp>
  
 diff --git a/frmts/rik/CMakeLists.txt b/frmts/rik/CMakeLists.txt
-index 9edace854d..3c3069824d 100644
+index dbafee14e7..a00b332129 100644
 --- a/frmts/rik/CMakeLists.txt
 +++ b/frmts/rik/CMakeLists.txt
-@@ -4,5 +4,5 @@ gdal_standard_includes(gdal_RIK)
+@@ -9,5 +9,5 @@ gdal_standard_includes(gdal_RIK)
  if (GDAL_USE_ZLIB_INTERNAL)
    gdal_add_vendored_lib(gdal_RIK libz)
  else ()
 -  gdal_target_link_libraries(gdal_RIK PRIVATE ZLIB::ZLIB)
 +  gdal_target_link_libraries(gdal_RIK PRIVATE zlib)
  endif ()
+diff --git a/frmts/vrt/pixelfunctions.cpp b/frmts/vrt/pixelfunctions.cpp
+index 0f82b20c62..2983bc51da 100644
+--- a/frmts/vrt/pixelfunctions.cpp
++++ b/frmts/vrt/pixelfunctions.cpp
+@@ -20,7 +20,7 @@
+ #include "vrtreclassifier.h"
+ #include "cpl_float.h"
+ 
+-#include "geodesic.h"  // from PROJ
++#include <proj/geodesic.h>  // from PROJ
+ 
+ #if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+ #define USE_SSE2
 diff --git a/gcore/CMakeLists.txt b/gcore/CMakeLists.txt
-index 3fb967e422..77118e5ac7 100644
+index 55306dcaff..68cb79800b 100644
 --- a/gcore/CMakeLists.txt
 +++ b/gcore/CMakeLists.txt
-@@ -165,7 +165,7 @@ add_subdirectory(mdreader)
+@@ -202,7 +202,7 @@ add_subdirectory(mdreader)
  
  # External libs now
  if (NOT GDAL_USE_JSONC_INTERNAL)
@@ -1322,8 +1359,17 @@ index 3fb967e422..77118e5ac7 100644
  endif ()
  
  if (NOT DEFINED OGR_ENABLE_DRIVER_SQLITE)
+@@ -244,7 +244,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+ endif ()
+ 
+ if (GDAL_USE_OPENMP AND OpenMP_C_LIBRARIES)
+-    gdal_target_link_libraries(gcore PRIVATE ${OpenMP_C_LIBRARIES})
++    gdal_target_link_libraries(gcore PRIVATE OpenMP::OpenMP_C)
+ endif()
+ 
+ # Build some files with AVX2 and FMA, if those are not by default enabled,
 diff --git a/gcore/gdal_misc.cpp b/gcore/gdal_misc.cpp
-index db22645589..59be7dc603 100644
+index f06a081c9d..3a94f6f69b 100644
 --- a/gcore/gdal_misc.cpp
 +++ b/gcore/gdal_misc.cpp
 @@ -48,7 +48,7 @@
@@ -1336,7 +1382,7 @@ index db22645589..59be7dc603 100644
  #ifdef HAVE_CURL
  #include "cpl_curl_priv.h"
 diff --git a/gcore/gdal_rat.cpp b/gcore/gdal_rat.cpp
-index fcc21fb553..fda066aebb 100644
+index 1a776a5a5b..f022ad0265 100644
 --- a/gcore/gdal_rat.cpp
 +++ b/gcore/gdal_rat.cpp
 @@ -34,7 +34,7 @@
@@ -1349,10 +1395,10 @@ index fcc21fb553..fda066aebb 100644
  #pragma clang diagnostic pop
  #endif
 diff --git a/gdal.cmake b/gdal.cmake
-index aa3128d202..455f772793 100644
+index c0b4a3f869..ca93537014 100644
 --- a/gdal.cmake
 +++ b/gdal.cmake
-@@ -239,9 +239,9 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
+@@ -291,9 +291,9 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
  else ()
    include(GNUInstallDirs)
    set(INSTALL_PLUGIN_DIR
@@ -1364,7 +1410,7 @@ index aa3128d202..455f772793 100644
  
    option(GDAL_SET_INSTALL_RELATIVE_RPATH "Whether the rpath of installed binaries should be written as a relative path to the library" OFF)
    if(GDAL_SET_INSTALL_RELATIVE_RPATH)
-@@ -318,7 +318,7 @@ endif ()
+@@ -372,7 +372,7 @@ endif ()
  option(ENABLE_DEFLATE64 "Enable Deflate64 decompression" ON)
  mark_as_advanced(ENABLE_DEFLATE64)
  if(ENABLE_DEFLATE64)
@@ -1373,7 +1419,15 @@ index aa3128d202..455f772793 100644
  endif()
  
  # Internal zlib and jsonc must be declared before
-@@ -550,7 +550,7 @@ install(
+@@ -435,6 +435,7 @@ check_cxx_compiler_flag(-fopenmp-simd HAVE_OPENMP_SIMD)
+ if (GDAL_USE_OPENMP)
+   add_compile_definitions(HAVE_OPENMP)
+   add_compile_options(${OpenMP_C_FLAGS})
++  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenMP REQUIRED)\n")
+   if (OpenMP_C_INCLUDE_DIRS)
+     include_directories(${OpenMP_C_INCLUDE_DIRS})
+   endif()
+@@ -626,7 +627,7 @@ install(
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
    RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
@@ -1382,7 +1436,7 @@ index aa3128d202..455f772793 100644
    FRAMEWORK DESTINATION "${FRAMEWORK_DESTINATION}")
  
  # Generate targets file for importing directly from GDAL build tree
-@@ -566,19 +566,6 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
+@@ -642,19 +643,6 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
      NAMESPACE GDAL::
      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
      EXPORT_LINK_INTERFACE_LIBRARIES)
@@ -1402,7 +1456,7 @@ index aa3128d202..455f772793 100644
  
    include(CMakePackageConfigHelpers)
    # SameMajorVersion as the C++ ABI stability is not relevant for new linking and there are only a few breaking API changes.
-@@ -587,29 +574,16 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
+@@ -663,29 +651,16 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
      VERSION ${GDAL_VERSION}
      COMPATIBILITY SameMajorVersion)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
@@ -1440,10 +1494,10 @@ index aa3128d202..455f772793 100644
  
  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 diff --git a/ogr/CMakeLists.txt b/ogr/CMakeLists.txt
-index d788f6ab4f..f5e8f22f7a 100644
+index 67dc533c6f..ad10212e91 100644
 --- a/ogr/CMakeLists.txt
 +++ b/ogr/CMakeLists.txt
-@@ -148,7 +148,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
+@@ -153,7 +153,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
    if (MSVC AND NOT ZLIB_IS_STATIC)
      target_compile_definitions(ogr PRIVATE -DZLIB_DLL)
    endif ()
@@ -1452,7 +1506,7 @@ index d788f6ab4f..f5e8f22f7a 100644
  endif ()
  
  if (GDAL_USE_EXPAT)
-@@ -163,7 +163,7 @@ if (GDAL_USE_XERCESC)
+@@ -168,7 +168,7 @@ if (GDAL_USE_XERCESC)
  endif ()
  
  if (NOT GDAL_USE_JSONC_INTERNAL)
@@ -1462,7 +1516,7 @@ index d788f6ab4f..f5e8f22f7a 100644
  
  include(TargetPublicHeader)
 diff --git a/ogr/ogr_fromepsg.cpp b/ogr/ogr_fromepsg.cpp
-index 8d632f5439..f0508e5f4d 100644
+index 2a937afd74..6f62d99231 100644
 --- a/ogr/ogr_fromepsg.cpp
 +++ b/ogr/ogr_fromepsg.cpp
 @@ -38,7 +38,7 @@
@@ -1475,7 +1529,7 @@ index 8d632f5439..f0508e5f4d 100644
  extern void OGRsnPrintDouble(char *pszStrBuf, size_t size, double dfValue);
  
 diff --git a/ogr/ogr_proj_p.cpp b/ogr/ogr_proj_p.cpp
-index 9ee654c097..d1811afcb5 100644
+index 7731ace9a6..afd61afdce 100644
 --- a/ogr/ogr_proj_p.cpp
 +++ b/ogr/ogr_proj_p.cpp
 @@ -17,7 +17,7 @@
@@ -1501,7 +1555,7 @@ index cef6d7ca48..deb07ffabf 100644
  #include "cpl_mem_cache.h"
  
 diff --git a/ogr/ogrct.cpp b/ogr/ogrct.cpp
-index 399c21e3db..a02ecb7598 100644
+index 4bd367b3a5..d33ec81ec6 100644
 --- a/ogr/ogrct.cpp
 +++ b/ogr/ogrct.cpp
 @@ -31,8 +31,8 @@
@@ -1516,7 +1570,7 @@ index 399c21e3db..a02ecb7598 100644
  #ifdef DEBUG_PERF
  static double g_dfTotalTimeCRStoCRS = 0;
 diff --git a/ogr/ogrgeojsonwriter.cpp b/ogr/ogrgeojsonwriter.cpp
-index d22f58e6ea..91d02b8058 100644
+index 024512cd27..53c4f36872 100644
 --- a/ogr/ogrgeojsonwriter.cpp
 +++ b/ogr/ogrgeojsonwriter.cpp
 @@ -21,13 +21,13 @@
@@ -1536,7 +1590,7 @@ index d22f58e6ea..91d02b8058 100644
  
  #include <algorithm>
 diff --git a/ogr/ogrlinestring.cpp b/ogr/ogrlinestring.cpp
-index 557933c25c..fe91b9cbaf 100644
+index c1bfe2ca9e..cc6e05c9e9 100644
 --- a/ogr/ogrlinestring.cpp
 +++ b/ogr/ogrlinestring.cpp
 @@ -15,7 +15,7 @@
@@ -1549,10 +1603,10 @@ index 557933c25c..fe91b9cbaf 100644
  #include <cmath>
  #include <cstdlib>
 diff --git a/ogr/ogrsf_frmts/amigocloud/CMakeLists.txt b/ogr/ogrsf_frmts/amigocloud/CMakeLists.txt
-index 70c866dbb5..c913495eae 100644
+index 435c5ed971..beec5c6a4b 100644
 --- a/ogr/ogrsf_frmts/amigocloud/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/amigocloud/CMakeLists.txt
-@@ -14,5 +14,5 @@ target_include_directories(ogr_AmigoCloud PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DI
+@@ -16,5 +16,5 @@ target_include_directories(ogr_AmigoCloud PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DI
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_AmigoCloud libjson)
  else ()
@@ -1560,10 +1614,10 @@ index 70c866dbb5..c913495eae 100644
 +  gdal_target_link_libraries(ogr_AmigoCloud PRIVATE json-c::json-c)
  endif ()
 diff --git a/ogr/ogrsf_frmts/carto/CMakeLists.txt b/ogr/ogrsf_frmts/carto/CMakeLists.txt
-index 0d3478c7b7..69cdbce81c 100644
+index 0afe6251c4..4e24405f78 100644
 --- a/ogr/ogrsf_frmts/carto/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/carto/CMakeLists.txt
-@@ -21,5 +21,5 @@ target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:ogr_PGDump,SOURCE
+@@ -23,5 +23,5 @@ target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:ogr_PGDump,SOURCE
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_Carto libjson)
  else ()
@@ -1571,10 +1625,10 @@ index 0d3478c7b7..69cdbce81c 100644
 +  gdal_target_link_libraries(ogr_Carto PRIVATE json-c::json-c)
  endif ()
 diff --git a/ogr/ogrsf_frmts/elastic/CMakeLists.txt b/ogr/ogrsf_frmts/elastic/CMakeLists.txt
-index f34e98f5f7..dac7a9a278 100644
+index 7628e321c1..1d640c149d 100644
 --- a/ogr/ogrsf_frmts/elastic/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/elastic/CMakeLists.txt
-@@ -19,5 +19,5 @@ gdal_standard_includes(ogr_Elastic)
+@@ -21,5 +21,5 @@ gdal_standard_includes(ogr_Elastic)
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_Elastic libjson)
  else ()
@@ -1582,10 +1636,10 @@ index f34e98f5f7..dac7a9a278 100644
 +  gdal_target_link_libraries(ogr_Elastic PRIVATE json-c::json-c)
  endif ()
 diff --git a/ogr/ogrsf_frmts/geojson/CMakeLists.txt b/ogr/ogrsf_frmts/geojson/CMakeLists.txt
-index 6d0a3d7628..72076fb74e 100644
+index d9c77955a8..b4bbc0f6e7 100644
 --- a/ogr/ogrsf_frmts/geojson/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/geojson/CMakeLists.txt
-@@ -19,7 +19,7 @@ target_include_directories(ogr_GeoJSON PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_
+@@ -22,7 +22,7 @@ target_include_directories(ogr_GeoJSON PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_GeoJSON libjson)
  else ()
@@ -1608,7 +1662,7 @@ index 1372133df2..5865a3d1c3 100644
  
  #include "json_object_iterator.h"
 diff --git a/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp b/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp
-index 3744e263ac..6fcb349793 100644
+index 3da1745f9d..334649e73a 100644
 --- a/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp
 @@ -22,7 +22,7 @@
@@ -1621,10 +1675,10 @@ index 3744e263ac..6fcb349793 100644
  // #include "json_tokener.h"
  #include "ogr_api.h"
 diff --git a/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp b/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp
-index 2469be8daf..98f42b9e45 100644
+index de1ef8ac62..ec94e66fa7 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp
-@@ -26,7 +26,7 @@
+@@ -27,7 +27,7 @@
  #include "cpl_string.h"
  #include "cpl_vsi.h"
  #include "cpl_vsi_error.h"
@@ -1634,7 +1688,7 @@ index 2469be8daf..98f42b9e45 100644
  #include "gdal_utils.h"
  #include "gdal.h"
 diff --git a/ogr/ogrsf_frmts/geojson/ogrgeojsonlayer.cpp b/ogr/ogrsf_frmts/geojson/ogrgeojsonlayer.cpp
-index 95a98d36bb..6d8b379f6f 100644
+index 819c3552ac..a767247242 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrgeojsonlayer.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogrgeojsonlayer.cpp
 @@ -22,7 +22,7 @@
@@ -1647,7 +1701,7 @@ index 95a98d36bb..6d8b379f6f 100644
  #if !DEBUG_JSON
  #ifdef __clang
 diff --git a/ogr/ogrsf_frmts/geojson/ogrgeojsonutils.cpp b/ogr/ogrsf_frmts/geojson/ogrgeojsonutils.cpp
-index 856dd9c3e7..0364f4c684 100644
+index e2d579a542..c14596ec72 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrgeojsonutils.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogrgeojsonutils.cpp
 @@ -17,7 +17,7 @@
@@ -1660,7 +1714,7 @@ index 856dd9c3e7..0364f4c684 100644
  #include <algorithm>
  #include <memory>
 diff --git a/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.cpp b/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.cpp
-index 91371c8a5a..e29ccc9627 100644
+index 1d27751e7e..cde1cc409b 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.cpp
 @@ -19,7 +19,7 @@
@@ -1673,7 +1727,7 @@ index 91371c8a5a..e29ccc9627 100644
  #if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
  #include <json_object_private.h>  // just for sizeof(struct json_object)
 diff --git a/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.h b/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.h
-index 7e0d6f8425..3b3b1c2199 100644
+index 667116370e..02b1cb5bf1 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.h
 +++ b/ogr/ogrsf_frmts/geojson/ogrjsoncollectionstreamingparser.h
 @@ -15,7 +15,7 @@
@@ -1684,9 +1738,9 @@ index 7e0d6f8425..3b3b1c2199 100644
 +#include <json-c/json.h>  // JSON-C
  
  /************************************************************************/
- /*                      OGRJSONCollectionStreamingParser                */
+ /*                   OGRJSONCollectionStreamingParser                   */
 diff --git a/ogr/ogrsf_frmts/geojson/ogrtopojsonreader.cpp b/ogr/ogrsf_frmts/geojson/ogrtopojsonreader.cpp
-index 314b7c6ba8..219ce4ba66 100644
+index 1097e6a4b2..b27407c4cd 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrtopojsonreader.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogrtopojsonreader.cpp
 @@ -15,7 +15,7 @@
@@ -1699,21 +1753,21 @@ index 314b7c6ba8..219ce4ba66 100644
  
  /************************************************************************/
 diff --git a/ogr/ogrsf_frmts/gml/CMakeLists.txt b/ogr/ogrsf_frmts/gml/CMakeLists.txt
-index 9316580f70..03f6016c45 100644
+index 0c11e8ec72..59f68c46b8 100644
 --- a/ogr/ogrsf_frmts/gml/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/gml/CMakeLists.txt
-@@ -90,5 +90,5 @@ if (GDAL_USE_XERCESC)
+@@ -89,5 +89,5 @@ if (GDAL_USE_XERCESC)
  endif ()
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(ogr_GML PRIVATE -DHAVE_SQLITE)
--  gdal_target_link_libraries(ogr_GML PRIVATE SQLite::SQLite3)
+-  gdal_target_link_libraries(ogr_GML PRIVATE SQLite3::SQLite3)
 +  gdal_target_link_libraries(ogr_GML PRIVATE sqlite3)
  endif ()
 diff --git a/ogr/ogrsf_frmts/gmlas/CMakeLists.txt b/ogr/ogrsf_frmts/gmlas/CMakeLists.txt
-index afac5d6bb3..108f44d219 100644
+index adbf002b3d..e939ad32a2 100644
 --- a/ogr/ogrsf_frmts/gmlas/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/gmlas/CMakeLists.txt
-@@ -57,7 +57,7 @@ endif ()
+@@ -56,7 +56,7 @@ endif ()
  
  # External libs then
  if (NOT GDAL_USE_JSONC_INTERNAL)
@@ -1723,23 +1777,23 @@ index afac5d6bb3..108f44d219 100644
  
  target_compile_definitions(ogr_GMLAS PRIVATE -DHAVE_XERCES=1)
 diff --git a/ogr/ogrsf_frmts/gpkg/CMakeLists.txt b/ogr/ogrsf_frmts/gpkg/CMakeLists.txt
-index ca3ddf5ec8..ef16167636 100644
+index 87d356b8dc..ae1a8a08c1 100644
 --- a/ogr/ogrsf_frmts/gpkg/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/gpkg/CMakeLists.txt
-@@ -22,7 +22,7 @@ target_include_directories(
+@@ -21,7 +21,7 @@ target_include_directories(
    ogr_GeoPackage PRIVATE $<TARGET_PROPERTY:alg,SOURCE_DIR> ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
                           ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/sqlite  $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
  
--gdal_target_link_libraries(ogr_GeoPackage PRIVATE SQLite::SQLite3)
+-gdal_target_link_libraries(ogr_GeoPackage PRIVATE SQLite3::SQLite3)
 +gdal_target_link_libraries(ogr_GeoPackage PRIVATE sqlite3)
  if (SQLite3_HAS_COLUMN_METADATA)
    target_compile_definitions(ogr_GeoPackage PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
  endif ()
 diff --git a/ogr/ogrsf_frmts/jsonfg/CMakeLists.txt b/ogr/ogrsf_frmts/jsonfg/CMakeLists.txt
-index 719f102270..fc141929fb 100644
+index 821034832e..21f198b585 100644
 --- a/ogr/ogrsf_frmts/jsonfg/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/jsonfg/CMakeLists.txt
-@@ -16,5 +16,5 @@ target_include_directories(ogr_JSONFG PRIVATE $<TARGET_PROPERTY:ogr_GeoJSON,SOUR
+@@ -15,5 +15,5 @@ target_include_directories(ogr_JSONFG PRIVATE $<TARGET_PROPERTY:ogr_GeoJSON,SOUR
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_JSONFG libjson)
  else ()
@@ -1747,7 +1801,7 @@ index 719f102270..fc141929fb 100644
 +  gdal_target_link_libraries(ogr_JSONFG PRIVATE json-c::json-c)
  endif ()
 diff --git a/ogr/ogrsf_frmts/jsonfg/ogrjsonfgreader.cpp b/ogr/ogrsf_frmts/jsonfg/ogrjsonfgreader.cpp
-index b859ecdf5d..16a826987a 100644
+index 801e091568..1c2ff136a2 100644
 --- a/ogr/ogrsf_frmts/jsonfg/ogrjsonfgreader.cpp
 +++ b/ogr/ogrsf_frmts/jsonfg/ogrjsonfgreader.cpp
 @@ -20,7 +20,7 @@
@@ -1758,12 +1812,12 @@ index b859ecdf5d..16a826987a 100644
 +#include <json-c/json.h>  // JSON-C
  
  /************************************************************************/
- /*                  OGRJSONFGReader::~OGRJSONFGReader()                 */
+ /*                 OGRJSONFGReader::~OGRJSONFGReader()                  */
 diff --git a/ogr/ogrsf_frmts/libkml/CMakeLists.txt b/ogr/ogrsf_frmts/libkml/CMakeLists.txt
-index 158e6cf702..317a903b08 100644
+index cf7362f391..4562b4fa75 100644
 --- a/ogr/ogrsf_frmts/libkml/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/libkml/CMakeLists.txt
-@@ -26,7 +26,7 @@ endif()
+@@ -28,7 +28,7 @@ endif()
  
  gdal_standard_includes(ogr_LIBKML)
  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)
@@ -1774,27 +1828,27 @@ index 158e6cf702..317a903b08 100644
 +  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER zlib ${EXPAT_TARGET})
  endif()
 diff --git a/ogr/ogrsf_frmts/mvt/CMakeLists.txt b/ogr/ogrsf_frmts/mvt/CMakeLists.txt
-index 5b88be85b3..49072d1fbc 100644
+index ce41dec63c..79308a2abe 100644
 --- a/ogr/ogrsf_frmts/mvt/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/mvt/CMakeLists.txt
-@@ -11,7 +11,7 @@ endif ()
+@@ -14,7 +14,7 @@ endif ()
  
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(ogr_MVT PRIVATE -DHAVE_SQLITE)
--  gdal_target_link_libraries(ogr_MVT PRIVATE SQLite::SQLite3)
+-  gdal_target_link_libraries(ogr_MVT PRIVATE SQLite3::SQLite3)
 +  gdal_target_link_libraries(ogr_MVT PRIVATE sqlite3)
  endif ()
  
  add_executable(mvt_tile_test EXCLUDE_FROM_ALL mvt_tile_test.cpp)
 diff --git a/ogr/ogrsf_frmts/osm/CMakeLists.txt b/ogr/ogrsf_frmts/osm/CMakeLists.txt
-index 113c119173..9941075c54 100644
+index cb07039384..c23991199c 100644
 --- a/ogr/ogrsf_frmts/osm/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/osm/CMakeLists.txt
 @@ -30,7 +30,7 @@ if (GDAL_USE_EXPAT)
    gdal_target_link_libraries(ogr_OSM PRIVATE ${EXPAT_TARGET})
  endif ()
  if (GDAL_USE_SQLITE3)
--  gdal_target_link_libraries(ogr_OSM PRIVATE SQLite::SQLite3)
+-  gdal_target_link_libraries(ogr_OSM PRIVATE SQLite3::SQLite3)
 +  gdal_target_link_libraries(ogr_OSM PRIVATE sqlite3)
  endif ()
  
@@ -1803,15 +1857,15 @@ index 113c119173..9941075c54 100644
    endif ()
    if (GDAL_USE_SQLITE3)
      target_sources(osm2osm PRIVATE ../sqlite/ogrsqlitevfs.cpp ../sqlite/ogrsqliteexecutesql.cpp)
--    target_link_libraries(osm2osm PRIVATE SQLite::SQLite3)
+-    target_link_libraries(osm2osm PRIVATE SQLite3::SQLite3)
 +    target_link_libraries(osm2osm PRIVATE sqlite3)
    endif ()
  endif ()
 diff --git a/ogr/ogrsf_frmts/pds/CMakeLists.txt b/ogr/ogrsf_frmts/pds/CMakeLists.txt
-index e28ed30bc5..90f279015d 100644
+index ab0d5f0518..1f264db77d 100644
 --- a/ogr/ogrsf_frmts/pds/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/pds/CMakeLists.txt
-@@ -7,5 +7,5 @@ target_include_directories(ogr_PDS PRIVATE $<TARGET_PROPERTY:gdal_PDS,SOURCE_DIR
+@@ -10,5 +10,5 @@ target_include_directories(ogr_PDS PRIVATE $<TARGET_PROPERTY:gdal_PDS,SOURCE_DIR
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_PDS libjson)
  else ()
@@ -1819,10 +1873,10 @@ index e28ed30bc5..90f279015d 100644
 +  gdal_target_link_libraries(ogr_PDS PRIVATE json-c::json-c)
  endif ()
 diff --git a/ogr/ogrsf_frmts/plscenes/CMakeLists.txt b/ogr/ogrsf_frmts/plscenes/CMakeLists.txt
-index ca9ef94564..31a7ff711d 100644
+index b829b8b36a..15fea3bcd8 100644
 --- a/ogr/ogrsf_frmts/plscenes/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/plscenes/CMakeLists.txt
-@@ -35,5 +35,5 @@ gdal_standard_includes(ogr_PLSCENES)
+@@ -37,5 +37,5 @@ gdal_standard_includes(ogr_PLSCENES)
  if (GDAL_USE_JSONC_INTERNAL)
    gdal_add_vendored_lib(ogr_PLSCENES libjson)
  else ()
@@ -1830,47 +1884,47 @@ index ca9ef94564..31a7ff711d 100644
 +  gdal_target_link_libraries(ogr_PLSCENES PRIVATE json-c::json-c)
  endif ()
 diff --git a/ogr/ogrsf_frmts/pmtiles/CMakeLists.txt b/ogr/ogrsf_frmts/pmtiles/CMakeLists.txt
-index eceb33a802..62a4322dfe 100644
+index a2336a58f3..bd56502dc0 100644
 --- a/ogr/ogrsf_frmts/pmtiles/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/pmtiles/CMakeLists.txt
 @@ -22,5 +22,5 @@ endif ()
  # Needed for Create() mode
  if (GDAL_USE_SQLITE3)
    target_compile_definitions(ogr_PMTiles PRIVATE -DHAVE_SQLITE)
--  gdal_target_link_libraries(ogr_PMTiles PRIVATE SQLite::SQLite3)
+-  gdal_target_link_libraries(ogr_PMTiles PRIVATE SQLite3::SQLite3)
 +  gdal_target_link_libraries(ogr_PMTiles PRIVATE sqlite3)
  endif ()
 diff --git a/ogr/ogrsf_frmts/sqlite/CMakeLists.txt b/ogr/ogrsf_frmts/sqlite/CMakeLists.txt
-index 1e46967b32..8be075488f 100644
+index f044cacb78..d7ab2799b8 100644
 --- a/ogr/ogrsf_frmts/sqlite/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/sqlite/CMakeLists.txt
-@@ -33,7 +33,7 @@ gdal_standard_includes(ogr_SQLite)
+@@ -32,7 +32,7 @@ gdal_standard_includes(ogr_SQLite)
  set_property(TARGET ogr_SQLite PROPERTY UNITY_BUILD OFF)
  
  target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
--gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite::SQLite3)
+-gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite3::SQLite3)
 +gdal_target_link_libraries(ogr_SQLite PRIVATE sqlite3)
  gdal_target_link_libraries(ogr_SQLite PRIVATE PROJ::proj)
  
  include(CMakePushCheckState)
-@@ -85,7 +85,7 @@ endif ()
+@@ -88,7 +88,7 @@ endif()
  # Test utility
  add_executable(test_load_virtual_ogr EXCLUDE_FROM_ALL test_load_virtual_ogr.c)
  gdal_standard_includes(test_load_virtual_ogr)
--target_link_libraries(test_load_virtual_ogr PRIVATE SQLite::SQLite3)
+-target_link_libraries(test_load_virtual_ogr PRIVATE SQLite3::SQLite3)
 +target_link_libraries(test_load_virtual_ogr PRIVATE sqlite3)
  if (GDAL_USE_SPATIALITE)
    target_include_directories(test_load_virtual_ogr PRIVATE ${SPATIALITE_INCLUDE_DIRS})
    target_compile_definitions(test_load_virtual_ogr PRIVATE -DHAVE_SPATIALITE)
-@@ -106,5 +106,5 @@ if (HAVE_SQLITE3EXT_H AND BUILD_SHARED_LIBS)
+@@ -109,5 +109,5 @@ if (HAVE_SQLITE3EXT_H AND BUILD_SHARED_LIBS)
                            LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
                            SKIP_BUILD_RPATH YES
                            )
--    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite::SQLite3)
+-    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite3::SQLite3)
 +    target_link_libraries(my_test_sqlite3_ext PRIVATE sqlite3)
  endif()
 diff --git a/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp b/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
-index afa49ba65a..344e35ce50 100644
+index df06aaf3a0..f0ddf7239b 100644
 --- a/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
 +++ b/ogr/ogrsf_frmts/sqlite/ogrsqlitedatasource.cpp
 @@ -55,7 +55,7 @@
@@ -1883,20 +1937,20 @@ index afa49ba65a..344e35ce50 100644
  
  #ifdef __clang__
 diff --git a/ogr/ogrsf_frmts/vfk/CMakeLists.txt b/ogr/ogrsf_frmts/vfk/CMakeLists.txt
-index 2d1045a787..8eea27aa6b 100644
+index 057b946eab..2090e7caee 100644
 --- a/ogr/ogrsf_frmts/vfk/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/vfk/CMakeLists.txt
-@@ -26,7 +26,7 @@ endif()
+@@ -28,7 +28,7 @@ endif()
  gdal_standard_includes(ogr_VFK)
  if (GDAL_USE_SQLITE3)
    target_include_directories(ogr_VFK PRIVATE ${SQLite3_INCLUDE_DIR})
--  gdal_target_link_libraries(ogr_VFK PRIVATE SQLite::SQLite3)
+-  gdal_target_link_libraries(ogr_VFK PRIVATE SQLite3::SQLite3)
 +  gdal_target_link_libraries(ogr_VFK PRIVATE sqlite3)
    target_compile_definitions(ogr_VFK PRIVATE -DHAVE_SQLITE)
  endif ()
  if (GDAL_USE_GEOS)
 diff --git a/ogr/ogrspatialreference.cpp b/ogr/ogrspatialreference.cpp
-index cd416f952b..20ed665bda 100644
+index 651726bd22..860a6804f2 100644
 --- a/ogr/ogrspatialreference.cpp
 +++ b/ogr/ogrspatialreference.cpp
 @@ -41,9 +41,9 @@
@@ -1913,10 +1967,10 @@ index cd416f952b..20ed665bda 100644
  bool GDALThreadLocalDatasetCacheIsInDestruction();
  
 diff --git a/port/CMakeLists.txt b/port/CMakeLists.txt
-index ec8859a263..d8fcc35f09 100644
+index 59068e1c1b..fda70245da 100644
 --- a/port/CMakeLists.txt
 +++ b/port/CMakeLists.txt
-@@ -191,7 +191,7 @@ endif ()
+@@ -201,7 +201,7 @@ endif ()
  
  # Now external libraries
  if (NOT GDAL_USE_JSONC_INTERNAL)
@@ -1925,7 +1979,7 @@ index ec8859a263..d8fcc35f09 100644
  endif ()
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
-@@ -199,7 +199,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
+@@ -209,7 +209,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
    if (MSVC AND NOT ZLIB_IS_STATIC)
      target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
    endif ()
@@ -1935,18 +1989,30 @@ index ec8859a263..d8fcc35f09 100644
  
  if (GDAL_USE_ARCHIVE)
 diff --git a/port/cpl_compressor.cpp b/port/cpl_compressor.cpp
-index f721868020..703bb2df96 100644
+index 45b26529d0..19ae506efa 100644
 --- a/port/cpl_compressor.cpp
 +++ b/port/cpl_compressor.cpp
-@@ -22,7 +22,7 @@
+@@ -26,17 +26,17 @@
+ #endif
+ 
  #ifdef HAVE_LIBDEFLATE
- #include "libdeflate.h"
+-#include "libdeflate.h"
++#include <deflate/libdeflate.h>
  #else
--#include "zlib.h"
-+#include <zlib/zlib.h>
+ #include "cpl_zlib_header.h"  // to avoid warnings when including zlib.h
  #endif
  
  #ifdef HAVE_LZMA
+-#include <lzma.h>
++#include <xz/lzma.h>
+ #endif
+ 
+ #ifdef HAVE_ZSTD
+-#include <zstd.h>
++#include <zstd/zstd.h>
+ #endif
+ 
+ #ifdef HAVE_LZ4
 diff --git a/port/cpl_json_header.h b/port/cpl_json_header.h
 index 7d05f276cb..f3a4f6a501 100644
 --- a/port/cpl_json_header.h

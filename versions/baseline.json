@@ -943,7 +943,7 @@
         },
         "gdal":
         {
-            "baseline": "3.11.3",
+            "baseline": "3.13.0",
             "port-version": 0
         },
         "geotiff":
