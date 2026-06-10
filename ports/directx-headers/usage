@@ -1,0 +1,4 @@
+To use DirectX headers in your project:
+
+    find_package(directx-headers CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers)
