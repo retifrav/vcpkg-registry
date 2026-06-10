@@ -6,7 +6,9 @@ endif()
 set(FILE_TO_DOWNLOAD "lzma2500.7z")
 vcpkg_download_distfile(
     ARCHIVE
-    URLS "https://7-zip.org/a/${FILE_TO_DOWNLOAD}"
+    URLS
+        "https://7-zip.org/a/${FILE_TO_DOWNLOAD}" # 404 for some reason, probably removed from server (something wrong with that version?)
+        "https://files.decovar.dev/public/packages/lzma/v${VERSION}/src/${FILE_TO_DOWNLOAD}"
     FILENAME "${FILE_TO_DOWNLOAD}"
     SHA512 6dde0dcf1989335524682a79003375c18a7ea74fa55a014ed8a705b749278375b55117c4e764181195e9775cd3e44eb5bed7d4d970e0dfb6d2ae20bdc352baac
 )
