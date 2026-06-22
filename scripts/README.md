@@ -7,6 +7,7 @@
 - [vcpkg-assets-caching](#vcpkg-assets-caching)
 - [license-based-todos](#license-based-todos)
 - [add-new-version](#add-new-version)
+- [collect-spdx-reports-from-vcpkg](#collect-spdx-reports-from-vcpkg)
 
 <!-- /MarkdownTOC -->
 
@@ -150,4 +151,34 @@ git commit -m "[$portName] version $newPortVersion"
 git log -n2 --oneline
 
 git push
+```
+
+## collect-spdx-reports-from-vcpkg
+
+If you'd like to collect SPDX reports in one place:
+
+``` sh
+$ tree /path/to/some/project/install/CMAKE-PRESET-NAME/ -P '*spdx*' --prune
+└── share
+    ├── lazperf
+    │   └── vcpkg.spdx.json
+    ├── ryu
+    │   └── vcpkg.spdx.json
+    ├── stduuid
+    │   └── vcpkg.spdx.json
+    ├── zlib
+    │   └── vcpkg.spdx.json
+    └── zstd
+        └── vcpkg.spdx.json
+
+$ /path/to/vcpkg-registry/scripts/collect-spdx-reports-from-vcpkg.sh \
+    -p /path/to/some/project/install/CMAKE-PRESET-NAME/share/ \
+    -o ./some-project-spdx
+
+$ ls -L1 ./some-project-spdx/
+lazperf.spdx.json
+ryu.spdx.json
+stduuid.spdx.json
+zlib.spdx.json
+zstd.spdx.json
 ```
