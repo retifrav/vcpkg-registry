@@ -1,10 +1,10 @@
 diff --git a/src/microsoft/spirv_to_dxil/meson.build b/src/microsoft/spirv_to_dxil/meson.build
-index 7a75e267760..eea9d146286 100644
+index a00ed9927bb..7d25655267a 100644
 --- a/src/microsoft/spirv_to_dxil/meson.build
 +++ b/src/microsoft/spirv_to_dxil/meson.build
-@@ -19,28 +19,53 @@
- # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- # IN THE SOFTWARE.
+@@ -1,28 +1,53 @@
+ # Copyright © Microsoft Corporation
+ # SPDX-License-Identifier: MIT
  
 -libspirv_to_dxil = both_libraries(
 -  'spirv_to_dxil',

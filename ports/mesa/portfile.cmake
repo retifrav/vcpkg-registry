@@ -1,5 +1,6 @@
-# not sure if this needs to be enforced, we haven't yet tried it with static MSVC runtime linking
-vcpkg_check_linkage(ONLY_DYNAMIC_CRT)
+# not sure if this needs to be enforced, maybe the rest of Mesa doesn't support that,
+# but so far we only needed SpirvToDxil, and that one seems to build (and work?) fine
+#vcpkg_check_linkage(ONLY_DYNAMIC_CRT)
 
 if(VCPKG_TARGET_IS_WINDOWS)
     set(VCPKG_POLICY_DLLS_IN_STATIC_LIBRARY enabled) # some parts of this port can only build as a shared library
@@ -8,17 +9,19 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL https://gitlab.freedesktop.org/mesa/mesa.git
-    REF cc175010c5d9c60b02c2b22d60564e8fb2fc0a55
+    REF 97341aa7d7c340c9a4dbec192795dadd733b5846
     PATCHES
         001-dependencies.patch
         002-single-library-type-spirv-to-dxil.patch
+        003-disable-we4189.patch # fails `src/compiler/nir/nir_lower_non_uniform_access.c:75`, should be fixed properly instead if disabling
 )
 
 x_vcpkg_get_python_packages(
     PYTHON_VERSION "3"
     OUT_PYTHON_VAR "PYTHON3"
     PACKAGES
-        setuptools
+        #setuptools
+        packaging
         mako
         pyyaml # doesn't seem to be needed on Windows, but is needed on other platforms
 )
@@ -55,17 +58,28 @@ list(APPEND MESA_OPTIONS -Dvalgrind=disabled)
 list(APPEND MESA_OPTIONS -Dshared-llvm=disabled)
 list(APPEND MESA_OPTIONS -Dcpp_rtti=true)
 
+# by default `*-drivers` seems to be set to 'auto', and that enables a lot of things,
+# including those (`llvmpipe`?) that require LLVM, which we might not want, and also
+# that would conflict with `-Dllvm=disabled`, so let's just disable all the drivers
+if(NOT "auto-configure-gallium-drivers" IN_LIST FEATURES)
+    list(APPEND MESA_OPTIONS -Dgallium-drivers=[])
+endif()
+if(NOT "auto-configure-vulkan-drivers" IN_LIST FEATURES)
+    list(APPEND MESA_OPTIONS -Dvulkan-drivers=[])
+endif()
+
 if("opengl" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Dopengl=true)
 else()
     list(APPEND MESA_OPTIONS -Dopengl=false)
 endif()
 
-if("offscreen" IN_LIST FEATURES)
-    list(APPEND MESA_OPTIONS -Dosmesa=true)
-else()
-    list(APPEND MESA_OPTIONS -Dosmesa=false)
-endif()
+# seems to be deprecated?
+#if("offscreen" IN_LIST FEATURES)
+#    list(APPEND MESA_OPTIONS -Dosmesa=true)
+#else()
+#    list(APPEND MESA_OPTIONS -Dosmesa=false)
+#endif()
 
 if("llvm" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Dllvm=enabled)
@@ -86,11 +100,12 @@ if("gles2" IN_LIST FEATURES)
 else()
     list(APPEND MESA_OPTIONS -Dgles2=disabled)
 endif()
-if(MESA_USE_GLES)
-    list(APPEND MESA_OPTIONS -Dshared-glapi=enabled) # shared GLAPI is required when building two or more of the following APIs: `gles1` and `gles2`
-else()
-    list(APPEND MESA_OPTIONS -Dshared-glapi=auto)
-endif()
+# seems to be deprecated?
+#if(MESA_USE_GLES)
+#    list(APPEND MESA_OPTIONS -Dshared-glapi=enabled) # shared GLAPI is required when building two or more of the following APIs: `gles1` and `gles2`
+#else()
+#    list(APPEND MESA_OPTIONS -Dshared-glapi=auto)
+#endif()
 
 if("egl" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Degl=enabled)
@@ -130,8 +145,8 @@ vcpkg_configure_meson(
         -Dgles-lib-suffix=_mesa
         -Dbuild-tests=false
     ADDITIONAL_BINARIES
-        python=['${PYTHON3}','-I']
-        python3=['${PYTHON3}','-I']
+        python=['${PYTHON3}','-E','-s']
+        python3=['${PYTHON3}','-E','-s']
 )
 
 vcpkg_install_meson()

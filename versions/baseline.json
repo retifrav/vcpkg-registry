@@ -1063,7 +1063,7 @@
         },
         "mesa":
         {
-            "baseline": "24.0.7",
+            "baseline": "26.1.1",
             "port-version": 0
         },
         "miniply":

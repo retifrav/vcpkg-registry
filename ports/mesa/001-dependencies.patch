@@ -1,11 +1,19 @@
 diff --git a/meson.build b/meson.build
-index 8963b314256..7286cd10205 100644
+index 392f147f365..b6f5a7a7884 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1534,14 +1534,22 @@ else
-   dep_clock = cc.find_library('rt')
+@@ -675,6 +675,7 @@ if with_gallium_d3d12 or with_microsoft_clc or with_microsoft_vk or (with_any_vk
+       version : '>= 1.619.1',
+       fallback : ['DirectX-Headers', 'dep_dxheaders'],
+       required : with_gallium_d3d12 or with_microsoft_vk
++      #method: 'cmake' # fails with CMake, but works with pkg-config
+     )
+   endif
+ endif
+@@ -1692,9 +1693,13 @@ else
  endif
  
+ # IMPORTANT: We can't upgrade Zlib beyond 1.2.5 because it would break Viewperf.
 -dep_zlib = dependency('zlib', version : '>= 1.2.3',
 -                      allow_fallback: true,
 -                      required : get_option('zlib'))
@@ -19,6 +27,9 @@ index 8963b314256..7286cd10205 100644
  if dep_zlib.found()
    pre_args += '-DHAVE_ZLIB'
  endif
+@@ -1709,7 +1714,11 @@ else
+   endif
+ endif
  
 -dep_zstd = dependency('libzstd', required : get_option('zstd'))
 +dep_zstd = dependency(
@@ -30,7 +41,7 @@ index 8963b314256..7286cd10205 100644
    pre_args += '-DHAVE_ZSTD'
  endif
 diff --git a/src/broadcom/cle/v3d_decoder.c b/src/broadcom/cle/v3d_decoder.c
-index 46cd152e599..87eb7895ee1 100644
+index 3b57036ac4f..20a5c75d228 100644
 --- a/src/broadcom/cle/v3d_decoder.c
 +++ b/src/broadcom/cle/v3d_decoder.c
 @@ -34,7 +34,7 @@
@@ -40,13 +51,13 @@ index 46cd152e599..87eb7895ee1 100644
 -#include <zlib.h>
 +#include <zlib/zlib.h>
  
+ #include <util/log.h>
  #include <util/macros.h>
- #include <util/ralloc.h>
 diff --git a/src/compiler/clc/nir_load_libclc.c b/src/compiler/clc/nir_load_libclc.c
-index e736a2b2d3f..51820690b8b 100644
+index b139b31a38a..25934eecbe4 100644
 --- a/src/compiler/clc/nir_load_libclc.c
 +++ b/src/compiler/clc/nir_load_libclc.c
-@@ -36,7 +36,7 @@
+@@ -37,7 +37,7 @@
  #endif
  
  #ifdef HAVE_STATIC_LIBCLC_ZSTD
@@ -55,10 +66,23 @@ index e736a2b2d3f..51820690b8b 100644
  #endif
  
  #ifdef HAVE_STATIC_LIBCLC_SPIRV
-diff --git a/src/intel/common/intel_decoder.c b/src/intel/common/intel_decoder.c
-index 0afa70f15ca..536d927632e 100644
---- a/src/intel/common/intel_decoder.c
-+++ b/src/intel/common/intel_decoder.c
+diff --git a/src/freedreno/common/freedreno_rd_output.h b/src/freedreno/common/freedreno_rd_output.h
+index 05c86c578db..7d94fa20dcc 100644
+--- a/src/freedreno/common/freedreno_rd_output.h
++++ b/src/freedreno/common/freedreno_rd_output.h
+@@ -8,7 +8,7 @@
+ 
+ #include <stdbool.h>
+ #include <stdint.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "redump.h"
+ #include "util/u_dynarray.h"
+diff --git a/src/intel/decoder/intel_decoder.c b/src/intel/decoder/intel_decoder.c
+index 328aa4aac27..ca44c93d9d1 100644
+--- a/src/intel/decoder/intel_decoder.c
++++ b/src/intel/decoder/intel_decoder.c
 @@ -28,7 +28,7 @@
  #include <string.h>
  #include <expat.h>
@@ -69,7 +93,7 @@ index 0afa70f15ca..536d927632e 100644
  #include <util/list.h>
  #include <util/macros.h>
 diff --git a/src/intel/tools/aubinator_error_decode.c b/src/intel/tools/aubinator_error_decode.c
-index bec874edd8f..d468af438b2 100644
+index 570f4d90fc2..1717e9f8a17 100644
 --- a/src/intel/tools/aubinator_error_decode.c
 +++ b/src/intel/tools/aubinator_error_decode.c
 @@ -36,7 +36,7 @@
@@ -79,10 +103,10 @@ index bec874edd8f..d468af438b2 100644
 -#include <zlib.h>
 +#include <zlib/zlib.h>
  
- #include "common/intel_decoder.h"
- #include "compiler/brw_compiler.h"
+ #include "aubinator_error_decode_lib.h"
+ #include "aubinator_error_decode_xe.h"
 diff --git a/src/intel/tools/error2aub.c b/src/intel/tools/error2aub.c
-index 601e08a00f3..d4eb0ad067c 100644
+index 907aa343e41..0dabd4c86a6 100644
 --- a/src/intel/tools/error2aub.c
 +++ b/src/intel/tools/error2aub.c
 @@ -30,7 +30,7 @@
@@ -95,7 +119,7 @@ index 601e08a00f3..d4eb0ad067c 100644
  #include "util/list.h"
  
 diff --git a/src/intel/tools/error2hangdump.c b/src/intel/tools/error2hangdump.c
-index 72f8761a806..43590b7090f 100644
+index 9f2f1c7a0d0..11fb462f82b 100644
 --- a/src/intel/tools/error2hangdump.c
 +++ b/src/intel/tools/error2hangdump.c
 @@ -30,7 +30,7 @@
@@ -106,6 +130,19 @@ index 72f8761a806..43590b7090f 100644
 +#include <zlib/zlib.h>
  
  #include "util/list.h"
+ 
+diff --git a/src/intel/tools/error_decode_lib.c b/src/intel/tools/error_decode_lib.c
+index f1ac2c703ee..44d8e058332 100644
+--- a/src/intel/tools/error_decode_lib.c
++++ b/src/intel/tools/error_decode_lib.c
+@@ -5,7 +5,7 @@
+ 
+ #include "error_decode_lib.h"
+ 
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #include <stdlib.h>
+ #include <string.h>
  
 diff --git a/src/util/compress.c b/src/util/compress.c
 index 1f4b429a770..293d413bebf 100644

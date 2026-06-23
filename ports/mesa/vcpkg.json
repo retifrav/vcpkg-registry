@@ -1,6 +1,6 @@
 {
     "name": "mesa",
-    "version": "24.0.7",
+    "version": "26.1.1",
     "description": "3D graphics library",
     "homepage": "https://docs.mesa3d.org/",
     "license": "MIT AND BSL-1.0 AND SGI-B-2.0",
@@ -23,6 +23,18 @@
     ],
     "features":
     {
+        "auto-configure-gallium-drivers":
+        {
+            "description": "Let Mesa auto-configure Gallium drivers",
+            "dependencies":
+            [
+                "directx-headers"
+            ]
+        },
+        "auto-configure-vulkan-drivers":
+        {
+            "description": "Let Mesa auto-configure Vulkan drivers"
+        },
         "egl":
         {
             "description": "Build support for EGL platform",
