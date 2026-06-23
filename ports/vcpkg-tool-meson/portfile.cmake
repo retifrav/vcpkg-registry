@@ -1,15 +1,12 @@
-# This port represents a dependency on the Meson build system.
-# In the future, it is expected that this port acquires and installs Meson.
-# Currently is used in ports that call vcpkg_find_acquire_program(MESON) in order to force rebuilds.
-
 set(VCPKG_POLICY_CMAKE_HELPER_PORT enabled)
 
 set(patches
     001-meson-intl.patch
     002-adjust-python-dep.patch
     003-adjust-args.patch
-    004-remove-freebsd-pcfile-specialization.patch
-    005-cmake-find-package-config.patch # might want to add a fallback to non-CONFIG mode, but fuck it, everyone should use configs
+    004-remove-pkgconfig-specialization.patch
+    005-meson-56879d5.patch # should be no loger needed with version 1.9.1
+    006-cmake-find-package-config.patch
 )
 
 set(scripts
@@ -39,7 +36,7 @@ string(SHA512 meson_path_hash "${meson_path_hash}")
 
 string(SUBSTRING "${meson_path_hash}" 0 6 MESON_SHORT_HASH)
 list(TRANSFORM patches REPLACE [[^(..*)$]] [["${CMAKE_CURRENT_LIST_DIR}/\0"]])
-list(JOIN patches "\n            " PATCHES) # wtf are these spaces
+list(JOIN patches "\n            " PATCHES)
 configure_file(
     "${CMAKE_CURRENT_LIST_DIR}/vcpkg-port-config.cmake"
     "${CURRENT_PACKAGES_DIR}/share/${PORT}/vcpkg-port-config.cmake"
