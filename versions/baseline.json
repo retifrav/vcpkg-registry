@@ -856,6 +856,11 @@
             "baseline": "3.5.3",
             "port-version": 0
         },
+        "cef":
+        {
+            "baseline": "149.0.4",
+            "port-version": 0
+        },
         "cpp-base64":
         {
             "baseline": "2.0.8",

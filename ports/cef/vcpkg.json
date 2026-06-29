@@ -1,0 +1,19 @@
+{
+    "name": "cef",
+    "version": "149.0.4",
+    "description": "Chromium Embedded Framework",
+    "homepage": "https://bitbucket.org/chromiumembedded/cef/",
+    "license": "BSD-3-Clause",
+    "supports": "osx",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}

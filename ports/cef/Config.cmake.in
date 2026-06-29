@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@CEF_TARGET@Targets.cmake")
+
+check_required_components(@CEF_TARGET@)
