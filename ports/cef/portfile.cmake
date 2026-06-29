@@ -1,9 +1,49 @@
+set(CEF_ARCHIVE_NAME_PLATFORM "unknown")
+set(CEF_ARCHIVE_CHECKSUM "unknown")
+
+if(VCPKG_TARGET_IS_WINDOWS)
+    if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
+        set(CEF_ARCHIVE_NAME_PLATFORM "windowsarm64")
+        set(CEF_ARCHIVE_CHECKSUM "4048faf6a7d02dc1f653d5565112b643da82006d7e96a63d2040e63813b96b1208e7d67159635ff28f23eb01ee25a2ae1c4cb053397344547dc97211960386ba")
+    elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
+        message(FATAL_ERROR "Windows platform x64 isn't supported for ${PORT}")
+    else()
+        message(FATAL_ERROR "This platform architecture isn't supported for ${PORT}")
+    endif()
+elseif(VCPKG_TARGET_IS_LINUX)
+    if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
+        set(CEF_ARCHIVE_NAME_PLATFORM "linuxarm64")
+        set(CEF_ARCHIVE_CHECKSUM "5c5a725f90c9c6cb402c39f3653eb83f7ae3eecb1bb185d00b8462f4f70d9636a29e40ae1928156ef1b44230681e3e70b006bfdee56e753a034ca6a654d4d23e")
+    elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
+        message(FATAL_ERROR "Linux platform x64 isn't supported for ${PORT}")
+    else()
+        message(FATAL_ERROR "This platform architecture isn't supported for ${PORT}")
+    endif()
+elseif(VCPKG_TARGET_IS_OSX)
+    if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
+        set(CEF_ARCHIVE_NAME_PLATFORM "macosarm64")
+        set(CEF_ARCHIVE_CHECKSUM "4714cc3fa104cf1872a655f45e58c862cf15c27f8c7d914e559cc4f56d39b02446160e5ff2b2c99bbf335efd4016bb1dbe0c5e4de105221ad77ba038fe9f7758")
+    elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
+        message(FATAL_ERROR "Mac OS platform x64 isn't supported for ${PORT}")
+    else()
+        message(FATAL_ERROR "This platform architecture isn't supported for ${PORT}")
+    endif()
+else()
+    message(FATAL_ERROR "This platform isn't supported for ${PORT}")
+endif()
+
+if(CEF_ARCHIVE_NAME_PLATFORM STREQUAL "unknown" OR CEF_ARCHIVE_CHECKSUM STREQUAL "unknown")
+    message(FATAL_ERROR "Either platform suffix or checksum are still unknown")
+endif()
+
+set(CEF_ARCHIVE_NAME "cef_binary_${VERSION}+g2f1bfd8+chromium-149.0.7827.156_${CEF_ARCHIVE_NAME_PLATFORM}.tar.bz2")
+
 vcpkg_download_distfile(
     ARCHIVE
     URLS
-        "https://cef-builds.spotifycdn.com/cef_binary_149.0.4%2Bg2f1bfd8%2Bchromium-149.0.7827.156_macosarm64.tar.bz2"
-    FILENAME "cef_binary_149.0.4+g2f1bfd8+chromium-149.0.7827.156_macosarm64.tar.bz2"
-    SHA512 4714cc3fa104cf1872a655f45e58c862cf15c27f8c7d914e559cc4f56d39b02446160e5ff2b2c99bbf335efd4016bb1dbe0c5e4de105221ad77ba038fe9f7758
+        "https://cef-builds.spotifycdn.com/${CEF_ARCHIVE_NAME}"
+    FILENAME "${CEF_ARCHIVE_NAME}"
+    SHA512 "${CEF_ARCHIVE_CHECKSUM}"
 )
 
 vcpkg_extract_source_archive(
@@ -62,18 +102,26 @@ foreach(CEF_HEADER IN ITEMS ${CEF_HEADERS})
    )
 endforeach()
 
+# this relies on the fact that CMake will try the lower-cased `cef` path too,
+# otherwise it should have been hardcoded `CEF`
+set(CEF_PACKAGE_NAME "${PORT}")
+
 file(
     INSTALL
         "${SOURCE_PATH}/cmake"
         "${SOURCE_PATH}/Debug"
         "${SOURCE_PATH}/Release"
     DESTINATION
-        "${CURRENT_PACKAGES_DIR}/share/${PORT}/cef-root/"
+        "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root/"
 )
 vcpkg_replace_string(
-    "${CURRENT_PACKAGES_DIR}/share/${PORT}/cef-root/cmake/cef_variables.cmake"
+    "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root/cmake/cef_variables.cmake"
         [=[set(CEF_INCLUDE_PATH "${_CEF_ROOT}")]=]
         [=[set(CEF_INCLUDE_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")]=]
+)
+
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}"
 )
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")
