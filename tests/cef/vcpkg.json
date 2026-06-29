@@ -1,0 +1,8 @@
+{
+    "name": "cef-test",
+    "version": "0",
+    "dependencies":
+    [
+        "cef"
+    ]
+}
