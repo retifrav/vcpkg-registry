@@ -1,9 +1,18 @@
+# it is meant to be built as a STATIC library, or actually originally it was intended
+# to be built as a part of the final application, so it was distributes as sources
+# together with the main pre-built CEF library(ies). Trying to build it is a SHARED
+# library will fail with lots of unresolved symbols, because its CMake target
+# doesn't actually link anything. In addition to that it doesn't export symbols
+# to make a DLL on Windows
+vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+
 set(CEF_ARCHIVE_NAME_PLATFORM "unknown")
 set(CEF_ARCHIVE_CHECKSUM "unknown")
 
 if(VCPKG_TARGET_IS_WINDOWS)
-    if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
-        # CEF pre-built binaries are DLL
+    if(VCPKG_CRT_LINKAGE STREQUAL "static")
+        # maybe this should apply to all the platforms, not just Windows,
+        # but then again non-Windows triplets never(?) set static CRT linkage
         set(VCPKG_POLICY_SKIP_CRT_LINKAGE_CHECK enabled)
     endif()
     
