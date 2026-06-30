@@ -106,6 +106,14 @@ endforeach()
 # otherwise it should have been hardcoded `CEF`
 set(CEF_PACKAGE_NAME "${PORT}")
 
+if(EXISTS "${SOURCE_PATH}/Resources")
+    file(
+        INSTALL
+            "${SOURCE_PATH}/Resources"
+        DESTINATION
+            "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root/"
+    )
+endif()
 file(
     INSTALL
         "${SOURCE_PATH}/cmake"

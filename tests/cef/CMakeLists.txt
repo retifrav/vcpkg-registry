@@ -65,8 +65,13 @@ APPEND_PLATFORM_SOURCES(CEFSIMPLE_WIN_SRCS)
 set(CEFSIMPLE_SRCS
     ${CEFSIMPLE_SRCS}
     ${CEFSIMPLE_WIN_SRCS}
-    #render_app.cc
 )
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # on Mac OS `render_app.cc` compiles in the helper target (`CEFSIMPLE_HELPER_SRCS_MAC`),
+    # but on other platforms everything(?) is in a single executable, which also hosts
+    # the render process, so `render_app.cc` needs to be compiled into that executable
+    list(APPEND CEFSIMPLE_SRCS render_app.cc)
+endif()
 
 set(CEFSIMPLE_HELPER_SRCS_MAC
     process_helper_mac.cc
@@ -278,14 +283,14 @@ endif()
 
 include(GNUInstallDirs)
 
-set(EXECUTABLE_INSTALLATION_PATH ${CMAKE_INSTALL_BINDIR}/${CEF_TARGET})
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(TARGETS ${CEF_TARGET}
         BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 else()
-    install(TARGETS ${CEF_TARGET}
-        RUNTIME DESTINATION ${EXECUTABLE_INSTALLATION_PATH}
+    install(
+        DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}/${CEF_TARGET}"
+        USE_SOURCE_PERMISSIONS
     )
 endif()

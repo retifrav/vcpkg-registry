@@ -4,6 +4,7 @@
 
 - [Building](#building)
 - [Running](#running)
+    - [Disabling sandbox](#disabling-sandbox)
     - [Enabling DevTools](#enabling-devtools)
 
 <!-- /MarkdownTOC -->
@@ -22,6 +23,28 @@ $ cmake --build --preset vcpkg-default-triplet
 $ ./install/vcpkg-default-triplet/bin/cefsimple.app/Contents/MacOS/cefsimple \
     --url=file:///path/to/vcpkg-registry/tests/cef/html/index.html \
     --enable-logging=stderr
+```
+
+### Disabling sandbox
+
+Trying to launch on Linux you might get this error:
+
+``` sh
+[FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:166] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /path/to/vcpkg-registry/tests/cef/install/vcpkg-default-triplet/bin/cefsimple/chrome-sandbox is owned by root and has mode 4755.
+```
+
+If you do want to have sandbox enabled, try setting the required ownership and permissions on the `chrome-sandbox` file:
+
+``` sh
+$ cd /path/to/vcpkg-registry/tests/cef/install/vcpkg-default-triplet/bin/cefsimple/
+$ sudo chown root:root ./chrome-sandbox
+$ sudo chmod 4755 ./chrome-sandbox
+```
+
+Or you can just disable sandbox by launching the application with `--no-sandbox`:
+
+``` sh
+$ ./install/vcpkg-default-triplet/bin/cefsimple/cefsimple --no-sandbox
 ```
 
 ### Enabling DevTools
