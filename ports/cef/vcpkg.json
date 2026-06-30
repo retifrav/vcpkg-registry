@@ -4,7 +4,7 @@
     "description": "Chromium Embedded Framework",
     "homepage": "https://bitbucket.org/chromiumembedded/cef/",
     "license": "BSD-3-Clause",
-    "supports": "(windows & arm64) | (linux & arm64) | (osx & arm64)",
+    "supports": "(windows & arm64) | linux | (osx & arm64)",
     "dependencies":
     [
         {

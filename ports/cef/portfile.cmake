@@ -20,7 +20,8 @@ elseif(VCPKG_TARGET_IS_LINUX)
         set(CEF_ARCHIVE_NAME_PLATFORM "linuxarm64")
         set(CEF_ARCHIVE_CHECKSUM "5c5a725f90c9c6cb402c39f3653eb83f7ae3eecb1bb185d00b8462f4f70d9636a29e40ae1928156ef1b44230681e3e70b006bfdee56e753a034ca6a654d4d23e")
     elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
-        message(FATAL_ERROR "Linux platform x64 isn't supported for ${PORT}")
+        set(CEF_ARCHIVE_NAME_PLATFORM "linux64")
+        set(CEF_ARCHIVE_CHECKSUM "7c047ea9c9dc744170f213f0766230d996906cf97cdb08193047da73d8ec25b8c65a90ccbe6d277d5a50e3b513d43343d73c182cf338ddc444f2139166338c27")
     else()
         message(FATAL_ERROR "This platform architecture isn't supported for ${PORT}")
     endif()
@@ -42,11 +43,13 @@ if(CEF_ARCHIVE_NAME_PLATFORM STREQUAL "unknown" OR CEF_ARCHIVE_CHECKSUM STREQUAL
 endif()
 
 set(CEF_ARCHIVE_NAME "cef_binary_${VERSION}+g2f1bfd8+chromium-149.0.7827.156_${CEF_ARCHIVE_NAME_PLATFORM}.tar.bz2")
+set(CEF_DOWNLOAD_URL "https://cef-builds.spotifycdn.com/${CEF_ARCHIVE_NAME}")
+message(DEBUG "CEF download URL: ${CEF_DOWNLOAD_URL}")
 
 vcpkg_download_distfile(
     ARCHIVE
     URLS
-        "https://cef-builds.spotifycdn.com/${CEF_ARCHIVE_NAME}"
+        "${CEF_DOWNLOAD_URL}"
     FILENAME "${CEF_ARCHIVE_NAME}"
     SHA512 "${CEF_ARCHIVE_CHECKSUM}"
 )
