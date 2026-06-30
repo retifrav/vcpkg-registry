@@ -2,6 +2,11 @@ set(CEF_ARCHIVE_NAME_PLATFORM "unknown")
 set(CEF_ARCHIVE_CHECKSUM "unknown")
 
 if(VCPKG_TARGET_IS_WINDOWS)
+    if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
+        # CEF pre-built binaries are DLL
+        set(VCPKG_POLICY_SKIP_CRT_LINKAGE_CHECK enabled)
+    endif()
+    
     if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
         set(CEF_ARCHIVE_NAME_PLATFORM "windowsarm64")
         set(CEF_ARCHIVE_CHECKSUM "4048faf6a7d02dc1f653d5565112b643da82006d7e96a63d2040e63813b96b1208e7d67159635ff28f23eb01ee25a2ae1c4cb053397344547dc97211960386ba")
@@ -130,6 +135,11 @@ vcpkg_replace_string(
 
 file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake"
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}"
+)
+
+file(
+    INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
 )
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")

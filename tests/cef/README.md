@@ -25,6 +25,8 @@ $ ./install/vcpkg-default-triplet/bin/cefsimple.app/Contents/MacOS/cefsimple \
     --enable-logging=stderr
 ```
 
+On Windows there will be no output printed from C++ side, probably because it builds as a GUI applications with no console attached, but C++ code does execute, and JS side gets results from C++ sides.
+
 ### Disabling sandbox
 
 Trying to launch on Linux you might get this error:

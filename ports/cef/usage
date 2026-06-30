@@ -1,0 +1,11 @@
+To use CEF in your project:
+
+    find_package(CEF REQUIRED)
+    find_package(libcef_dll_wrapper CONFIG REQUIRED)
+
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+            #libcef_lib
+            cef::libcef_dll_wrapper
+            ${CEF_STANDARD_LIBS}
+    )
