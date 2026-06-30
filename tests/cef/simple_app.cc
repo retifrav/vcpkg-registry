@@ -6,6 +6,7 @@
 
 #include <cef/cef_browser.h>
 #include <cef/cef_command_line.h>
+#include <cef/cef_request_context.h>
 #include <cef/views/cef_browser_view.h>
 #include <cef/views/cef_window.h>
 #include <cef/wrapper/cef_helpers.h>
@@ -109,6 +110,20 @@ SimpleApp::SimpleApp() = default;
 
 void SimpleApp::OnContextInitialized() {
   CEF_REQUIRE_UI_THREAD();
+
+  // Force a light color scheme regardless of the OS setting:
+  //
+  // - CEF_COLOR_VARIANT_LIGHT  -> always light
+  // - CEF_COLOR_VARIANT_DARK   -> always dark
+  // - CEF_COLOR_VARIANT_SYSTEM -> follow the OS (default)
+  //
+  // This drives both the Chrome UI and the prefers-color-scheme reported to
+  // page content. Browsers here use the global request context (created with a
+  // nullptr context below), so configure the scheme on that context
+  CefRequestContext::GetGlobalContext()->SetChromeColorScheme(
+      CEF_COLOR_VARIANT_LIGHT,
+      /*user_color=*/0
+  );
 
   CefRefPtr<CefCommandLine> command_line =
       CefCommandLine::GetGlobalCommandLine();
