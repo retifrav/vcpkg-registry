@@ -10,9 +10,8 @@ set(CEF_ARCHIVE_NAME_PLATFORM "unknown")
 set(CEF_ARCHIVE_CHECKSUM "unknown")
 
 if(VCPKG_TARGET_IS_WINDOWS)
-    if(VCPKG_CRT_LINKAGE STREQUAL "static")
-        # maybe this should apply to all the platforms, not just Windows,
-        # but then again non-Windows triplets never(?) set static CRT linkage
+    if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
+        # probably should apply to all the platforms, not just Windows
         set(VCPKG_POLICY_SKIP_CRT_LINKAGE_CHECK enabled)
     endif()
     
@@ -20,7 +19,8 @@ if(VCPKG_TARGET_IS_WINDOWS)
         set(CEF_ARCHIVE_NAME_PLATFORM "windowsarm64")
         set(CEF_ARCHIVE_CHECKSUM "4048faf6a7d02dc1f653d5565112b643da82006d7e96a63d2040e63813b96b1208e7d67159635ff28f23eb01ee25a2ae1c4cb053397344547dc97211960386ba")
     elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
-        message(FATAL_ERROR "Windows platform x64 isn't supported for ${PORT}")
+        set(CEF_ARCHIVE_NAME_PLATFORM "windows64")
+        set(CEF_ARCHIVE_CHECKSUM "9eace2971cf7fc985a7240c791aafb5a2f98b1afac6d1447ca6be9816e6ace938d284f6dde5eb1bf85e4c02adf812f58aee324af119fad9400e7c9b9bb492bc6")
     else()
         message(FATAL_ERROR "This platform architecture isn't supported for ${PORT}")
     endif()
@@ -62,6 +62,22 @@ vcpkg_download_distfile(
     FILENAME "${CEF_ARCHIVE_NAME}"
     SHA512 "${CEF_ARCHIVE_CHECKSUM}"
 )
+
+if(VCPKG_TARGET_IS_WINDOWS)
+    # apparently, since the patch is not a proper Git patch but a diff output,
+    # the line endings got messed up somehow, and on Windows that requires some fixing
+    find_program(DOS2UNIX_TOOL
+        NAMES "dos2unix"
+        PATHS "${CURRENT_HOST_INSTALLED_DIR}/tools/dos2unix"
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    vcpkg_execute_required_process(
+        COMMAND ${DOS2UNIX_TOOL} 001-cmake.diff
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+        LOGNAME preparing-${PORT}-${TARGET_TRIPLET}
+    )
+endif()
 
 vcpkg_extract_source_archive(
     SOURCE_PATH
@@ -128,7 +144,7 @@ if(EXISTS "${SOURCE_PATH}/Resources")
         INSTALL
             "${SOURCE_PATH}/Resources"
         DESTINATION
-            "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root/"
+            "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root"
     )
 endif()
 file(
@@ -137,7 +153,7 @@ file(
         "${SOURCE_PATH}/Debug"
         "${SOURCE_PATH}/Release"
     DESTINATION
-        "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root/"
+        "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root"
 )
 vcpkg_replace_string(
     "${CURRENT_PACKAGES_DIR}/share/${CEF_PACKAGE_NAME}/cef-root/cmake/cef_variables.cmake"

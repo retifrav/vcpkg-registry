@@ -4,7 +4,7 @@
     "description": "Chromium Embedded Framework",
     "homepage": "https://bitbucket.org/chromiumembedded/cef/",
     "license": "BSD-3-Clause",
-    "supports": "(windows & arm64) | linux | (osx & arm64)",
+    "supports": "windows | linux | (osx & arm64)",
     "dependencies":
     [
         {
@@ -13,6 +13,11 @@
         },
         {
             "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "dos2unix",
+            "platform": "windows",
             "host": true
         }
     ]
