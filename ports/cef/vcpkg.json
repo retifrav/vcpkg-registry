@@ -14,11 +14,6 @@
         {
             "name": "vcpkg-cmake-config",
             "host": true
-        },
-        {
-            "name": "dos2unix",
-            "platform": "windows",
-            "host": true
         }
     ]
 }

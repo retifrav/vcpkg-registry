@@ -266,6 +266,57 @@
 -  endif()
 -endif()
 +#PRINT_CEF_CONFIG()
+--- cmake/cef_variables.cmake
++++ cmake/cef_variables.cmake
+@@ -24,16 +24,29 @@
+   set(OS_WINDOWS 1)
+ endif()
+ 
+-# Determine the project architecture.
++# determine the project architecture
+ if(NOT DEFINED PROJECT_ARCH)
+-  if(("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64") OR
+-     ("${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "ARM64"))
+-    set(PROJECT_ARCH "arm64")
+-  elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
+-    set(PROJECT_ARCH "x86_64")
+-  else()
+-    set(PROJECT_ARCH "x86")
+-  endif()
++    string(TOLOWER "${CMAKE_HOST_SYSTEM_PROCESSOR}" CMAKE_HOST_SYSTEM_PROCESSOR_LOWER)
++    string(TOLOWER "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" CMAKE_CXX_COMPILER_ARCHITECTURE_ID_LOWER)
++    if(
++        (
++            "${CMAKE_HOST_SYSTEM_PROCESSOR_LOWER}" STREQUAL "arm64"
++            OR
++            "${CMAKE_HOST_SYSTEM_PROCESSOR_LOWER}" STREQUAL "aarch64"
++        )
++        OR
++        (
++            "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID_LOWER}" STREQUAL "arm64"
++            OR
++            "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID_LOWER}" STREQUAL "aarch64"
++        )
++    )
++        set(PROJECT_ARCH "arm64")
++    elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
++        set(PROJECT_ARCH "x86_64")
++    else()
++        set(PROJECT_ARCH "x86")
++    endif()
+ endif()
+ 
+ if(${CMAKE_GENERATOR} STREQUAL "Ninja")
+@@ -53,9 +66,6 @@
+ # Path to the include directory.
+ set(CEF_INCLUDE_PATH "${_CEF_ROOT}")
+ 
+-# Path to the libcef_dll_wrapper target.
+-set(CEF_LIBCEF_DLL_WRAPPER_PATH "${_CEF_ROOT}/libcef_dll")
+-
+ 
+ # Shared compiler/linker flags.
+ list(APPEND CEF_COMPILER_DEFINES
 --- libcef_dll/CMakeLists.txt
 +++ libcef_dll/CMakeLists.txt
 @@ -843,3 +843,34 @@
@@ -303,52 +354,3 @@
 +    "${CMAKE_CURRENT_BINARY_DIR}/${CEF_TARGET}Config.cmake"
 +    DESTINATION "share/${CEF_TARGET}"
 +)
---- cmake/cef_variables.cmake
-+++ cmake/cef_variables.cmake
-@@ -24,16 +24,27 @@
-   set(OS_WINDOWS 1)
- endif()
-
--# Determine the project architecture.
-+# determine the project architecture
- if(NOT DEFINED PROJECT_ARCH)
--  if(("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64") OR
--     ("${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "ARM64"))
--    set(PROJECT_ARCH "arm64")
--  elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
--    set(PROJECT_ARCH "x86_64")
--  else()
--    set(PROJECT_ARCH "x86")
--  endif()
-+    if(
-+        (
-+            "${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64"
-+            OR
-+            "${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64"
-+        )
-+        OR
-+        (
-+            "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "ARM64"
-+            OR
-+            "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "aarch64"
-+        )
-+    )
-+        set(PROJECT_ARCH "arm64")
-+    elseif(CMAKE_SIZEOF_VOID_P MATCHES 8)
-+        set(PROJECT_ARCH "x86_64")
-+    else()
-+        set(PROJECT_ARCH "x86")
-+    endif()
- endif()
-
- if(${CMAKE_GENERATOR} STREQUAL "Ninja")
-@@ -53,9 +64,6 @@
- # Path to the include directory.
- set(CEF_INCLUDE_PATH "${_CEF_ROOT}")
-
--# Path to the libcef_dll_wrapper target.
--set(CEF_LIBCEF_DLL_WRAPPER_PATH "${_CEF_ROOT}/libcef_dll")
--
-
- # Shared compiler/linker flags.
- list(APPEND CEF_COMPILER_DEFINES

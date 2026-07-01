@@ -63,21 +63,28 @@ vcpkg_download_distfile(
     SHA512 "${CEF_ARCHIVE_CHECKSUM}"
 )
 
-if(VCPKG_TARGET_IS_WINDOWS)
-    # apparently, since the patch is not a proper Git patch but a diff output,
-    # the line endings got messed up somehow, and on Windows that requires some fixing
-    find_program(DOS2UNIX_TOOL
-        NAMES "dos2unix"
-        PATHS "${CURRENT_HOST_INSTALLED_DIR}/tools/dos2unix"
-        NO_DEFAULT_PATH
-        REQUIRED
-    )
-    vcpkg_execute_required_process(
-        COMMAND ${DOS2UNIX_TOOL} 001-cmake.diff
-        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
-        LOGNAME preparing-${PORT}-${TARGET_TRIPLET}
-    )
-endif()
+#if(VCPKG_TARGET_IS_WINDOWS)
+#    # apparently, since the patch is not a proper Git patch but a diff output,
+#    # the line endings got messed up somehow, and on Windows that requires some fixing
+#    #```
+#    #{
+#    #    "name": "dos2unix",
+#    #    "platform": "windows",
+#    #    "host": true
+#    #}
+#    #```
+#    find_program(DOS2UNIX_TOOL
+#        NAMES "dos2unix"
+#        PATHS "${CURRENT_HOST_INSTALLED_DIR}/tools/dos2unix"
+#        NO_DEFAULT_PATH
+#        REQUIRED
+#    )
+#    vcpkg_execute_required_process(
+#        COMMAND ${DOS2UNIX_TOOL} 001-cmake.diff
+#        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+#        LOGNAME preparing-${PORT}-${TARGET_TRIPLET}
+#    )
+#endif()
 
 vcpkg_extract_source_archive(
     SOURCE_PATH
