@@ -1,12 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(dos2unix
-    DESCRIPTION "Text file format converters"
-    LANGUAGES C
-)
-
-set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
-
 file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/version.mk VERSION_INFO)
 foreach(VAR_LINE ${VERSION_INFO})
   # strip leading spaces
@@ -25,7 +18,13 @@ message(DEBUG "DOS2UNIX_VERSION: ${DOS2UNIX_VERSION}")
 message(DEBUG "DOS2UNIX_DATE: ${DOS2UNIX_DATE}")
 message(DEBUG "DOS2UNIX_AUTHOR: ${DOS2UNIX_AUTHOR}")
 
-set(CMAKE_PROJECT_VERSION ${DOS2UNIX_VERSION} CACHE STATIC "Project version") # FORCE
+project(dos2unix
+    DESCRIPTION "Text file format converters"
+    LANGUAGES C
+    VERSION "${DOS2UNIX_VERSION}"
+)
+
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 set(TOOLS dos2unix unix2dos)
 

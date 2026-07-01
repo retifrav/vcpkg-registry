@@ -3,6 +3,7 @@
     "version": "7.5.2",
     "description": "Text file format converters",
     "homepage": "https://waterlan.home.xs4all.nl/dos2unix.html",
+    "license": null,
     "supports": "native",
     "dependencies":
     [
