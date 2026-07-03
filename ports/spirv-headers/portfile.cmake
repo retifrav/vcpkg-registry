@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Headers.git
-    REF 04f10f650d514df88b76d25e83db360142c7b174 # vulkan-sdk-1.4.341.0
+    REF ad9184e76a66b1001c29db9b0a3e87f646c64de0 # vulkan-sdk-1.4.350.0 # vulkan-sdk-1.4.350.1
     PATCHES
         001-versions.patch
 )
