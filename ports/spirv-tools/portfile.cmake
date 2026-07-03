@@ -5,7 +5,7 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:KhronosGroup/SPIRV-Tools.git
-    REF fbe4f3ad913c44fe8700545f8ffe35d1382b7093 # vulkan-sdk-1.4.341.0
+    REF 0539c81f69a3daeb706fd3477dca61435b475156 # v2026.2 # vulkan-sdk-1.4.350.0 # vulkan-sdk-1.4.350.1
     PATCHES
         001-single-target-dependencies-and-installation.patch
 )
@@ -69,11 +69,12 @@ if("with-source-headers" IN_LIST FEATURES) # the include paths are fucked up
             [=[#include "core_tables_header.inc"]=]
             [=[#include "spirv-tools/core_tables_header.inc"]=]
     )
-    vcpkg_replace_string(
-        "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/opt/instruction.h"
-            [=[#include "NonSemanticShaderDebugInfo100.h"]=]
-            [=[#include "spirv-tools/NonSemanticShaderDebugInfo100.h"]=]
-    )
+    # the `NonSemanticShaderDebugInfo100.h` is not there anymore?
+    #vcpkg_replace_string(
+    #    "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/opt/instruction.h"
+    #        [=[#include "NonSemanticShaderDebugInfo100.h"]=]
+    #        [=[#include "spirv-tools/NonSemanticShaderDebugInfo100.h"]=]
+    #)
     vcpkg_replace_string(
         "${CURRENT_PACKAGES_DIR}/include/spirv-tools/source/opt/instruction.h"
             [=[#include "OpenCLDebugInfo100.h"]=]

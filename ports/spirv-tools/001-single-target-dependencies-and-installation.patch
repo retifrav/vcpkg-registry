@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b69ec9fb..641aa81c 100644
+index b69ec9fb..aeee9750 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -14,7 +14,11 @@
@@ -173,7 +173,7 @@ index b69ec9fb..641aa81c 100644
 +    install(
 +      FILES
 +        ${CMAKE_BINARY_DIR}/core_tables_header.inc
-+        ${CMAKE_BINARY_DIR}/NonSemanticShaderDebugInfo100.h
++        #${CMAKE_BINARY_DIR}/NonSemanticShaderDebugInfo100.h # not there anymore?
 +        ${CMAKE_BINARY_DIR}/OpenCLDebugInfo100.h
 +      DESTINATION
 +        ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/
@@ -263,7 +263,7 @@ index eb4e69e5..0dba9f0a 100644
    # Find gmock if we can. If it's not already configured, then try finding
    # it in external/googletest.
 diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
-index 6f169339..87b5821a 100644
+index 8e918de0..a3c19f93 100644
 --- a/source/CMakeLists.txt
 +++ b/source/CMakeLists.txt
 @@ -12,6 +12,13 @@
@@ -280,7 +280,7 @@ index 6f169339..87b5821a 100644
  set(VIMSYNTAX_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/vim/generate_syntax.py")
  set(XML_REGISTRY_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_registry_tables.py")
  set(LANG_HEADER_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_language_headers.py")
-@@ -164,13 +171,6 @@ set_source_files_properties(
+@@ -158,13 +165,6 @@ set_source_files_properties(
    ${CMAKE_CURRENT_SOURCE_DIR}/pch_source.cpp
    PROPERTIES OBJECT_DEPENDS "${PCH_DEPENDS}")
  
@@ -294,8 +294,8 @@ index 6f169339..87b5821a 100644
  set(SPIRV_SOURCES
    ${spirv-tools_SOURCE_DIR}/include/spirv-tools/libspirv.h
  
-@@ -340,51 +340,35 @@ function(spirv_tools_default_target_options target)
-   add_dependencies(${target} spirv-tools-build-version core_tables extinst_tables)
+@@ -337,51 +337,35 @@ function(spirv_tools_default_target_options target)
+   add_dependencies(${target} core_tables extinst_tables)
  endfunction()
  
 -# Always build ${SPIRV_TOOLS}-shared. This is expected distro packages, and
@@ -368,7 +368,7 @@ index 6f169339..87b5821a 100644
      endforeach()
    endif()
  endif()
-@@ -393,14 +377,19 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+@@ -390,14 +374,19 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
    if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
      list(APPEND SPIRV_TOOLS_TARGETS mimalloc-static)
    endif()
@@ -509,10 +509,10 @@ index c2636ae5..003e76ad 100644
  target_link_libraries(SPIRV-Tools-lint
    PUBLIC SPIRV-Tools-opt)
 diff --git a/source/opt/CMakeLists.txt b/source/opt/CMakeLists.txt
-index ff32dfaa..db80b4d8 100644
+index a0ca5b84..22840014 100644
 --- a/source/opt/CMakeLists.txt
 +++ b/source/opt/CMakeLists.txt
-@@ -263,7 +263,7 @@ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_US
+@@ -265,7 +265,7 @@ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_US
    list(APPEND SPIRV_TOOLS_OPT_SOURCES ${spirv-tools_SOURCE_DIR}/source/mimalloc.cpp)
  endif()
  
@@ -521,7 +521,7 @@ index ff32dfaa..db80b4d8 100644
  
  if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
    target_link_libraries(SPIRV-Tools-opt PRIVATE mimalloc-static)
-@@ -279,7 +279,7 @@ target_include_directories(SPIRV-Tools-opt
+@@ -281,7 +281,7 @@ target_include_directories(SPIRV-Tools-opt
  )
  # We need the assembling and disassembling functionalities in the main library.
  target_link_libraries(SPIRV-Tools-opt
@@ -618,7 +618,7 @@ index b631e9d0..0ed79da2 100644
  
  set_property(TARGET SPIRV-Tools-reduce PROPERTY FOLDER "SPIRV-Tools libraries")
 diff --git a/source/val/validate_builtins.cpp b/source/val/validate_builtins.cpp
-index 130d5fba..4f5313c1 100644
+index 5e913d43..7eb90c21 100644
 --- a/source/val/validate_builtins.cpp
 +++ b/source/val/validate_builtins.cpp
 @@ -32,7 +32,7 @@
@@ -631,23 +631,25 @@ index 130d5fba..4f5313c1 100644
  namespace spvtools {
  namespace val {
 diff --git a/source/val/validate_extensions.cpp b/source/val/validate_extensions.cpp
-index c6d99fcf..bb987b95 100644
+index 831823bd..90c71749 100644
 --- a/source/val/validate_extensions.cpp
 +++ b/source/val/validate_extensions.cpp
-@@ -30,7 +30,7 @@
- #include "source/val/instruction.h"
+@@ -32,8 +32,8 @@
  #include "source/val/validate.h"
  #include "source/val/validation_state.h"
+ #include "spirv-tools/libspirv.h"
 -#include "spirv/unified1/NonSemanticClspvReflection.h"
+-#include "spirv/unified1/NonSemanticShaderDebugInfo.h"
 +#include <spirv/unified1/NonSemanticClspvReflection.h>
++#include <spirv/unified1/NonSemanticShaderDebugInfo.h>
  
  namespace spvtools {
  namespace val {
 diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
-index d7f60b50..97b98b03 100644
+index 2627f9a7..83b3b79d 100644
 --- a/test/CMakeLists.txt
 +++ b/test/CMakeLists.txt
-@@ -169,18 +169,18 @@ spvtools_pch(TEST_SOURCES pch_test)
+@@ -170,18 +170,18 @@ spvtools_pch(TEST_SOURCES pch_test)
  add_spvtools_unittest(
    TARGET spirv_unit_tests
    SRCS ${TEST_SOURCES}
@@ -670,7 +672,7 @@ index d7f60b50..97b98b03 100644
  
  add_spvtools_unittest(
    TARGET cpp_interface
-@@ -191,7 +191,7 @@ if (${SPIRV_TIMER_ENABLED})
+@@ -192,7 +192,7 @@ if (${SPIRV_TIMER_ENABLED})
  add_spvtools_unittest(
    TARGET timer
    SRCS timer_test.cpp
@@ -770,10 +772,10 @@ index 46fae21a..3b4980a7 100644
 +    LIBS ${SPIRV_TOOLS} SPIRV-Tools-opt
    DEFINES TESTING=1)
 diff --git a/test/val/CMakeLists.txt b/test/val/CMakeLists.txt
-index 8932b0e0..c309528b 100644
+index 550a5b28..4b5364dd 100644
 --- a/test/val/CMakeLists.txt
 +++ b/test/val/CMakeLists.txt
-@@ -54,21 +54,21 @@ add_spvtools_unittest(TARGET val_abcde
+@@ -57,21 +57,21 @@ add_spvtools_unittest(TARGET val_abcde
         val_ext_inst_test.cpp
         val_ext_inst_debug_test.cpp
         ${VAL_TEST_COMMON_SRCS}
@@ -798,8 +800,8 @@ index 8932b0e0..c309528b 100644
    PCH_FILE pch_test_val
  )
  
-@@ -93,7 +93,7 @@ add_spvtools_unittest(TARGET val_fghijklmnop
-        val_opencl_test.cpp
+@@ -98,7 +98,7 @@ add_spvtools_unittest(TARGET val_fghijklmnop
+        val_pipe_test.cpp
         val_primitives_test.cpp
         ${VAL_TEST_COMMON_SRCS}
 -  LIBS ${SPIRV_TOOLS_FULL_VISIBILITY}
@@ -807,7 +809,7 @@ index 8932b0e0..c309528b 100644
    PCH_FILE pch_test_val
  )
  
-@@ -111,6 +111,6 @@ add_spvtools_unittest(TARGET val_rstuvw
+@@ -116,6 +116,6 @@ add_spvtools_unittest(TARGET val_rstuvw
         val_validation_state_test.cpp
         val_version_test.cpp
         ${VAL_TEST_COMMON_SRCS}
