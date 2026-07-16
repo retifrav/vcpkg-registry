@@ -243,8 +243,8 @@ index 0b79c0b..3223040 100644
 -  string(TOUPPER "GLEW::${_glew_target}" _glew_dest_target)
 -  if(TARGET ${_glew_dest_target})
 +
-+set(_glew_src_target "GLEW::${glew}")
-+string(TOUPPER "GLEW::${glew}" _glew_dest_target)
++set(_glew_src_target "GLEW::glew")
++string(TOUPPER "GLEW::glew" _glew_dest_target)
 +if(TARGET ${_glew_dest_target})
      get_target_property(_glew_previous_src_target ${_glew_dest_target}
 -      _GLEW_SRC_TARGET)

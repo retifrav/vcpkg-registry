@@ -6,6 +6,7 @@ if(VCPKG_TARGET_IS_LINUX)
     )
 endif()
 
+set(YOU_LIKE_TO_SUFFER NO)
 # sources on GitHub do not contain required headers
 # I guess, because fuck you, that's why
 if(YOU_LIKE_TO_SUFFER)
@@ -19,7 +20,9 @@ if(YOU_LIKE_TO_SUFFER)
 else()
     vcpkg_download_distfile(
         ARCHIVE
-        URLS "https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz"
+        URLS
+            "https://github.com/nigels-com/glew/releases/download/glew-${VERSION}/glew-${VERSION}.tgz"
+            "https://files.decovar.dev/public/packages/glew/v${VERSION}/src/glew-${VERSION}.tgz"
         FILENAME "glew-2.2.0.tgz"
         SHA512 57453646635609d54f62fb32a080b82b601fd471fcfd26e109f479b3fef6dfbc24b83f4ba62916d07d62cd06d1409ad7aa19bc1cd7cf3639c103c815b8be31d1
     )
@@ -74,8 +77,4 @@ file(
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
 )
 
-file(
-    INSTALL "${SOURCE_PATH}/LICENSE.txt"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")

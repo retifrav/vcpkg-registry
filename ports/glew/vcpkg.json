@@ -3,6 +3,7 @@
     "version": "2.2.0",
     "description": "The OpenGL Extension Wrangler Library",
     "homepage": "http://glew.sourceforge.net/",
+    "license": null,
     "dependencies":
     [
         {
