@@ -336,8 +336,8 @@ if not ignoreVersionFromManifest:
             logging.error(
                 " ".join((
                     f"The current version {currentManifestVersion}",
-                    "in the port manifest is different from the provided",
-                    f"version {portVersion} (you can ignore",
+                    f"in the [{portName}] port manifest is different from",
+                    f"the provided version {portVersion} (you can ignore",
                     "that with --ignore-version-from-manifest)"
                 ))
             )
@@ -522,5 +522,5 @@ with open(portVersionsPath, "r+", newline="") as f:
     f.write("\n")
     f.truncate()
 
-logging.info(f"Updated the port to version {portVersion}")
+logging.info(f"Updated the [{portName}] port to version {portVersion}")
 raise SystemExit(0)
