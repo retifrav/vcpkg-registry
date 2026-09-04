@@ -1,10 +1,14 @@
-import sys
+# /// script
+# requires-python = ">=3.12"
+# ///
+
+import json
 import logging
 import pathlib
-import json
-from license_expression import get_spdx_licensing
+import sys
+from typing import Any
 
-from typing import List, Dict, Optional, Any
+from license_expression import get_spdx_licensing
 
 logging.basicConfig(
     format="[%(levelname)s] %(message)s",
@@ -13,7 +17,7 @@ logging.basicConfig(
 )
 
 # not a full list
-licensesThatRequirePublishingPatches: List[str] = [
+licensesThatRequirePublishingPatches: list[str] = [
     "LGPL-2.0-only",
     "LGPL-2.0-or-later",
     "LGPL-2.1-only",
@@ -22,14 +26,14 @@ licensesThatRequirePublishingPatches: List[str] = [
     "LGPL-3.0-or-later",
     "MPL-2.0"
 ]
-licensesThatRequireOpeningSources: List[str] = [
+licensesThatRequireOpeningSources: list[str] = [
     "GPL-2.0-only",
     "GPL-2.0-or-later",
     "GPL-3.0-only",
     "GPL-3.0-or-later"
 ]
 
-todos: Dict[str, List[str]] = {
+todos: dict[str, list[str]] = {
     # these ports have no `license` field in the manifest at all
     "missing-license": [],
     # these ports have their `license` value either set to `null`
@@ -41,7 +45,7 @@ todos: Dict[str, List[str]] = {
     "open-sources": []
 }
 
-registryPath: pathlib.Path = pathlib.Path(".").resolve()
+registryPath: pathlib.Path = pathlib.Path.cwd()
 if registryPath.name != "vcpkg-registry":
     logging.warning(
         " ".join((
@@ -78,8 +82,8 @@ if not portsPath.is_dir():
     )
     raise SystemExit(1)
 
-ports: List[str] = sorted([p.name for p in portsPath.iterdir() if p.is_dir()])
-print(f"Total ports: {len(ports)}\n")
+ports: list[str] = sorted([p.name for p in portsPath.iterdir() if p.is_dir()])
+print(f"Total ports: {len(ports)}")
 
 for p in ports:
     manifest: pathlib.Path = portsPath / p / "vcpkg.json"
@@ -87,17 +91,17 @@ for p in ports:
         logging.warning(f"[{p}] has no port manifest")
         todos["missing-license"].append(p)
     else:
-        manifestContent: Dict[str, Any] = {}
+        manifestContent: dict[str, Any] = {}
         with open(manifest, "r") as f:
             manifestContent = json.load(f)
-        if "license" in manifestContent.keys():
+        if "license" in manifestContent:
             # the `license` field might be present and have `null` value,
             # which means that this port license is not a SPDX license
             # expression, so the license is expected to be found
             # in `/share/PORT/copyright` file
             # https://learn.microsoft.com/en-us/vcpkg/reference/vcpkg-json#license
             # and `null` in JSON translates/converts to `None` in Python dictionary
-            license: Optional[str] = manifestContent.get("license")
+            license: str | None = manifestContent.get("license")
             if license is None:
                 todos["non-spdx-license"].append(p)
             else:
@@ -118,13 +122,11 @@ for p in ports:
         else:
             todos["missing-license"].append(p)
 
-print("\nResults:")
-
 portsWithoutLicenseCnt: int = len(todos["missing-license"])
 if portsWithoutLicenseCnt > 0:
     print(
         " ".join((
-            f"- ports without licenses (total {portsWithoutLicenseCnt}):",
+            f"\n- ports without licenses (total {portsWithoutLicenseCnt}):",
             ', '.join(todos["missing-license"])
         ))
     )
@@ -133,7 +135,7 @@ portsWithNonSpdxLicensesCnt = len(todos["non-spdx-license"])
 if portsWithNonSpdxLicensesCnt > 0:
     print(
         " ".join((
-            "- ports with non-SPDX licenses",
+            "\n- ports with non-SPDX licenses",
             f"(total {portsWithNonSpdxLicensesCnt}):",
             ', '.join(todos["non-spdx-license"])
         ))
@@ -149,7 +151,7 @@ if portsRequirePublishingPatchesCnt > 0:
     # )
     print(
         " ".join((
-            "- ports that require publishing patches",
+            "\n- ports that require publishing patches",
             f"(total {portsRequirePublishingPatchesCnt}):",
             ", ".join(todos["publish-patches"])
         ))
@@ -159,7 +161,7 @@ portsRequireOpeningSourcesCnt: int = len(todos["open-sources"])
 if portsRequireOpeningSourcesCnt > 0:
     print(
         " ".join((
-            "- ports that require opening sources",
+            "\n- ports that require opening sources",
             f"(total {portsRequireOpeningSourcesCnt}):",
             ", ".join(todos["open-sources"])
         ))

@@ -1,0 +1,13 @@
+# minimal Python version required by the scripts in ./scripts/, matching
+# the `requires-python` value in their PEP 723 inline metadata blocks
+#
+# ruff does not read that metadata, so the target version is pinned here,
+# otherwise ruff will fallback to assuming 3.10
+target-version = "py312"
+
+[lint]
+# the scripts in ./scripts/ are standalone scripts that set up logging
+# themselves with `logging.basicConfig()`, so calling `logging.warning()`,
+# `logging.error()` and the likes on the root logger is intentional there
+# and does not need a dedicated logger of its own
+ignore = [ "LOG015" ]
