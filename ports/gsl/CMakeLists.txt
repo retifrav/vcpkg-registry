@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(gsl C)
+set(GSL_VERSION "0.0.0" CACHE STRING "GSL version")
+
+project(gsl
+    LANGUAGES C
+    VERSION ${GSL_VERSION}
+)
+
+set(PROJECT_NAMESPACE_FOR_PACKAGE "gsl")
 
 # function to extract parameters from makefile, space-separated values are returned as lists
 function(extract_from_makefile PATTERN RETURN FILEPATH)
@@ -57,17 +64,20 @@ set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under D
 add_library(gslcblas ${CBLAS_SOURCES})
 set_target_properties(gslcblas
     PROPERTIES
-        # not a good idea to export all the symbols
+        # probably not a good idea to export all the symbols
         WINDOWS_EXPORT_ALL_SYMBOLS YES
 )
+add_library("${PROJECT_NAMESPACE_FOR_PACKAGE}::gslcblas" ALIAS gslcblas)
 
 add_library(gsl ${SOURCES})
 set_target_properties(gsl
     PROPERTIES
         DEFINE_SYMBOL DLL_EXPORT
+        # probably not a good idea to export all the symbols
         WINDOWS_EXPORT_ALL_SYMBOLS YES
 )
 target_link_libraries(gsl PUBLIC gslcblas)
+add_library("${PROJECT_NAMESPACE_FOR_PACKAGE}::gsl" ALIAS gsl)
 
 set_target_properties(gsl
     PROPERTIES
@@ -92,20 +102,5 @@ file(
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/gsl"
 )
 
-include(GNUInstallDirs)
-
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/gsl.pc.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/gsl.pc" @ONLY
-)
-install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/gsl.pc"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
-)
-
-install(TARGETS gsl gslcblas
-    #RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
-    #LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-    #ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
-    PUBLIC_HEADER DESTINATION include/gsl
-)
+set(PROJECT_TARGETS_TO_INSTALL gsl gslcblas)
+include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
