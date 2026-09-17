@@ -3,6 +3,7 @@
     "version": "1.2.12",
     "description": "A massively spiffy yet delicately unobtrusive compression library",
     "homepage": "https://github.com/madler/zlib",
+    "license": "Zlib",
     "supports": "!uwp",
     "dependencies":
     [

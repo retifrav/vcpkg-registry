@@ -3,6 +3,7 @@
     "version": "2.11.1",
     "description": "Seamless operability between C++ and Python",
     "homepage": "https://github.com/pybind/pybind11",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {

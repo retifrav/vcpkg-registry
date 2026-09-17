@@ -4,6 +4,7 @@
     "port-version": 3,
     "description": "Some thing",
     "homepage": "https://github.com/retifrav/cmake-target-link-libraries-example",
+    "license": "GPL-3.0-or-later",
     "dependencies":
     [
         {

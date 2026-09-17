@@ -3,6 +3,7 @@
     "version": "3.11.3",
     "description": "JSON for Modern C++",
     "homepage": "https://json.nlohmann.me/",
+    "license": "MIT",
     "dependencies":
     [
         {

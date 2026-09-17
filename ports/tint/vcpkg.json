@@ -4,6 +4,7 @@
     "port-version": 1,
     "description": "A compiler for the WebGPU Shader Language",
     "homepage": "https://dawn.googlesource.com/tint",
+    "license": "Apache-2.0",
     "dependencies":
     [
         {

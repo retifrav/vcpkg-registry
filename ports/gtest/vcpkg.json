@@ -3,6 +3,7 @@
     "version": "1.13.0",
     "description": "Google testing and mocking framework",
     "homepage": "https://github.com/google/googletest",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {

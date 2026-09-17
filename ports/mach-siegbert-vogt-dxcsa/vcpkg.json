@@ -3,7 +3,7 @@
     "version": "2025.2.26",
     "description": "Mach Siegbert Vogt DX Code Signing Algorithm on a DXIL binary file / container blob",
     "homepage": "https://github.com/hexops/DirectXShaderCompiler/blob/main/tools/clang/tools/dxcompiler/MachSiegbertVogtDXCSA.h",
-    "license": null,
+    "license": "Apache-2.0 OR MIT",
     "dependencies":
     [
         {

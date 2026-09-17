@@ -3,6 +3,7 @@
     "version": "3.4.0",
     "description": "A multi-platform library for OpenGL/Vulkan/etc, window and input",
     "homepage": "https://glfw.org/",
+    "license": "Zlib",
     "dependencies":
     [
         {

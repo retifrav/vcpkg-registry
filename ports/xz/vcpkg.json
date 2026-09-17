@@ -3,7 +3,7 @@
     "version": "5.8.1",
     "description": "General-purpose data compression",
     "homepage": "https://tukaani.org/xz/",
-    "license": null,
+    "license": "0BSD",
     "dependencies":
     [
         {

@@ -6,7 +6,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:retifrav/rfc6234-sha.git
-    REF 50f13a03f15fc8b6c6dc0accc100ebd87b2ea7a3
+    REF 741320cbbd19b2219614065149b08b5fadd8f304
 )
 
 file(COPY

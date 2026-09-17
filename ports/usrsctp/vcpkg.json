@@ -3,6 +3,7 @@
     "version": "0.9.5",
     "description": "A portable SCTP userland stack",
     "homepage": "https://github.com/sctplab/usrsctp",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {

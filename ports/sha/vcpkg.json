@@ -3,6 +3,7 @@
     "version": "2011.5.1",
     "description": "RFC 6234: US Secure Hash Algorithms (SHA and SHA-based HMAC and HKDF)",
     "homepage": "https://rfc-editor.org/rfc/rfc6234#section-8",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {

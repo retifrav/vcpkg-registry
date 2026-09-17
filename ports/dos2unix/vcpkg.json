@@ -3,7 +3,7 @@
     "version": "7.5.2",
     "description": "Text file format converters",
     "homepage": "https://dos2unix.sourceforge.io/",
-    "license": null,
+    "license": "BSD-2-Clause",
     "supports": "native",
     "dependencies":
     [

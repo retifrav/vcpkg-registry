@@ -3,6 +3,7 @@
     "version": "2.6.0",
     "description": "Secure Realtime Transport Protocol",
     "homepage": "https://github.com/cisco/libsrtp",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {

@@ -2,5 +2,6 @@
     "name": "iconv",
     "version": "1.16.0",
     "description": "GNU Unicode text conversion",
-    "homepage": "https://gnu.org/software/libiconv/"
+    "homepage": "https://gnu.org/software/libiconv/",
+    "license": "LGPL-2.0-or-later AND GPL-3.0-or-later"
 }

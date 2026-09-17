@@ -3,6 +3,7 @@
     "version": "3.2.4",
     "description": "Validating XML parser",
     "homepage": "https://xerces.apache.org/xerces-c/",
+    "license": "Apache-2.0",
     "dependencies":
     [
         {

@@ -3,6 +3,7 @@
     "version": "1.0.119",
     "description": "ADO.NET provider for SQLite",
     "homepage": "https://system.data.sqlite.org/index.html",
+    "license": null,
     "dependencies":
     [
         {

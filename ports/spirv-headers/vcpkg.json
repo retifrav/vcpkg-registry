@@ -3,7 +3,7 @@
     "version": "2026.4.15",
     "description": "Machine-readable files for the SPIR-V Registry",
     "homepage": "https://github.com/KhronosGroup/SPIRV-Headers",
-    "license": null,
+    "license": "MIT",
     "dependencies":
     [
         {

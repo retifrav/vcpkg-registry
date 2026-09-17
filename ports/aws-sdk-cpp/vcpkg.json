@@ -3,6 +3,7 @@
     "version": "1.11.416",
     "description": "AWS SDK",
     "homepage": "https://github.com/aws/aws-sdk-cpp",
+    "license": "Apache-2.0",
     "dependencies":
     [
         {

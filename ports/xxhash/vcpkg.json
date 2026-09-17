@@ -3,6 +3,7 @@
     "version": "0.8.2",
     "description": "Extremely fast non-cryptographic hash algorithm",
     "homepage": "https://xxhash.com/",
+    "license": "BSD-2-Clause",
     "dependencies": [
         {
             "name": "vcpkg-cmake",

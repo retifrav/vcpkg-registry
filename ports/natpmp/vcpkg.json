@@ -3,6 +3,7 @@
     "version": "2023.6.18",
     "description": "NAT Port Mapping Protocol implementation",
     "homepage": "http://miniupnp.free.fr/libnatpmp.html",
+    "license": "BSD-3-Clause",
     "dependencies":
     [
         {

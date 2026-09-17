@@ -3,6 +3,7 @@
     "version": "2.2.5",
     "description": "UPnP Internet Gateway Device client implementation",
     "homepage": "http://miniupnp.free.fr",
+    "license": "BSD-3-Clause",
     "supports": "!uwp",
     "dependencies":
     [

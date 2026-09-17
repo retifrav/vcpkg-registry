@@ -3,6 +3,7 @@
     "version": "1.5.1",
     "description": "UDP Interactive Connectivity Establishment library",
     "homepage": "https://github.com/paullouisageneau/libjuice",
+    "license": "MPL-2.0",
     "dependencies":
     [
         {

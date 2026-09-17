@@ -3,6 +3,7 @@
     "version": "3.5.3",
     "description": "A modern, C++-native, test framework for unit-tests, TDD and BDD",
     "homepage": "https://github.com/catchorg/Catch2",
+    "license": "BSL-1.0",
     "dependencies":
     [
         {

@@ -3,7 +3,7 @@
     "version": "2025.6.22",
     "description": "PLY 3D mesh format importer and exporter",
     "homepage": "https://github.com/ddiakopoulos/tinyply",
-    "license": null,
+    "license": "BSD-2-Clause",
     "dependencies":
     [
         {

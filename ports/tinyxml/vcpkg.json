@@ -3,6 +3,7 @@
     "version": "2.6.2",
     "description": "A simple, small, minimal C++ XML parser",
     "homepage": "https://sourceforge.net/projects/tinyxml/",
+    "license": "Zlib",
     "dependencies":
     [
         {

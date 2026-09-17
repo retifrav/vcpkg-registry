@@ -2,5 +2,6 @@
     "name": "egl-registry",
     "version": "2024.1.25",
     "description": "EGL API and Extension Registry",
-    "homepage": "https://github.com/KhronosGroup/EGL-Registry"
+    "homepage": "https://github.com/KhronosGroup/EGL-Registry",
+    "license": "Apache-2.0 AND MIT"
 }

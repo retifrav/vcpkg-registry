@@ -3,6 +3,7 @@
     "version": "1.0.8",
     "description": "A freely available patent free high-quality data compressor",
     "homepage": "https://sourceware.org/bzip2/",
+    "license": "bzip2-1.0.6",
     "dependencies":
     [
         {

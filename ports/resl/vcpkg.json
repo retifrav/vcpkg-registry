@@ -4,6 +4,7 @@
     "port-version": 1,
     "description": "Reverse-engineered game Shortline",
     "homepage": "https://github.com/konovalov-aleks/reSL",
+    "license": "GPL-3.0-or-later",
     "dependencies":
     [
         {
