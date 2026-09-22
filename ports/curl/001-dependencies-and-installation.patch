@@ -172,8 +172,8 @@ index 8e5383ac98..8ca43f630c 100644
 +    set(HAVE_LIBZ YES)
 +    # Depend on ZLIB via imported targets. This allows our dependents to
 +    # get our dependencies transitively.
-+    list(APPEND CURL_LIBS zlib)
-+    set_target_properties(zlib PROPERTIES INTERFACE_LIBCURL_PC_MODULES "zlib")
++    list(APPEND CURL_LIBS zlib::zlib)
++    set_target_properties(zlib::zlib PROPERTIES INTERFACE_LIBCURL_PC_MODULES "zlib")
 +endif()
 +
 +option(CURL_BROTLI "Using brotli" NO)
@@ -202,7 +202,7 @@ index 8e5383ac98..8ca43f630c 100644
      list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DOPENSSL_SUPPRESS_DEPRECATED")  # for SSL_CTX_set_srp_username deprecated since 3.0.0
      if(HAVE_LIBZ)
 -      list(APPEND CMAKE_REQUIRED_LIBRARIES ZLIB::ZLIB)
-+      list(APPEND CMAKE_REQUIRED_LIBRARIES zlib)
++      list(APPEND CMAKE_REQUIRED_LIBRARIES zlib::zlib)
      endif()
      if(WIN32)
        list(APPEND CMAKE_REQUIRED_LIBRARIES "bcrypt")  # for OpenSSL/LibreSSL
@@ -213,7 +213,7 @@ index 8e5383ac98..8ca43f630c 100644
 +    list(APPEND CMAKE_REQUIRED_LIBRARIES wolfssl::wolfssl)
      if(HAVE_LIBZ)
 -      list(APPEND CMAKE_REQUIRED_LIBRARIES ZLIB::ZLIB)  # Public wolfSSL headers also require zlib headers
-+      list(APPEND CMAKE_REQUIRED_LIBRARIES zlib)  # Public wolfSSL headers also require zlib headers
++      list(APPEND CMAKE_REQUIRED_LIBRARIES zlib::zlib)  # Public wolfSSL headers also require zlib headers
      endif()
      list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DHAVE_UINTPTR_T")  # to pull in stdint.h (as of wolfSSL v5.5.4)
    endif()
@@ -222,7 +222,7 @@ index 8e5383ac98..8ca43f630c 100644
  # linkers sensitive to lib order. There must be a better solution to this.
  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 -  foreach(_lib IN ITEMS OpenSSL::Crypto ZLIB::ZLIB)
-+  foreach(_lib IN ITEMS OpenSSL::Crypto zlib)
++  foreach(_lib IN ITEMS OpenSSL::Crypto zlib::zlib)
      if(TARGET "${_lib}")
        add_library(CURL::${_lib} INTERFACE IMPORTED)
        get_target_property(_libname "${_lib}" LOCATION)
