@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:OSGeo/gdal.git
-    REF 130cb4675a0b42bd32acad56e57022cca44fc008
+    REF b2e6057d1d0f2cb4c11bfdf79ab1a61def0ce9ca
     PATCHES
         001-dependencies-and-installation.patch
 )

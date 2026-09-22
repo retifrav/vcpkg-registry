@@ -12,7 +12,7 @@ index 0fcdf8ba00..d61effbc2c 100644
  #include <cmath>
  #include <limits>
 diff --git a/apps/CMakeLists.txt b/apps/CMakeLists.txt
-index d9b156cd81..58ebe04520 100644
+index d9b156cd81..bde9283a73 100644
 --- a/apps/CMakeLists.txt
 +++ b/apps/CMakeLists.txt
 @@ -196,7 +196,7 @@ endif()
@@ -29,7 +29,7 @@ index d9b156cd81..58ebe04520 100644
      target_compile_definitions(appslib PRIVATE -DZLIB_DLL)
    endif ()
 -  gdal_target_link_libraries(appslib PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(appslib PRIVATE zlib)
++  gdal_target_link_libraries(appslib PRIVATE zlib::zlib)
  endif ()
  
  include(TargetPublicHeader)
@@ -349,7 +349,7 @@ index 855e5156f0..18aef1fc1b 100644
          set_property(GLOBAL APPEND PROPERTY PACKAGES_NOT_FOUND "${pkgname}")
      endif()
 diff --git a/cmake/modules/packages/FindTEIGHA.cmake b/cmake/modules/packages/FindTEIGHA.cmake
-index 36ba2755a1..0f377196fd 100644
+index 36ba2755a1..3fed7279ee 100644
 --- a/cmake/modules/packages/FindTEIGHA.cmake
 +++ b/cmake/modules/packages/FindTEIGHA.cmake
 @@ -228,7 +228,7 @@ if(TEIGHA_FOUND)
@@ -357,7 +357,7 @@ index 36ba2755a1..0f377196fd 100644
          if (EXISTS "${TEIGHA_ROOT}/lib/${TEIGHA_PLATFORM}/libTG_Db.a")
              find_library(FREETYPE_LIBRARY NAMES freetype)
 -            list(APPEND TEIGHA_TARGETS ZLIB::ZLIB)
-+            list(APPEND TEIGHA_TARGETS zlib)
++            list(APPEND TEIGHA_TARGETS zlib::zlib)
          endif()
          add_library(TEIGHA::TEIGHA INTERFACE IMPORTED)
          set_target_properties(TEIGHA::TEIGHA PROPERTIES
@@ -414,7 +414,7 @@ index d531229bb5..b3b25b0614 100644
  
  if (GDAL_ENABLE_DRIVER_EEDA_PLUGIN)
 diff --git a/frmts/georaster/CMakeLists.txt b/frmts/georaster/CMakeLists.txt
-index b1072b227a..a0dda9fe81 100644
+index b1072b227a..7012e31037 100644
 --- a/frmts/georaster/CMakeLists.txt
 +++ b/frmts/georaster/CMakeLists.txt
 @@ -52,11 +52,11 @@ endif ()
@@ -429,12 +429,21 @@ index b1072b227a..a0dda9fe81 100644
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_GEOR PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_GEOR PRIVATE zlib)
++  gdal_target_link_libraries(gdal_GEOR PRIVATE zlib::zlib)
  endif ()
 diff --git a/frmts/georaster/georaster_priv.h b/frmts/georaster/georaster_priv.h
-index 9912a3e951..ba4e2ba8c6 100644
+index 9912a3e951..4c5cc74f8b 100644
 --- a/frmts/georaster/georaster_priv.h
 +++ b/frmts/georaster/georaster_priv.h
+@@ -28,7 +28,7 @@
+ //  DEFLATE compression support
+ //  ---------------------------------------------------------------------------
+ 
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ //  ---------------------------------------------------------------------------
+ //  JPEG compression support
 @@ -36,7 +36,7 @@
  
  #ifdef JPEG_SUPPORTED
@@ -445,7 +454,7 @@ index 9912a3e951..ba4e2ba8c6 100644
  #endif
  
 diff --git a/frmts/grib/CMakeLists.txt b/frmts/grib/CMakeLists.txt
-index 2c17d1cfd2..3e59131e5a 100644
+index 2c17d1cfd2..026a351fd5 100644
 --- a/frmts/grib/CMakeLists.txt
 +++ b/frmts/grib/CMakeLists.txt
 @@ -167,12 +167,12 @@ endif ()
@@ -459,7 +468,7 @@ index 2c17d1cfd2..3e59131e5a 100644
  
  if (GDAL_USE_ZLIB AND NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_GRIB PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_GRIB PRIVATE zlib)
++  gdal_target_link_libraries(gdal_GRIB PRIVATE zlib::zlib)
  endif ()
  
  if (GDAL_USE_LIBAEC)
@@ -490,7 +499,7 @@ index 2e49243d21..2e151c54c4 100644
  
  struct png_stream {
 diff --git a/frmts/gtiff/CMakeLists.txt b/frmts/gtiff/CMakeLists.txt
-index 7171c951f6..0df84cbba6 100644
+index 7171c951f6..7fd3b4f26d 100644
 --- a/frmts/gtiff/CMakeLists.txt
 +++ b/frmts/gtiff/CMakeLists.txt
 @@ -84,18 +84,18 @@ endif ()
@@ -520,7 +529,7 @@ index 7171c951f6..0df84cbba6 100644
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libz>)
        else ()
 -        target_link_libraries(generate_quant_table_md5sum PRIVATE ZLIB::ZLIB)
-+        target_link_libraries(generate_quant_table_md5sum PRIVATE zlib)
++        target_link_libraries(generate_quant_table_md5sum PRIVATE zlib::zlib)
        endif ()
        if (GDAL_USE_DEFLATE)
          target_link_libraries(generate_quant_table_md5sum PRIVATE Deflate::Deflate)
@@ -889,7 +898,7 @@ index bec6a90dcc..9fdc7d9496 100644
  
  #include <cmath>
 diff --git a/frmts/jpeg/CMakeLists.txt b/frmts/jpeg/CMakeLists.txt
-index 06a0137fef..55cce50793 100644
+index 06a0137fef..c646ba4553 100644
 --- a/frmts/jpeg/CMakeLists.txt
 +++ b/frmts/jpeg/CMakeLists.txt
 @@ -8,8 +8,8 @@ add_gdal_driver(
@@ -917,7 +926,7 @@ index 06a0137fef..55cce50793 100644
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_JPEG PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_JPEG PRIVATE zlib)
++  gdal_target_link_libraries(gdal_JPEG PRIVATE zlib::zlib)
  endif ()
  
  # Breaks ODR
@@ -987,7 +996,7 @@ index 1e4b8132b4..574f5c51c8 100644
  CPL_C_END
  
 diff --git a/frmts/libertiff/CMakeLists.txt b/frmts/libertiff/CMakeLists.txt
-index d01c412a28..24582813fb 100644
+index d01c412a28..c56c4fe566 100644
 --- a/frmts/libertiff/CMakeLists.txt
 +++ b/frmts/libertiff/CMakeLists.txt
 @@ -24,7 +24,7 @@ endif ()
@@ -995,12 +1004,12 @@ index d01c412a28..24582813fb 100644
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_LIBERTIFF PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_LIBERTIFF PRIVATE zlib)
++  gdal_target_link_libraries(gdal_LIBERTIFF PRIVATE zlib::zlib)
  endif ()
  
  if (GDAL_USE_DEFLATE)
 diff --git a/frmts/mbtiles/CMakeLists.txt b/frmts/mbtiles/CMakeLists.txt
-index a96c44be7d..16c022801c 100644
+index a96c44be7d..5388437dee 100644
 --- a/frmts/mbtiles/CMakeLists.txt
 +++ b/frmts/mbtiles/CMakeLists.txt
 @@ -20,13 +20,13 @@ if (GDAL_USE_GEOS)
@@ -1012,7 +1021,7 @@ index a96c44be7d..16c022801c 100644
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_MBTiles PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_MBTiles PRIVATE zlib)
++  gdal_target_link_libraries(gdal_MBTiles PRIVATE zlib::zlib)
  endif ()
  if (NOT GDAL_USE_JSONC_INTERNAL)
 -  gdal_target_link_libraries(gdal_MBTiles PRIVATE ${JSONC_TARGET})
@@ -1021,7 +1030,7 @@ index a96c44be7d..16c022801c 100644
  target_include_directories(
    gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gpkg
 diff --git a/frmts/mbtiles/mbtilesdataset.cpp b/frmts/mbtiles/mbtilesdataset.cpp
-index 80f64353f4..cbd9c838b1 100644
+index b6e120f3b1..0d0450941a 100644
 --- a/frmts/mbtiles/mbtilesdataset.cpp
 +++ b/frmts/mbtiles/mbtilesdataset.cpp
 @@ -27,7 +27,7 @@
@@ -1034,7 +1043,7 @@ index 80f64353f4..cbd9c838b1 100644
  
  #include <math.h>
 diff --git a/frmts/mrf/CMakeLists.txt b/frmts/mrf/CMakeLists.txt
-index fac692162e..f2d1cf9ea0 100644
+index fac692162e..93b3b582ed 100644
 --- a/frmts/mrf/CMakeLists.txt
 +++ b/frmts/mrf/CMakeLists.txt
 @@ -85,15 +85,15 @@ endif ()
@@ -1052,12 +1061,12 @@ index fac692162e..f2d1cf9ea0 100644
  
  if (NOT GDAL_USE_ZLIB_INTERNAL)
 -  gdal_target_link_libraries(gdal_MRF PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_MRF PRIVATE zlib)
++  gdal_target_link_libraries(gdal_MRF PRIVATE zlib::zlib)
  endif ()
  
  if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC)
 diff --git a/frmts/mrf/JPEG_band.cpp b/frmts/mrf/JPEG_band.cpp
-index 0c434f092d..69e12ddb7d 100644
+index 48460e696e..7a666e3a1b 100644
 --- a/frmts/mrf/JPEG_band.cpp
 +++ b/frmts/mrf/JPEG_band.cpp
 @@ -72,8 +72,8 @@
@@ -1099,6 +1108,61 @@ index dc24c9a247..e0878ccd50 100644
  CPL_C_END
  
  #if defined(__clang__)
+diff --git a/frmts/mrf/marfa.h b/frmts/mrf/marfa.h
+index 86785c89c8..65c5289a69 100644
+--- a/frmts/mrf/marfa.h
++++ b/frmts/mrf/marfa.h
+@@ -74,7 +74,7 @@
+ #pragma clang diagnostic push
+ #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+ #endif
+-#include <zstd.h>
++#include <zstd/zstd.h>
+ #if defined(__clang__)
+ #pragma clang diagnostic pop
+ #endif
+diff --git a/frmts/mrf/marfa_dataset.cpp b/frmts/mrf/marfa_dataset.cpp
+index fb71dc75ea..4e73a4e372 100644
+--- a/frmts/mrf/marfa_dataset.cpp
++++ b/frmts/mrf/marfa_dataset.cpp
+@@ -68,7 +68,7 @@
+ #include <limits>
+ #include <vector>
+ #if defined(ZSTD_SUPPORT)
+-#include <zstd.h>
++#include <zstd/zstd.h>
+ #endif
+ using std::string;
+ using std::vector;
+diff --git a/frmts/mrf/mrf_band.cpp b/frmts/mrf/mrf_band.cpp
+index ff9b3ceff5..62cbc8c481 100644
+--- a/frmts/mrf/mrf_band.cpp
++++ b/frmts/mrf/mrf_band.cpp
+@@ -60,9 +60,9 @@
+ #include <vector>
+ #include <algorithm>
+ #include <cassert>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #if defined(ZSTD_SUPPORT)
+-#include <zstd.h>
++#include <zstd/zstd.h>
+ #endif
+ 
+ using namespace std::chrono;
+diff --git a/frmts/mrf/mrf_util.cpp b/frmts/mrf/mrf_util.cpp
+index 559653220d..99540e7457 100644
+--- a/frmts/mrf/mrf_util.cpp
++++ b/frmts/mrf/mrf_util.cpp
+@@ -48,7 +48,7 @@
+  */
+ 
+ #include "marfa.h"
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #include <algorithm>
+ #include <limits>
+ #include "mrfdrivercore.h"
 diff --git a/frmts/mrsid/CMakeLists.txt b/frmts/mrsid/CMakeLists.txt
 index 5f068b86cf..d2ab48c6af 100644
 --- a/frmts/mrsid/CMakeLists.txt
@@ -1111,7 +1175,7 @@ index 5f068b86cf..d2ab48c6af 100644
 +  gdal_target_link_libraries(gdal_MrSID PRIVATE geotiff)
  endif ()
 diff --git a/frmts/nitf/CMakeLists.txt b/frmts/nitf/CMakeLists.txt
-index a9eeb158fd..b4dc9a9347 100644
+index a9eeb158fd..b8d49af56c 100644
 --- a/frmts/nitf/CMakeLists.txt
 +++ b/frmts/nitf/CMakeLists.txt
 @@ -87,7 +87,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
@@ -1137,7 +1201,7 @@ index a9eeb158fd..b4dc9a9347 100644
      target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libz>)
    else ()
 -    target_link_libraries(nitfdump PRIVATE ZLIB::ZLIB)
-+    target_link_libraries(nitfdump PRIVATE zlib)
++    target_link_libraries(nitfdump PRIVATE zlib::zlib)
    endif ()
    if (GDAL_USE_DEFLATE)
      target_link_libraries(nitfdump PRIVATE Deflate::Deflate)
@@ -1213,10 +1277,10 @@ index 004a31ddf9..d78dc4415a 100644
  
  static void _DummyMgrMethod( j_compress_ptr /*pUnused*/ ) {}
 diff --git a/frmts/pdf/CMakeLists.txt b/frmts/pdf/CMakeLists.txt
-index 34e8925db8..77c9e3c37d 100644
+index b78591cc99..704c26a222 100644
 --- a/frmts/pdf/CMakeLists.txt
 +++ b/frmts/pdf/CMakeLists.txt
-@@ -98,8 +98,8 @@ if (GDAL_USE_PDFIUM)
+@@ -104,8 +104,8 @@ if (GDAL_USE_PDFIUM)
      gdal_target_link_libraries(
        gdal_PDF
        PRIVATE
@@ -1277,7 +1341,7 @@ index ff7ca47643..ed215d6183 100644
 +  gdal_target_link_libraries(gdal_PLMOSAIC PRIVATE json-c::json-c)
  endif ()
 diff --git a/frmts/png/CMakeLists.txt b/frmts/png/CMakeLists.txt
-index ec4976db78..b6981d8661 100644
+index ec4976db78..920be14125 100644
 --- a/frmts/png/CMakeLists.txt
 +++ b/frmts/png/CMakeLists.txt
 @@ -14,13 +14,13 @@ gdal_standard_includes(gdal_PNG)
@@ -1292,7 +1356,7 @@ index ec4976db78..b6981d8661 100644
    gdal_add_vendored_lib(gdal_PNG libz)
  else ()
 -  gdal_target_link_libraries(gdal_PNG PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_PNG PRIVATE zlib)
++  gdal_target_link_libraries(gdal_PNG PRIVATE zlib::zlib)
  endif ()
  
  if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
@@ -1323,7 +1387,7 @@ index 7ab5dcce09..f45ca6a5f0 100644
  #include <csetjmp>
  
 diff --git a/frmts/rik/CMakeLists.txt b/frmts/rik/CMakeLists.txt
-index dbafee14e7..a00b332129 100644
+index dbafee14e7..ef0dcf4898 100644
 --- a/frmts/rik/CMakeLists.txt
 +++ b/frmts/rik/CMakeLists.txt
 @@ -9,5 +9,5 @@ gdal_standard_includes(gdal_RIK)
@@ -1331,8 +1395,21 @@ index dbafee14e7..a00b332129 100644
    gdal_add_vendored_lib(gdal_RIK libz)
  else ()
 -  gdal_target_link_libraries(gdal_RIK PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(gdal_RIK PRIVATE zlib)
++  gdal_target_link_libraries(gdal_RIK PRIVATE zlib::zlib)
  endif ()
+diff --git a/frmts/rik/rikdataset.cpp b/frmts/rik/rikdataset.cpp
+index 2a6bcfe3f4..b2208981ee 100644
+--- a/frmts/rik/rikdataset.cpp
++++ b/frmts/rik/rikdataset.cpp
+@@ -12,7 +12,7 @@
+  ****************************************************************************/
+ 
+ #include <cfloat>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #include "gdal_frmts.h"
+ #include "gdal_colortable.h"
+ #include "gdal_pam.h"
 diff --git a/frmts/vrt/pixelfunctions.cpp b/frmts/vrt/pixelfunctions.cpp
 index 0f82b20c62..2983bc51da 100644
 --- a/frmts/vrt/pixelfunctions.cpp
@@ -1494,7 +1571,7 @@ index c0b4a3f869..ca93537014 100644
  
  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 diff --git a/ogr/CMakeLists.txt b/ogr/CMakeLists.txt
-index 67dc533c6f..ad10212e91 100644
+index 67dc533c6f..59519c9bf7 100644
 --- a/ogr/CMakeLists.txt
 +++ b/ogr/CMakeLists.txt
 @@ -153,7 +153,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
@@ -1502,7 +1579,7 @@ index 67dc533c6f..ad10212e91 100644
      target_compile_definitions(ogr PRIVATE -DZLIB_DLL)
    endif ()
 -  gdal_target_link_libraries(ogr PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(ogr PRIVATE zlib)
++  gdal_target_link_libraries(ogr PRIVATE zlib::zlib)
  endif ()
  
  if (GDAL_USE_EXPAT)
@@ -1570,7 +1647,7 @@ index 4bd367b3a5..d33ec81ec6 100644
  #ifdef DEBUG_PERF
  static double g_dfTotalTimeCRStoCRS = 0;
 diff --git a/ogr/ogrgeojsonwriter.cpp b/ogr/ogrgeojsonwriter.cpp
-index 024512cd27..53c4f36872 100644
+index b4543edf03..113e6d5976 100644
 --- a/ogr/ogrgeojsonwriter.cpp
 +++ b/ogr/ogrgeojsonwriter.cpp
 @@ -21,13 +21,13 @@
@@ -1648,19 +1725,6 @@ index d9c77955a8..b4bbc0f6e7 100644
  endif ()
  if (OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)
    target_compile_definitions(ogr_GeoJSON PRIVATE BUILT_AS_PLUGIN)
-diff --git a/ogr/ogrsf_frmts/geojson/libjson/json_object_iterator.c b/ogr/ogrsf_frmts/geojson/libjson/json_object_iterator.c
-index 1372133df2..5865a3d1c3 100644
---- a/ogr/ogrsf_frmts/geojson/libjson/json_object_iterator.c
-+++ b/ogr/ogrsf_frmts/geojson/libjson/json_object_iterator.c
-@@ -13,7 +13,7 @@
- 
- #include <stddef.h>
- 
--#include "json.h"
-+#include <json-c/json.h>
- #include "json_object_private.h"
- 
- #include "json_object_iterator.h"
 diff --git a/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp b/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp
 index 3da1745f9d..334649e73a 100644
 --- a/ogr/ogrsf_frmts/geojson/ogresrijsonreader.cpp
@@ -1675,7 +1739,7 @@ index 3da1745f9d..334649e73a 100644
  // #include "json_tokener.h"
  #include "ogr_api.h"
 diff --git a/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp b/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp
-index de1ef8ac62..ec94e66fa7 100644
+index 211b77e7d1..b2bfba4211 100644
 --- a/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp
 +++ b/ogr/ogrsf_frmts/geojson/ogrgeojsondatasource.cpp
 @@ -27,7 +27,7 @@
@@ -1814,7 +1878,7 @@ index 801e091568..1c2ff136a2 100644
  /************************************************************************/
  /*                 OGRJSONFGReader::~OGRJSONFGReader()                  */
 diff --git a/ogr/ogrsf_frmts/libkml/CMakeLists.txt b/ogr/ogrsf_frmts/libkml/CMakeLists.txt
-index cf7362f391..4562b4fa75 100644
+index cf7362f391..735675eaaa 100644
 --- a/ogr/ogrsf_frmts/libkml/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/libkml/CMakeLists.txt
 @@ -28,7 +28,7 @@ endif()
@@ -1822,13 +1886,13 @@ index cf7362f391..4562b4fa75 100644
  gdal_standard_includes(ogr_LIBKML)
  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)
 -if (TARGET LIBKML::MINIZIP AND TARGET LIBKML::URIPARSER AND TARGET ZLIB::ZLIB AND GDAL_USE_EXPAT)
-+if (TARGET LIBKML::MINIZIP AND TARGET LIBKML::URIPARSER AND TARGET zlib AND GDAL_USE_EXPAT)
++if (TARGET LIBKML::MINIZIP AND TARGET LIBKML::URIPARSER AND TARGET zlib::zlib AND GDAL_USE_EXPAT)
    # Fedora Rawhide doesn't have LIBKML::MINIZIP
 -  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER ZLIB::ZLIB ${EXPAT_TARGET})
-+  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER zlib ${EXPAT_TARGET})
++  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER zlib::zlib ${EXPAT_TARGET})
  endif()
 diff --git a/ogr/ogrsf_frmts/mvt/CMakeLists.txt b/ogr/ogrsf_frmts/mvt/CMakeLists.txt
-index ce41dec63c..79308a2abe 100644
+index ce41dec63c..52fe553e8b 100644
 --- a/ogr/ogrsf_frmts/mvt/CMakeLists.txt
 +++ b/ogr/ogrsf_frmts/mvt/CMakeLists.txt
 @@ -14,7 +14,7 @@ endif ()
@@ -1967,7 +2031,7 @@ index 651726bd22..860a6804f2 100644
  bool GDALThreadLocalDatasetCacheIsInDestruction();
  
 diff --git a/port/CMakeLists.txt b/port/CMakeLists.txt
-index 59068e1c1b..fda70245da 100644
+index 59068e1c1b..53231921e8 100644
 --- a/port/CMakeLists.txt
 +++ b/port/CMakeLists.txt
 @@ -201,7 +201,7 @@ endif ()
@@ -1984,7 +2048,7 @@ index 59068e1c1b..fda70245da 100644
      target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
    endif ()
 -  gdal_target_link_libraries(cpl PRIVATE ZLIB::ZLIB)
-+  gdal_target_link_libraries(cpl PRIVATE zlib)
++  gdal_target_link_libraries(cpl PRIVATE zlib::zlib)
  endif ()
  
  if (GDAL_USE_ARCHIVE)
