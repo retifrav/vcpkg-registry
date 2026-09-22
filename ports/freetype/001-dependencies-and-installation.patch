@@ -166,7 +166,7 @@ index cd04b9745..73fa5a6b0 100644
 -  target_include_directories(freetype PRIVATE ${ZLIB_INCLUDE_DIRS})
 -  list(APPEND PKGCONFIG_REQUIRES_PRIVATE "zlib")
 +if (NOT FT_DISABLE_ZLIB)
-+  target_link_libraries(freetype PRIVATE zlib)
++  target_link_libraries(freetype PRIVATE zlib::zlib)
  endif ()
 -if (BZIP2_FOUND)
 -  target_link_libraries(freetype PRIVATE ${BZIP2_LIBRARIES})
