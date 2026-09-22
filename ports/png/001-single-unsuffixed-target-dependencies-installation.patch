@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b0e1cfe6c..b47c01c1f 100644
+index b0e1cfe6c..a2fb25cd6 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -25,7 +25,7 @@ set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_REVISION})
@@ -25,7 +25,7 @@ index b0e1cfe6c..b47c01c1f 100644
 -if(NOT APPLE AND PNG_FRAMEWORK)
 -  message(SEND_ERROR "The option PNG_FRAMEWORK should not be set on this platform")
 +option(PNG_STATIC "Build ${PROJECT_NAME} as a static library" 1)
-+option(${PROJECT_NAME} "Build ${PROJECT_NAME} as a shared library" 0)
++option(PNG_SHARED "Build ${PROJECT_NAME} as a shared library" 0)
 +option(PNG_FRAMEWORK "Build libpng as a framework bundle" 0)
 +
 +if(PNG_STATIC AND PNG_SHARED)
@@ -149,7 +149,7 @@ index b0e1cfe6c..b47c01c1f 100644
 -                        PUBLIC ${PNG_LINK_LIBRARIES})
 +                             INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 +  target_link_libraries(${PROJECT_NAME}
-+                        PUBLIC zlib ${M_LIBRARY})
++                        PUBLIC zlib::zlib ${M_LIBRARY})
  endif()
  
  if(PNG_STATIC)
@@ -182,7 +182,7 @@ index b0e1cfe6c..b47c01c1f 100644
 -  set(PNG_FRAMEWORK OFF)
 +                             INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 +  target_link_libraries(${PROJECT_NAME}
-+                        PUBLIC zlib ${M_LIBRARY})
++                        PUBLIC zlib::zlib ${M_LIBRARY})
  endif()
  
  if(PNG_FRAMEWORK)
@@ -221,7 +221,7 @@ index b0e1cfe6c..b47c01c1f 100644
 -                        PUBLIC ${PNG_LINK_LIBRARIES})
 +                             INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 +  target_link_libraries(${PROJECT_NAME}
-+                        PUBLIC zlib ${M_LIBRARY})
++                        PUBLIC zlib::zlib ${M_LIBRARY})
  endif()
  
  if(NOT PNG_LIBRARY_TARGETS)
@@ -398,6 +398,175 @@ index b0e1cfe6c..b47c01c1f 100644
  
  # TODO: Create MSVC import lib for MinGW-compiled shared lib.
  # pexports libpng.dll > libpng.def
+diff --git a/contrib/gregbook/readpng.c b/contrib/gregbook/readpng.c
+index fad9b536a..c57b02e2c 100644
+--- a/contrib/gregbook/readpng.c
++++ b/contrib/gregbook/readpng.c
+@@ -55,7 +55,7 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "png.h"        /* libpng header */
+ #include "readpng.h"    /* typedefs, common macros, public prototypes */
+diff --git a/contrib/gregbook/readpng2.c b/contrib/gregbook/readpng2.c
+index 610b3cd87..f697f1f91 100644
+--- a/contrib/gregbook/readpng2.c
++++ b/contrib/gregbook/readpng2.c
+@@ -63,7 +63,7 @@
+ #include <stdlib.h>     /* for exit() prototype */
+ #include <setjmp.h>
+ 
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #include "png.h"        /* libpng header from the local directory */
+ #include "readpng2.h"   /* typedefs, common macros, public prototypes */
+ 
+diff --git a/contrib/gregbook/writepng.c b/contrib/gregbook/writepng.c
+index 055c74374..cdfd448c4 100644
+--- a/contrib/gregbook/writepng.c
++++ b/contrib/gregbook/writepng.c
+@@ -55,7 +55,7 @@
+ 
+ 
+ #include <stdlib.h>     /* for exit() prototype */
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "png.h"        /* libpng header, includes setjmp.h */
+ #include "writepng.h"   /* typedefs, common macros, public prototypes */
+diff --git a/contrib/libtests/fakepng.c b/contrib/libtests/fakepng.c
+index 6512c1401..7b6ac0642 100644
+--- a/contrib/libtests/fakepng.c
++++ b/contrib/libtests/fakepng.c
+@@ -8,7 +8,7 @@
+  */
+ 
+ #include <stdio.h>
+-#include <zlib.h> /* for crc32 */
++#include <zlib/zlib.h> /* for crc32 */
+ 
+ void
+ put_uLong(uLong val)
+diff --git a/contrib/libtests/makepng.c b/contrib/libtests/makepng.c
+index a866fc1d1..9a1ccc104 100644
+--- a/contrib/libtests/makepng.c
++++ b/contrib/libtests/makepng.c
+@@ -144,7 +144,7 @@
+ #  include "../../png.h"
+ #endif
+ 
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ /* Work round for GCC complaints about casting a (double) function result to
+  * an unsigned:
+diff --git a/contrib/libtests/pngvalid.c b/contrib/libtests/pngvalid.c
+index 64de1714a..9b5585170 100644
+--- a/contrib/libtests/pngvalid.c
++++ b/contrib/libtests/pngvalid.c
+@@ -56,7 +56,7 @@
+ #ifdef PNG_ZLIB_HEADER
+ #  include PNG_ZLIB_HEADER
+ #else
+-#  include <zlib.h>   /* For crc32 */
++#  include <zlib/zlib.h>   /* For crc32 */
+ #endif
+ 
+ /* 1.6.1 added support for the configure test harness, which uses 77 to indicate
+diff --git a/contrib/tools/checksum-icc.c b/contrib/tools/checksum-icc.c
+index 83e1f9a43..e9602ed36 100644
+--- a/contrib/tools/checksum-icc.c
++++ b/contrib/tools/checksum-icc.c
+@@ -11,7 +11,7 @@
+  */
+ 
+ #include <stdio.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ static int
+ read_one_file(FILE *ip, const char *name)
+diff --git a/contrib/tools/png-fix-itxt.c b/contrib/tools/png-fix-itxt.c
+index b8286b9e5..287b0ac5b 100644
+--- a/contrib/tools/png-fix-itxt.c
++++ b/contrib/tools/png-fix-itxt.c
+@@ -28,7 +28,7 @@
+  */
+ 
+ #include <stdio.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #define MAX_LENGTH 500000
+ 
+diff --git a/contrib/tools/pngcp.c b/contrib/tools/pngcp.c
+index cf621fa5b..de655d6e8 100644
+--- a/contrib/tools/pngcp.c
++++ b/contrib/tools/pngcp.c
+@@ -76,7 +76,7 @@
+ #include <unistd.h>
+ #include <sys/stat.h>
+ 
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #ifndef PNG_SETJMP_SUPPORTED
+ #  include <setjmp.h> /* because png.h did *not* include this */
+diff --git a/contrib/tools/pngfix.c b/contrib/tools/pngfix.c
+index 3f0e334f8..676938ace 100644
+--- a/contrib/tools/pngfix.c
++++ b/contrib/tools/pngfix.c
+@@ -50,7 +50,7 @@
+    /* We must ensure that zlib uses 'const' in declarations. */
+ #  define ZLIB_CONST
+ #endif
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ #ifdef const
+    /* zlib.h sometimes #defines const to nothing, undo this. */
+ #  undef const
+diff --git a/contrib/visupng/PngFile.c b/contrib/visupng/PngFile.c
+index cf943f32a..5ff07af62 100644
+--- a/contrib/visupng/PngFile.c
++++ b/contrib/visupng/PngFile.c
+@@ -13,7 +13,7 @@
+ #include <commdlg.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ #include "png.h"
+ #include "pngfile.h"
+diff --git a/contrib/visupng/VisualPng.c b/contrib/visupng/VisualPng.c
+index 6f7b1dfe5..214633788 100644
+--- a/contrib/visupng/VisualPng.c
++++ b/contrib/visupng/VisualPng.c
+@@ -27,7 +27,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <windows.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ /* application includes */
+ 
+diff --git a/example.c b/example.c
+index 6af8f6f90..4fa606497 100644
+--- a/example.c
++++ b/example.c
+@@ -41,7 +41,7 @@
+ #include <string.h>
+ #include <stdio.h>
+ #include <png.h>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ int main(int argc, const char **argv)
+ {
 diff --git a/pngstruct.h b/pngstruct.h
 index fe5fa0415..97a267437 100644
 --- a/pngstruct.h
