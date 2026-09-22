@@ -531,7 +531,7 @@ index b7b08de3b..504f21796 100644
  ELSE()
 -  TARGET_LINK_LIBRARIES(assimp ${ZLIB_LIBRARIES} ${OPENDDL_PARSER_LIBRARIES})
 +  TARGET_LINK_LIBRARIES(assimp
-+    zlib
++    zlib::zlib
 +    ${OPENDDL_PARSER_LIBRARIES}
 +    RapidJSON
 +    stb
@@ -597,3 +597,29 @@ index 5cfc9c627..b8df57b22 100644
  #endif
  
  #ifndef  _ZLIBIOAPI_H
+diff --git a/include/assimp/ZipArchiveIOSystem.h b/include/assimp/ZipArchiveIOSystem.h
+index 078cdef9e..c0119f8a0 100644
+--- a/include/assimp/ZipArchiveIOSystem.h
++++ b/include/assimp/ZipArchiveIOSystem.h
+@@ -53,7 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ #include <assimp/IOStream.hpp>
+ #include <assimp/IOSystem.hpp>
+-#include <zlib.h>
++#include <zlib/zlib.h>
+ 
+ namespace Assimp {
+ 
+diff --git a/tools/assimp_cmd/CMakeLists.txt b/tools/assimp_cmd/CMakeLists.txt
+index 6d57b65be..0cfb73ae2 100644
+--- a/tools/assimp_cmd/CMakeLists.txt
++++ b/tools/assimp_cmd/CMakeLists.txt
+@@ -72,7 +72,7 @@ TARGET_USE_COMMON_OUTPUT_DIRECTORY(assimp_cmd)
+ 
+ SET_PROPERTY(TARGET assimp_cmd PROPERTY DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+ 
+-TARGET_LINK_LIBRARIES( assimp_cmd assimp ${ZLIB_LIBRARIES} )
++TARGET_LINK_LIBRARIES( assimp_cmd assimp zlib::zlib )
+ SET_TARGET_PROPERTIES( assimp_cmd PROPERTIES
+   OUTPUT_NAME assimp
+ )
