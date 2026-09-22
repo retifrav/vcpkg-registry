@@ -29,7 +29,7 @@ index ca49824..04ec922 100644
  add_library(spz::spz ALIAS spz)
  
 -target_link_libraries(spz PRIVATE ZLIB::ZLIB)
-+target_link_libraries(spz PRIVATE zlib)
++target_link_libraries(spz PRIVATE zlib::zlib)
  
  target_include_directories(spz
    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/cc>
