@@ -869,7 +869,7 @@
         "cpp-http":
         {
             "baseline": "0.15.3",
-            "port-version": 1
+            "port-version": 2
         },
         "curl":
         {

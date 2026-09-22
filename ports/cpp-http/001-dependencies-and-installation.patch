@@ -68,7 +68,7 @@ index 73de511..fa61a8c 100644
 +		$<$<BOOL:${HTTPLIB_IS_USING_BROTLI}>:brotlicommon>
 +		$<$<BOOL:${HTTPLIB_IS_USING_BROTLI}>:brotlienc>
 +		$<$<BOOL:${HTTPLIB_IS_USING_BROTLI}>:brotlidec>
-+		$<$<BOOL:${HTTPLIB_IS_USING_ZLIB}>:zlib>
++		$<$<BOOL:${HTTPLIB_IS_USING_ZLIB}>:zlib::zlib>
  		$<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::SSL>
  		$<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::Crypto>
  )
