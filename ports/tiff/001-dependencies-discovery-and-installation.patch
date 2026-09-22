@@ -229,18 +229,20 @@ index 74b2a02..bdf6d73 100644
  if(WEBP_SUPPORT AND EMSCRIPTEN)
    # Emscripten is pretty finnicky about linker flags.
 diff --git a/libtiff/CMakeLists.txt b/libtiff/CMakeLists.txt
-index a8aa0c3..9364e2a 100644
+index a8aa0c3..03e8809 100644
 --- a/libtiff/CMakeLists.txt
 +++ b/libtiff/CMakeLists.txt
-@@ -136,7 +136,7 @@ set(tiff_libs_private_list "") # cmake list
+@@ -136,8 +136,8 @@ set(tiff_libs_private_list "") # cmake list
  set(tiff_requires_private "") # cmake string
  
  if(ZIP_SUPPORT)
 -  target_link_libraries(tiff PRIVATE ZLIB::ZLIB)
-+  target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
-   string(APPEND tiff_requires_private " zlib")
+-  string(APPEND tiff_requires_private " zlib")
++  target_link_libraries(${PROJECT_NAME} PRIVATE zlib::zlib)
++  string(APPEND tiff_requires_private " zlib::zlib")
  endif()
  if(ZIP_SUPPORT AND LIBDEFLATE_SUPPORT)
+   target_link_libraries(tiff PRIVATE Deflate::Deflate)
 @@ -173,20 +173,23 @@ if(LERC_SUPPORT)
    endif()
  endif()
