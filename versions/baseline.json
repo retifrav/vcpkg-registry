@@ -954,7 +954,7 @@
         "geotiff":
         {
             "baseline": "1.7.4",
-            "port-version": 0
+            "port-version": 1
         },
         "ghc-filesystem":
         {

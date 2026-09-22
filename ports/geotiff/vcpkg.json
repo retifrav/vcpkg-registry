@@ -1,6 +1,7 @@
 {
     "name": "geotiff",
     "version": "1.7.4",
+    "port-version": 1,
     "description": "TIFF-based interchange format for georeferenced raster imagery",
     "homepage": "https://github.com/OSGeo/libgeotiff",
     "license": "MIT",
@@ -32,7 +33,10 @@
             "description": "Enable zlib capabilities",
             "dependencies":
             [
-                "zlib"
+                {
+                    "name": "zlib",
+                    "version>=": "1.3.2"
+                }
             ]
         },
         "tools":

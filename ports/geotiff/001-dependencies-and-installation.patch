@@ -311,7 +311,7 @@ index 87957b1..18821c5 100644
 +endif()
 +
 +if(WITH_ZLIB)
-+    target_link_libraries(geotifcp PRIVATE zlib)
++    target_link_libraries(geotifcp PRIVATE zlib::zlib)
 +endif()
  
  SET(GEOTIFF_UTILITIES ${GEOTIFF_UTILITIES} geotifcp )
