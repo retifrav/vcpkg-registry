@@ -1,6 +1,7 @@
 {
     "name": "wolfssl",
     "version": "5.8.4",
+    "port-version": 1,
     "description": "Small, fast, portable implementation of TLS/SSL for embedded devices to the cloud",
     "homepage": "https://wolfssl.com",
     "license": "GPL-3.0-or-later",

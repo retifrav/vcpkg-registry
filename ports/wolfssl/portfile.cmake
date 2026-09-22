@@ -4,6 +4,7 @@ vcpkg_from_git(
     REF 59f4fa568615396fbf381b073b220d1e8d61e4c2
     PATCHES
         001-installation.patch
+        002-xstrlcpy.patch
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
