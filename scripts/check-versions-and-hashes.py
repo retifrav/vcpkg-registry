@@ -1,10 +1,11 @@
 import logging
-from datetime import datetime
 import pathlib
 import argparse
 import sys
 import subprocess
 import json
+import re
+import datetime
 import pandas
 from pandera import pandas as pandera
 from tabulate import tabulate
@@ -15,13 +16,21 @@ import typing
 loggingLevel: int = logging.INFO
 loggingFormat: str = "[%(levelname)s] %(message)s"
 
+versionRegEx = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)")
+versionDateRegEx = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+# vcpkg version schemes that are not used in this registry
+unsupportedVersionKeys: typing.List[str] = [
+    "version-semver",
+    "version-string"
+]
+
 argParser = argparse.ArgumentParser(
     prog="check-versions-and-hashes",
     description="".join((
         "-= %(prog)s =-\n",
         "Verifies currently stated port versions ",
         "and their rev-parse hashes.\n\n",
-        f"Copyright (C) 2025-{datetime.now().year} ",
+        f"Copyright (C) 2025-{datetime.datetime.now().year} ",
         "Declaration of VAR\n",
         "License: GPLv3"
     )),
@@ -111,6 +120,42 @@ def getRevParseHash(
             return revParsedHash
 
 
+def getVersionFormatProblem(
+    versionKey: str,
+    versionValue: typing.Any
+) -> typing.Optional[str]:
+    """
+    Returns a description of what is wrong with the version value format,
+    or `None` if there is nothing wrong with it.
+    """
+    if not isinstance(versionValue, str):
+        return f"[{versionValue}] is not a string"
+    if versionKey == "version":
+        if not versionRegEx.fullmatch(versionValue):
+            return " ".join((
+                f"[{versionValue}] is not in X.Y.Z format",
+                "(must be 3 numeric components without leading zeros)"
+            ))
+    elif versionKey == "version-date":
+        if not versionDateRegEx.fullmatch(versionValue):
+            return f"[{versionValue}] is not in YYYY-MM-DD format"
+        try:
+            datetime.date.fromisoformat(versionValue)
+        except ValueError:
+            return f"[{versionValue}] is not a real date"
+    else:
+        return f"[{versionKey}] version scheme is not allowed in this registry"
+    return None
+
+
+def formatVersion(version: typing.Any, portVersion: typing.Any) -> str:
+    return (
+        f"{version}#{portVersion}"
+        if portVersion != 0
+        else f"{version}"
+    )
+
+
 # --- do some checks first
 
 if not registryPath.is_dir():
@@ -127,7 +172,8 @@ if not portsPath.is_dir():
     )
     raise SystemExit(3)
 
-if not (registryPath / "versions" / "baseline.json").is_file():
+baselinePath: pathlib.Path = registryPath / "versions" / "baseline.json"
+if not baselinePath.is_file():
     logging.error(
         " ".join((
             "There is no [versions/baseline.json] file inside the registry,",
@@ -135,6 +181,14 @@ if not (registryPath / "versions" / "baseline.json").is_file():
         ))
     )
     raise SystemExit(4)
+
+baseline: typing.Dict[str, typing.Any] = {}
+with open(baselinePath, "r") as f:
+    try:
+        baseline = json.load(f).get("default", {})
+    except (ValueError, AttributeError) as ex:
+        logging.error(f"Could not read/parse [versions/baseline.json]: {ex}")
+        raise SystemExit(5)
 
 # ---
 
@@ -164,9 +218,15 @@ portsSchema = pandera.DataFrameSchema(
 
 ports: pandas.DataFrame = pandas.DataFrame()
 problematicPorts: typing.Set[str] = set()
+# ports with an invalid version value format in their manifest
+invalidVersionPorts: typing.Set[str] = set()
+# ports whose baseline differs from the manifest, which is not necessarily a problem,
+# because a new version might be intentionally held back from the baseline
+baselineDifferences: typing.Dict[str, str] = {}
 
 for p in sorted([p.name for p in portsPath.iterdir() if p.is_dir()]):
     version: typing.Optional[str] = None
+    versionKey: typing.Optional[str] = None
     statedHash: typing.Optional[str] = None
     actualHash: typing.Optional[str] = None
     portVersion: int = 0
@@ -181,15 +241,85 @@ for p in sorted([p.name for p in portsPath.iterdir() if p.is_dir()]):
             manifestContent = json.load(f)
 
         if "version" in manifestContent.keys():
-            version = manifestContent.get("version")
+            versionKey = "version"
         elif "version-date" in manifestContent.keys():
-            version = manifestContent.get("version-date")
+            versionKey = "version-date"
         else:
             problematicPorts.add(p)
-            logging.error(f"Port [{p}] manifest has no version value")
+            unsupportedKeys: typing.List[str] = [
+                k for k in unsupportedVersionKeys if k in manifestContent
+            ]
+            if unsupportedKeys:
+                logging.error(
+                    " ".join((
+                        f"Port [{p}] manifest uses the [{unsupportedKeys[0]}]",
+                        "version scheme, which is not allowed in this registry",
+                        "(only [version] and [version-date] are)"
+                    ))
+                )
+            else:
+                logging.error(f"Port [{p}] manifest has no version value")
+
+        if versionKey is not None:
+            version = manifestContent.get(versionKey)
+            versionProblem: typing.Optional[str] = getVersionFormatProblem(
+                versionKey,
+                version
+            )
+            if versionProblem is not None:
+                problematicPorts.add(p)
+                invalidVersionPorts.add(p)
+                logging.error(
+                    " ".join((
+                        f"Port [{p}] manifest has an invalid [{versionKey}]",
+                        f"value: {versionProblem}"
+                    ))
+                )
 
         if "port-version" in manifestContent.keys():
             portVersion = manifestContent.get("port-version")
+
+        baselineEntry: typing.Optional[typing.Dict[str, typing.Any]] = (
+            baseline.get(p)
+        )
+        if baselineEntry is None:
+            problematicPorts.add(p)
+            logging.error(
+                f"Port [{p}] is missing in [versions/baseline.json]"
+            )
+        elif versionKey is not None:
+            baselineVersion: typing.Any = baselineEntry.get("baseline")
+            baselinePortVersion: typing.Any = baselineEntry.get("port-version")
+            baselineProblem: typing.Optional[str] = (
+                getVersionFormatProblem(versionKey, baselineVersion)
+                if baselineVersion is not None
+                else "there is no [baseline] value"
+            )
+            if baselineProblem is None and not isinstance(
+                baselinePortVersion,
+                int
+            ):
+                baselineProblem = "there is no integer [port-version] value"
+            if baselineProblem is not None:
+                problematicPorts.add(p)
+                logging.error(
+                    " ".join((
+                        f"Port [{p}] has an invalid entry",
+                        f"in [versions/baseline.json]: {baselineProblem}"
+                    ))
+                )
+            # a port with an invalid manifest version is already reported
+            elif p not in invalidVersionPorts and (
+                baselineVersion != version
+                or
+                baselinePortVersion != portVersion
+            ):
+                baselineDifferences[p] = " ".join((
+                    "baseline",
+                    formatVersion(baselineVersion, baselinePortVersion),
+                    "/ manifest",
+                    formatVersion(version, portVersion)
+                ))
 
     if version is not None:
         versionsFile: pathlib.Path = (
@@ -271,7 +401,11 @@ for p in sorted([p.name for p in portsPath.iterdir() if p.is_dir()]):
     port: pandas.DataFrame = pandas.DataFrame(
         {
             "version": (
-                f"{Style.DIM}{version}{Style.RESET_ALL}"
+                (
+                    valueErrorTemplateString.format(errorval=version)
+                    if p in invalidVersionPorts
+                    else f"{Style.DIM}{version}{Style.RESET_ALL}"
+                )
                 if version is not None
                 else valueErrorTemplateString.format(
                     errorval="could not get version"
@@ -313,8 +447,28 @@ print(
     )
 )
 
+baselineDifferencesCnt: int = len(baselineDifferences)
+if baselineDifferencesCnt > 0:
+    print()
+    print(
+        "\n".join(
+            [
+                " ".join((
+                    "Ports whose baseline differs from the manifest, although",
+                    f"that might be intentional (total {baselineDifferencesCnt}):"
+                ))
+            ]
+            +
+            [
+                f"- {Fore.YELLOW}{p}{Style.RESET_ALL}: {d}"
+                for p, d in sorted(baselineDifferences.items())
+            ]
+        )
+    )
+
 problematicPortsCnt: int = len(problematicPorts)
 if problematicPortsCnt > 0:
+    print()
     print(
         "".join((
             f"Problematic ports (total {problematicPortsCnt}): ",
