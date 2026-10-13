@@ -279,10 +279,12 @@ if not baselinePath.is_file():
 portVersionsPath: pathlib.Path = (
     registryPath / "versions" / f"{portName[0]}-" / f"{portName}.json"
 )
+# a missing versions file is only created in the end, after all the checks
+# have passed, so a failed run does not leave an empty versions file behind
+creatingMissingVersionsFile: bool = False
 if not portVersionsPath.is_file():
     if creatingVersionsFile:
-        with open(portVersionsPath, "w", newline="") as f:
-            f.write("{\"versions\":[]}\n")
+        creatingMissingVersionsFile = True
     else:
         logging.error(
             " ".join((
@@ -345,155 +347,183 @@ if not ignoreVersionFromManifest:
 else:
     logging.info("Not checking the version value in the port manifest")
 
-# ---
+# perform all the checks first and only then write the changes, so that
+# a failed run would not leave corrupted/broken/wrong files behind
 
+baselineVersions: Optional[Dict[str, Any]] = None
 if updatingBaseline:
-    with open(baselinePath, "r+", newline="") as f:
+    with open(baselinePath, "r", newline="") as f:
         baselineVersions = json.load(f)
-        currentVersion = baselineVersions.get("default", {}).get(portName)
-        if currentVersion is None:
+    currentVersion = baselineVersions.get("default", {}).get(portName)
+    if currentVersion is None:
+        logging.error(
+            " ".join((
+                f"Could not get the [{portName}] version",
+                f"from {baselinePath.resolve()}"
+            ))
+        )
+        raise SystemExit(9)
+    else:
+        # logging.debug(
+        #     f"Current baseline version values: {currentVersion}"
+        # )
+        baselineKey: str = "baseline"
+        currentVersionBaseline: str = currentVersion.get(baselineKey)
+        portVersionKey: str = "port-version"
+        currentVersionPort: int = currentVersion.get(portVersionKey)
+        if currentVersionBaseline is None or currentVersionPort is None:
             logging.error(
                 " ".join((
-                    f"Could not get the [{portName}] version",
-                    f"from {baselinePath.resolve()}"
+                    f"The {baselinePath.resolve()} is missing",
+                    f"[{baselineKey}] or/and [{portVersionKey}] value",
+                    f"for the [{portName}] port"
                 ))
             )
-            raise SystemExit(9)
+            raise SystemExit(10)
         else:
-            # logging.debug(
-            #     f"Current baseline version values: {currentVersion}"
-            # )
-            baselineKey: str = "baseline"
-            currentVersionBaseline: str = currentVersion.get(baselineKey)
-            portVersionKey: str = "port-version"
-            currentVersionPort: int = currentVersion.get(portVersionKey)
-            if currentVersionBaseline is None or currentVersionPort is None:
-                logging.error(
-                    " ".join((
-                        f"The {baselinePath.resolve()} is missing",
-                        f"[{baselineKey}] or/and [{portVersionKey}] value",
-                        f"for the [{portName}] port"
-                    ))
-                )
-                raise SystemExit(10)
-            else:
-                parsedCurrentVersion: str = (
-                    f"{currentVersionBaseline}#{currentVersionPort}"
-                )
-                logging.debug(
-                    f"Parsed current baseline version: {parsedCurrentVersion}"
-                )
-                if parsedCurrentVersion == portVersion:
-                    logging.error(
-                        " ".join((
-                            f"The version of [{portName}] port in",
-                            f"{baselinePath.resolve()} is",
-                            f"already {portVersion}"
-                        ))
-                    )
-                    raise SystemExit(11)
-
-            # redundant check, because these are already checked with RegEx
-            if newVersionMain is None or newVersionPort is None:
-                logging.error(
-                    " ".join((
-                        f"Could not get version values from [{portVersion}],",
-                        f"is it in the correct format ({versionFormat})?"
-                    ))
-                )
-                raise SystemExit(12)
-            else:
-                currentVersion[baselineKey] = newVersionMain
-                currentVersion[portVersionKey] = newVersionPort
-                baselineVersions["default"][portName] = currentVersion
-
-            f.seek(0)
-            f.write(
-                formatJson(
-                    baselineVersions,
-                    sortKeys=sortingJson
-                )
+            parsedCurrentVersion: str = (
+                f"{currentVersionBaseline}#{currentVersionPort}"
             )
-            f.write("\n")
-            f.truncate()
+            logging.debug(
+                f"Parsed current baseline version: {parsedCurrentVersion}"
+            )
+            if parsedCurrentVersion == portVersion:
+                logging.error(
+                    " ".join((
+                        f"The version of [{portName}] port in",
+                        f"{baselinePath.resolve()} is",
+                        f"already {portVersion}"
+                    ))
+                )
+                raise SystemExit(11)
+
+        # redundant check, because these are already checked with RegEx
+        if newVersionMain is None or newVersionPort is None:
+            logging.error(
+                " ".join((
+                    f"Could not get version values from [{portVersion}],",
+                    f"is it in the correct format ({versionFormat})?"
+                ))
+            )
+            raise SystemExit(12)
+        else:
+            currentVersion[baselineKey] = newVersionMain
+            currentVersion[portVersionKey] = newVersionPort
+            baselineVersions["default"][portName] = currentVersion
 else:
     logging.info("Not updating the baseline")
 
-with open(portVersionsPath, "r+", newline="") as f:
-    revParsedGitHash: str = gitTreePlaceholder
-    if withRevParse:
-        revParsedGitHash = revParseSubfolder(
-            portPath.relative_to(registryPath).as_posix()
-        )
-    else:
-        logging.info(
+revParsedGitHash: str = gitTreePlaceholder
+if withRevParse:
+    revParsedGitHash = revParseSubfolder(
+        portPath.relative_to(registryPath).as_posix()
+    )
+else:
+    logging.info(
+        " ".join((
+            "Not trying to get the actual tree/subfolder hash,",
+            "will use a placeholder instead"
+        ))
+    )
+
+versions: Optional[Dict[str, Any]] = None
+if creatingMissingVersionsFile:
+    versions = {"versions": []}
+else:
+    with open(portVersionsPath, "r", newline="") as f:
+        try:
+            versions = json.load(f)
+        except Exception as ex:
+            logging.error(f"Could not read/parse the versions file: {ex}")
+            raise SystemExit(13)
+currentVersions = versions.get("versions")
+if currentVersions is None:
+    logging.error(
+        f"Could not get the versions from {portVersionsPath.resolve()}"
+    )
+    raise SystemExit(13)
+
+# this version can already be in the versions file with exactly the same tree/port hash,
+# for example when it was added there without updating the baseline, and so now it is
+# just being promoted in the baseline
+promotingVersion: bool = False
+for v in currentVersions:
+    # verify that this version has not been already added before
+    versionKey: str = "version"
+    vrsn = v.get(versionKey)
+    if vrsn is None:
+        logging.error(
             " ".join((
-                "Not trying to get the actual tree/subfolder hash,",
-                "will use a placeholder instead"
+                "One of the version values in",
+                f"{portVersionsPath.resolve()} does not have",
+                f"the [{versionKey}] key"
             ))
         )
-
-    versions = None
-    try:
-        versions = json.load(f)
-    except Exception as ex:
-        logging.error(f"Could not read/parse the versions file: {ex}")
-        raise SystemExit(13)
-    currentVersions = versions.get("versions")
-    if currentVersions is None:
-        logging.error(
-            f"Could not get the versions from {portVersionsPath.resolve()}"
-        )
-        raise SystemExit(13)
-
-    for v in currentVersions:
-        # verify that this version has not been already added before
-        versionKey: str = "version"
-        vrsn = v.get(versionKey)
-        if vrsn is None:
-            logging.error(
-                " ".join((
-                    "One of the version values in",
-                    f"{portVersionsPath.resolve()} does not have",
-                    f"the [{versionKey}] key"
-                ))
-            )
-            raise SystemExit(14)
+        raise SystemExit(14)
+    gitTree: str = "git-tree"
+    if (
+        vrsn == newVersionMain
+        and
+        # missing is okay, defaulting to 0
+        v.get("port-version", 0) == newVersionPort
+    ):
         if (
-            vrsn == newVersionMain
+            updatingBaseline
             and
-            # missing is okay, defaulting to 0
-            v.get("port-version", 0) == newVersionPort
+            withRevParse
+            and
+            v.get(gitTree) == revParsedGitHash
         ):
-            logging.error(
-                " ".join((
-                    f"Version {portVersion} is already present",
-                    f"in {portVersionsPath.resolve()}"
-                ))
-            )
-            raise SystemExit(15)
-        # also verify that none of the existing versions have the same
-        # tree/port hash (the one from `git rev-parse`/`git write-tree`)
-        gitTree: str = "git-tree"
-        gttr = v.get(gitTree)
-        if gttr is None:
-            logging.error(
-                " ".join((
-                    "One of the version values in",
-                    f"{portVersionsPath.resolve()} does not have",
-                    f"the [{gitTree}] key"
-                ))
-            )
-            raise SystemExit(16)
-        if (gttr == revParsedGitHash):
-            logging.error(
-                " ".join((
-                    f"The tree hash {revParsedGitHash} is already present",
-                    f"in {portVersionsPath.resolve()}"
-                ))
-            )
-            raise SystemExit(17)
+            promotingVersion = True
+            continue
+        logging.error(
+            " ".join((
+                f"Version {portVersion} is already present",
+                f"in {portVersionsPath.resolve()}",
+                (
+                    " ".join((
+                        "with a different (or missing) git-tree, so the port",
+                        "has changed since that version was added, and it",
+                        "needs a new version (or port-version)"
+                    ))
+                    if updatingBaseline and withRevParse
+                    else ""
+                )
+            )).strip()
+        )
+        raise SystemExit(15)
+    # also verify that none of the existing versions have the same tree/port hash
+    # (the one from `git rev-parse`/`git write-tree`)
+    gttr = v.get(gitTree)
+    if gttr is None:
+        logging.error(
+            " ".join((
+                "One of the version values in",
+                f"{portVersionsPath.resolve()} does not have",
+                f"the [{gitTree}] key"
+            ))
+        )
+        raise SystemExit(16)
+    if (gttr == revParsedGitHash):
+        logging.error(
+            " ".join((
+                f"The tree hash {revParsedGitHash} is already present",
+                f"in {portVersionsPath.resolve()}"
+            ))
+        )
+        raise SystemExit(17)
 
+# all the checks have passed, now the changes can be written
+
+if promotingVersion:
+    logging.info(
+        " ".join((
+            f"Version {portVersion} is already present",
+            f"in {portVersionsPath.resolve()} with the same git-tree,",
+            "so only the baseline needs to be updated"
+        ))
+    )
+else:
     if newVersionPort == 0:
         versions["versions"].insert(
             0,
@@ -512,15 +542,40 @@ with open(portVersionsPath, "r+", newline="") as f:
             }
         )
 
-    f.seek(0)
-    f.write(
-        formatJson(
-            versions,
-            sortKeys=False  # should never sort these
-        )
+    versionsContent: str = formatJson(
+        versions,
+        sortKeys=False  # should never sort these
     )
-    f.write("\n")
-    f.truncate()
+    if creatingMissingVersionsFile:
+        # the folder might be missing too, when this is the first port
+        # with a name starting with that character
+        portVersionsPath.parent.mkdir(exist_ok=True)
+        logging.info(
+            f"Creating the versions file {portVersionsPath.resolve()}"
+        )
+    with open(portVersionsPath, "w", newline="") as f:
+        f.write(versionsContent)
+        f.write("\n")
 
-logging.info(f"Updated the [{portName}] port to version {portVersion}")
+# the baseline goes last, because if writing it fails, then the new version
+# would still be valid (just held back from the baseline), otherwise we end up
+# with a baseline pointing to a version that is not in the versions file
+if baselineVersions is not None:
+    baselineContent: str = formatJson(
+        baselineVersions,
+        sortKeys=sortingJson
+    )
+    with open(baselinePath, "w", newline="") as f:
+        f.write(baselineContent)
+        f.write("\n")
+
+if promotingVersion:
+    logging.info(
+        " ".join((
+            f"Promoted the [{portName}] port to version {portVersion}",
+            "in the baseline"
+        ))
+    )
+else:
+    logging.info(f"Updated the [{portName}] port to version {portVersion}")
 raise SystemExit(0)
