@@ -1011,6 +1011,11 @@
             "baseline": "72.1.0",
             "port-version": 0
         },
+        "imgui-node-editor":
+        {
+            "baseline": "0.9.4",
+            "port-version": 0
+        },
         "implot":
         {
             "baseline": "1.0.0",

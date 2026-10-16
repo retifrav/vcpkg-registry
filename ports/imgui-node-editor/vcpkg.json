@@ -1,0 +1,26 @@
+{
+    "name": "imgui-node-editor",
+    "version": "0.9.4",
+    "description": "Node editor based on Dear ImGui",
+    "homepage": "https://github.com/thedmd/imgui-node-editor",
+    "license": "MIT",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "dearimgui",
+            "version>=": "1.93.0"
+        }
+    ]
+}

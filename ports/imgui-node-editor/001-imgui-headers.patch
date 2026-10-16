@@ -1,0 +1,65 @@
+diff --git a/imgui_canvas.h b/imgui_canvas.h
+index fe932c9..cb4852d 100644
+--- a/imgui_canvas.h
++++ b/imgui_canvas.h
+@@ -48,8 +48,8 @@
+ # define __IMGUI_EX_CANVAS_H__
+ # pragma once
+ 
+-# include <imgui.h>
+-# include <imgui_internal.h> // ImRect, ImFloor
++# include <dearimgui/imgui.h>
++# include <dearimgui/imgui_internal.h> // ImRect, ImFloor
+ 
+ #ifndef IMGUIEX_CANVAS_API
+ #define IMGUIEX_CANVAS_API
+@@ -317,4 +317,4 @@ private:
+ 
+ } // namespace ImGuiEx
+ 
+-# endif // __IMGUI_EX_CANVAS_H__
+\ No newline at end of file
++# endif // __IMGUI_EX_CANVAS_H__
+diff --git a/imgui_extra_math.h b/imgui_extra_math.h
+index c8d000e..26224f9 100644
+--- a/imgui_extra_math.h
++++ b/imgui_extra_math.h
+@@ -16,8 +16,8 @@
+ # ifndef IMGUI_DEFINE_MATH_OPERATORS
+ #     define IMGUI_DEFINE_MATH_OPERATORS
+ # endif
+-# include <imgui.h>
+-# include <imgui_internal.h>
++# include <dearimgui/imgui.h>
++# include <dearimgui/imgui_internal.h>
+ 
+ 
+ //------------------------------------------------------------------------------
+diff --git a/imgui_node_editor.h b/imgui_node_editor.h
+index 7a79c4f..7e3e134 100644
+--- a/imgui_node_editor.h
++++ b/imgui_node_editor.h
+@@ -13,7 +13,7 @@
+ 
+ 
+ //------------------------------------------------------------------------------
+-# include <imgui.h>
++# include <dearimgui/imgui.h>
+ # include <cstdint> // std::uintXX_t
+ # include <utility> // std::move
+ 
+diff --git a/imgui_node_editor_internal.h b/imgui_node_editor_internal.h
+index 6f1bf18..a491808 100644
+--- a/imgui_node_editor_internal.h
++++ b/imgui_node_editor_internal.h
+@@ -20,8 +20,8 @@
+ 
+ 
+ //------------------------------------------------------------------------------
+-# include <imgui.h>
+-# include <imgui_internal.h>
++# include <dearimgui/imgui.h>
++# include <dearimgui/imgui_internal.h>
+ # include "imgui_extra_math.h"
+ # include "imgui_bezier_math.h"
+ # include "imgui_canvas.h"
