@@ -888,7 +888,7 @@
         },
         "dearimgui":
         {
-            "baseline": "1.92.8",
+            "baseline": "1.93.0",
             "port-version": 0
         },
         "decovar-vcpkg-cmake":

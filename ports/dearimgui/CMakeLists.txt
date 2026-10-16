@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(DEARIMGUI_VERSION "0.0.0" CACHE STRING "Dear ImGui version")
+set(DEARIMGUI_VERSION "0.0.0" CACHE STRING "Project version")
 
 project("dearimgui"
     VERSION "${DEARIMGUI_VERSION}"
@@ -16,8 +16,20 @@ option(PLATFORM_WIN32    "Support for win32"        0)
 option(WITH_INTERNAL     "Using internal header(s)" 0)
 option(WITH_STB_TEXTEDIT "Using STB textedit"       0)
 
-set(CMAKE_CXX_STANDARD 11)
+set(REQUIRED_CPP_STANDARD 11 CACHE STRING "Required C++ standard")
+if(DEFINED CMAKE_CXX_STANDARD)
+    if(CMAKE_CXX_STANDARD LESS ${REQUIRED_CPP_STANDARD})
+        message(FATAL_ERROR "This project requires at least C++${REQUIRED_CPP_STANDARD}")
+    endif()
+else()
+    set(CMAKE_CXX_STANDARD ${REQUIRED_CPP_STANDARD})
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
+if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
+    set(CMAKE_CXX_EXTENSIONS NO)
+endif()
+
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 add_library(${PROJECT_NAME})
 
@@ -158,6 +170,8 @@ target_include_directories(${PROJECT_NAME}
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+target_compile_features(${PROJECT_NAME} PUBLIC "cxx_std_${REQUIRED_CPP_STANDARD}")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
