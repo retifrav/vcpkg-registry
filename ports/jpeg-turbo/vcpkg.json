@@ -1,6 +1,6 @@
 {
     "name": "jpeg-turbo",
-    "version": "3.1.1",
+    "version": "3.2.0",
     "description": "JPEG image codec that uses SIMD instructions (MMX, SSE2, NEON, AltiVec) to accelerate baseline JPEG compression and decompression",
     "homepage": "https://libjpeg-turbo.org/",
     "license": "BSD-3-Clause",
@@ -13,7 +13,8 @@
         {
             "name": "vcpkg-cmake-config",
             "host": true
-        }
+        },
+        "spng"
     ],
     "features":
     {

@@ -1,10 +1,3 @@
-# even though it can build a shared library and seems to export symbols for DLL,
-# apparently not all the symbols are exported, as projects fail
-# to find some when linking dynamically
-if(VCPKG_TARGET_IS_WINDOWS)
-    vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
-endif()
-
 if(EXISTS "${CURRENT_INSTALLED_DIR}/share/jpeg/copyright") # and perhaps the same for mozjpeg
     message(FATAL_ERROR "[ERROR] ${PORT} port overlaps with jpeg port, you need to chose one of them and remove the other")
 endif()
@@ -12,10 +5,16 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:libjpeg-turbo/libjpeg-turbo.git
-    REF 7723f50f3f66b9da74376e6d8badb6162464212c
+    REF c85e6b905bf237038faa936dab160ebfc5da0344
     PATCHES
         001-disabled-tools-docs-single-architecture-and-installation.patch
         002-boolean-typedef.patch
+)
+
+# do not vendor 3rd-party dependencies
+file(REMOVE_RECURSE
+    "${SOURCE_PATH}/sharedlib/spng"
+    "${SOURCE_PATH}/src/spng"
 )
 
 set(JPEGTURBO_SIMD -DWITH_SIMD=1)
@@ -31,7 +30,7 @@ elseif(
 )
     set(JPEGTURBO_SIMD
         -DWITH_SIMD=1
-        -DNEON_INTRINSICS=1
+        #-DNEON_INTRINSICS=1 # no longer in the project?
     )
 else()
     vcpkg_find_acquire_program(NASM)
@@ -62,9 +61,9 @@ vcpkg_cmake_configure(
         ${JPEGTURBO_SIMD}
         -DENABLE_STATIC=${ENABLE_STATIC}
         -DENABLE_SHARED=${ENABLE_SHARED}
-        -DENABLE_EXECUTABLES=0
-        -DINSTALL_DOCS=0
         -DWITH_CRT_DLL=${WITH_CRT_DLL}
+        -DWITH_TESTS=0
+        -DWITH_TOOLS=0
     MAYBE_UNUSED_VARIABLES
         WITH_CRT_DLL
 )

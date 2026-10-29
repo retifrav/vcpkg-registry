@@ -1,10 +1,10 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 352f67e9..653dfe27 100644
+index a1293dbb..13b8b520 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,4 @@
--cmake_minimum_required(VERSION 2.8.12...3.28)
-+cmake_minimum_required(VERSION 3.22)
+-cmake_minimum_required(VERSION 3.15...3.28)
++cmake_minimum_required(VERSION 3.28)
  
  if(CMAKE_EXECUTABLE_SUFFIX)
    set(CMAKE_EXECUTABLE_SUFFIX_TMP ${CMAKE_EXECUTABLE_SUFFIX})
@@ -14,10 +14,19 @@ index 352f67e9..653dfe27 100644
  
 -project(libjpeg-turbo C)
 +project(jpeg-turbo C)
- set(VERSION 3.1.1)
- set(COPYRIGHT_YEAR "1991-2024")
+ set(VERSION 3.2.0)
+ set(COPYRIGHT_YEAR "1991-2026")
  string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
-@@ -105,14 +105,27 @@ include(cmakescripts/PackageInfo.cmake)
+@@ -42,6 +42,8 @@ if(MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
+   set(MSVC_LIKE 1)
+ endif()
+ 
++set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
+ # The libjpeg-turbo build system has never supported and will never support
+ # being integrated into another build system using add_subdirectory(), because
+ # doing so would require that we (minimally):
+@@ -105,14 +107,28 @@ include(cmakescripts/PackageInfo.cmake)
  
  # Detect CPU type and whether we're building 64-bit or 32-bit code
  math(EXPR BITS "${CMAKE_SIZEOF_VOID_P} * 8")
@@ -25,10 +34,11 @@ index 352f67e9..653dfe27 100644
 -set(COUNT 1)
 -foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
 -  if(COUNT GREATER 1)
--    message(FATAL_ERROR "libjpeg-turbo contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES.")
+-    message(FATAL_ERROR "${CMAKE_PROJECT_NAME} contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES.")
 -  endif()
 -  math(EXPR COUNT "${COUNT}+1")
 -endforeach()
++
 +string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" CMAKE_SYSTEM_PROCESSOR_LC)
 +
 +# jpeg-turbo contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES
@@ -53,18 +63,106 @@ index 352f67e9..653dfe27 100644
  if(CMAKE_SYSTEM_PROCESSOR_LC MATCHES "x86_64" OR
    CMAKE_SYSTEM_PROCESSOR_LC MATCHES "amd64" OR
    CMAKE_SYSTEM_PROCESSOR_LC MATCHES "i[0-9]86" OR
-@@ -233,6 +246,10 @@ option(ENABLE_SHARED "Build shared libraries" TRUE)
+@@ -245,22 +261,41 @@ macro(boolean_number var)
+   endif()
+ endmacro()
+ 
++macro(report_option var desc)
++  if(${var})
++    set(ENABLED enabled)
++  else()
++    set(ENABLED disabled)
++  endif()
++  set(OPTION_REPORT "${desc} ${ENABLED} (${var} = ${${var}})")
++  string(LENGTH ${OPTION_REPORT} OPTION_REPORT_LENGTH)
++  if(OPTION_REPORT_LENGTH GREATER 76)
++    set(OPTION_REPORT "${desc} ${ENABLED}\n   (${var} = ${${var}})")
++  endif()
++  message(STATUS "${OPTION_REPORT}")
++endmacro()
++
+ option(ENABLE_SHARED "Build shared libraries" TRUE)
  boolean_number(ENABLE_SHARED)
++
  option(ENABLE_STATIC "Build static libraries" TRUE)
  boolean_number(ENABLE_STATIC)
-+option(ENABLE_EXECUTABLES "Build executables" 0)
-+boolean_number(ENABLE_EXECUTABLES)
-+option(INSTALL_DOCS "Install documentation files" 0)
-+boolean_number(INSTALL_DOCS)
++
  option(REQUIRE_SIMD
    "Generate a fatal error if SIMD extensions are not available for this platform (default is to fall back to a non-SIMD build)"
    FALSE)
-@@ -290,8 +307,14 @@ if(DEFINED CMAKE_POSITION_INDEPENDENT_CODE AND
+ boolean_number(REQUIRE_SIMD)
++
+ option(WITH_ARITH_DEC
+   "Include arithmetic decoding support when emulating the libjpeg v6b API/ABI"
+   TRUE)
+ boolean_number(WITH_ARITH_DEC)
++
+ option(WITH_ARITH_ENC
+   "Include arithmetic encoding support when emulating the libjpeg v6b API/ABI"
+   TRUE)
+ boolean_number(WITH_ARITH_ENC)
++
+ if(CMAKE_C_COMPILER_ABI MATCHES "ELF X32")
+   unset(WITH_JNA)
+ else()
+@@ -270,48 +305,42 @@ else()
+     message(FATAL_ERROR "${WITH_JNA} does not exist.")
+   endif()
+ endif()
++
+ option(WITH_JPEG7
+   "Emulate libjpeg v7 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)"
+   FALSE)
+ boolean_number(WITH_JPEG7)
++
+ option(WITH_JPEG8
+   "Emulate libjpeg v8 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)"
+   FALSE)
+ boolean_number(WITH_JPEG8)
++
+ option(WITH_SIMD "Include SIMD extensions, if available for this platform"
+   TRUE)
+ boolean_number(WITH_SIMD)
++
+ option(WITH_TURBOJPEG
+   "Include the TurboJPEG API library and associated command-line tools/test programs"
+   TRUE)
+ boolean_number(WITH_TURBOJPEG)
++
+ option(WITH_TOOLS
+   "Build command-line tools (Disabling this disables WITH_TESTS)" TRUE)
+ boolean_number(WITH_TOOLS)
++
+ option(WITH_TESTS "Enable regression tests, and build associated test programs (WARNING: Disable this at your own risk. If a build is not validated with the regression tests, then it is the responsibility of the builder to ensure, via other means, that the build produces mathematically correct results.)"
+   TRUE)
+ boolean_number(WITH_TESTS)
+ if(NOT WITH_TOOLS)
+   set(WITH_TESTS 0)
+ endif()
++
+ option(WITH_FUZZ "Build fuzz targets" FALSE)
++
+ option(WITH_PROFILE "Enable low-level JPEG algorithm performance profiling (useful for SIMD module development but not suitable for production)"
+   FALSE)
+ 
+-macro(report_option var desc)
+-  if(${var})
+-    set(ENABLED enabled)
+-  else()
+-    set(ENABLED disabled)
+-  endif()
+-  set(OPTION_REPORT "${desc} ${ENABLED} (${var} = ${${var}})")
+-  string(LENGTH ${OPTION_REPORT} OPTION_REPORT_LENGTH)
+-  if(OPTION_REPORT_LENGTH GREATER 76)
+-    set(OPTION_REPORT "${desc} ${ENABLED}\n   (${var} = ${${var}})")
+-  endif()
+-  message(STATUS "${OPTION_REPORT}")
+-endmacro()
+-
+ if(WITH_JNA)
+   set(ENABLE_SHARED 1)
+   set(WITH_TURBOJPEG 1)
+@@ -327,8 +356,14 @@ if(DEFINED CMAKE_POSITION_INDEPENDENT_CODE AND
    unset(CMAKE_POSITION_INDEPENDENT_CODE CACHE)
  endif()
  
@@ -81,14 +179,57 @@ index 352f67e9..653dfe27 100644
  
  if(ENABLE_SHARED)
    set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
-@@ -691,12 +714,12 @@ if(ENABLE_STATIC)
-   add_library(jpeg16-static OBJECT ${JPEG16_SOURCES})
-   set_property(TARGET jpeg16-static PROPERTY COMPILE_FLAGS
-     "-DBITS_IN_JSAMPLE=16")
+@@ -439,6 +474,7 @@ set(TURBOJPEG_SO_MAJOR_VERSION 0)
+ set(TURBOJPEG_SO_AGE 5)
+ set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
+ 
++find_package(spng CONFIG REQUIRED)
+ 
+ ###############################################################################
+ # COMPILER SETTINGS
+@@ -728,47 +764,16 @@ if(WITH_JNA)
+   add_subdirectory(jna)
+ endif()
+ 
+-if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+-  option(WITH_SYSTEM_SPNG
+-    "Build ${CMAKE_PROJECT_NAME} against the system-supplied libspng implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree"
+-    OFF)
+-  boolean_number(WITH_SYSTEM_SPNG)
+-  report_option(WITH_SYSTEM_SPNG "System-supplied libspng")
+-  if(WITH_SYSTEM_SPNG)
+-    include(FindPkgConfig)
+-    pkg_check_modules(spng REQUIRED spng IMPORTED_TARGET)
+-    unset(SPNG_STATIC_SOURCES)
+-    set(SPNG_LIBRARY PkgConfig::spng)
+-  else()
+-    option(WITH_SYSTEM_ZLIB
+-      "Build ${CMAKE_PROJECT_NAME} against the system-supplied zlib implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree"
+-      OFF)
+-    boolean_number(WITH_SYSTEM_ZLIB)
+-    report_option(WITH_SYSTEM_ZLIB "System-supplied zlib")
+-    add_subdirectory(src/spng)
+-    set(SPNG_STATIC_SOURCES $<TARGET_OBJECTS:spng-static>)
+-    unset(SPNG_LIBRARY)
+-  endif()
+-  if(WITH_SYSTEM_ZLIB OR WITH_SYSTEM_SPNG)
+-    find_package(ZLIB REQUIRED)
+-    unset(ZLIB_STATIC_SOURCES)
+-    set(ZLIB_LIBRARY ZLIB::ZLIB)
+-  else()
+-    set(ZLIB_STATIC_SOURCES $<TARGET_OBJECTS:zlib-static>)
+-    unset(ZLIB_LIBRARY)
+-  endif()
+-endif()
+-
+ if(ENABLE_SHARED)
+   add_subdirectory(sharedlib)
+ endif()
+ 
+ if(ENABLE_STATIC)
 -  add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
 +  add_library(jpeg STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-     ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12-static>
-     $<TARGET_OBJECTS:jpeg16-static>)
+     ${SIMD_OBJS})
 -  if(NOT MSVC_LIKE)
 -    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
 -  endif()
@@ -98,113 +239,178 @@ index 352f67e9..653dfe27 100644
  endif()
  
  if(WITH_TURBOJPEG)
-@@ -749,6 +772,7 @@ if(WITH_TURBOJPEG)
-         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
+@@ -776,7 +781,6 @@ if(WITH_TURBOJPEG)
+     src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
+     src/rdbmp.c
+     src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
+-    ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
+     src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+     src/wrbmp.c
+     src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
+@@ -790,14 +794,15 @@ if(WITH_TURBOJPEG)
+         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
      endif()
+     add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES})
+-    if(SPNG_LIBRARY)
+-      target_link_libraries(turbojpeg ${SPNG_LIBRARY})
+-    endif()
+-    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+-      target_link_libraries(turbojpeg ${ZLIB_LIBRARY})
+-    endif()
++
++    target_link_libraries(turbojpeg
++        PRIVATE
++            spng::spng
++            #zlib::zlib
++    )
++
+     set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
+-      "-DBMP_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED")
++      "-DBMP_SUPPORTED -DPNG_SUPPORTED -DPPM_SUPPORTED")
+     if(WIN32)
+       set_target_properties(turbojpeg PROPERTIES DEFINE_SYMBOL DLLDEFINE)
+     endif()
+@@ -846,28 +851,27 @@ if(WITH_TURBOJPEG)
+   endif()
  
-+    if(ENABLE_EXECUTABLES)
-     add_executable(tjunittest src/tjunittest.c src/tjutil.c src/md5/md5.c
-       src/md5/md5hl.c)
-     target_link_libraries(tjunittest turbojpeg)
-@@ -767,6 +791,7 @@ if(WITH_TURBOJPEG)
- 
-     add_executable(tjtran src/tjtran.c)
-     target_link_libraries(tjtran turbojpeg)
-+    endif()
- 
-     add_custom_target(tjdoc COMMAND doxygen -s ../doc/doxygen.config
-       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src)
-@@ -779,27 +804,29 @@ if(WITH_TURBOJPEG)
-     add_library(turbojpeg16-static OBJECT src/rdppm.c src/wrppm.c)
-     set_property(TARGET turbojpeg16-static PROPERTY COMPILE_FLAGS
-       "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
--    add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-+    add_library(turbojpeg STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-       ${SIMD_OBJS} src/turbojpeg.c src/transupp.c src/jdatadst-tj.c
-       src/jdatasrc-tj.c src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
-       $<TARGET_OBJECTS:jpeg12-static> $<TARGET_OBJECTS:jpeg16-static>
-       $<TARGET_OBJECTS:turbojpeg12-static>
-       $<TARGET_OBJECTS:turbojpeg16-static>)
+   if(ENABLE_STATIC)
+-    add_library(turbojpeg-static STATIC ${TURBOJPEG_SOURCES})
+-    if(SPNG_LIBRARY)
+-      target_link_libraries(turbojpeg-static ${SPNG_LIBRARY})
+-    endif()
+-    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+-      target_link_libraries(turbojpeg-static ${ZLIB_LIBRARY})
+-    endif()
 -    set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
+-      "-DBMP_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED")
++    add_library(turbojpeg STATIC ${TURBOJPEG_SOURCES})
++    target_link_libraries(turbojpeg
++        PRIVATE
++            spng::spng
++            #zlib::zlib
++    )
 +    set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
-       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
++      "-DBMP_SUPPORTED -DPNG_SUPPORTED -DPPM_SUPPORTED")
      if(NOT MSVC_LIKE)
 -      set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
 +      set_target_properties(turbojpeg PROPERTIES OUTPUT_NAME turbojpeg)
      endif()
  
-+    if(ENABLE_EXECUTABLES)
-     add_executable(tjunittest-static src/tjunittest.c src/tjutil.c
-       src/md5/md5.c src/md5/md5hl.c)
--    target_link_libraries(tjunittest-static turbojpeg-static)
-+    target_link_libraries(tjunittest-static turbojpeg)
- 
-     add_executable(tjbench-static src/tjbench.c src/tjutil.c)
--    target_link_libraries(tjbench-static turbojpeg-static)
-+    target_link_libraries(tjbench-static turbojpeg)
-     if(UNIX)
-       target_link_libraries(tjbench-static m)
+     if(WITH_TESTS)
+       add_executable(tjunittest-static src/tjunittest.c src/tjutil.c
+         src/md5/md5.c src/md5/md5hl.c)
+-      target_link_libraries(tjunittest-static turbojpeg-static)
++      target_link_libraries(tjunittest-static turbojpeg)
      endif()
-+    endif()
+ 
+     if(WITH_TOOLS)
+       add_executable(tjbench-static src/tjbench.c src/tjutil.c)
+-      target_link_libraries(tjbench-static turbojpeg-static)
++      target_link_libraries(tjbench-static turbojpeg)
+       if(UNIX)
+         target_link_libraries(tjbench-static m)
+       endif()
+@@ -880,7 +884,7 @@ if(WITH_TOOLS)
+     set(USE_SETMODE "-DUSE_SETMODE")
+   endif()
+   set(CDJPEG_COMPILE_FLAGS
+-    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
++    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPNG_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
+ endif()
+ 
+ if(ENABLE_STATIC)
+@@ -888,47 +892,43 @@ if(ENABLE_STATIC)
+     add_executable(cjpeg-static src/cjpeg.c src/cdjpeg.c src/rdbmp.c
+       src/rdgif.c
+       src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
+-      ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
+       src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+       src/rdswitch.c src/rdtarga.c)
+     set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS
+       ${CDJPEG_COMPILE_FLAGS})
+-    target_link_libraries(cjpeg-static jpeg-static)
+-    if(SPNG_LIBRARY)
+-      target_link_libraries(cjpeg-static ${SPNG_LIBRARY})
+-    endif()
+-    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+-      target_link_libraries(cjpeg-static ${ZLIB_LIBRARY})
+-    endif()
++    target_link_libraries(cjpeg-static
++        PRIVATE
++            jpeg
++            spng::spng
++            #zlib::zlib
++    )
+ 
+     add_executable(djpeg-static src/djpeg.c src/cdjpeg.c
+       src/wrapper/rdcolmap-8.c src/wrapper/rdcolmap-12.c
+       src/rdswitch.c src/wrbmp.c
+       src/wrapper/wrgif-8.c src/wrapper/wrgif-12.c
+       src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
+-      ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
+       src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c
+       src/wrtarga.c)
+     set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS
+       ${CDJPEG_COMPILE_FLAGS})
+-    target_link_libraries(djpeg-static jpeg-static)
+-    if(SPNG_LIBRARY)
+-      target_link_libraries(djpeg-static ${SPNG_LIBRARY})
+-    endif()
+-    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+-      target_link_libraries(djpeg-static ${ZLIB_LIBRARY})
+-    endif()
++    target_link_libraries(djpeg-static
++        PRIVATE
++            jpeg
++            spng::spng
++            #zlib::zlib
++    )
+ 
+     add_executable(jpegtran-static src/jpegtran.c src/cdjpeg.c src/rdswitch.c
+       src/transupp.c)
+-    target_link_libraries(jpegtran-static jpeg-static)
++    target_link_libraries(jpegtran-static jpeg)
+     set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS
+       "${USE_SETMODE}")
+   endif()
+ 
+   if(WITH_TESTS)
+     add_executable(example-static src/example.c)
+-    target_link_libraries(example-static jpeg-static)
++    target_link_libraries(example-static jpeg)
+ 
+     include(CheckFunctionExists)
+     check_function_exists(fmemopen HAVE_FMEMOPEN)
+@@ -936,7 +936,6 @@ if(ENABLE_STATIC)
+       add_executable(bmpsizetest-static src/bmpsizetest.c
+         src/rdbmp.c src/wrbmp.c
+         src/rdgif.c src/wrapper/wrgif-8.c src/wrapper/wrgif-12.c
+-        ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
+         src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
+         src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
+         src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+@@ -944,13 +943,13 @@ if(ENABLE_STATIC)
+         src/rdtarga.c src/wrtarga.c)
+       set_property(TARGET bmpsizetest-static PROPERTY COMPILE_FLAGS
+         ${CDJPEG_COMPILE_FLAGS})
+-      target_link_libraries(bmpsizetest-static jpeg-static)
+-      if(SPNG_LIBRARY)
+-        target_link_libraries(bmpsizetest-static ${SPNG_LIBRARY})
+-      endif()
+-      if(ZLIB_LIBRARY)
+-        target_link_libraries(bmpsizetest-static ${ZLIB_LIBRARY})
+-      endif()
++      target_link_libraries(bmpsizetest-static
++          PRIVATE
++              jpeg
++              spng::spng
++              #zlib::zlib
++      )
++
+     endif()
    endif()
  endif()
- 
-@@ -809,7 +836,7 @@ endif()
- set(CDJPEG_COMPILE_FLAGS
-   "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
- 
--if(ENABLE_STATIC)
-+if(ENABLE_STATIC AND ENABLE_EXECUTABLES)
-   # Compile a separate version of these source files with 12-bit and 16-bit
-   # data precision.
-   add_library(cjpeg12-static OBJECT src/rdppm.c)
-@@ -823,7 +850,7 @@ if(ENABLE_STATIC)
-     $<TARGET_OBJECTS:cjpeg16-static>)
-   set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS
-     ${CDJPEG_COMPILE_FLAGS})
--  target_link_libraries(cjpeg-static jpeg-static)
-+  target_link_libraries(cjpeg-static jpeg)
- 
-   # Compile a separate version of these source files with 12-bit and 16-bit
-   # data precision.
-@@ -838,21 +865,22 @@ if(ENABLE_STATIC)
-     $<TARGET_OBJECTS:djpeg12-static> $<TARGET_OBJECTS:djpeg16-static>)
-   set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS
-     ${CDJPEG_COMPILE_FLAGS})
--  target_link_libraries(djpeg-static jpeg-static)
-+  target_link_libraries(djpeg-static jpeg)
- 
-   add_executable(jpegtran-static src/jpegtran.c src/cdjpeg.c src/rdswitch.c
-     src/transupp.c)
--  target_link_libraries(jpegtran-static jpeg-static)
-+  target_link_libraries(jpegtran-static jpeg)
-   set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
- 
-   add_executable(example-static src/example.c)
--  target_link_libraries(example-static jpeg-static)
-+  target_link_libraries(example-static jpeg)
- endif()
- 
-+if(ENABLE_EXECUTABLES)
- add_executable(rdjpgcom src/rdjpgcom.c)
- 
- add_executable(wrjpgcom src/wrjpgcom.c)
--
-+endif()
- 
- ###############################################################################
- # TESTS
-@@ -862,7 +890,9 @@ if(WITH_FUZZ)
-   add_subdirectory(fuzz)
- endif()
- 
-+if(ENABLE_EXECUTABLES)
- add_executable(strtest src/strtest.c)
-+endif()
- 
- add_subdirectory(src/md5)
- 
-@@ -1978,17 +2008,32 @@ endif()
+@@ -1947,15 +1946,29 @@ endif() # WITH_TESTS
  # INSTALLATION
  ###############################################################################
  
@@ -231,33 +437,28 @@ index 352f67e9..653dfe27 100644
 -      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
 +      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin
 +      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jpeg
-+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-+    if(ENABLE_EXECUTABLES)
-     install(TARGETS tjbench
-       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
-+    endif()
-     if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC_LIKE AND
-       CMAKE_C_LINKER_SUPPORTS_PDB)
-       install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
-@@ -1996,10 +2041,12 @@ if(WITH_TURBOJPEG)
++      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
++    )
+     if(WITH_TOOLS)
+       install(TARGETS tjbench
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
+@@ -1966,9 +1979,12 @@ if(WITH_TURBOJPEG)
      endif()
    endif()
    if(ENABLE_STATIC)
 -    install(TARGETS turbojpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
--      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
--      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
--    if(NOT ENABLE_SHARED)
 +    set_target_properties(turbojpeg PROPERTIES PUBLIC_HEADER "${public_headers}")
 +    install(TARGETS turbojpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
 +      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
 +      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jpeg
-+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-+    if(NOT ENABLE_SHARED AND ENABLE_EXECUTABLES)
+       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
++    )
+     if(NOT ENABLE_SHARED)
        if(GENERATOR_IS_MULTI_CONFIG)
          set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
-       else()
-@@ -2009,15 +2056,15 @@ if(WITH_TURBOJPEG)
-         DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin RENAME tjbench${EXE})
+@@ -1982,14 +1998,15 @@ if(WITH_TURBOJPEG)
+       endif()
      endif()
    endif()
 -  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg.h
@@ -266,43 +467,63 @@ index 352f67e9..653dfe27 100644
  
  if(ENABLE_STATIC)
 -  install(TARGETS jpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
--    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
--    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
--  if(NOT ENABLE_SHARED)
 +  set_target_properties(jpeg PROPERTIES PUBLIC_HEADER "${public_headers}")
 +  install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
 +    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
 +    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jpeg
-+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-+  if(NOT ENABLE_SHARED AND ENABLE_EXECUTABLES)
+     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
++  )
+   if(NOT ENABLE_SHARED)
      if(GENERATOR_IS_MULTI_CONFIG)
        set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
-     else()
-@@ -2032,9 +2079,12 @@ if(ENABLE_STATIC)
-   endif()
+@@ -2013,45 +2030,6 @@ if(WITH_TOOLS)
+     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
  endif()
  
-+if(ENABLE_EXECUTABLES)
- install(TARGETS rdjpgcom wrjpgcom
-   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
-+endif()
- 
-+if(INSTALL_DOCS)
- install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
-   ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-   ${CMAKE_CURRENT_SOURCE_DIR}/src/example.c
-@@ -2053,8 +2103,9 @@ if(WITH_JAVA)
-     ${CMAKE_CURRENT_SOURCE_DIR}/java/TJTran.java
-     DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT doc)
- endif()
-+endif()
- 
+-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
+-  ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+-  ${CMAKE_CURRENT_SOURCE_DIR}/src/example.c
+-  ${CMAKE_CURRENT_SOURCE_DIR}/doc/libjpeg.txt
+-  ${CMAKE_CURRENT_SOURCE_DIR}/doc/structure.txt
+-  ${CMAKE_CURRENT_SOURCE_DIR}/doc/usage.txt
+-  ${CMAKE_CURRENT_SOURCE_DIR}/doc/wizard.txt
+-  ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md
+-  DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT doc)
+-if(WITH_TURBOJPEG)
+-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/tjcomp.c
+-    ${CMAKE_CURRENT_SOURCE_DIR}/src/tjdecomp.c
+-    ${CMAKE_CURRENT_SOURCE_DIR}/src/tjtran.c
+-    DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT doc)
+-endif()
+-if(WITH_JNA)
+-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJ.java
+-    ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJComp.java
+-    ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJDecomp.java
+-    ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJTran.java
+-    DESTINATION ${CMAKE_INSTALL_DOCDIR}/jna COMPONENT doc)
+-endif()
+-
 -if(UNIX OR MINGW)
-+if((UNIX OR MINGW) AND INSTALL_DOCS)
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/cjpeg.1
-     ${CMAKE_CURRENT_SOURCE_DIR}/doc/djpeg.1
-     ${CMAKE_CURRENT_SOURCE_DIR}/doc/jpegtran.1
-@@ -2078,12 +2129,6 @@ install(EXPORT ${CMAKE_PROJECT_NAME}Targets
+-  if(WITH_TOOLS)
+-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/cjpeg.1
+-      ${CMAKE_CURRENT_SOURCE_DIR}/doc/djpeg.1
+-      ${CMAKE_CURRENT_SOURCE_DIR}/doc/jpegtran.1
+-      ${CMAKE_CURRENT_SOURCE_DIR}/doc/rdjpgcom.1
+-      ${CMAKE_CURRENT_SOURCE_DIR}/doc/wrjpgcom.1
+-      DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT man)
+-  endif()
+-endif()
+-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libjpeg.pc
+-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT lib)
+-if(WITH_TURBOJPEG)
+-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libturbojpeg.pc
+-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT lib)
+-endif()
+ install(FILES
+   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}Config.cmake
+   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}ConfigVersion.cmake
+@@ -2062,12 +2040,6 @@ install(EXPORT ${CMAKE_PROJECT_NAME}Targets
    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}
    COMPONENT lib)
  
@@ -315,55 +536,228 @@ index 352f67e9..653dfe27 100644
  include(cmakescripts/BuildPackages.cmake)
  
  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
+diff --git a/fuzz/CMakeLists.txt b/fuzz/CMakeLists.txt
+index a439c77f..075f11a9 100644
+--- a/fuzz/CMakeLists.txt
++++ b/fuzz/CMakeLists.txt
+@@ -28,12 +28,11 @@ message(STATUS "C++ Compiler flags = ${EFFECTIVE_CXX_FLAGS}")
+ add_executable(cjpeg_fuzzer${FUZZER_SUFFIX} cjpeg.cc ../src/cdjpeg.c
+   ../src/rdbmp.c ../src/rdgif.c
+   ../src/wrapper/rdpng-8.c ../src/wrapper/rdpng-12.c ../src/wrapper/rdpng-16.c
+-  ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
+   ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c ../src/wrapper/rdppm-16.c
+   ../src/rdswitch.c ../src/rdtarga.c)
+ set_property(TARGET cjpeg_fuzzer${FUZZER_SUFFIX} PROPERTY COMPILE_FLAGS
+   ${CDJPEG_COMPILE_FLAGS})
+-target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY} jpeg-static)
++target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY} jpeg)
+ if(SPNG_LIBRARY)
+   target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${SPNG_LIBRARY})
+ endif()
+@@ -46,7 +45,7 @@ install(TARGETS cjpeg_fuzzer${FUZZER_SUFFIX}
+ macro(add_fuzz_target target source_file)
+   add_executable(${target}_fuzzer${FUZZER_SUFFIX} ${source_file})
+   target_link_libraries(${target}_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY}
+-    turbojpeg-static)
++    turbojpeg)
+   install(TARGETS ${target}_fuzzer${FUZZER_SUFFIX}
+     RUNTIME DESTINATION ${FUZZ_BINDIR} COMPONENT bin)
+ endmacro()
+@@ -70,7 +69,7 @@ add_fuzz_target(libjpeg_turbo decompress.cc)
+ 
+ add_executable(decompress_libjpeg_fuzzer${FUZZER_SUFFIX} decompress_libjpeg.cc)
+ target_link_libraries(decompress_libjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY}
+-  jpeg-static)
++  jpeg)
+ install(TARGETS decompress_libjpeg_fuzzer${FUZZER_SUFFIX}
+   RUNTIME DESTINATION ${FUZZ_BINDIR} COMPONENT bin)
+ 
+diff --git a/release/Config.cmake.in b/release/Config.cmake.in
+index 0c1ba8aa..f496ffe0 100644
+--- a/release/Config.cmake.in
++++ b/release/Config.cmake.in
+@@ -1,4 +1,9 @@
+ @PACKAGE_INIT@
+ 
+-include("${CMAKE_CURRENT_LIST_DIR}/@CMAKE_PROJECT_NAME@Targets.cmake")
+-check_required_components("@CMAKE_PROJECT_NAME@")
++include(CMakeFindDependencyMacro)
++
++find_dependency(spng CONFIG REQUIRED)
++
++include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
++
++check_required_components(@PROJECT_NAME@)
 diff --git a/sharedlib/CMakeLists.txt b/sharedlib/CMakeLists.txt
-index c8c92996..e8f61bce 100644
+index 62e8ffc4..81eeab74 100644
 --- a/sharedlib/CMakeLists.txt
 +++ b/sharedlib/CMakeLists.txt
-@@ -94,11 +94,13 @@ set_property(TARGET cjpeg12 PROPERTY COMPILE_FLAGS
- add_library(cjpeg16 OBJECT ../src/rdppm.c)
- set_property(TARGET cjpeg16 PROPERTY COMPILE_FLAGS
-   "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-+if(ENABLE_EXECUTABLES)
- add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c
-   ../src/rdgif.c ../src/rdppm.c ../src/rdswitch.c ../src/rdtarga.c
-   $<TARGET_OBJECTS:cjpeg12> $<TARGET_OBJECTS:cjpeg16>)
- set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
- target_link_libraries(cjpeg jpeg)
-+endif()
+@@ -30,20 +30,6 @@ if(WITH_SIMD AND (MSVC_IDE OR XCODE))
+   set_source_files_properties(${SIMD_OBJS} PROPERTIES GENERATED 1)
+ endif()
  
- # Compile a separate version of these source files with 12-bit and 16-bit data
- # precision.
-@@ -108,12 +110,15 @@ set_property(TARGET djpeg12 PROPERTY COMPILE_FLAGS
- add_library(djpeg16 OBJECT ../src/wrppm.c)
- set_property(TARGET djpeg16 PROPERTY COMPILE_FLAGS
-   "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-+if(ENABLE_EXECUTABLES)
- add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c ../src/rdcolmap.c
-   ../src/rdswitch.c ../src/wrbmp.c ../src/wrgif.c ../src/wrppm.c
-   ../src/wrtarga.c $<TARGET_OBJECTS:djpeg12> $<TARGET_OBJECTS:djpeg16>)
- set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
- target_link_libraries(djpeg jpeg)
-+endif()
+-if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+-  if(WITH_SYSTEM_SPNG)
+-    unset(SPNG_SOURCES)
+-  else()
+-    add_subdirectory(spng)
+-    set(SPNG_SOURCES $<TARGET_OBJECTS:spng>)
+-  endif()
+-  if(WITH_SYSTEM_ZLIB OR WITH_SYSTEM_SPNG)
+-    unset(ZLIB_SOURCES)
+-  else()
+-    set(ZLIB_SOURCES $<TARGET_OBJECTS:zlib>)
+-  endif()
+-endif()
+-
+ if(WIN32)
+   set(DEFFILE ../win/jpeg${SO_MAJOR_VERSION}.def)
+ endif()
+@@ -89,41 +75,39 @@ if(WITH_TOOLS)
+     set(USE_SETMODE "-DUSE_SETMODE")
+   endif()
+   set(CDJPEG_COMPILE_FLAGS
+-    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
++    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPNG_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
  
-+if(ENABLE_EXECUTABLES)
- add_executable(jpegtran ../src/jpegtran.c ../src/cdjpeg.c ../src/rdswitch.c
-   ../src/transupp.c)
- target_link_libraries(jpegtran jpeg)
-@@ -124,14 +129,17 @@ target_link_libraries(example jpeg)
+   add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c
+     ../src/rdgif.c
+     ../src/wrapper/rdpng-8.c ../src/wrapper/rdpng-12.c
+-    ../src/wrapper/rdpng-16.c ${ZLIB_SOURCES} ${SPNG_SOURCES}
++    ../src/wrapper/rdpng-16.c
+     ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c
+     ../src/wrapper/rdppm-16.c
+     ../src/rdswitch.c ../src/rdtarga.c)
+   set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
+-  target_link_libraries(cjpeg jpeg)
+-  if(SPNG_LIBRARY)
+-    target_link_libraries(cjpeg ${SPNG_LIBRARY})
+-  endif()
+-  if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+-    target_link_libraries(cjpeg ${ZLIB_LIBRARY})
+-  endif()
++  target_link_libraries(cjpeg
++      PRIVATE
++          jpeg
++          spng::spng
++          #zlib::zlib
++  )
  
- add_executable(jcstest ../src/jcstest.c)
- target_link_libraries(jcstest jpeg)
-+endif()
+   add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c
+     ../src/wrapper/rdcolmap-8.c ../src/wrapper/rdcolmap-12.c
+     ../src/rdswitch.c ../src/wrbmp.c
+     ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
+     ../src/wrapper/wrpng-8.c ../src/wrapper/wrpng-12.c
+-    ../src/wrapper/wrpng-16.c ${ZLIB_SOURCES} ${SPNG_SOURCES}
++    ../src/wrapper/wrpng-16.c
+     ../src/wrapper/wrppm-8.c ../src/wrapper/wrppm-12.c
+     ../src/wrapper/wrppm-16.c
+     ../src/wrtarga.c)
+   set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
+-  target_link_libraries(djpeg jpeg)
+-  if(SPNG_LIBRARY)
+-    target_link_libraries(djpeg ${SPNG_LIBRARY})
+-  endif()
+-  if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+-    target_link_libraries(djpeg ${ZLIB_LIBRARY})
+-  endif()
++  target_link_libraries(djpeg
++      PRIVATE
++          jpeg
++          spng::spng
++          #zlib::zlib
++  )
  
- install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
-   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
-+if(ENABLE_EXECUTABLES)
- install(TARGETS cjpeg djpeg jpegtran
-   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
-+endif()
- if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC_LIKE AND
-   CMAKE_C_LINKER_SUPPORTS_PDB)
-   install(FILES "$<TARGET_PDB_FILE:jpeg>"
+   add_executable(jpegtran ../src/jpegtran.c ../src/cdjpeg.c ../src/rdswitch.c
+     ../src/transupp.c)
+@@ -144,7 +128,6 @@ if(WITH_TESTS)
+     add_executable(bmpsizetest ../src/bmpsizetest.c
+       ../src/rdbmp.c ../src/wrbmp.c
+       ../src/rdgif.c ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
+-      ${ZLIB_SOURCES} ${SPNG_SOURCES}
+       ../src/wrapper/rdpng-8.c ../src/wrapper/rdpng-12.c
+       ../src/wrapper/rdpng-16.c ../src/wrapper/wrpng-8.c
+       ../src/wrapper/wrpng-12.c ../src/wrapper/wrpng-16.c
+@@ -154,13 +137,12 @@ if(WITH_TESTS)
+       ../src/rdtarga.c ../src/wrtarga.c)
+     set_property(TARGET bmpsizetest PROPERTY COMPILE_FLAGS
+       ${CDJPEG_COMPILE_FLAGS})
+-    target_link_libraries(bmpsizetest jpeg)
+-    if(SPNG_LIBRARY)
+-      target_link_libraries(bmpsizetest ${SPNG_LIBRARY})
+-    endif()
+-    if(ZLIB_LIBRARY)
+-      target_link_libraries(bmpsizetest ${ZLIB_LIBRARY})
+-    endif()
++    target_link_libraries(bmpsizetest
++        PRIVATE
++            jpeg
++            spng::spng
++            #zlib::zlib
++    )
+   endif()
+ endif()
+ 
+diff --git a/simd/CMakeLists.txt b/simd/CMakeLists.txt
+index 48f215d3..9b72708c 100644
+--- a/simd/CMakeLists.txt
++++ b/simd/CMakeLists.txt
+@@ -567,5 +567,5 @@ endif() # CPU_TYPE
+ 
+ if(WITH_SIMD AND ENABLE_STATIC)
+   add_executable(simdcoverage simdcoverage.c)
+-  target_link_libraries(simdcoverage jpeg-static)
++  target_link_libraries(simdcoverage jpeg)
+ endif()
+diff --git a/src/bmpsizetest.c b/src/bmpsizetest.c
+index 60503799..d30c869a 100644
+--- a/src/bmpsizetest.c
++++ b/src/bmpsizetest.c
+@@ -13,7 +13,7 @@
+ #define JPEG_INTERNALS
+ #include "cdjpeg.h"
+ #include <setjmp.h>
+-#include "spng/zlib/zlib.h"
++#include <zlib/zlib.h>
+ 
+ #define JMESSAGE(code, string)  string,
+ 
+diff --git a/src/rdpng.c b/src/rdpng.c
+index 08a0e632..a4aa18e7 100644
+--- a/src/rdpng.c
++++ b/src/rdpng.c
+@@ -19,7 +19,7 @@
+ 
+ #include "cmyk.h"
+ #include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
+-#include "spng/spng.h"
++#include <spng/spng.h>
+ 
+ #if defined(PNG_SUPPORTED) && \
+     (BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED))
+diff --git a/src/spng/spng.c b/src/spng/spng.c
+index 06249d68..6d96a67e 100644
+--- a/src/spng/spng.c
++++ b/src/spng/spng.c
+@@ -18,7 +18,7 @@
+     #ifdef SPNG_USE_MINIZ
+         #include <miniz.h>
+     #else
+-        #include <zlib.h>
++        #include <zlib/zlib.h>
+     #endif
+ #endif
+ 
+diff --git a/src/wrpng.c b/src/wrpng.c
+index 93dc80b8..5330f8b3 100644
+--- a/src/wrpng.c
++++ b/src/wrpng.c
+@@ -19,7 +19,7 @@
+ 
+ #include "cmyk.h"
+ #include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
+-#include "spng/spng.h"
++#include <spng/spng.h>
+ 
+ #if defined(PNG_SUPPORTED) && \
+     (BITS_IN_JSAMPLE != 16 || defined(D_LOSSLESS_SUPPORTED))
