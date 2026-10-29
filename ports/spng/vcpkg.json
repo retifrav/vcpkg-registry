@@ -1,0 +1,23 @@
+{
+    "name": "spng",
+    "version": "0.7.4",
+    "description": "Simple, modern PNG",
+    "homepage": "https://libspng.org/",
+    "license": "BSD-2-Clause",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        },
+        "zlib"
+    ]
+}

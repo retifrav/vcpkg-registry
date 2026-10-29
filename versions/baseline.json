@@ -1226,6 +1226,11 @@
             "baseline": "2026.4.29",
             "port-version": 0
         },
+        "spng":
+        {
+            "baseline": "0.7.4",
+            "port-version": 0
+        },
         "spz":
         {
             "baseline": "2.0.0",
