@@ -28,6 +28,8 @@ index da1917e..d1a252d 100644
 -    set(MATH_LIBRARY "")
 -endif()
 +set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
++
++add_library(${PROJECT_NAME})
  
  if(NOT ENABLE_OPT)
 -    add_definitions( -DSPNG_DISABLE_OPT=1 )
@@ -38,8 +40,7 @@ index da1917e..d1a252d 100644
  endif()
  
 -set(spng_TARGETS "")
-+add_library(${PROJECT_NAME})
- 
+-
 -set(spng_SOURCES spng/spng.c)
 +target_sources(${PROJECT_NAME}
 +    PRIVATE
@@ -57,8 +58,8 @@ index da1917e..d1a252d 100644
 -        add_executable(example examples/example.c)
 -        target_link_libraries(example PRIVATE spng)
 -    endif()
-+if(DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
-+    target_compile_definitions(spng PUBLIC SPNG_STATIC)
++if(NOT BUILD_SHARED_LIBS)
++    target_compile_definitions(${PROJECT_NAME} PUBLIC SPNG_STATIC)
  endif()
  
 -if(SPNG_STATIC)
