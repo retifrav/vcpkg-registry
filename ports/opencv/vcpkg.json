@@ -31,7 +31,10 @@
                 "jpeg-turbo",
                 "png",
                 "tiff",
-                "webp"
+                {
+                    "name": "webp",
+                    "features": [ "webpmux" ]
+                }
             ]
         },
         "imgproc":

@@ -164,7 +164,7 @@ index 40e48d7465..7dabb07734 100644
        ocv_download_log("#try ${try}")
        file(DOWNLOAD "${DL_URL}" "${CACHE_CANDIDATE}"
 diff --git a/cmake/OpenCVFindLibsGrfmt.cmake b/cmake/OpenCVFindLibsGrfmt.cmake
-index c3c358f6fc..6ee3b72bb4 100644
+index c3c358f6fc..c18c7e3cb8 100644
 --- a/cmake/OpenCVFindLibsGrfmt.cmake
 +++ b/cmake/OpenCVFindLibsGrfmt.cmake
 @@ -3,6 +3,7 @@
@@ -220,7 +220,7 @@ index c3c358f6fc..6ee3b72bb4 100644
 -  endif()
 +  ocv_clear_internal_cache_vars(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
 +  find_package(zlib CONFIG REQUIRED)
-+  set(ZLIB_LIBRARY zlib)
++  set(ZLIB_LIBRARY zlib::zlib)
 +  set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
 +  set(ZLIB_FOUND YES)
  endif()
@@ -291,7 +291,7 @@ index c3c358f6fc..6ee3b72bb4 100644
 +if(WITH_JPEG)
 +  ocv_clear_internal_cache_vars(JPEG_LIBRARY JPEG_INCLUDE_DIR)
 +  find_package(jpeg-turbo CONFIG REQUIRED)
-+  set(JPEG_LIBRARY jpeg-turbo::turbojpeg)
++  set(JPEG_LIBRARY jpeg-turbo::jpeg)
 +  set(JPEG_LIBRARIES ${JPEG_LIBRARY})
 +  set(JPEG_FOUND YES)
    set(HAVE_JPEG YES)
@@ -372,10 +372,7 @@ index c3c358f6fc..6ee3b72bb4 100644
 -)
 -  ocv_clear_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
 -  set(WEBP_LIBRARY libwebp CACHE INTERNAL "")
-+  ocv_clear_internal_cache_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
-+  find_package(WebP CONFIG REQUIRED)
-+  set(WEBP_LIBRARY WebP::webp)
-   set(WEBP_LIBRARIES ${WEBP_LIBRARY})
+-  set(WEBP_LIBRARIES ${WEBP_LIBRARY})
 -
 -  add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libwebp")
 -  set(WEBP_INCLUDE_DIR "${${WEBP_LIBRARY}_SOURCE_DIR}/src" CACHE INTERNAL "")
@@ -411,6 +408,10 @@ index c3c358f6fc..6ee3b72bb4 100644
 -  endif()
 -
 -set(WEBP_VERSION "decoder: ${WEBP_DECODER_ABI_VERSION}, encoder: ${WEBP_ENCODER_ABI_VERSION}, demux: ${WEBP_DEMUX_ABI_VERSION}")
++  ocv_clear_internal_cache_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
++  find_package(WebP CONFIG REQUIRED)
++  set(WEBP_LIBRARY WebP::webp)
++  set(WEBP_LIBRARIES ${WEBP_LIBRARY} WebP::libwebpmux WebP::webpdemux)
 +  set(WEBP_FOUND YES)
 +  set(HAVE_WEBP YES)
  endif()
@@ -913,7 +914,7 @@ index 499036cedf..6760469718 100644
  
  #ifndef CV_MANUAL_JPEG_STD_HUFF_TABLES
 diff --git a/modules/imgcodecs/src/grfmt_png.hpp b/modules/imgcodecs/src/grfmt_png.hpp
-index 6094139baf..c5a292cacf 100644
+index 6094139baf..cf23a71bac 100644
 --- a/modules/imgcodecs/src/grfmt_png.hpp
 +++ b/modules/imgcodecs/src/grfmt_png.hpp
 @@ -47,8 +47,8 @@
@@ -922,24 +923,11 @@ index 6094139baf..c5a292cacf 100644
  #include "bitstrm.hpp"
 -#include <png.h>
 -#include <zlib.h>
-+#include <png/png.h>
 +#include <zlib/zlib.h>
++#include <png/png.h>
  #include <vector>
  
  namespace cv
-diff --git a/modules/imgcodecs/src/grfmt_spng.cpp b/modules/imgcodecs/src/grfmt_spng.cpp
-index 852db5f2f5..445bcc1840 100644
---- a/modules/imgcodecs/src/grfmt_spng.cpp
-+++ b/modules/imgcodecs/src/grfmt_spng.cpp
-@@ -20,7 +20,7 @@
- #endif
- 
- #include <spng.h>
--#include <zlib.h>
-+#include <zlib/zlib.h>
- 
- #include "grfmt_spng.hpp"
- #include <opencv2/core/utils/logger.hpp>
 diff --git a/modules/imgcodecs/src/grfmt_tiff.cpp b/modules/imgcodecs/src/grfmt_tiff.cpp
 index 902e061e31..d1625335cd 100644
 --- a/modules/imgcodecs/src/grfmt_tiff.cpp
