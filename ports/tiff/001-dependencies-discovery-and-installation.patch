@@ -1,8 +1,25 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 31ae5f6..281d425 100644
+index 5fff94d..fefa152 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -42,12 +42,13 @@ project(tiff
+@@ -24,15 +24,7 @@
+ # LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+ # OF THIS SOFTWARE.
+ 
+-cmake_minimum_required(VERSION 3.10)
+-
+-# Default policy is from 3.10
+-cmake_policy(VERSION 3.10)
+-
+-if(POLICY CMP0074)
+-  # Allow find_package() to use the ZLIB_ROOT variable, if available.
+-  cmake_policy(SET CMP0074 NEW)
+-endif()
++cmake_minimum_required(VERSION 3.28)
+ 
+ # Find CMake modules in cmake/
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+@@ -47,6 +39,8 @@ project(tiff
          VERSION "${LIBTIFF_VERSION}"
          LANGUAGES C CXX)
  
@@ -11,26 +28,16 @@ index 31ae5f6..281d425 100644
  if(NOT CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
    # libtiff is being included as a subproject of some other project.
    set(TIFF_INSTALL_DEFAULT OFF)
- else()
-   set(TIFF_INSTALL_DEFAULT ON)
--  option(BUILD_SHARED_LIBS "Build shared libraries" ON)
- endif()
+@@ -168,7 +162,7 @@ include(LibraryFeatures)
  
- option(tiff-tools "build TIFF tools" ON)
-@@ -133,9 +134,9 @@ include(WindowsSupport)
- # Orthogonal features
- include(LibraryFeatures)
  
--
--# math.h/libm portability
+ # math.h/libm portability
 -find_package(CMath REQUIRED)
-+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-+    find_library(MATH_LIBRARY m)
-+endif()
++find_library(MATH_LIBRARY m)
  
  # Release support
  include(Release)
-@@ -157,9 +158,6 @@ if(tiff-docs)
+@@ -190,9 +184,6 @@ if(tiff-docs)
    add_subdirectory(doc)
  endif()
  
@@ -41,108 +48,221 @@ index 31ae5f6..281d425 100644
  message(STATUS "Libtiff is now configured for ${CMAKE_SYSTEM}")
  message(STATUS "")
 diff --git a/cmake/DeflateCodec.cmake b/cmake/DeflateCodec.cmake
-index 76e5673..5dc75a3 100644
+index 76e5673..41ac931 100644
 --- a/cmake/DeflateCodec.cmake
 +++ b/cmake/DeflateCodec.cmake
-@@ -23,23 +23,28 @@
+@@ -23,23 +23,19 @@
  # LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  # OF THIS SOFTWARE.
  
 -
  # ZLIB
-+
- set(ZLIB_SUPPORT FALSE)
+-set(ZLIB_SUPPORT FALSE)
 -find_package(ZLIB)
 -option(zlib "use zlib (required for Deflate compression)" ${ZLIB_FOUND})
 -if(zlib AND ZLIB_FOUND)
-+option(zlib "use zlib (required for Deflate compression)" 1)
-+
-+if(zlib)
+-    set(ZLIB_SUPPORT TRUE)
++option(ZLIB_SUPPORT "Use zlib" 1)
++if(ZLIB_SUPPORT)
 +    find_package(zlib CONFIG REQUIRED)
-     set(ZLIB_SUPPORT TRUE)
  endif()
  set(ZIP_SUPPORT ${ZLIB_SUPPORT})
  
  # libdeflate
-+
- set(LIBDEFLATE_SUPPORT FALSE)
+-set(LIBDEFLATE_SUPPORT FALSE)
 -find_package(Deflate)
 -option(libdeflate "use libdeflate (optional for faster Deflate support, still requires zlib)" ${Deflate_FOUND})
 -if (libdeflate AND Deflate_FOUND AND ZIP_SUPPORT)
 -    set(LIBDEFLATE_SUPPORT TRUE)
--endif()
++option(LIBDEFLATE_SUPPORT "Use deflate" 1)
++if(LIBDEFLATE_SUPPORT)
++    find_package(deflate CONFIG REQUIRED)
+ endif()
 -if(Deflate_FOUND AND NOT ZIP_SUPPORT)
 -    message(WARNING "libdeflate available but zlib is not. libdeflate cannot be used")
-+option(libdeflate "use libdeflate (optional for faster Deflate support, still requires zlib)" 0)
 +
-+if(libdeflate)
-+    find_package(Deflate)
-+    if(Deflate_FOUND AND ZIP_SUPPORT)
-+        set(LIBDEFLATE_SUPPORT TRUE)
-+    endif()
-+    if(Deflate_FOUND AND NOT ZIP_SUPPORT)
-+        message(WARNING "libdeflate available but zlib is not. libdeflate cannot be used")
-+    endif()
++if(LIBDEFLATE_SUPPORT AND NOT ZLIB_SUPPORT)
++    message(WARNING "Deflate is available, but zlib is not") # FATAL_ERROR
  endif()
-diff --git a/cmake/FindCMath.cmake b/cmake/FindCMath.cmake
-index ad92218..dd42aba 100644
---- a/cmake/FindCMath.cmake
-+++ b/cmake/FindCMath.cmake
-@@ -31,7 +31,7 @@ include(CheckSymbolExists)
- include(CheckLibraryExists)
+diff --git a/cmake/JPEGCodec.cmake b/cmake/JPEGCodec.cmake
+index 2a26c43..f3fa1f1 100644
+--- a/cmake/JPEGCodec.cmake
++++ b/cmake/JPEGCodec.cmake
+@@ -25,63 +25,9 @@
  
- check_symbol_exists(pow "math.h" CMath_HAVE_LIBC_POW)
--find_library(CMath_LIBRARY NAMES m)
-+find_library(CMath_LIBRARY NAMES m PATHS ${CMAKE_C_IMPLICIT_LINK_DIRECTORIES})
  
- if(NOT CMath_HAVE_LIBC_POW)
-     set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
+ # JPEG
+-set(JPEG_SUPPORT FALSE)
+-
+-# Option to prefer standard JPEG over TurboJPEG
+-option(jpeg-prefer-standard "prefer standard JPEG library over libjpeg-turbo" OFF)
+-
+-# Try to find libjpeg-turbo first using CONFIG mode (more reliable, cross-platform)
+-# Only do this if we're not explicitly preferring standard JPEG
+-if(NOT jpeg-prefer-standard)
+-    find_package(libjpeg-turbo CONFIG QUIET)
+-    if(libjpeg-turbo_FOUND)
+-        # libjpeg-turbo was found via CONFIG
+-        # It provides targets like libjpeg-turbo::jpeg and libjpeg-turbo::turbojpeg
+-        # IMPORTANT: We need libjpeg-turbo::jpeg (standard libjpeg API), NOT turbojpeg
+-        # The turbojpeg target only provides the TurboJPEG API, which libtiff doesn't use
+-        # Create an alias to JPEG::JPEG for consistent usage throughout the project
+-        if(TARGET libjpeg-turbo::jpeg AND NOT TARGET JPEG::JPEG)
+-            add_library(JPEG::JPEG ALIAS libjpeg-turbo::jpeg)
+-            set(JPEG_FOUND TRUE)
+-            # Set JPEG_LIBRARIES to the target name
+-            set(JPEG_LIBRARIES libjpeg-turbo::jpeg)
+-            # For JPEG_INCLUDE_DIRS, try to get the property, but it's OK if it's not set
+-            get_target_property(_jpeg_includes libjpeg-turbo::jpeg INTERFACE_INCLUDE_DIRECTORIES)
+-            if(_jpeg_includes)
+-                set(JPEG_INCLUDE_DIRS "${_jpeg_includes}")
+-            else()
+-                set(JPEG_INCLUDE_DIRS "")
+-            endif()
+-            unset(_jpeg_includes)
+-        elseif(TARGET libjpeg-turbo::turbojpeg AND NOT TARGET JPEG::JPEG)
+-            # Only use turbojpeg as a fallback if jpeg target doesn't exist
+-            # This is unlikely to work correctly but better than nothing
+-            add_library(JPEG::JPEG ALIAS libjpeg-turbo::turbojpeg)
+-            set(JPEG_FOUND TRUE)
+-            # Set JPEG_LIBRARIES to the target name - CMake will handle includes automatically
+-            # when this is used in CMAKE_REQUIRED_LIBRARIES
+-            set(JPEG_LIBRARIES libjpeg-turbo::turbojpeg)
+-            # For JPEG_INCLUDE_DIRS, try to get the property, but it's OK if it's not set
+-            # since the target will provide the includes when used
+-            get_target_property(_jpeg_includes libjpeg-turbo::turbojpeg INTERFACE_INCLUDE_DIRECTORIES)
+-            if(_jpeg_includes)
+-                set(JPEG_INCLUDE_DIRS "${_jpeg_includes}")
+-            else()
+-                set(JPEG_INCLUDE_DIRS "")
+-            endif()
+-            unset(_jpeg_includes)
+-        endif()
+-    endif()
+-endif()
+-
+-# Fall back to Find module if CONFIG didn't work
+-if(NOT JPEG_FOUND)
+-    find_package(JPEG)
+-endif()
+-
+-option(jpeg "use libjpeg (required for JPEG compression)" ${JPEG_FOUND})
+-if (jpeg AND JPEG_FOUND)
+-    set(JPEG_SUPPORT TRUE)
++option(JPEG_SUPPORT "Use JPEG" 1)
++if(JPEG_SUPPORT)
++    find_package(jpeg-turbo CONFIG REQUIRED)
+ endif()
+ 
+ # Old-jpeg
+@@ -98,26 +44,13 @@ if (JPEG_SUPPORT)
+     include(CMakePushCheckState)
+     cmake_push_check_state(RESET)
+ 
+-    # Set up includes and libraries for the check
+-    # For targets, we need to explicitly get the include directories
+-    if(TARGET ${JPEG_LIBRARIES})
+-        # It's an imported target - extract properties
+-        get_target_property(_jpeg_includes ${JPEG_LIBRARIES} INTERFACE_INCLUDE_DIRECTORIES)
+-        if(_jpeg_includes)
+-            set(CMAKE_REQUIRED_INCLUDES "${_jpeg_includes}")
+-        endif()
+-        unset(_jpeg_includes)
+-    elseif(JPEG_INCLUDE_DIRS)
+-        # It's a plain library - use the provided includes
+-        set(CMAKE_REQUIRED_INCLUDES "${JPEG_INCLUDE_DIRS}")
+-    endif()
+-
+-    set(CMAKE_REQUIRED_LIBRARIES "${JPEG_LIBRARIES}")
++    # same target as what TIFF links to, its usage requirements provide the include directories
++    set(CMAKE_REQUIRED_LIBRARIES jpeg-turbo::jpeg)
+ 
+     # Check if the jpeg12_read_scanlines symbol exists in jpeglib.h
+     # This is more reliable than trying to compile code that calls it
+-    check_symbol_exists(jpeg_read_scanlines "stdio.h;jpeglib.h" HAVE_JPEGTURBO_DUAL_MODE_8)
+-    check_symbol_exists(jpeg12_read_scanlines "stdio.h;jpeglib.h" HAVE_JPEGTURBO_DUAL_MODE_12)
++    check_symbol_exists(jpeg_read_scanlines "stdio.h;jpeg/jpeglib.h" HAVE_JPEGTURBO_DUAL_MODE_8)
++    check_symbol_exists(jpeg12_read_scanlines "stdio.h;jpeg/jpeglib.h" HAVE_JPEGTURBO_DUAL_MODE_12)
+     set(HAVE_JPEGTURBO_DUAL_MODE_8_12 OFF)
+     if (HAVE_JPEGTURBO_DUAL_MODE_8 AND HAVE_JPEGTURBO_DUAL_MODE_12)
+         set(HAVE_JPEGTURBO_DUAL_MODE_8_12 ON)
+@@ -125,23 +58,3 @@ if (JPEG_SUPPORT)
+ 
+     cmake_pop_check_state()
+ endif()
+-
+-if (NOT HAVE_JPEGTURBO_DUAL_MODE_8_12)
+-
+-    # 12-bit jpeg mode in a dedicated libjpeg12 library
+-    set(JPEG12_INCLUDE_DIR JPEG12_INCLUDE_DIR-NOTFOUND CACHE PATH "Include directory for 12-bit libjpeg")
+-    set(JPEG12_LIBRARY JPEG12_LIBRARY-NOTFOUND CACHE FILEPATH "12-bit libjpeg library")
+-    set(JPEG_DUAL_MODE_8_12 FALSE)
+-    if (JPEG12_INCLUDE_DIR AND JPEG12_LIBRARY)
+-        set(JPEG12_LIBRARIES ${JPEG12_LIBRARY})
+-        set(JPEG12_FOUND TRUE)
+-    else()
+-        set(JPEG12_FOUND FALSE)
+-    endif()
+-    option(jpeg12 "enable libjpeg 8/12-bit dual mode (requires separate 12-bit libjpeg build)" ${JPEG12_FOUND})
+-    if (jpeg12 AND JPEG12_FOUND)
+-        set(JPEG_DUAL_MODE_8_12 TRUE)
+-        set(LIBJPEG_12_PATH "${JPEG12_INCLUDE_DIR}/jpeglib.h")
+-    endif()
+-
+-endif()
 diff --git a/cmake/LZMACodec.cmake b/cmake/LZMACodec.cmake
-index c51afe8..eb04c56 100644
+index c51afe8..9370e60 100644
 --- a/cmake/LZMACodec.cmake
 +++ b/cmake/LZMACodec.cmake
-@@ -23,12 +23,12 @@
+@@ -25,10 +25,7 @@
+ 
+ 
+ # liblzma2
+-set(LZMA_SUPPORT FALSE)
+-find_package(liblzma)
+-
+-option(lzma "use liblzma (required for LZMA2 compression)" ${LIBLZMA_FOUND})
+-if (lzma AND LIBLZMA_FOUND)
+-    set(LZMA_SUPPORT TRUE)
++option(LZMA_SUPPORT "Use LZMA" 0)
++if(LZMA_SUPPORT)
++    find_package(xz CONFIG REQUIRED)
+ endif()
+diff --git a/cmake/WebPCodec.cmake b/cmake/WebPCodec.cmake
+index 1d676a7..ab170b0 100644
+--- a/cmake/WebPCodec.cmake
++++ b/cmake/WebPCodec.cmake
+@@ -24,12 +24,7 @@
+ # OF THIS SOFTWARE.
+ 
+ # libwebp
+-set(WEBP_SUPPORT FALSE)
+-
+-find_package(WebP)
+-
+-option(webp "use libwebp (required for WEBP compression)" ${WebP_FOUND})
+-
+-if (webp AND WebP_FOUND)
+-    set(WEBP_SUPPORT TRUE)
++option(WEBP_SUPPORT "Use WebP" 0)
++if(WEBP_SUPPORT)
++    find_package(WebP CONFIG REQUIRED)
+ endif()
+diff --git a/cmake/ZSTDCodec.cmake b/cmake/ZSTDCodec.cmake
+index 3fac861..518b086 100644
+--- a/cmake/ZSTDCodec.cmake
++++ b/cmake/ZSTDCodec.cmake
+@@ -23,42 +23,8 @@
  # LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  # OF THIS SOFTWARE.
  
 -
- # liblzma2
-+
- set(LZMA_SUPPORT FALSE)
--find_package(liblzma)
-+option(lzma "use liblzma (required for LZMA2 compression)" 0)
- 
--option(lzma "use liblzma (required for LZMA2 compression)" ${LIBLZMA_FOUND})
--if (lzma AND LIBLZMA_FOUND)
-+if(lzma)
-+    find_package(xz CONFIG REQUIRED)
-     set(LZMA_SUPPORT TRUE)
- endif()
-diff --git a/cmake/WindowsSupport.cmake b/cmake/WindowsSupport.cmake
-index a60bba9..4c7d0e4 100644
---- a/cmake/WindowsSupport.cmake
-+++ b/cmake/WindowsSupport.cmake
-@@ -24,9 +24,6 @@
- # OF THIS SOFTWARE.
- 
- if(MSVC)
--    # Debug postfix
--    set(CMAKE_DEBUG_POSTFIX "d")
+ # libzstd
+-set(ZSTD_SUPPORT FALSE)
+-set(ZSTD_USABLE FALSE)
 -
-     # disable deprecation warnings
-     add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
-     # suppress deprecation warning for MSVC POSIX names
-diff --git a/cmake/ZSTDCodec.cmake b/cmake/ZSTDCodec.cmake
-index 3fac861..e4f626e 100644
---- a/cmake/ZSTDCodec.cmake
-+++ b/cmake/ZSTDCodec.cmake
-@@ -28,37 +28,37 @@
- set(ZSTD_SUPPORT FALSE)
- set(ZSTD_USABLE FALSE)
- 
 -find_package(ZSTD)
-+option(zstd "use Zstandard (required for ZSTD compression)" 1)
- 
+-
 -if(ZSTD_FOUND)
 -    if(TARGET zstd::libzstd_shared)
 -        add_library(ZSTD::ZSTD ALIAS zstd::libzstd_shared)
@@ -151,9 +271,7 @@ index 3fac861..e4f626e 100644
 -        add_library(ZSTD::ZSTD ALIAS zstd::libzstd_static)
 -        set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
 -    endif()
-+if(zstd)
-+    find_package(zstd CONFIG REQUIRED)
- 
+-
 -    if(NOT DEFINED ZSTD_HAVE_DECOMPRESS_STREAM)
 -      set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
 -      set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ZSTD_INCLUDE_DIRS})
@@ -164,16 +282,7 @@ index 3fac861..e4f626e 100644
 -      set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
 -    endif()
 -    set(ZSTD_RECENT_ENOUGH ${ZSTD_HAVE_DECOMPRESS_STREAM})
-+    # if(ZSTD_FOUND)
-+        # if(TARGET zstd::libzstd_shared)
-+        #     add_library(ZSTD::ZSTD ALIAS zstd::libzstd_shared)
-+        #     set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
-+        # elseif(TARGET zstd::libzstd_static)
-+        #     add_library(ZSTD::ZSTD ALIAS zstd::libzstd_static)
-+        #     set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
-+        # endif()
-+        # set(ZSTD_HAVE_DECOMPRESS_STREAM ON)
- 
+-
 -    if (ZSTD_RECENT_ENOUGH)
 -        set(ZSTD_USABLE TRUE)
 -    else()
@@ -182,116 +291,138 @@ index 3fac861..e4f626e 100644
 -endif()
 -
 -option(zstd "use libzstd (required for ZSTD compression)" ${ZSTD_USABLE})
-+        # if(NOT DEFINED ZSTD_HAVE_DECOMPRESS_STREAM)
-+        #   set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
-+        #   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ZSTD_INCLUDE_DIRS})
-+        #   set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
-+        #   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${ZSTD_LIBRARIES})
-+        #   check_symbol_exists(ZSTD_decompressStream "zstd.h" ZSTD_HAVE_DECOMPRESS_STREAM)
-+        #   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
-+        #   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
-+        # endif()
-+        # set(ZSTD_RECENT_ENOUGH ${ZSTD_HAVE_DECOMPRESS_STREAM})
-+        # if (ZSTD_RECENT_ENOUGH)
-+        #     set(ZSTD_USABLE TRUE)
-+        # else()
-+        #     message(WARNING "Found ZSTD library, but not recent enough. Use zstd >= 1.0")
-+        # endif()
-+    # endif()
- 
+-
 -if (zstd AND ZSTD_USABLE)
-     set(ZSTD_SUPPORT TRUE)
+-    set(ZSTD_SUPPORT TRUE)
++option(ZSTD_SUPPORT "Use zstd" 1)
++if(ZSTD_SUPPORT)
++    find_package(zstd CONFIG REQUIRED)
  endif()
 diff --git a/contrib/dbs/CMakeLists.txt b/contrib/dbs/CMakeLists.txt
-index 74b2a02..bdf6d73 100644
+index 869c726..515cb54 100644
 --- a/contrib/dbs/CMakeLists.txt
 +++ b/contrib/dbs/CMakeLists.txt
-@@ -26,13 +26,19 @@ add_executable(tiff-bi tiff-bi.c)
- target_link_libraries(tiff-bi tiff tiff_port)
+@@ -28,7 +28,12 @@ target_link_libraries(tiff-bi tiff tiff_port)
  
  add_executable(tiff-grayscale tiff-grayscale.c)
--target_link_libraries(tiff-grayscale tiff tiff_port CMath::CMath)
+ set_target_properties(tiff-grayscale PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(tiff-grayscale tiff tiff_port ${CMath_LIBRARIES})
 +target_link_libraries(tiff-grayscale tiff tiff_port)
 +if(MATH_LIBRARY)
-+    target_link_libraries(tiff-grayscale ${MATH_LIBRARY})
++  target_link_libraries(tiff-grayscale
++      m # ${MATH_LIBRARY} expands to local path on the build host
++  )
 +endif()
  
  add_executable(tiff-palette tiff-palette.c)
- target_link_libraries(tiff-palette tiff tiff_port)
+ set_target_properties(tiff-palette PROPERTIES LINKER_LANGUAGE CXX)
+@@ -36,7 +41,12 @@ target_link_libraries(tiff-palette tiff tiff_port)
  
  add_executable(tiff-rgb tiff-rgb.c)
--target_link_libraries(tiff-rgb tiff tiff_port CMath::CMath)
+ set_target_properties(tiff-rgb PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(tiff-rgb tiff tiff_port ${CMath_LIBRARIES})
 +target_link_libraries(tiff-rgb tiff tiff_port)
 +if(MATH_LIBRARY)
-+    target_link_libraries(tiff-rgb ${MATH_LIBRARY})
++  target_link_libraries(tiff-rgb
++      m # ${MATH_LIBRARY} expands to local path on the build host
++  )
 +endif()
  
- if(WEBP_SUPPORT AND EMSCRIPTEN)
-   # Emscripten is pretty finnicky about linker flags.
+ # Apply C++ compatibility mode to all contrib/dbs targets if enabled
+ foreach(target tiff-bi tiff-grayscale tiff-palette tiff-rgb)
 diff --git a/libtiff/CMakeLists.txt b/libtiff/CMakeLists.txt
-index a8aa0c3..03e8809 100644
+index aa1895c..545ffe6 100755
 --- a/libtiff/CMakeLists.txt
 +++ b/libtiff/CMakeLists.txt
-@@ -136,8 +136,8 @@ set(tiff_libs_private_list "") # cmake list
+@@ -138,25 +138,17 @@ endif ()
+ set(tiff_libs_private_list "") # cmake list
  set(tiff_requires_private "") # cmake string
  
- if(ZIP_SUPPORT)
+-if(ZIP_SUPPORT)
 -  target_link_libraries(tiff PRIVATE ZLIB::ZLIB)
 -  string(APPEND tiff_requires_private " zlib")
++if(ZLIB_SUPPORT)
 +  target_link_libraries(${PROJECT_NAME} PRIVATE zlib::zlib)
 +  string(APPEND tiff_requires_private " zlib::zlib")
  endif()
- if(ZIP_SUPPORT AND LIBDEFLATE_SUPPORT)
-   target_link_libraries(tiff PRIVATE Deflate::Deflate)
-@@ -173,20 +173,23 @@ if(LERC_SUPPORT)
+-if(ZIP_SUPPORT AND LIBDEFLATE_SUPPORT)
+-  target_link_libraries(tiff PRIVATE Deflate::Deflate)
+-  if(Deflate_VERSION_STRING VERSION_GREATER_EQUAL "1.9")
+-    string(APPEND tiff_requires_private " libdeflate")
+-  else()
+-    list(APPEND tiff_libs_private_list "${Deflate_LIBRARY}")
+-  endif()
++if(ZLIB_SUPPORT AND LIBDEFLATE_SUPPORT)
++  target_link_libraries(tiff PRIVATE deflate::deflate)
++  string(APPEND tiff_requires_private " deflate::deflate")
+ endif()
+ if(JPEG_SUPPORT)
+-  target_link_libraries(tiff PRIVATE JPEG::JPEG)
+-  string(APPEND tiff_requires_private " libjpeg")
+-  if(JPEG_DUAL_MODE_8_12 AND NOT HAVE_JPEGTURBO_DUAL_MODE_8_12)
+-    target_include_directories(tiff PRIVATE ${JPEG12_INCLUDE_DIR})
+-    target_link_libraries(tiff PRIVATE ${JPEG12_LIBRARIES})
+-  endif()
++  target_link_libraries(tiff PRIVATE jpeg-turbo::jpeg)
++  string(APPEND tiff_requires_private " jpeg-turbo::jpeg")
+ endif()
+ if(JBIG_SUPPORT)
+   target_link_libraries(tiff PRIVATE JBIG::JBIG)
+@@ -171,20 +163,23 @@ if(LERC_SUPPORT)
    endif()
  endif()
  if(LZMA_SUPPORT)
 -  target_link_libraries(tiff PRIVATE liblzma::liblzma)
-+  target_link_libraries(${PROJECT_NAME} PRIVATE xz::lzma)
-   string(APPEND tiff_requires_private " liblzma")
+-  string(APPEND tiff_requires_private " liblzma")
++  target_link_libraries(tiff PRIVATE xz::lzma)
++  string(APPEND tiff_requires_private " xz::lzma")
  endif()
  if(ZSTD_SUPPORT)
 -  target_link_libraries(tiff PRIVATE ZSTD::ZSTD)
-+  target_link_libraries(${PROJECT_NAME}
-+      PRIVATE
-+          zstd::zstd
-+  )
-   string(APPEND tiff_requires_private " libzstd")
+-  string(APPEND tiff_requires_private " libzstd")
++  target_link_libraries(${PROJECT_NAME} PRIVATE zstd::zstd)
++  string(APPEND tiff_requires_private " zstd::zstd")
  endif()
  if(WEBP_SUPPORT)
    target_link_libraries(tiff PRIVATE WebP::webp)
-   string(APPEND tiff_requires_private " libwebp")
+-  string(APPEND tiff_requires_private " libwebp")
++  string(APPEND tiff_requires_private " WebP::webp")
  endif()
 -if(CMath_LIBRARY)
--  target_link_libraries(tiff PRIVATE CMath::CMath)
--  list(APPEND tiff_libs_private_list "${CMath_LIBRARY}")
+-  target_link_libraries(tiff PRIVATE ${CMath_LIBRARIES})
+-  list(APPEND tiff_libs_private_list "${CMath_LIBRARIES}")
 +if(MATH_LIBRARY)
-+  target_link_libraries(tiff PRIVATE ${MATH_LIBRARY})
-+  list(APPEND tiff_libs_private_list "${MATH_LIBRARY}")
++  target_link_libraries(tiff
++      PRIVATE
++          m # ${MATH_LIBRARY} expands to local path on the build host
++  )
++  list(APPEND tiff_libs_private_list "m")
  endif()
  
  set(tiff_libs_private_list "${tiff_libs_private_list}" PARENT_SCOPE)
-@@ -206,32 +209,43 @@ if(HAVE_LD_VERSION_SCRIPT)
- endif()
+@@ -236,33 +231,44 @@ endmacro()
+ set_framework_properties(tiff tiff_public_HEADERS)
  
  if(tiff-install)
 -  export(TARGETS tiff NAMESPACE TIFF:: FILE "${CMAKE_CURRENT_BINARY_DIR}/libtiffTargets.cmake")
 -  install(TARGETS tiff EXPORT TiffTargets
 -          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 -          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
--          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-+  include(CMakePackageConfigHelpers)
- 
+-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-          FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+-
 -  install(FILES ${tiff_public_HEADERS}
 -          DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-+  set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${tiff_public_HEADERS}")
- 
+-
 -  set(TIFF_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/tiff)
 -  install(EXPORT TiffTargets
--          FILE TiffTargets.cmake
+-          FILE tiff-targets.cmake
 -          NAMESPACE TIFF::
 -          DESTINATION ${TIFF_CONFIGDIR}
++  include(CMakePackageConfigHelpers)
++
++  set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${tiff_public_HEADERS}")
++
 +  # install the target and create export-set
 +  install(TARGETS ${PROJECT_NAME}
 +      EXPORT ${PROJECT_NAME}Targets
@@ -301,7 +432,7 @@ index a8aa0c3..03e8809 100644
 +      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiff
 +      #INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
    )
--
+ 
 -  include(CMakePackageConfigHelpers)
 +  # generate and install export file
 +  install(EXPORT "${PROJECT_NAME}Targets"
@@ -311,14 +442,14 @@ index a8aa0c3..03e8809 100644
 +  )
 +  # generate the version file for the config file
    write_basic_package_version_file(
--    TiffConfigVersion.cmake
+-    tiff-config-version.cmake
 -    VERSION ${LIBTIFF_VERSION}
 -    COMPATIBILITY SameMajorVersion)
--  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TiffConfigVersion.cmake DESTINATION ${TIFF_CONFIGDIR})
+-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tiff-config-version.cmake DESTINATION ${TIFF_CONFIGDIR})
 -
--  configure_file(${PROJECT_SOURCE_DIR}/cmake/TiffConfig.cmake.in
--                 ${CMAKE_CURRENT_BINARY_DIR}/TiffConfig.cmake @ONLY)
--  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TiffConfig.cmake DESTINATION ${TIFF_CONFIGDIR})
+-  configure_file(${PROJECT_SOURCE_DIR}/cmake/tiff-config.cmake.in
+-                 ${CMAKE_CURRENT_BINARY_DIR}/tiff-config.cmake @ONLY)
+-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tiff-config.cmake DESTINATION ${TIFF_CONFIGDIR})
 +      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
 +      VERSION ${LIBTIFF_VERSION}
 +      COMPATIBILITY SameMajorVersion
@@ -338,24 +469,45 @@ index a8aa0c3..03e8809 100644
  endif()
  
  if(CXX_SUPPORT)
+diff --git a/libtiff/tif_jpeg.c b/libtiff/tif_jpeg.c
+index b9a85cb..c462cdf 100644
+--- a/libtiff/tif_jpeg.c
++++ b/libtiff/tif_jpeg.c
+@@ -70,8 +70,8 @@ int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
+                       int scheme, int is_encode);
+ int TIFFJPEGIsFullStripRequired_12(TIFF *tif);
+ 
+-#include "jerror.h"
+-#include "jpeglib.h"
++#include <jpeg/jerror.h>
++#include <jpeg/jpeglib.h>
+ 
+ /* Do optional compile-time version check */
+ #if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_PATH)
 diff --git a/libtiff/tif_lerc.c b/libtiff/tif_lerc.c
-index d57b1d2..8cf0569 100644
+index 0466cab..f818d73 100644
 --- a/libtiff/tif_lerc.c
 +++ b/libtiff/tif_lerc.c
-@@ -32,9 +32,9 @@
+@@ -32,14 +32,14 @@
   */
  
  #include "Lerc_c_api.h"
 -#include "zlib.h"
 +#include <zlib/zlib.h>
+ #include <math.h>
  #ifdef ZSTD_SUPPORT
 -#include "zstd.h"
 +#include <zstd/zstd.h>
  #endif
  
  #if LIBDEFLATE_SUPPORT
+-#include "libdeflate.h"
++#include <deflate/libdeflate.h>
+ #endif
+ #define LIBDEFLATE_MAX_COMPRESSION_LEVEL 12
+ 
 diff --git a/libtiff/tif_lzma.c b/libtiff/tif_lzma.c
-index db1c8b6..4e9e5e1 100644
+index 7763f61..98f3850 100644
 --- a/libtiff/tif_lzma.c
 +++ b/libtiff/tif_lzma.c
 @@ -33,7 +33,7 @@
@@ -367,8 +519,23 @@ index db1c8b6..4e9e5e1 100644
  #include "tif_predict.h"
  
  #include <stdio.h>
+diff --git a/libtiff/tif_ojpeg.c b/libtiff/tif_ojpeg.c
+index e62ec9e..584271e 100644
+--- a/libtiff/tif_ojpeg.c
++++ b/libtiff/tif_ojpeg.c
+@@ -203,8 +203,8 @@ static const TIFFField ojpegFields[] = {
+ #include <setjmp.h>
+ #endif
+ 
+-#include "jerror.h"
+-#include "jpeglib.h"
++#include <jpeg/jerror.h>
++#include <jpeg/jpeglib.h>
+ 
+ typedef struct jpeg_source_mgr tiff_ojpeg_source_mgr;
+ 
 diff --git a/libtiff/tif_pixarlog.c b/libtiff/tif_pixarlog.c
-index 56cf416..82eedc1 100644
+index fa267df..b661059 100644
 --- a/libtiff/tif_pixarlog.c
 +++ b/libtiff/tif_pixarlog.c
 @@ -88,7 +88,7 @@
@@ -381,10 +548,10 @@ index 56cf416..82eedc1 100644
  #include <math.h>
  #include <stdio.h>
 diff --git a/libtiff/tif_zip.c b/libtiff/tif_zip.c
-index 2a2a1d7..efdd18e 100644
+index 4081e7f..39320ee 100644
 --- a/libtiff/tif_zip.c
 +++ b/libtiff/tif_zip.c
-@@ -38,7 +38,7 @@
+@@ -38,10 +38,10 @@
   * For scanline access, zlib will be sued as a fallback.
   */
  #include "tif_predict.h"
@@ -392,9 +559,13 @@ index 2a2a1d7..efdd18e 100644
 +#include <zlib/zlib.h>
  
  #if LIBDEFLATE_SUPPORT
- #include "libdeflate.h"
+-#include "libdeflate.h"
++#include <deflate/libdeflate.h>
+ #endif
+ #define LIBDEFLATE_MAX_COMPRESSION_LEVEL 12
+ 
 diff --git a/libtiff/tif_zstd.c b/libtiff/tif_zstd.c
-index fc73ce9..9b5e6d4 100644
+index 9a0b969..b76284e 100644
 --- a/libtiff/tif_zstd.c
 +++ b/libtiff/tif_zstd.c
 @@ -32,7 +32,7 @@
@@ -406,3 +577,93 @@ index fc73ce9..9b5e6d4 100644
  
  #include <stdio.h>
  
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index 59ae985..666706e 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -145,7 +145,7 @@ if(JPEG_SUPPORT)
+   add_executable(raw_decode ../placeholder.h)
+   target_sources(raw_decode PRIVATE raw_decode.c)
+   set_target_properties(raw_decode PROPERTIES LINKER_LANGUAGE CXX)
+-  target_link_libraries(raw_decode PRIVATE tiff tiff_port JPEG::JPEG)
++  target_link_libraries(raw_decode PRIVATE tiff tiff_port jpeg-turbo::jpeg)
+   list(APPEND simple_tests raw_decode)
+ endif()
+ 
+diff --git a/test/raw_decode.c b/test/raw_decode.c
+index 3683689..265ede9 100644
+--- a/test/raw_decode.c
++++ b/test/raw_decode.c
+@@ -40,7 +40,7 @@
+ 
+ #include "tiffio.h"
+ 
+-#include "jpeglib.h" /* Needed for JPEG_LIB_VERSION */
++#include <jpeg/jpeglib.h> /* Needed for JPEG_LIB_VERSION */
+ 
+ static unsigned char cluster_0[] = {0, 0, 2, 0, 138, 139};
+ static unsigned char cluster_64[] = {0, 0, 9, 6, 134, 119};
+diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
+index a3c8f04..3ff4ae1 100755
+--- a/tools/CMakeLists.txt
++++ b/tools/CMakeLists.txt
+@@ -58,7 +58,13 @@ target_link_libraries(ppm2tiff PRIVATE tiff tiff_port)
+ add_executable(raw2tiff ../placeholder.h)
+ target_sources(raw2tiff PRIVATE raw2tiff.c ${MSVC_RESOURCE_FILE})
+ set_target_properties(raw2tiff PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(raw2tiff PRIVATE tiff tiff_port ${CMath_LIBRARIES})
++target_link_libraries(raw2tiff PRIVATE tiff tiff_port)
++if(MATH_LIBRARY)
++  target_link_libraries(raw2tiff
++      PRIVATE
++          m # ${MATH_LIBRARY} expands to local path on the build host
++  )
++endif()
+ 
+ add_executable(rgb2ycbcr ../placeholder.h)
+ target_sources(rgb2ycbcr PRIVATE rgb2ycbcr.c ${MSVC_RESOURCE_FILE})
+@@ -68,7 +74,13 @@ target_link_libraries(rgb2ycbcr PRIVATE tiff tiff_port)
+ add_executable(thumbnail ../placeholder.h)
+ target_sources(thumbnail PRIVATE thumbnail.c ${MSVC_RESOURCE_FILE})
+ set_target_properties(thumbnail PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(thumbnail PRIVATE tiff tiff_port ${CMath_LIBRARIES})
++target_link_libraries(thumbnail PRIVATE tiff tiff_port)
++if(MATH_LIBRARY)
++  target_link_libraries(thumbnail
++      PRIVATE
++          m # ${MATH_LIBRARY} expands to local path on the build host
++  )
++endif()
+ 
+ add_executable(tiff2bw ../placeholder.h)
+ target_sources(tiff2bw PRIVATE tiff2bw.c ${MSVC_RESOURCE_FILE})
+@@ -83,7 +95,13 @@ target_link_libraries(tiff2pdf PRIVATE tiff tiff_port)
+ add_executable(tiff2ps ../placeholder.h)
+ target_sources(tiff2ps PRIVATE tiff2ps.c ${MSVC_RESOURCE_FILE})
+ set_target_properties(tiff2ps PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(tiff2ps PRIVATE tiff tiff_port ${CMath_LIBRARIES})
++target_link_libraries(tiff2ps PRIVATE tiff tiff_port)
++if(MATH_LIBRARY)
++  target_link_libraries(tiff2ps
++      PRIVATE
++          m # ${MATH_LIBRARY} expands to local path on the build host
++  )
++endif()
+ 
+ add_executable(tiff2rgba ../placeholder.h)
+ target_sources(tiff2rgba PRIVATE tiff2rgba.c ${MSVC_RESOURCE_FILE})
+@@ -103,7 +121,13 @@ target_link_libraries(tiffcp PRIVATE tiff tiff_port)
+ add_executable(tiffcrop ../placeholder.h)
+ target_sources(tiffcrop PRIVATE tiffcrop.c ${MSVC_RESOURCE_FILE})
+ set_target_properties(tiffcrop PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(tiffcrop PRIVATE tiff tiff_port ${CMath_LIBRARIES})
++target_link_libraries(tiffcrop PRIVATE tiff tiff_port)
++if(MATH_LIBRARY)
++  target_link_libraries(tiffcrop
++      PRIVATE
++          m # ${MATH_LIBRARY} expands to local path on the build host
++  )
++endif()
+ 
+ add_executable(tiffdither ../placeholder.h)
+ target_sources(tiffdither PRIVATE tiffdither.c ${MSVC_RESOURCE_FILE})

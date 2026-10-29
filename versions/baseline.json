@@ -1263,8 +1263,8 @@
         },
         "tiff":
         {
-            "baseline": "4.7.0",
-            "port-version": 1
+            "baseline": "4.7.2",
+            "port-version": 0
         },
         "tint":
         {

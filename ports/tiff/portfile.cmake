@@ -1,8 +1,10 @@
 vcpkg_download_distfile(
     ARCHIVE
-    URLS "https://download.osgeo.org/libtiff/tiff-${VERSION}.zip"
+    URLS
+        "https://download.osgeo.org/libtiff/tiff-${VERSION}.zip"
+        "https://files.decovar.dev/public/packages/tiff/v${VERSION}/src/tiff-${VERSION}.zip"
     FILENAME "tiff-${VERSION}.zip"
-    SHA512 e8a22cd152cc4b4d766c40b9f7c344a357fbc9a01d01ed1832ef39fc0f0d1264d30e815942702f4dfc83b5cb3666caf7a8e8a8350c0d01b045d51e1e5da2e111
+    SHA512 f0ebceaddf02a57994ce0981ebf017e653c714b768364e045c7c90946b43c08199c7801a1bb2dfe33be4ce944490d6c2ccdb3c091a1e65df8cbbc7c948924ce7
 )
 
 vcpkg_extract_source_archive(
@@ -19,10 +21,13 @@ file(COPY
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        cxx cxx
-        lzma lzma
-        zip zlib
-        zstandard zstd
+        cxx tiff-cxx
+        jpeg JPEG_SUPPORT
+        lzma LZMA_SUPPORT
+        webp WEBP_SUPPORT
+        zip LIBDEFLATE_SUPPORT
+        zip ZLIB_SUPPORT
+        zstandard ZSTD_SUPPORT
 )
 
 vcpkg_cmake_configure(
@@ -30,14 +35,13 @@ vcpkg_cmake_configure(
     OPTIONS
         ${FEATURE_OPTIONS}
         -Djbig=0
-        -Djpeg12=0
-        -Djpeg=0 # should be a feature
         -Dlerc=0
-        -Dlibdeflate=0 # should be a feature
         -Dtiff-docs=0
+        -Dtiff-framework=0
         -Dtiff-tests=0
         -Dtiff-tools=0
-        -Dwebp=0 # should be a feature
+    MAYBE_UNUSED_VARIABLES
+        tiff-framework
 )
 
 vcpkg_cmake_install()
