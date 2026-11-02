@@ -1008,7 +1008,7 @@
         },
         "icu":
         {
-            "baseline": "72.1.0",
+            "baseline": "78.3.0",
             "port-version": 0
         },
         "imgui-node-editor":

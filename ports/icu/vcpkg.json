@@ -1,10 +1,9 @@
 {
     "name": "icu",
-    "version": "72.1.0",
+    "version": "78.3.0",
     "description": "A mature, widely used set of libraries providing Unicode and globalization support for software applications",
     "homepage": "https://icu.unicode.org/",
     "license": "ICU",
-    "supports": "!uwp",
     "dependencies":
     [
         {
@@ -14,13 +13,26 @@
             [
                 "tools"
             ]
+        },
+        {
+            "name": "vcpkg-cmake-get-vars",
+            "host": true
+        },
+        {
+            "name": "vcpkg-make",
+            "host": true
         }
     ],
     "features":
     {
+        "data":
+        {
+            "description": "Full ICU data library, required for collation, charset conversion, break iteration, locale data and so on. Without it the data library is the ICU stub, which is enough only for the functionality with compiled-in data, such as character properties and case mapping"
+        },
         "tools":
         {
-            "description": "Build tools"
+            "description": "Build tools",
+            "supports": "!uwp"
         }
     }
 }
