@@ -253,7 +253,7 @@ index a2ab32b933..70707989fa 100644
 +    endif()
 +endif()
 diff --git a/cmake/helpers/CheckDependentLibrariesJpeg.cmake b/cmake/helpers/CheckDependentLibrariesJpeg.cmake
-index 8227c85fdd..d9a44edb3d 100644
+index 8227c85fdd..3fb40fa4bb 100644
 --- a/cmake/helpers/CheckDependentLibrariesJpeg.cmake
 +++ b/cmake/helpers/CheckDependentLibrariesJpeg.cmake
 @@ -1,17 +1,7 @@
@@ -285,7 +285,7 @@ index 8227c85fdd..d9a44edb3d 100644
 -  set(CMAKE_REQUIRED_INCLUDES "${JPEG_INCLUDE_DIRS}")
 -  set(CMAKE_REQUIRED_LIBRARIES "${JPEG_LIBRARIES}")
 +  set(CMAKE_REQUIRED_INCLUDES "${jpeg-turbo_DIR}/../../include")
-+  set(CMAKE_REQUIRED_LIBRARIES jpeg-turbo::turbojpeg)
++  set(CMAKE_REQUIRED_LIBRARIES jpeg-turbo::jpeg)
    check_c_source_compiles(
        "
        #include <stddef.h>
@@ -414,7 +414,7 @@ index d531229bb5..b3b25b0614 100644
  
  if (GDAL_ENABLE_DRIVER_EEDA_PLUGIN)
 diff --git a/frmts/georaster/CMakeLists.txt b/frmts/georaster/CMakeLists.txt
-index b1072b227a..7012e31037 100644
+index b1072b227a..cf065e6097 100644
 --- a/frmts/georaster/CMakeLists.txt
 +++ b/frmts/georaster/CMakeLists.txt
 @@ -52,11 +52,11 @@ endif ()
@@ -422,7 +422,7 @@ index b1072b227a..7012e31037 100644
  # that contains libjpeg 9e
  if (GDAL_ENABLE_DRIVER_JPEG AND (NOT GDAL_USE_JPEG_INTERNAL))
 -  gdal_target_link_libraries(gdal_GEOR PRIVATE JPEG::JPEG)
-+  gdal_target_link_libraries(gdal_GEOR PRIVATE jpeg-turbo::turbojpeg)
++  gdal_target_link_libraries(gdal_GEOR PRIVATE jpeg-turbo::jpeg)
  endif ()
  
  gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)
@@ -499,7 +499,7 @@ index 2e49243d21..2e151c54c4 100644
  
  struct png_stream {
 diff --git a/frmts/gtiff/CMakeLists.txt b/frmts/gtiff/CMakeLists.txt
-index 7171c951f6..7fd3b4f26d 100644
+index 7171c951f6..0b291edb3c 100644
 --- a/frmts/gtiff/CMakeLists.txt
 +++ b/frmts/gtiff/CMakeLists.txt
 @@ -84,18 +84,18 @@ endif ()
@@ -507,7 +507,7 @@ index 7171c951f6..7fd3b4f26d 100644
  # triggered by libtiff, that contains libjpeg 9e
  if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
 -  gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
-+  gdal_target_link_libraries(gdal_GTIFF PRIVATE jpeg-turbo::turbojpeg)
++  gdal_target_link_libraries(gdal_GTIFF PRIVATE jpeg-turbo::jpeg)
  endif ()
  
  gdal_target_link_libraries(gdal_GTIFF PRIVATE PROJ::proj)
@@ -538,7 +538,7 @@ index 7171c951f6..7fd3b4f26d 100644
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libjpeg>)
        else ()
 -        target_link_libraries(generate_quant_table_md5sum PRIVATE JPEG::JPEG)
-+        target_link_libraries(generate_quant_table_md5sum PRIVATE jpeg-turbo::turbojpeg)
++        target_link_libraries(generate_quant_table_md5sum PRIVATE jpeg-turbo::jpeg)
        endif ()
        if (GDAL_USE_JPEG12_INTERNAL)
          target_sources(generate_quant_table_md5sum PRIVATE $<TARGET_OBJECTS:libjpeg12>)
@@ -898,7 +898,7 @@ index bec6a90dcc..9fdc7d9496 100644
  
  #include <cmath>
 diff --git a/frmts/jpeg/CMakeLists.txt b/frmts/jpeg/CMakeLists.txt
-index 06a0137fef..c646ba4553 100644
+index 06a0137fef..4ca53dd9c4 100644
 --- a/frmts/jpeg/CMakeLists.txt
 +++ b/frmts/jpeg/CMakeLists.txt
 @@ -8,8 +8,8 @@ add_gdal_driver(
@@ -907,8 +907,8 @@ index 06a0137fef..c646ba4553 100644
  if(TARGET gdal_JPEG_core)
 -    target_include_directories(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_INCLUDE_DIRECTORIES>)
 -    target_compile_definitions(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_COMPILE_DEFINITIONS>)
-+    target_include_directories(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:jpeg-turbo::turbojpeg,INTERFACE_INCLUDE_DIRECTORIES>)
-+    target_compile_definitions(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:jpeg-turbo::turbojpeg,INTERFACE_COMPILE_DEFINITIONS>)
++    target_include_directories(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:jpeg-turbo::jpeg,INTERFACE_INCLUDE_DIRECTORIES>)
++    target_compile_definitions(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:jpeg-turbo::jpeg,INTERFACE_COMPILE_DEFINITIONS>)
      if (HAVE_JPEGTURBO_DUAL_MODE_8_12)
          target_compile_definitions(gdal_JPEG_core PRIVATE JPEG_DUAL_MODE_8_12 HAVE_JPEGTURBO_DUAL_MODE_8_12)
      endif()
@@ -917,7 +917,7 @@ index 06a0137fef..c646ba4553 100644
  # that contains libjpeg 9e
  if (NOT GDAL_USE_JPEG_INTERNAL)
 -  gdal_target_link_libraries(gdal_JPEG PRIVATE JPEG::JPEG)
-+  gdal_target_link_libraries(gdal_JPEG PRIVATE jpeg-turbo::turbojpeg)
++  gdal_target_link_libraries(gdal_JPEG PRIVATE jpeg-turbo::jpeg)
    if (HAVE_JPEGTURBO_DUAL_MODE_8_12 AND NOT GDAL_USE_JPEG12_INTERNAL)
      target_sources(gdal_JPEG PRIVATE jpgdataset_12.cpp vsidataio_12.cpp)
      target_compile_definitions(gdal_JPEG PRIVATE JPEG_DUAL_MODE_8_12 HAVE_JPEGTURBO_DUAL_MODE_8_12)
@@ -1043,7 +1043,7 @@ index b6e120f3b1..0d0450941a 100644
  
  #include <math.h>
 diff --git a/frmts/mrf/CMakeLists.txt b/frmts/mrf/CMakeLists.txt
-index fac692162e..93b3b582ed 100644
+index fac692162e..cba6ee945f 100644
 --- a/frmts/mrf/CMakeLists.txt
 +++ b/frmts/mrf/CMakeLists.txt
 @@ -85,15 +85,15 @@ endif ()
@@ -1051,7 +1051,7 @@ index fac692162e..93b3b582ed 100644
  # triggered by libtiff, that contains libjpeg 9e
  if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
 -  gdal_target_link_libraries(gdal_MRF PRIVATE JPEG::JPEG)
-+  gdal_target_link_libraries(gdal_MRF PRIVATE jpeg-turbo::turbojpeg)
++  gdal_target_link_libraries(gdal_MRF PRIVATE jpeg-turbo::jpeg)
  endif ()
  
  if (GDAL_USE_PNG AND NOT GDAL_USE_PNG_INTERNAL)
@@ -1175,7 +1175,7 @@ index 5f068b86cf..d2ab48c6af 100644
 +  gdal_target_link_libraries(gdal_MrSID PRIVATE geotiff)
  endif ()
 diff --git a/frmts/nitf/CMakeLists.txt b/frmts/nitf/CMakeLists.txt
-index a9eeb158fd..b8d49af56c 100644
+index a9eeb158fd..8901468245 100644
 --- a/frmts/nitf/CMakeLists.txt
 +++ b/frmts/nitf/CMakeLists.txt
 @@ -87,7 +87,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
@@ -1183,7 +1183,7 @@ index a9eeb158fd..b8d49af56c 100644
    # triggered by libtiff, that contains libjpeg 9e
    if (NOT GDAL_USE_JPEG_INTERNAL)
 -    gdal_target_link_libraries(gdal_NITF PRIVATE JPEG::JPEG)
-+    gdal_target_link_libraries(gdal_NITF PRIVATE jpeg-turbo::turbojpeg)
++    gdal_target_link_libraries(gdal_NITF PRIVATE jpeg-turbo::jpeg)
    endif ()
    if (GDAL_USE_JPEG12_INTERNAL)
      target_compile_definitions(gdal_NITF PRIVATE -DJPEG_DUAL_MODE_8_12)
@@ -1210,7 +1210,7 @@ index a9eeb158fd..b8d49af56c 100644
          target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libjpeg>)
        else ()
 -        target_link_libraries(nitfdump PRIVATE JPEG::JPEG)
-+        target_link_libraries(nitfdump PRIVATE jpeg-turbo::turbojpeg)
++        target_link_libraries(nitfdump PRIVATE jpeg-turbo::jpeg)
        endif ()
        if (GDAL_USE_JPEG12_INTERNAL)
          target_sources(nitfdump PRIVATE $<TARGET_OBJECTS:libjpeg12>)
@@ -1253,7 +1253,7 @@ index b6aacb1a85..a1d4631c77 100644
  CPL_C_END
  
 diff --git a/frmts/pcidsk/CMakeLists.txt b/frmts/pcidsk/CMakeLists.txt
-index a799529bdb..81edcc6e2e 100644
+index a799529bdb..393cb68f51 100644
 --- a/frmts/pcidsk/CMakeLists.txt
 +++ b/frmts/pcidsk/CMakeLists.txt
 @@ -27,5 +27,5 @@ add_subdirectory(sdk)
@@ -1261,7 +1261,7 @@ index a799529bdb..81edcc6e2e 100644
  
  if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
 -  gdal_target_link_libraries(gdal_PCIDSK PRIVATE JPEG::JPEG)
-+  gdal_target_link_libraries(gdal_PCIDSK PRIVATE jpeg-turbo::turbojpeg)
++  gdal_target_link_libraries(gdal_PCIDSK PRIVATE jpeg-turbo::jpeg)
  endif ()
 diff --git a/frmts/pcidsk/sdk/core/libjpeg_io.cpp b/frmts/pcidsk/sdk/core/libjpeg_io.cpp
 index 004a31ddf9..d78dc4415a 100644
@@ -1277,7 +1277,7 @@ index 004a31ddf9..d78dc4415a 100644
  
  static void _DummyMgrMethod( j_compress_ptr /*pUnused*/ ) {}
 diff --git a/frmts/pdf/CMakeLists.txt b/frmts/pdf/CMakeLists.txt
-index b78591cc99..704c26a222 100644
+index b78591cc99..c43805233b 100644
 --- a/frmts/pdf/CMakeLists.txt
 +++ b/frmts/pdf/CMakeLists.txt
 @@ -104,8 +104,8 @@ if (GDAL_USE_PDFIUM)
@@ -1286,7 +1286,7 @@ index b78591cc99..704c26a222 100644
        PRIVATE
 -      JPEG::JPEG
 -      PNG::PNG
-+      jpeg-turbo::turbojpeg
++      jpeg-turbo::jpeg
 +      png
        ${OPENJPEG_LIBRARIES}
        Threads::Threads

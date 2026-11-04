@@ -119,6 +119,7 @@ vcpkg_cmake_configure(
         -DGDAL_USE_OPENDRIVE=0
         -DGDAL_USE_OPENEXR=0
         -DGDAL_USE_OPENJPEG=0
+        -DGDAL_USE_OPENMP=0
         -DGDAL_USE_OPENSSL=0
         -DGDAL_USE_ORACLE=0
         -DGDAL_USE_PARQUET=0

@@ -1,6 +1,7 @@
 {
     "name": "gdal",
     "version": "3.13.1",
+    "port-version": 1,
     "description": "Translator library for raster and vector geospatial data formats",
     "homepage": "https://gdal.org/",
     "license": null,
@@ -19,7 +20,10 @@
         "json-c",
         "png",
         "proj",
-        "tiff",
+        {
+            "name": "tiff",
+            "version>=": "4.7.2"
+        },
         {
             "name": "zlib",
             "version>=": "1.3.2"
