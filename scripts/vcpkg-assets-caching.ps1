@@ -16,6 +16,12 @@ $contentype = "application/octet-stream"
 #$headers = @{ Authorization = "Bearer $token" }
 #$contentype = "multipart/form-data"
 
+# how long to wait for the cache to respond, otherwise an unreachable cache (such as
+# when you are outside of the local network) blocks every asset for the OS-level
+# TCP timeout. It only limits the time until response headers, so it won't cut off
+# large downloads
+$cacheTimeoutSec = 10
+
 $filename = Split-Path -Path $Destination -Leaf
 $correctFilename = $filename -replace "\.\d+\.part$", ""
 $cacheurl = "$baseurl/$correctFilename"
@@ -67,36 +73,39 @@ function Verify-SHA512
     return $hashesMatch
 }
 
+# only upload to the cache if it is reachable and doesn't have this asset yet
+$uploadToCache = $false
+
 try
 {
     Write-Output "Downloading $cacheurl"
-    $response = Invoke-WebRequest -Uri $cacheurl -Headers $headers -OutFile $Destination -ContentType $contentype
+    $response = Invoke-WebRequest -Uri $cacheurl -Headers $headers -OutFile $Destination -ContentType $contentype -TimeoutSec $cacheTimeoutSec
 }
 catch
 {
+    # failing to get the asset from the cache is not fatal, as there is still the original URL,
+    # but whatever might have been partially downloaded needs to be deleted
+    if (Test-Path $Destination)
+    {
+        $out = Remove-Item -Path $Destination
+    }
+
     if ($_.Exception.Response)
     {
         $statusCode = $_.Exception.Response.StatusCode.Value__
         if ($statusCode -eq 404)
         {
             Write-Warning "[$correctFilename] is not available in cache at $baseurl"
-            if (Test-Path $Destination)
-            {
-                $out = Remove-Item -Path $Destination
-            }
+            $uploadToCache = $true
         }
         else
         {
-            $ProgressPreference = $ProgressPreferenceOriginal
-            Write-Error "Download failed with status code: $statusCode"
-            exit 1
+            Write-Warning "Cache download failed with status code: $statusCode"
         }
     }
-    else
+    else # no response at all (timeout, refused connection, DNS/TLS failure)
     {
-        $ProgressPreference = $ProgressPreferenceOriginal
-        Write-Error "Download failed with error: $_"
-        exit 1
+        Write-Warning "Cache at $baseurl is not available: $_"
     }
 }
 
@@ -188,26 +197,31 @@ if (-not (Test-Path $Destination))
         exit 2
     }
 
-    Write-Output "Uploading to $cacheurl"
-    try
+    if (-not $uploadToCache)
     {
-        $response = Invoke-WebRequest -Uri $cacheurl -Method Put -Headers $headers -InFile $Destination -ContentType $contentype
+        Write-Warning "Not uploading [$correctFilename] to cache, as the cache did not respond properly"
     }
-    catch
+    else
     {
-        $ProgressPreference = $ProgressPreferenceOriginal
-
-        if ($_.Exception.Response)
+        Write-Output "Uploading to $cacheurl"
+        # no -TimeoutSec here, because for uploads it limits the entire transfer
+        try
         {
-            $statusCode = $_.Exception.Response.StatusCode.Value__
-            Write-Error "Download failed with status code: $statusCode"
+            $response = Invoke-WebRequest -Uri $cacheurl -Method Put -Headers $headers -InFile $Destination -ContentType $contentype
         }
-        else
+        catch
         {
-            Write-Error "Upload failed with error: $_"
+            # the asset is already downloaded and verified, so failing to cache it shouldn't fail the build
+            if ($_.Exception.Response)
+            {
+                $statusCode = $_.Exception.Response.StatusCode.Value__
+                Write-Warning "Upload failed with status code: $statusCode"
+            }
+            else
+            {
+                Write-Warning "Upload failed with error: $_"
+            }
         }
-
-        exit 3
     }
 }
 
