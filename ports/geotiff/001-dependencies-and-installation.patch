@@ -277,7 +277,7 @@ index 0216ead..caa1e58 100644
  ################################
  Summary of build options:
 diff --git a/libgeotiff/bin/CMakeLists.txt b/libgeotiff/bin/CMakeLists.txt
-index 87957b1..18821c5 100644
+index 87957b1..ffe9b91 100644
 --- a/libgeotiff/bin/CMakeLists.txt
 +++ b/libgeotiff/bin/CMakeLists.txt
 @@ -23,14 +23,33 @@ MESSAGE(STATUS "Adding GeoTIFF utilities to build")
@@ -307,7 +307,7 @@ index 87957b1..18821c5 100644
 +endif()
 +
 +if(WITH_JPEG)
-+    target_link_libraries(geotifcp PRIVATE jpeg-turbo::turbojpeg)
++    target_link_libraries(geotifcp PRIVATE jpeg-turbo::jpeg)
 +endif()
 +
 +if(WITH_ZLIB)
