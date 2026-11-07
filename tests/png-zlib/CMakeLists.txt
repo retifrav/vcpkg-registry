@@ -56,7 +56,7 @@ find_package(png CONFIG REQUIRED)
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
-        zlib
+        zlib::zlib
         png
 )
 
