@@ -1383,7 +1383,7 @@
         },
         "zlib":
         {
-            "baseline": "1.3.2",
+            "baseline": "1.4.0",
             "port-version": 0
         },
         "zstd":

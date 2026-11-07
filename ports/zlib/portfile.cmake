@@ -1,7 +1,7 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:madler/zlib.git
-    REF da607da739fa6047df13e66a2af6b8bec7c2a498
+    REF 99623ef7097352da7993ba614161fd6a311e046e
     PATCHES
         001-single-target-and-installation.patch
 )
