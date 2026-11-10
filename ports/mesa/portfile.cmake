@@ -20,7 +20,6 @@ x_vcpkg_get_python_packages(
     PYTHON_VERSION "3"
     OUT_PYTHON_VAR "PYTHON3"
     PACKAGES
-        #setuptools
         packaging
         mako
         pyyaml # doesn't seem to be needed on Windows, but is needed on other platforms
@@ -28,45 +27,51 @@ x_vcpkg_get_python_packages(
 get_filename_component(PYTHON3_DIR "${PYTHON3}" DIRECTORY)
 vcpkg_add_to_path(PREPEND "${PYTHON3_DIR}")
 
-vcpkg_find_acquire_program(FLEX)
-get_filename_component(FLEX_DIR "${FLEX}" DIRECTORY)
-vcpkg_add_to_path(PREPEND "${FLEX_DIR}")
-vcpkg_find_acquire_program(BISON)
-get_filename_component(BISON_DIR "${BISON}" DIRECTORY)
-vcpkg_add_to_path(PREPEND "${BISON_DIR}")
+# flex and bison are required only for the GLSL compiler and the like, which Mesa builds
+# with OpenGL / OpenGL ES (or with Gallium drivers and some of the tools) - all that
+# originates in Mesa's `meson.build` at `needs_flex_bison`
+if("opengl" IN_LIST FEATURES OR "gles1" IN_LIST FEATURES OR "gles2" IN_LIST FEATURES)
+    vcpkg_find_acquire_program(FLEX)
+    get_filename_component(FLEX_DIR "${FLEX}" DIRECTORY)
+    vcpkg_add_to_path(PREPEND "${FLEX_DIR}")
+    vcpkg_find_acquire_program(BISON)
+    get_filename_component(BISON_DIR "${BISON}" DIRECTORY)
+    vcpkg_add_to_path(PREPEND "${BISON_DIR}")
 
-if(CMAKE_HOST_WIN32) # Windows hosts might already have win_flex and win_bison
-    if(NOT EXISTS "${FLEX_DIR}/flex${VCPKG_HOST_EXECUTABLE_SUFFIX}")
-        if(FLEX_DIR MATCHES "${DOWNLOADS}")
-            file(CREATE_LINK "${FLEX}" "${FLEX_DIR}/flex${VCPKG_HOST_EXECUTABLE_SUFFIX}")
-        else()
-            message(FATAL_ERROR "${PORT} requires flex being named flex on windows and not win_flex!\nThat can be solved by creating a simple link from win_flex to flex")
+    if(CMAKE_HOST_WIN32) # Windows hosts might already have win_flex and win_bison
+        if(NOT EXISTS "${FLEX_DIR}/flex${VCPKG_HOST_EXECUTABLE_SUFFIX}")
+            if(FLEX_DIR MATCHES "${DOWNLOADS}")
+                file(CREATE_LINK "${FLEX}" "${FLEX_DIR}/flex${VCPKG_HOST_EXECUTABLE_SUFFIX}")
+            else()
+                message(FATAL_ERROR "${PORT} requires flex being named flex on windows and not win_flex!\nThat can be solved by creating a simple link from win_flex to flex")
+            endif()
         endif()
-    endif()
-    if(NOT EXISTS "${BISON_DIR}/BISON${VCPKG_HOST_EXECUTABLE_SUFFIX}")
-        if(BISON_DIR MATCHES "${DOWNLOADS}")
-            file(CREATE_LINK "${BISON}" "${BISON_DIR}/bison${VCPKG_HOST_EXECUTABLE_SUFFIX}")
-        else()
-            message(FATAL_ERROR "${PORT} requires bison being named bison on windows and not win_bison!\nThat can be solved by creating a simple link from win_bison to bison")
+        if(NOT EXISTS "${BISON_DIR}/BISON${VCPKG_HOST_EXECUTABLE_SUFFIX}")
+            if(BISON_DIR MATCHES "${DOWNLOADS}")
+                file(CREATE_LINK "${BISON}" "${BISON_DIR}/bison${VCPKG_HOST_EXECUTABLE_SUFFIX}")
+            else()
+                message(FATAL_ERROR "${PORT} requires bison being named bison on windows and not win_bison!\nThat can be solved by creating a simple link from win_bison to bison")
+            endif()
         endif()
     endif()
 endif()
 
 # https://github.com/pal1000/mesa-dist-win
-#list(APPEND MESA_OPTIONS -Dauto_features=disabled)
+# Mesa enables every `auto` feature whose dependency it finds in the installed tree,
+# so the result would depend on whatever other ports happen to be installed
+list(APPEND MESA_OPTIONS -Dauto_features=disabled)
+# SPIRV-Tools is only used for disassembling shaders with `MESA_SPIRV_DEBUG=asm`,
+# but when found, it makes spirv_to_dxil reference spv* symbols, which consumers
+# then have to resolve
+list(APPEND MESA_OPTIONS -Dspirv-tools=disabled)
 list(APPEND MESA_OPTIONS -Dvalgrind=disabled)
 list(APPEND MESA_OPTIONS -Dshared-llvm=disabled)
 list(APPEND MESA_OPTIONS -Dcpp_rtti=true)
-
-# by default `*-drivers` seems to be set to 'auto', and that enables a lot of things,
-# including those (`llvmpipe`?) that require LLVM, which we might not want, and also
-# that would conflict with `-Dllvm=disabled`, so let's just disable all the drivers
-if(NOT "auto-configure-gallium-drivers" IN_LIST FEATURES)
-    list(APPEND MESA_OPTIONS -Dgallium-drivers=[])
-endif()
-if(NOT "auto-configure-vulkan-drivers" IN_LIST FEATURES)
-    list(APPEND MESA_OPTIONS -Dvulkan-drivers=[])
-endif()
+# this port only builds spirv-to-dxil at the moment, so it does not need gallium
+# or vulkan drivers. Mesa's default `gallium-drivers=['auto']` pulls in llvmpipe
+# on Windows, which requires LLVM and conflicts with `-Dllvm=disabled`
+list(APPEND MESA_OPTIONS -Dgallium-drivers=[])
+list(APPEND MESA_OPTIONS -Dvulkan-drivers=[])
 
 if("opengl" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Dopengl=true)
@@ -123,6 +128,12 @@ if("spirv-to-dxil" IN_LIST FEATURES)
 #     list(APPEND MESA_OPTIONS -Dspirv-to-dxil=false)
 endif()
 
+if("zlib" IN_LIST FEATURES)
+    list(APPEND MESA_OPTIONS -Dzlib=enabled)
+else()
+    list(APPEND MESA_OPTIONS -Dzlib=disabled)
+endif()
+
 if("zstd" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Dzstd=enabled)
 else()
@@ -150,6 +161,7 @@ vcpkg_configure_meson(
 )
 
 vcpkg_install_meson()
+
 vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE
@@ -214,9 +226,6 @@ if("spirv-to-dxil" IN_LIST FEATURES)
     else()
         # should also patch-in an option for not building it in the first place,
         # but it's Meson, so probably better not patch it too often
-        #
-        # also, that's probably not the best place to remove tools,
-        # because other Mesa components might have tools as well
         file(REMOVE_RECURSE
             "${CURRENT_PACKAGES_DIR}/bin"
             "${CURRENT_PACKAGES_DIR}/debug/bin"
