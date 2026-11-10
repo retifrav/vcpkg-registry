@@ -1101,6 +1101,11 @@
             "baseline": "2023.6.18",
             "port-version": 0
         },
+        "nghttp2":
+        {
+            "baseline": "1.70.0",
+            "port-version": 0
+        },
         "oculus-sdk":
         {
             "baseline": "1.64.0",
