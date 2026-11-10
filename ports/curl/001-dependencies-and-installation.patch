@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8e5383ac98..8ca43f630c 100644
+index 8e5383ac98..722b15976b 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -22,7 +22,7 @@
@@ -135,7 +135,7 @@ index 8e5383ac98..8ca43f630c 100644
  
    if(CURL_DEFAULT_SSL_BACKEND AND CURL_DEFAULT_SSL_BACKEND STREQUAL "wolfssl")
      set(_valid_default_ssl_backend TRUE)
-@@ -886,32 +886,35 @@ endif()
+@@ -886,32 +886,34 @@ endif()
  # Keep ZLIB detection after TLS detection,
  # and before calling curl_openssl_check_exists().
  
@@ -183,7 +183,6 @@ index 8e5383ac98..8ca43f630c 100644
 +    set(HAVE_BROTLI YES)
 +    list(APPEND CURL_LIBS
 +        brotlicommon
-+        brotlienc
 +        brotlidec
 +    )
 +endif()
@@ -197,7 +196,7 @@ index 8e5383ac98..8ca43f630c 100644
  endif()
  
  # Check function in an OpenSSL-like TLS backend.
-@@ -921,16 +924,16 @@ macro(curl_openssl_check_exists)
+@@ -921,16 +923,16 @@ macro(curl_openssl_check_exists)
      list(APPEND CMAKE_REQUIRED_LIBRARIES OpenSSL::SSL OpenSSL::Crypto)
      list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DOPENSSL_SUPPRESS_DEPRECATED")  # for SSL_CTX_set_srp_username deprecated since 3.0.0
      if(HAVE_LIBZ)
@@ -217,7 +216,25 @@ index 8e5383ac98..8ca43f630c 100644
      endif()
      list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DHAVE_UINTPTR_T")  # to pull in stdint.h (as of wolfSSL v5.5.4)
    endif()
-@@ -1799,7 +1802,7 @@ endif()
+@@ -1026,14 +1028,10 @@ if(USE_SSLS_EXPORT)
+   endif()
+ endif()
+ 
+-option(USE_NGHTTP2 "Use nghttp2 library" ON)
++option(USE_NGHTTP2 "Use nghttp2 library" NO)
+ if(USE_NGHTTP2)
+-  find_package(NGHTTP2)
+-  if(NGHTTP2_FOUND)
+-    list(APPEND CURL_LIBS CURL::nghttp2)
+-  else()
+-    set(USE_NGHTTP2 OFF)
+-  endif()
++    find_package(nghttp2 CONFIG REQUIRED)
++    list(APPEND CURL_LIBS nghttp2::nghttp2)
+ endif()
+ 
+ option(USE_NGTCP2 "Use ngtcp2 and nghttp3 libraries for HTTP/3 support" OFF)
+@@ -1799,7 +1797,7 @@ endif()
  # before dependencies detected via curl's custom Find modules, and breaks
  # linkers sensitive to lib order. There must be a better solution to this.
  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -226,7 +243,7 @@ index 8e5383ac98..8ca43f630c 100644
      if(TARGET "${_lib}")
        add_library(CURL::${_lib} INTERFACE IMPORTED)
        get_target_property(_libname "${_lib}" LOCATION)
-@@ -1854,14 +1857,6 @@ function(curl_transform_makefile_inc _input_file _output_file)
+@@ -1854,14 +1852,6 @@ function(curl_transform_makefile_inc _input_file _output_file)
    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_input_file}")
  endfunction()
  
@@ -241,7 +258,7 @@ index 8e5383ac98..8ca43f630c 100644
  option(BUILD_TESTING "Build tests" ON)
  if(BUILD_TESTING AND Perl_FOUND)
    set(CURL_BUILD_TESTING ON)
-@@ -2033,372 +2028,18 @@ if(CURL_DEFAULT_SSL_BACKEND)
+@@ -2033,372 +2023,19 @@ if(CURL_DEFAULT_SSL_BACKEND)
    message(STATUS "Default SSL backend: ${CURL_DEFAULT_SSL_BACKEND}")
  endif()
  
@@ -616,6 +633,7 @@ index 8e5383ac98..8ca43f630c 100644
 -  include(CPack)
 -endif()
 +set(PROJECT_INCLUDES_NAME_FOR_PACKAGE "${PROJECT_NAME_LOWER}")
++set(PROJECT_NAMESPACE_FOR_PACKAGE "${PROJECT_NAME_LOWER}")
 +set(CURL_PROJECT_NAME_BACKUP ${PROJECT_NAME})
 +set(PROJECT_NAME ${PROJECT_NAME_LOWER})
 +include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
@@ -624,7 +642,7 @@ index 8e5383ac98..8ca43f630c 100644
  # Save build info for test runner to pick up and log
  set(_cmake_sysroot "")
 diff --git a/lib/CMakeLists.txt b/lib/CMakeLists.txt
-index 0f842f0cc1..7e8c868155 100644
+index 0f842f0cc1..88b40824f5 100644
 --- a/lib/CMakeLists.txt
 +++ b/lib/CMakeLists.txt
 @@ -58,32 +58,6 @@ if(CURL_BUILD_TESTING)
@@ -682,13 +700,14 @@ index 0f842f0cc1..7e8c868155 100644
      POSITION_INDEPENDENT_CODE ON)
    if(CURL_HIDES_PRIVATE_SYMBOLS)
      set_property(TARGET ${LIB_SHARED} APPEND PROPERTY COMPILE_OPTIONS "${CURL_CFLAG_SYMBOLS_HIDE}")
-@@ -320,9 +291,6 @@ if(BUILD_SHARED_LIBS)
+@@ -320,9 +291,8 @@ if(BUILD_SHARED_LIBS)
    endif()
  endif()
  
 -add_library(${LIB_NAME} ALIAS ${LIB_SELECTED})
 -add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_SELECTED})
--
++add_library(${PROJECT_NAME_LOWER}::${LIB_NAME} ALIAS ${LIB_SELECTED})
+ 
  if(CURL_ENABLE_EXPORT_TARGET)
    if(NOT CURL_DISABLE_INSTALL AND BUILD_STATIC_LIBS)
      install(TARGETS ${LIB_STATIC}

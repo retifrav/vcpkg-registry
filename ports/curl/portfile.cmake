@@ -14,6 +14,14 @@ vcpkg_from_git(
         001-dependencies-and-installation.patch
 )
 
+# dependencies are supposed to be found via their CMake configs
+file(REMOVE
+    "${SOURCE_PATH}/CMake/FindBrotli.cmake"
+    "${SOURCE_PATH}/CMake/FindNGHTTP2.cmake"
+    "${SOURCE_PATH}/CMake/FindWolfSSL.cmake"
+    "${SOURCE_PATH}/CMake/FindZstd.cmake"
+)
+
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in" DESTINATION "${SOURCE_PATH}")
 file(COPY
     "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
@@ -24,6 +32,7 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         boringssl   HAVE_BORINGSSL
         brotli      CURL_BROTLI
+        http2       USE_NGHTTP2
         openssl     CURL_CA_FALLBACK
         openssl     CURL_USE_OPENSSL
         ssls-export USE_SSLS_EXPORT
@@ -91,6 +100,12 @@ vcpkg_cmake_configure(
         -DBUILD_STATIC_CURL=${CURL_STATIC}
         -DBUILD_STATIC_LIBS=${CURL_STATIC}
         -DBUILD_TESTING=0
+        # no build host path baked in. With `openssl`/`boringssl` the `CURL_CA_FALLBACK` defers to OpenSSL
+        # default paths at runtime, but other backends such as `wolfssl` have no fallback, so applications
+        # need to set either `CURLSSLOPT_NATIVE_CA` (`--ca-native` for the tool) or CURLOPT_CAINFO,
+        # otherwise every certificate verification fails
+        -DCURL_CA_BUNDLE=none
+        -DCURL_CA_PATH=none
         -DCURL_USE_LIBPSL=0 # should be a feature?
         -DCURL_USE_LIBSSH2=0 # should be a feature
         -DCURL_USE_LIBSSH=0 # should be a feature
@@ -100,7 +115,6 @@ vcpkg_cmake_configure(
         -DSHARE_LIB_OBJECT=0
         -DUSE_APPLE_IDN=0 # should be a feature?
         -DUSE_LIBIDN2=0 # should be a feature?
-        -DUSE_NGHTTP2=0 # should be a feature?
     MAYBE_UNUSED_VARIABLES
         HAVE_BORINGSSL
 )

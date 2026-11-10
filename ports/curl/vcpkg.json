@@ -1,7 +1,7 @@
 {
     "name": "curl",
     "version": "8.18.0",
-    "port-version": 2,
+    "port-version": 3,
     "description": "Library for transferring data with URL syntax",
     "homepage": "https://curl.se/",
     "license": "curl AND ISC AND BSD-3-Clause",
@@ -22,6 +22,7 @@
     ],
     "default-features":
     [
+        "brotli",
         "wolfssl",
         "zlib",
         "zstd"
@@ -42,6 +43,14 @@
             "dependencies":
             [
                 "brotli"
+            ]
+        },
+        "http2":
+        {
+            "description": "HTTP/2 support via nghttp2",
+            "dependencies":
+            [
+                "nghttp2"
             ]
         },
         "openssl":

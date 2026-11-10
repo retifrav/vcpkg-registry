@@ -6,6 +6,10 @@ if(@CURL_BROTLI@)
     find_dependency(brotli CONFIG REQUIRED)
 endif()
 
+if(@USE_NGHTTP2@)
+    find_dependency(nghttp2 CONFIG REQUIRED)
+endif()
+
 if(@CURL_USE_OPENSSL@)
     find_dependency(OpenSSL CONFIG REQUIRED)
 endif()
@@ -32,10 +36,6 @@ endif()
 #
 #if(@USE_SSH2@)
 #    find_dependency(ssh2 CONFIG REQUIRED)
-#endif()
-#
-#if(@USE_NGHTTP2@)
-#    find_dependency(NGHTTP2 CONFIG REQUIRED)
 #endif()
 #
 # ...
