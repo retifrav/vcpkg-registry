@@ -261,7 +261,7 @@ index 5753d319..c37f6da5 100644
  if(CURL_ENABLED)
    target_compile_definitions(proj PRIVATE -DCURL_ENABLED)
 -  target_link_libraries(proj PRIVATE CURL::libcurl)
-+  target_link_libraries(proj PRIVATE curl)
++  target_link_libraries(proj PRIVATE curl::curl)
    target_link_libraries(proj
      PRIVATE
        $<$<CXX_COMPILER_ID:MSVC>:ws2_32>
@@ -348,7 +348,7 @@ index 09d0c5ef..5ddd248b 100644
  if(CURL_ENABLED)
    target_compile_definitions(test_network PRIVATE -DCURL_ENABLED)
 -  target_link_libraries(test_network PRIVATE CURL::libcurl)
-+  target_link_libraries(test_network PRIVATE curl)
++  target_link_libraries(test_network PRIVATE curl::curl)
  endif()
  target_link_libraries(test_network
    PRIVATE GTest::gtest

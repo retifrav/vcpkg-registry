@@ -1159,7 +1159,7 @@
         "proj":
         {
             "baseline": "9.7.0",
-            "port-version": 0
+            "port-version": 1
         },
         "pybind11":
         {

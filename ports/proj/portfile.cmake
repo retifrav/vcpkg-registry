@@ -24,7 +24,6 @@ if("embed-resource-files" IN_LIST FEATURES)
     set(PROJ_EMBED_RESOURCE_FILES 1)
 endif()
 
-
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS

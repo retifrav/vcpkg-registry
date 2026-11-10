@@ -1,6 +1,7 @@
 {
     "name": "proj",
     "version": "9.7.0",
+    "port-version": 1,
     "description": "Cartographic projections and coordinate transformations",
     "homepage": "https://proj.org/",
     "license": "MIT",
@@ -36,7 +37,10 @@
             "description": "Enable network capability with cURL",
             "dependencies":
             [
-                "curl"
+                {
+                    "name": "curl",
+                    "version>=": "8.18.0#3"
+                }
             ]
         },
         "embed-resource-files":
