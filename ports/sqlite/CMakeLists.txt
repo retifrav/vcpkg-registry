@@ -17,7 +17,7 @@ option(SQLITE_ENABLE_FTS3            "Enables full text searches version 3"     
 option(SQLITE_ENABLE_FTS4            "Enables full text searches version 3 and 4"      0)
 option(SQLITE_ENABLE_FTS5            "Enables full text searches version 5"            0)
 option(SQLITE_ENABLE_GEOPOLY         "Enables Geopoly extention"                       0)
-option(SQLITE_ENABLE_ICU             "Enables international components for Unicode"    0)
+#option(SQLITE_ENABLE_ICU             "Enables international components for Unicode"    0)
 option(SQLITE_ENABLE_MATH_FUNCTIONS  "Enables built-in SQL math functions"             1)
 option(SQLITE_ENABLE_RBU             "Enables resumable bulk update extension"         0)
 option(SQLITE_ENABLE_RTREE           "Enables R*TRee index extension"                  0)
@@ -39,12 +39,16 @@ add_library(${PROJECT_NAME})
 if(BUILD_SHARED_LIBS)
     if(WIN32)
         target_compile_definitions(${PROJECT_NAME}
-           PUBLIC
+           PRIVATE
                "SQLITE_API=__declspec(dllexport)"
+           # in-tree consumers (the CLI tool) need to import, same as SQLite's own Makefile.msc does,
+           # and for installed consumers the portfile sets that as the default in sqlite3.h
+           INTERFACE
+               "$<BUILD_INTERFACE:SQLITE_API=__declspec(dllimport)>"
         )
     else()
         target_compile_definitions(${PROJECT_NAME}
-           PUBLIC
+           PRIVATE
                "SQLITE_API=__attribute__((visibility(\"default\")))"
         )
     endif()
@@ -96,6 +100,8 @@ target_include_directories(${PROJECT_NAME}
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
 # taken from https://github.com/azadkuh/sqlite-amalgamation/blob/master/CMakeLists.txt
+#
+# also add `$<$<BOOL:${SQLITE_ENABLE_ICU}>:SQLITE_ENABLE_ICU>` when this feature will be actually used
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:
         $<$<BOOL:${SQLITE_ENABLE_COLUMN_METADATA}>:SQLITE_ENABLE_COLUMN_METADATA>
@@ -104,7 +110,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
         $<$<BOOL:${SQLITE_ENABLE_FTS4}>:SQLITE_ENABLE_FTS4>
         $<$<BOOL:${SQLITE_ENABLE_FTS5}>:SQLITE_ENABLE_FTS5>
         $<$<BOOL:${SQLITE_ENABLE_GEOPOLY}>:SQLITE_ENABLE_GEOPOLY>
-        $<$<BOOL:${SQLITE_ENABLE_ICU}>:SQLITE_ENABLE_ICU>
         $<$<BOOL:${SQLITE_ENABLE_MATH_FUNCTIONS}>:SQLITE_ENABLE_MATH_FUNCTIONS>
         $<$<BOOL:${SQLITE_ENABLE_RBU}>:SQLITE_ENABLE_RBU>
         $<$<BOOL:${SQLITE_ENABLE_RTREE}>:SQLITE_ENABLE_RTREE>
@@ -180,4 +185,5 @@ if(BUILD_SQLITE_TOOL)
    )
 endif()
 
+set(PROJECT_NAMESPACE_FOR_PACKAGE "sqlite")
 include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")

@@ -1,10 +1,22 @@
-547,548c547,548
-< #ifdef _WIN32
-< __declspec(dllexport)
----
-> #ifndef SQLITE_API
->     #define SQLITE_API // so it doesn't fail being undefined
-554c554
-< int sqlite3_memvfs_init(
----
-> SQLITE_API int sqlite3_memvfs_init(
+diff --git a/ext/misc/memvfs.c b/ext/misc/memvfs.c
+index 83fc946..0f38296 100644
+--- a/ext/misc/memvfs.c
++++ b/ext/misc/memvfs.c
+@@ -544,14 +544,14 @@ static int memvfsRegister(
+ #endif /* MEMVFS_TEST */
+ 
+   
+-#ifdef _WIN32
+-__declspec(dllexport)
++#ifndef SQLITE_MEMVFS_API
++    #define SQLITE_MEMVFS_API // define it as __declspec(dllexport) for exporting this function from a DLL
+ #endif
+ /* 
+ ** This routine is called when the extension is loaded.
+ ** Register the new VFS.
+ */
+-int sqlite3_memvfs_init(
++SQLITE_MEMVFS_API int sqlite3_memvfs_init(
+   sqlite3 *db, 
+   char **pzErrMsg, 
+   const sqlite3_api_routines *pApi

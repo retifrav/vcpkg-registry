@@ -54,7 +54,10 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         fts4 SQLITE_ENABLE_FTS4
         fts5 SQLITE_ENABLE_FTS5
         geopoly SQLITE_ENABLE_GEOPOLY
-        icu SQLITE_ENABLE_ICU
+        #
+        # ICU is disabled for good, see _notes.md
+        #icu SQLITE_ENABLE_ICU
+        #
         math SQLITE_ENABLE_MATH_FUNCTIONS
         rbu SQLITE_ENABLE_RBU
         rtree SQLITE_ENABLE_RTREE
@@ -93,6 +96,17 @@ if("tool" IN_LIST FEATURES)
     # )
 endif()
 
+if(VCPKG_TARGET_IS_WINDOWS AND VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+    # consumers need to import the symbols from the DLL, otherwise the exported variables
+    # (`sqlite3_version`, `sqlite3_temp_directory`, `sqlite3_data_directory`) won't link.
+    # Setting it in the header makes it work for consumers without CMake too,
+    # and it is still within `#ifndef`, so it can be overridden
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/sqlite3/sqlite3.h"
+        "#ifndef SQLITE_API\n# define SQLITE_API\n#endif"
+        "#ifndef SQLITE_API\n# define SQLITE_API __declspec(dllimport)\n#endif"
+    )
+endif()
+
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 if("in-memory-vfs" IN_LIST FEATURES)
@@ -115,19 +129,10 @@ if("in-memory-vfs" IN_LIST FEATURES)
         FILENAME "${MEMVFS_FILE}"
         SHA512 e47757db92a4dfb0ad305d19175ef300fc9b86467605d34ed2133e2f80320a4b98f4f519359fd7ab0f3cbeef8958aad45fede63641c54b77aa8ad4d950fdae4c
     )
-    # this should not be needed, because that compile definition is PUBLIC
-    #if(
-    #    VCPKG_TARGET_IS_WINDOWS
-    #    AND
-    #    VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic"
-    #)
-    #    message(
-    #        STATUS
-    #            "[WARNING] If you intend to compile ${MEMVFS_FILE} source file as a part of your project, "
-    #            "then you should be aware that for making a DLL it expects `SQLITE_API=__declspec(dllexport)` "
-    #            "compile definition to be set"
-    #    )
-    #endif()
+    # if you intend to compile memvfs.c source file as a part of your project, and that project
+    # is a DLL which needs to export `sqlite3_memvfs_init()`, then set `SQLITE_MEMVFS_API=__declspec(dllexport)`
+    # compile definition. It cannot use `SQLITE_API` for that, because for consumers of SQLite DLL
+    # that one is `__declspec(dllimport)`, and defining a dllimport function is an error (C2491)
 
     # in general, this is needed for being able to serialize an SQLite database file
     # and then load it from VFS (virtual file system), which might be needed in cases
@@ -145,8 +150,15 @@ if("in-memory-vfs" IN_LIST FEATURES)
         INSTALL "${MEMVFS_FILE_DOWNLOADED}"
         DESTINATION "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
     )
+    # applying with Git instead of `patch` tool, because the latter usually isn't available on Windows.
+    # The `--work-tree`/`--git-dir` arguments are the same as vcpkg's own patching uses, so Git doesn't
+    # pick up the enclosing vcpkg repository, and `-p3` is because the patch is made against
+    # SQLite's source tree (`ext/misc/memvfs.c`)
+    vcpkg_find_acquire_program(GIT)
     vcpkg_execute_required_process(
-        COMMAND patch "${MEMVFS_FILE}" "${CMAKE_CURRENT_LIST_DIR}/001-dll-definitions.patch"
+        COMMAND "${GIT}" -c core.longpaths=true -c core.autocrlf=false --work-tree=. --git-dir=.git
+            apply -p3 --ignore-whitespace --whitespace=nowarn --verbose
+            "${CMAKE_CURRENT_LIST_DIR}/001-dll-definitions.patch"
         WORKING_DIRECTORY "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
         LOGNAME git-patching-memvfs
     )

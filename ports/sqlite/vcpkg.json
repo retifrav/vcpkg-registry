@@ -55,10 +55,6 @@
         {
             "description": "Enable Geopoly extension"
         },
-        "icu":
-        {
-            "description": "Enable international components for Unicode"
-        },
         "math":
         {
             "description": "Enable built-in SQL math functions"
