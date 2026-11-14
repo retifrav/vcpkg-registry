@@ -1,9 +1,9 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:glfw/glfw.git
-    REF 7b6aead9fb88b3623e3b3725ebb42670cbe4c579
+    REF d9d6f0f1f967807ffade6598ea9a631ebaf37a56
     PATCHES
-        disable-pkgconfig.patch
+        001-disable-pkgconfig.patch
 )
 
 vcpkg_cmake_configure(
@@ -20,8 +20,6 @@ vcpkg_cmake_config_fixup(
     PACKAGE_NAME "glfw3"
     CONFIG_PATH "lib/cmake/glfw3"
 )
-
-#vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 

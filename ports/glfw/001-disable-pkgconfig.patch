@@ -1,8 +1,14 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 75069161..b3bb69f7 100644
+index cbc12be8..e77261b5 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -368,8 +368,8 @@ if (GLFW_INSTALL)
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.16...3.28 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.28)
+ 
+ project(GLFW VERSION 3.5.1 LANGUAGES C HOMEPAGE_URL "https://www.glfw.org/")
+ 
+@@ -119,8 +119,8 @@ if (GLFW_INSTALL)
      install(EXPORT glfwTargets FILE glfw3Targets.cmake
              EXPORT_LINK_INTERFACE_LIBRARIES
              DESTINATION "${GLFW_CONFIG_PATH}")
