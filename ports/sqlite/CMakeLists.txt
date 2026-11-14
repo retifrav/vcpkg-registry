@@ -11,6 +11,7 @@ project("sqlite3"
 set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 
 option(SQLITE_RECOMMENDED_OPTIONS    "Build with SQLite3 recommended options"          1)
+option(SQLITE_ENABLE_CARRAY          "Enables carray() table-valued function"          0)
 option(SQLITE_ENABLE_COLUMN_METADATA "Enables column metadata"                         0)
 option(SQLITE_ENABLE_DBSTAT_VTAB     "Enables dbstat virtual table"                    0)
 option(SQLITE_ENABLE_FTS3            "Enables full text searches version 3"            0)
@@ -19,6 +20,7 @@ option(SQLITE_ENABLE_FTS5            "Enables full text searches version 5"     
 option(SQLITE_ENABLE_GEOPOLY         "Enables Geopoly extention"                       0)
 #option(SQLITE_ENABLE_ICU             "Enables international components for Unicode"    0)
 option(SQLITE_ENABLE_MATH_FUNCTIONS  "Enables built-in SQL math functions"             1)
+option(SQLITE_ENABLE_PERCENTILE      "Enables percentile and median SQL functions"     0)
 option(SQLITE_ENABLE_RBU             "Enables resumable bulk update extension"         0)
 option(SQLITE_ENABLE_RTREE           "Enables R*TRee index extension"                  0)
 option(SQLITE_ENABLE_STAT4           "Enhances query planner under certain situations" 0)
@@ -59,12 +61,6 @@ if(WIN32)
        PRIVATE
            "SQLITE_OS_WIN"
     )
-    if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-        target_compile_definitions(${PROJECT_NAME}
-           PRIVATE
-               "SQLITE_OS_WINRT"
-        )
-    endif()
 else()
     target_compile_definitions(${PROJECT_NAME}
        PRIVATE
@@ -99,11 +95,13 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
 
-# taken from https://github.com/azadkuh/sqlite-amalgamation/blob/master/CMakeLists.txt
+# originally taken from https://github.com/azadkuh/sqlite-amalgamation/blob/master/CMakeLists.txt,
+# the recommended options follow https://sqlite.org/compile.html#rcmd (as of 3.54.1)
 #
 # also add `$<$<BOOL:${SQLITE_ENABLE_ICU}>:SQLITE_ENABLE_ICU>` when this feature will be actually used
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:
+        $<$<BOOL:${SQLITE_ENABLE_CARRAY}>:SQLITE_ENABLE_CARRAY>
         $<$<BOOL:${SQLITE_ENABLE_COLUMN_METADATA}>:SQLITE_ENABLE_COLUMN_METADATA>
         $<$<BOOL:${SQLITE_ENABLE_DBSTAT_VTAB}>:SQLITE_ENABLE_DBSTAT_VTAB>
         $<$<BOOL:${SQLITE_ENABLE_FTS3}>:SQLITE_ENABLE_FTS3>
@@ -111,6 +109,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
         $<$<BOOL:${SQLITE_ENABLE_FTS5}>:SQLITE_ENABLE_FTS5>
         $<$<BOOL:${SQLITE_ENABLE_GEOPOLY}>:SQLITE_ENABLE_GEOPOLY>
         $<$<BOOL:${SQLITE_ENABLE_MATH_FUNCTIONS}>:SQLITE_ENABLE_MATH_FUNCTIONS>
+        $<$<BOOL:${SQLITE_ENABLE_PERCENTILE}>:SQLITE_ENABLE_PERCENTILE>
         $<$<BOOL:${SQLITE_ENABLE_RBU}>:SQLITE_ENABLE_RBU>
         $<$<BOOL:${SQLITE_ENABLE_RTREE}>:SQLITE_ENABLE_RTREE>
         $<$<BOOL:${SQLITE_ENABLE_STAT4}>:SQLITE_ENABLE_STAT4>
@@ -126,7 +125,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
             SQLITE_OMIT_DEPRECATED
             SQLITE_OMIT_PROGRESS_CALLBACK
             SQLITE_OMIT_SHARED_CACHE
-            SQLITE_USE_ALLOCA
+            SQLITE_STRICT_SUBTYPE=1
         >
     >
 )

@@ -16,7 +16,7 @@
 # what genius had the idea to put year into URL
 set(SQLITE_VERSION_YEAR "2026")
 # is it the same genius who came up with this version string format
-set(SQLITE_VERSION_VALUE "3530100")
+set(SQLITE_VERSION_VALUE "3540100")
 
 vcpkg_download_distfile(
     ARCHIVE
@@ -24,7 +24,7 @@ vcpkg_download_distfile(
         "https://sqlite.org/${SQLITE_VERSION_YEAR}/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
         "https://files.decovar.dev/public/packages/sqlite/v${VERSION}/src/sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
     FILENAME "sqlite-amalgamation-${SQLITE_VERSION_VALUE}.zip"
-    SHA512 8f35db4083c77a2f3ff355551556043bea82d5411d748cea35f577592b47dc9a45b41e5e5a054dcce29861f077d6e6b223ae3d161b575b4b4e708ee8470255c2
+    SHA512 70a88503f1a4e287ed2d89157a0c23d9ecc162f2d4604659cea6f783b3c276dada5ee2bb8cbe967e4a2d9f2caba7f9b1529f66332158cb1e9727bf0a34d47f48
 )
 
 vcpkg_extract_source_archive(
@@ -48,6 +48,7 @@ file(COPY
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         recommended-options SQLITE_RECOMMENDED_OPTIONS
+        carray SQLITE_ENABLE_CARRAY
         column-metadata SQLITE_ENABLE_COLUMN_METADATA
         dbstat-vtab SQLITE_ENABLE_DBSTAT_VTAB
         fts3 SQLITE_ENABLE_FTS3
@@ -59,6 +60,7 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         #icu SQLITE_ENABLE_ICU
         #
         math SQLITE_ENABLE_MATH_FUNCTIONS
+        percentile SQLITE_ENABLE_PERCENTILE
         rbu SQLITE_ENABLE_RBU
         rtree SQLITE_ENABLE_RTREE
         stat4 SQLITE_ENABLE_STAT4

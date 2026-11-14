@@ -1,5 +1,41 @@
 # Maintainer notes
 
+## Compile-time options
+
+### Recommended options
+
+The `recommended-options` feature (*default*) follows the [recommended compile-time options](https://sqlite.org/compile.html#rcmd), apart from:
+
+- `SQLITE_THREADSAFE=0`: SQLite could then be used from only one thread at a time, even with separate connections;
+- `SQLITE_OMIT_AUTOINIT`: every consumer would have to call `sqlite3_initialize()` before anything else, and one that doesn't would crash;
+- `SQLITE_OMIT_DECLTYPE`, which is the separate `omit-decltype` feature (*also default*), as it cannot be combined with `column-metadata`.
+
+That list changes between versions, so compare it on every update. The original set came from [azadkuh/sqlite-amalgamation](https://github.com/azadkuh/sqlite-amalgamation) and had `SQLITE_USE_ALLOCA`, which disappeared from that page between 2026-03-28 and 2026-06-02 (*according to Web Archive snapshots; the reason is unknown, as the history of the documentation sources is behind a bot check*), so it was removed here in `3.54.1`, even though it is still a valid option. `SQLITE_STRICT_SUBTYPE=1` has been on that page since at least 2024-05, but was added here only in `3.54.1`: it makes an application-defined function that calls `sqlite3_result_subtype()` without the `SQLITE_RESULT_SUBTYPE` property fail, and `sqlite3.h` says that future versions might enable it by default.
+
+The options are applied only to the library and the CLI tool (*`$<BUILD_INTERFACE:...>`*), installed consumers don't get them. That is fine, because the only one that affects `sqlite3.h` is `SQLITE_OMIT_DEPRECATED`, which hides the declarations of deprecated functions. Everything else is declared there regardless of the options (*such as `sqlite3_column_decltype()`, `sqlite3_progress_handler()` or `sqlite3_carray_bind_v2()`*), so a consumer using something that was omitted or not enabled compiles fine and fails only at linking.
+
+The documentation says that `SQLITE_OMIT_*` options [may not work](https://sqlite.org/compile.html#omitfeatures) with the amalgamation, but the four from the recommended list are a part of the configuration that upstream always tests, and `SQLITE_OMIT_JSON` is what upstream's own `configure --disable-json` uses with the amalgamation. Options that change the parser tables (*such as `SQLITE_ENABLE_UPDATE_DELETE_LIMIT` and `SQLITE_ENABLE_ORDERED_SET_AGGREGATES`*) cannot work with the amalgamation at all.
+
+As of `3.54.1`, `proj` (*the only port depending on `sqlite`, as `gdal` is built with `GDAL_USE_SQLITE3=0`*) calls none of the functions omitted by the default features, and it was fixed to work with `SQLITE_DQS=0` long ago ([OSGeo/PROJ#2480](https://github.com/OSGeo/PROJ/issues/2480)).
+
+### Geopoly
+
+`SQLITE_ENABLE_GEOPOLY` is compiled only within the R*Tree extension, so without `SQLITE_ENABLE_RTREE` it silently does nothing, apart from `sqlite_compileoption_used('ENABLE_GEOPOLY')` still returning `1`. Hence the `geopoly` feature depends on `rtree` (*with `"default-features": false`, so `sqlite[core,geopoly]` doesn't bring the default features back*), same as upstream's `configure` enables `--rtree` for `--geopoly`. Microsoft's port doesn't do that (*as of its `3.53.4`*).
+
+### carray and percentile
+
+Both have been a part of the amalgamation since `3.51.0` (*before that they were separate loadable extensions*). Upstream's `configure` enables `carray` by default and `percentile` only for its CLI tool, while here both are optional features and not default ones.
+
+`carray` isn't listed in `pragma_module_list`, because it gets registered on first use, so check it either with `sqlite_compileoption_used('ENABLE_CARRAY')` or by actually querying `carray(?1)` with an array bound via `sqlite3_carray_bind_v2()`.
+
+### Limits
+
+`3.54.0` added `SQLITE_MAX_SCHEMA` (*the maximum number of tables, indexes, triggers and views in a schema, `10000000` by default*) and `SQLITE_MAX_TRIGGER_STEPS` (*the maximum number of statements in one trigger, `65000` by default, and it cannot exceed `65535`*). They are not set here. As with any `SQLITE_MAX_*` option, the compile-time value is both the default and a hard upper bound, which `sqlite3_limit()` cannot raise at runtime, and upstream says that no real-world application should get anywhere close to the schema limit. Setting them to the same values here would change nothing, except that a future change of the defaults upstream would then not get here. An application that opens untrusted databases should rather lower them per connection with `sqlite3_limit()` (*`SQLITE_LIMIT_SCHEMA` and `SQLITE_LIMIT_TRIGGER_STEPS`*).
+
+### UWP
+
+There are no UWP triplets in this registry anymore, and the `WindowsStore` branch was removed from `CMakeLists.txt` in `3.54.1`. It used to set `SQLITE_OS_WINRT`, which SQLite hadn't recognised since at least `3.53.1`, so UWP builds were using desktop APIs anyway. Since `3.54.0` that is `SQLITE_UWP` (*checked with `#ifdef`, not detected automatically*), so that is what to set if UWP is ever needed again, and then the application also has to set the temporary directory itself (*`sqlite3_temp_directory` or `sqlite3_win32_set_directory()`*), as `GetTempPathW()` isn't used.
+
 ## ICU
 
 Unlike Microsoft's port, there is no `icu` feature here. It was present before (*originated with `CMakeLists.txt` taken from [azadkuh/sqlite-amalgamation](https://github.com/azadkuh/sqlite-amalgamation)*), but all it did was set the `SQLITE_ENABLE_ICU` compile definition. There was no dependency on the `icu` port, no `find_package(ICU)` and no linking, so it could never work - `sqlite3.c` would either fail to compile on `#include <unicode/utypes.h>` or pick up some system ICU headers and then fail to link. It was removed in `3.53.1`, and commented-out option in `CMakeLists.txt` and the feature line in `portfile.cmake` are left as markers.

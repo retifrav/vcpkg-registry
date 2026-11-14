@@ -1,6 +1,6 @@
 {
     "name": "sqlite",
-    "version": "3.53.1",
+    "version": "3.54.1",
     "description": "Small, fast, self-contained, high-reliability, full-featured, SQL database engine",
     "homepage": "https://sqlite.org/",
     "license": "blessing",
@@ -31,6 +31,10 @@
         {
             "description": "Build with SQLite3 recommended options"
         },
+        "carray":
+        {
+            "description": "Enable carray() table-valued function"
+        },
         "column-metadata":
         {
             "description": "Enable column metadata"
@@ -53,11 +57,26 @@
         },
         "geopoly":
         {
-            "description": "Enable Geopoly extension"
+            "description": "Enable Geopoly extension",
+            "dependencies":
+            [
+                {
+                    "name": "sqlite",
+                    "default-features": false,
+                    "features":
+                    [
+                        "rtree"
+                    ]
+                }
+            ]
         },
         "math":
         {
             "description": "Enable built-in SQL math functions"
+        },
+        "percentile":
+        {
+            "description": "Enable percentile(), percentile_cont(), percentile_disc() and median() SQL functions"
         },
         "rbu":
         {
