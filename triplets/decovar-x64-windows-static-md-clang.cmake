@@ -5,7 +5,10 @@ set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_PLATFORM_TOOLSET ClangCL)
 
 # otherwise these environment variables won't be available in the chainloaded toolchain
-set(VCPKG_ENV_PASSTHROUGH_UNTRACKED LLVMInstallDir LLVMToolsVersion)
+set(VCPKG_ENV_PASSTHROUGH_UNTRACKED
+    LLVMInstallDir
+    LLVMToolsVersion
+)
 
 # finding and setting C/CXX compiler to Clang
 #

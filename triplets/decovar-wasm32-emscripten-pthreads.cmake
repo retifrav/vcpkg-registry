@@ -15,7 +15,12 @@ if(NOT EXISTS ${EMSCRIPTEN_TOOLCHAIN_FILE_PATH})
 endif()
 
 # otherwise these environment variables won't be available in the chainloaded toolchain
-set(VCPKG_ENV_PASSTHROUGH_UNTRACKED EMSDK EMSCRIPTEN PATH)
+set(VCPKG_ENV_PASSTHROUGH_UNTRACKED
+    EMSDK
+    EMSCRIPTEN
+    PATH
+)
+
 # required, otherwise "Unable to determine toolchain use ... with CMAKE_SYSTEM_NAME Emscripten"
 # and yes, for building the main project you'll yet again need to provide `-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"` in CLI
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${EMSCRIPTEN_TOOLCHAIN_FILE_PATH})
