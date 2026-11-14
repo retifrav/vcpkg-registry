@@ -16,7 +16,10 @@
             "host": true
         },
         "json-nlohmann",
-        "sqlite",
+        {
+            "name": "sqlite",
+            "version>=": "3.53.1"
+        },
         {
             "name": "sqlite",
             "host": true,

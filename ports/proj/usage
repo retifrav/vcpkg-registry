@@ -1,7 +1,8 @@
 To use PROJ in your project:
 
-    find_package(proj CONFIG REQUIRED)
-    target_link_libraries(main
+    # has to be upper-cased `PROJ`, not `proj`, otherwise its version file rejects the package
+    find_package(PROJ CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME}
         PRIVATE
             PROJ::proj
     )
