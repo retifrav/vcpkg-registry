@@ -3,7 +3,7 @@
     {
         "kind": "git",
         "repository": "git@github.com:retifrav/vcpkg-registry.git",
-        "baseline": "15f73787c3ce4d6d990977cecc470aaa94444e12"
+        "baseline": "d905093e9754cec7ded7f15a5ed16017de13c7be"
     },
     "registries": []
 }

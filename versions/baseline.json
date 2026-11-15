@@ -873,8 +873,8 @@
         },
         "curl":
         {
-            "baseline": "8.18.0",
-            "port-version": 3
+            "baseline": "8.23.0",
+            "port-version": 0
         },
         "datachannel":
         {

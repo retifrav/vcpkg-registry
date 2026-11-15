@@ -9,7 +9,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:curl/curl.git
-    REF 2eebc58c4b8d68c98c8344381a9f6df4cca838fd
+    REF 3163ec065643ba20709f190111f42c3e1fe95273
     PATCHES
         001-dependencies-and-installation.patch
 )
@@ -76,7 +76,6 @@ endif()
 
 if(VCPKG_TARGET_IS_UWP)
     list(APPEND FEATURE_OPTIONS
-        -DCURL_DISABLE_TELNET=1
         -DENABLE_UNIX_SOCKETS=0
     )
 endif()
@@ -84,6 +83,18 @@ endif()
 if(VCPKG_TARGET_IS_WINDOWS)
     list(APPEND FEATURE_OPTIONS
         -DENABLE_UNICODE=1
+    )
+endif()
+
+# static BoringSSL needs C++ runtime, which cURL links as `stdc++` by default,
+# but Apple SDKs only have LLVM's `c++`
+if(
+    "boringssl" IN_LIST FEATURES
+    AND
+    (VCPKG_TARGET_IS_OSX OR VCPKG_TARGET_IS_IOS)
+)
+    list(APPEND FEATURE_OPTIONS
+        -D_curl_stdlib_cxx=c++
     )
 endif()
 
@@ -97,25 +108,43 @@ vcpkg_cmake_configure(
         -DBUILD_LIBCURL_DOCS=0
         -DBUILD_MISC_DOCS=0
         -DBUILD_SHARED_LIBS=${CURL_SHARED}
-        -DBUILD_STATIC_CURL=${CURL_STATIC}
         -DBUILD_STATIC_LIBS=${CURL_STATIC}
         -DBUILD_TESTING=0
-        # no build host path baked in. With `openssl`/`boringssl` the `CURL_CA_FALLBACK` defers to OpenSSL
-        # default paths at runtime, but other backends such as `wolfssl` have no fallback, so applications
-        # need to set either `CURLSSLOPT_NATIVE_CA` (`--ca-native` for the tool) or CURLOPT_CAINFO,
-        # otherwise every certificate verification fails
+        # no build host paths baked in. Instead, unless an application sets its own CA (CURLOPT_CAINFO and such),
+        # the OS-native CA store is used by default, as if `CURLSSLOPT_NATIVE_CA` (`--ca-native` for the tool)
+        # was set, where the backend supports that: `wolfssl`, and `openssl`/`boringssl` on Windows (Schannel
+        # always uses it anyway). Elsewhere `openssl`/`boringssl` have `CURL_CA_FALLBACK`, which defers to OpenSSL
+        # default paths at runtime. On Windows this also turns `CURL_DISABLE_CA_SEARCH` on, so there is no (unsafe)
+        # search for `curl-ca-bundle.crt` in `PATH`
         -DCURL_CA_BUNDLE=none
+        -DCURL_CA_NATIVE=1
         -DCURL_CA_PATH=none
+        # HTTP(S) and WS(S) only. Before 8.23.0 that was `HTTP_ONLY`, which upstream dropped,
+        # and these are the protocols it used to disable (except for SMB, which is gone for good)
+        -DCURL_DISABLE_DICT=1
+        -DCURL_DISABLE_FILE=1
+        -DCURL_DISABLE_FTP=1
+        -DCURL_DISABLE_GOPHER=1
+        -DCURL_DISABLE_IMAP=1
+        -DCURL_DISABLE_IPFS=1
+        -DCURL_DISABLE_LDAP=1
+        -DCURL_DISABLE_LDAPS=1
+        -DCURL_DISABLE_MQTT=1
+        -DCURL_DISABLE_POP3=1
+        -DCURL_DISABLE_RTSP=1
+        -DCURL_DISABLE_SMTP=1
+        -DCURL_DISABLE_TELNET=1
+        -DCURL_DISABLE_TFTP=1
         -DCURL_USE_LIBPSL=0 # should be a feature?
         -DCURL_USE_LIBSSH2=0 # should be a feature
         -DCURL_USE_LIBSSH=0 # should be a feature
         -DCURL_USE_PKGCONFIG=0
         -DENABLE_CURL_MANUAL=0
-        -DHTTP_ONLY=1
         -DSHARE_LIB_OBJECT=0
         -DUSE_APPLE_IDN=0 # should be a feature?
         -DUSE_LIBIDN2=0 # should be a feature?
     MAYBE_UNUSED_VARIABLES
+        _curl_stdlib_cxx
         HAVE_BORINGSSL
 )
 

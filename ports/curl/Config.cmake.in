@@ -2,6 +2,11 @@
 
 include(CMakeFindDependencyMacro)
 
+# quoted, as either can be empty
+if("@HAVE_THREADS_POSIX@" OR "@HAVE_THREADS_POSIX_BORINGSSL@")
+    find_dependency(Threads)
+endif()
+
 if(@CURL_BROTLI@)
     find_dependency(brotli CONFIG REQUIRED)
 endif()
