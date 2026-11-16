@@ -1,6 +1,6 @@
 {
     "name": "xxhash",
-    "version": "0.8.2",
+    "version": "0.8.4",
     "description": "Extremely fast non-cryptographic hash algorithm",
     "homepage": "https://xxhash.com/",
     "license": "BSD-2-Clause",
@@ -22,7 +22,8 @@
     {
         "tool":
         {
-            "description": "Build xxhsum CLI tool"
+            "description": "Build xxhsum CLI tool",
+            "license": "GPL-2.0-or-later"
         }
     }
 }

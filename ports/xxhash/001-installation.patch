@@ -1,7 +1,7 @@
-diff --git a/cmake_unofficial/CMakeLists.txt b/cmake_unofficial/CMakeLists.txt
-index e8fbb53..c7fcfa0 100644
---- a/cmake_unofficial/CMakeLists.txt
-+++ b/cmake_unofficial/CMakeLists.txt
+diff --git a/build/cmake/CMakeLists.txt b/build/cmake/CMakeLists.txt
+index dfbf09e..f7b8972 100644
+--- a/build/cmake/CMakeLists.txt
++++ b/build/cmake/CMakeLists.txt
 @@ -1,11 +1,4 @@
 -# To the extent possible under law, the author(s) have dedicated all
 -# copyright and related and neighboring rights to this software to
@@ -10,12 +10,12 @@ index e8fbb53..c7fcfa0 100644
 -#
 -# For details, see <https://creativecommons.org/publicdomain/zero/1.0/>.
 -
--cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
+-cmake_minimum_required (VERSION 3.10 FATAL_ERROR)
 +cmake_minimum_required(VERSION 3.22)
  
- set(XXHASH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
- 
-@@ -20,67 +13,20 @@ set(XXHASH_LIB_VERSION ${XXHASH_VERSION_STRING})
+ # This CMakeLists.txt is in a nested directory, which makes relative paths
+ # (e.g. ../..) show up in include flags and logs.
+@@ -28,57 +21,18 @@ set(XXHASH_LIB_VERSION ${XXHASH_VERSION_STRING})
  set(XXHASH_LIB_SOVERSION "${XXHASH_VERSION_MAJOR}")
  mark_as_advanced(XXHASH_VERSION_MAJOR XXHASH_VERSION_MINOR XXHASH_VERSION_RELEASE XXHASH_VERSION_STRING XXHASH_LIB_VERSION XXHASH_LIB_SOVERSION)
  
@@ -24,14 +24,10 @@ index e8fbb53..c7fcfa0 100644
 -else()
 -    cmake_policy (SET CMP0077 NEW)
 -endif()
--if("${CMAKE_VERSION}" VERSION_LESS "3.0")
--    project(xxHash C)
--else()
--    cmake_policy (SET CMP0048 NEW)
--    project(xxHash
--        VERSION ${XXHASH_VERSION_STRING}
--        LANGUAGES C)
--endif()
+-cmake_policy (SET CMP0048 NEW)
+ project(xxHash
+     VERSION ${XXHASH_VERSION_STRING}
+-    LANGUAGES C)
 -
 -if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 -  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Project build type" FORCE)
@@ -41,8 +37,6 @@ index e8fbb53..c7fcfa0 100644
 -if(NOT CMAKE_CONFIGURATION_TYPES)
 -  message(STATUS "xxHash build type: ${CMAKE_BUILD_TYPE}")
 -endif()
-+project(xxHash
-+    VERSION ${XXHASH_VERSION_STRING}
 +    LANGUAGES C
 +)
  
@@ -79,18 +73,10 @@ index e8fbb53..c7fcfa0 100644
 -include(CMakeDependentOption)
 -CMAKE_DEPENDENT_OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON "NOT XXHASH_BUNDLED_MODE" OFF)
 -
--if("${CMAKE_VERSION}" VERSION_LESS "3.10")
--  # Can not enable DISPATCH mode since it fails to recognize architecture.
--else()
--  CMAKE_HOST_SYSTEM_INFORMATION(RESULT PLATFORM QUERY OS_PLATFORM)
--  message(STATUS "Architecture: ${PLATFORM}")
--endif()
-+CMAKE_HOST_SYSTEM_INFORMATION(RESULT PLATFORM QUERY OS_PLATFORM)
-+message(STATUS "Architecture: ${PLATFORM}")
- 
- # libxxhash
- if((DEFINED DISPATCH) AND (DEFINED PLATFORM))
-@@ -88,26 +34,26 @@ if((DEFINED DISPATCH) AND (DEFINED PLATFORM))
+ # detect architecture for DISPATCH mode
+ set(PLATFORM ${CMAKE_SYSTEM_PROCESSOR})
+ message(STATUS "Architecture: ${PLATFORM}")
+@@ -89,26 +43,32 @@ if((DEFINED DISPATCH) AND (DEFINED PLATFORM))
    if(("${PLATFORM}" STREQUAL "x86_64") OR ("${PLATFORM}" STREQUAL "AMD64"))
      set(XXHSUM_DISPATCH ON)
      message(STATUS "Enable xxHash dispatch mode")
@@ -117,14 +103,20 @@ index e8fbb53..c7fcfa0 100644
      $<INSTALL_INTERFACE:include/>)
  if (BUILD_SHARED_LIBS)
 -  target_compile_definitions(xxhash PUBLIC XXH_EXPORT)
-+  target_compile_definitions(${PROJECT_NAME} PUBLIC XXH_EXPORT)
++  target_compile_definitions(${PROJECT_NAME}
++    PRIVATE
++      XXH_EXPORT
++    INTERFACE
++      XXH_IMPORT
++  )
  endif ()
 -set_target_properties(xxhash PROPERTIES
 +set_target_properties(${PROJECT_NAME} PROPERTIES
++  OUTPUT_NAME xxhash
    SOVERSION "${XXHASH_LIB_SOVERSION}"
    VERSION "${XXHASH_VERSION_STRING}")
  
-@@ -127,7 +73,7 @@ if(XXHASH_BUILD_XXHSUM)
+@@ -129,7 +89,7 @@ if(XXHASH_BUILD_XXHSUM)
    add_executable(xxhsum ${XXHSUM_SOURCES})
    add_executable(${PROJECT_NAME}::xxhsum ALIAS xxhsum)
  
@@ -133,7 +125,7 @@ index e8fbb53..c7fcfa0 100644
    target_include_directories(xxhsum PRIVATE "${XXHASH_DIR}")
  endif(XXHASH_BUILD_XXHSUM)
  
-@@ -137,75 +83,24 @@ if (XXHASH_C_FLAGS)
+@@ -139,65 +99,27 @@ if (XXHASH_C_FLAGS)
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${XXHASH_C_FLAGS}")
  endif()
  
@@ -174,19 +166,9 @@ index e8fbb53..c7fcfa0 100644
 -    ${PROJECT_SOURCE_DIR}/xxHashConfig.cmake.in
 -    ${xxHash_PROJECT_CONFIG}
 -    INSTALL_DESTINATION ${xxHash_CONFIG_INSTALL_DIR})
--  if("${CMAKE_VERSION}" VERSION_LESS "3.0")
--      set(XXHASH_EXPORT_SET xxhash)
--      if(XXHASH_BUILD_XXHSUM)
--        set(XXHASH_EXPORT_SET ${XXHASH_EXPORT_SET} xxhsum)
--      endif()
--      export(TARGETS ${XXHASH_EXPORT_SET}
--      FILE ${xxHash_TARGETS_CONFIG}
--      NAMESPACE ${PROJECT_NAME}::)
--  else()
 -    export(EXPORT xxHashTargets
 -      FILE ${xxHash_TARGETS_CONFIG}
 -      NAMESPACE ${PROJECT_NAME}::)
--  endif()
 -
 -  install(FILES ${xxHash_PROJECT_CONFIG} ${xxHash_VERSION_CONFIG}
 -    DESTINATION ${xxHash_CONFIG_INSTALL_DIR})
@@ -220,10 +202,13 @@ index e8fbb53..c7fcfa0 100644
 +include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
  
 -include(CPack)
++# the tool is not a part of the package (not in the export set),
++# and it is only installed in Release configuration
 +if(XXHASH_BUILD_XXHSUM)
 +  install(TARGETS xxhsum
-+    EXPORT ${PROJECT_NAME}Targets
-+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
++    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
++    CONFIGURATIONS Release)
 +  install(FILES "${XXHSUM_DIR}/xxhsum.1"
-+    DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
++    DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
++    CONFIGURATIONS Release)
 +endif()
