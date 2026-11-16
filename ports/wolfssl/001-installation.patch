@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 12bcf1031..9f776f8d3 100644
+index 79d44dd61..a57ec45ae 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -19,23 +19,16 @@
@@ -25,24 +25,14 @@ index 12bcf1031..9f776f8d3 100644
 +# if this is not set, CMake will use OLD behavior
 +cmake_policy(SET CMP0128 NEW)
  
- project(wolfssl VERSION 5.8.4 LANGUAGES C ASM)
+ project(wolfssl VERSION 5.9.4 LANGUAGES C ASM)
  
 +set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
 +
  # Set WOLFSSL_ROOT if not already defined
  if ("${WOLFSSL_ROOT}" STREQUAL "")
      # we'll assume this CMakeLists.txt is in the root of wolfSSL
-@@ -66,9 +59,6 @@ set(WOLFSSL_DEFINITIONS)
- set(WOLFSSL_LINK_LIBS)
- set(WOLFSSL_INCLUDE_DIRS)
- 
--# Initialize pkg-config private variables
--set(PC_LIBS_PRIVATE "")
--
- set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
- include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/functions.cmake)
- 
-@@ -251,8 +241,6 @@ if(WOLFSSL_REPRODUCIBLE_BUILD)
+@@ -568,8 +561,6 @@ if(WOLFSSL_REPRODUCIBLE_BUILD)
      set(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> -D <TARGET>")
  endif()
  
@@ -51,39 +41,7 @@ index 12bcf1031..9f776f8d3 100644
  # Support for forcing 32-bit mode
  # TODO: detect platform from other options
  add_option("WOLFSSL_32BIT"
-@@ -2428,21 +2416,15 @@ file(REMOVE ${OPTION_FILE})
- 
- # TODO: - Build shared/static libs based on enables. Check CMake
- #         global flag BUILD_SHARED_LIBS.
--option(BUILD_SHARED_LIBS "Build shared libraries (.dll/.so) instead of static ones (.lib/.a)" ON)
-+option(BUILD_SHARED_LIBS "Build shared libraries (.dll/.so) instead of static ones (.lib/.a)" NO)
- 
- set(LIB_SOURCES "")
- # Generates a list of sources to include in the library.
- # Corresponds to the instances of "src_libwolfssl_la_SOURCES += ..."
- # in the *.am files.
- generate_lib_src_list("${LIB_SOURCES}")
--if(BUILD_SHARED_LIBS)
--    message(STATUS "BUILD_SHARED_LIBS enabled: ${LIB_SOURCES}")
--    add_library(wolfssl SHARED ${LIB_SOURCES})
--else()
--    message(STATUS "Static Libs: ${LIB_SOURCES}")
--    add_library(wolfssl STATIC ${LIB_SOURCES})
--endif()
- 
-+add_library(wolfssl ${LIB_SOURCES})
- add_library(wolfssl::wolfssl ALIAS wolfssl)
- 
- if (NOT "$ENV{ARIA_DIR}" STREQUAL "")
-@@ -2857,7 +2839,6 @@ else()
-   endif()
- endif()
- 
--
- if(NOT BUILD_INTEL_QA AND NOT BUILD_INTEL_QA_SYNC)
-   list(APPEND HEADER_EXCLUDE
-     "wolfssl/wolfcrypt/port/intel")
-@@ -2906,109 +2887,31 @@ list(JOIN HEADER_EXCLUDE "|" EXCLUDED_HEADERS_REGEX)
+@@ -5026,109 +5017,31 @@ list(JOIN HEADER_EXCLUDE "|" EXCLUDED_HEADERS_REGEX)
  string(PREPEND EXCLUDED_HEADERS_REGEX "(")
  string(APPEND  EXCLUDED_HEADERS_REGEX ")")
  
@@ -104,9 +62,9 @@ index 12bcf1031..9f776f8d3 100644
 -    # Install the library
 -    install(TARGETS wolfssl
 -            EXPORT wolfssl-targets
--            LIBRARY DESTINATION lib
--            ARCHIVE DESTINATION lib
--            RUNTIME DESTINATION bin
+-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 -            )
 -    # Install the headers
 -    install(DIRECTORY ${WOLFSSL_OUTPUT_BASE}/wolfssl/
@@ -220,37 +178,3 @@ index 12bcf1031..9f776f8d3 100644
 +    DESTINATION
 +        "share/${PROJECT_NAME}/doc"
 +)
-diff --git a/cmake/Config.cmake.in b/cmake/Config.cmake.in
-deleted file mode 100644
-index 3b8098b6b..000000000
---- a/cmake/Config.cmake.in
-+++ /dev/null
-@@ -1,9 +0,0 @@
--@PACKAGE_INIT@
--
--include(CMakeFindDependencyMacro)
--if (@HAVE_PTHREAD@)
--  find_dependency(Threads)
--endif()
--
--
--include ( "${CMAKE_CURRENT_LIST_DIR}/wolfssl-targets.cmake" )
-diff --git a/zephyr/CMakeLists.txt b/zephyr/CMakeLists.txt
-index aeb714b94..b2fae0c23 100644
---- a/zephyr/CMakeLists.txt
-+++ b/zephyr/CMakeLists.txt
-@@ -197,12 +197,12 @@ if(CONFIG_WOLFSSL)
-     # therefore susceptible to bit rot
- 
-     target_include_directories(wolfSSL INTERFACE
--        ${CONFIG_WOLFSSL_INSTALL_PATH}
-+        ${CONFIG_WOLFSSL_INSTALL_PATH} # where is it defined?
-         )
- 
-     zephyr_link_libraries(
-       wolfssl_external
--      -L${CONFIG_WOLFSSL_INSTALL_PATH}
-+      -L${CONFIG_WOLFSSL_INSTALL_PATH} # where is it defined?
-       gcc
-       )
-     # Lib wolfssl depends on libgcc so to allow

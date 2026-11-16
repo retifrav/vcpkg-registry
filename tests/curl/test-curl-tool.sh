@@ -23,6 +23,8 @@
 #   exit codes than with OpenSSL/wolfSSL; the known alternatives are accepted, but others might show up
 # - Schannel supports TLS 1.3 only on Windows 11 / Windows Server 2022 and newer,
 #   so the `--tlsv1.3` check fails on older Windows versions
+# - Schannel does not report TLS session reuse (only debug builds of cURL log it),
+#   so the session reuse checks are skipped
 # - trust comes from the Windows certificate store (`CURL_CA_NATIVE`), so a TLS-inspecting corporate proxy
 #   or antivirus that re-signs traffic with its own root certificate can turn the badssl.com checks
 #   for expired/self-signed/wrong host certificates into false failures
@@ -130,8 +132,12 @@ hasFeature()
 # certificate verification failures: 60 (peer verification), 77 (CA problem, wolfSSL),
 # and Schannel also reports some of them as 35 (TLS handshake)
 certErrors="60|77"
+schannel=0
 case "$versionLine" in
-    *Schannel*) certErrors="35|60|77" ;;
+    *Schannel*)
+        certErrors="35|60|77"
+        schannel=1
+    ;;
 esac
 
 tmpDir="$(mktemp -d "${TMPDIR:-/tmp}/curl-tool-tests.XXXXXX")" || exit 2
@@ -230,6 +236,28 @@ openSslBackend()
     "$curlTool" --version | head -n 1
     crl -sS -o /dev/null -w '%{http_code} verify=%{ssl_verify_result}\n' https://httpbingo.org/get
 )
+
+# two requests over separate connections (HTTP/1.1 with `Connection: close`, as with HTTP/2
+# the second request would simply go over the same connection), so the second TLS handshake
+# can use the session cached from the first one. Extra arguments are passed to cURL. Note
+# that cURL only reports offering the cached session, not whether the server accepted it
+# (otherwise there is just a full handshake)
+sessionReuse()
+{
+    local output exitCode
+    output="$(crl -sS -v --http1.1 -H 'Connection: close' "$@" -o /dev/null -o /dev/null \
+        -w 'transfer: %{http_code} %{num_connects}\n' \
+        https://httpbingo.org/get https://httpbingo.org/get 2>&1)"
+    exitCode=$?
+    output="${output//$'\r'/}"
+    printf '%s\n' "$output" | grep -E '^\* (SSL connection using|SSL reusing session|cached session)|^transfer: |^curl: '
+    [ $exitCode -eq 0 ] || return $exitCode
+    local total=0 connects
+    while read -r _ _ connects; do
+        total=$((total + connects))
+    done <<< "$(printf '%s\n' "$output" | grep '^transfer: ')"
+    echo "new connections: $total"
+}
 
 cookieJar()
 {
@@ -375,6 +403,14 @@ if hasFeature SSL; then
         crl -sS -k -o /dev/null -w '%{http_code}\n' https://self-signed.badssl.com/
     check 'TLS 1.3 only' 0 '^200$' -- \
         crl -sS --tlsv1.3 -o /dev/null -w '%{http_code}\n' https://httpbingo.org/get
+    if [ $schannel -eq 1 ]; then
+        skip 'TLS session reuse' 'Schannel does not report it'
+    else
+        check 'TLS 1.2 session is reused on a new connection' 0 'SSL reusing session' 'new connections: 2$' -- \
+            sessionReuse --tls-max 1.2
+        check 'TLS 1.3 session is reused on a new connection' 0 'SSL reusing session' 'new connections: 2$' -- \
+            sessionReuse --tlsv1.3
+    fi
     if [ -n "$caBundle" ]; then
         check 'explicit CA bundle' 0 '^200$' -- \
             crl -sS --cacert "$caBundle" -o /dev/null -w '%{http_code}\n' https://httpbingo.org/get
