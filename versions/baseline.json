@@ -989,7 +989,7 @@
         "gource":
         {
             "baseline": "0.55.0",
-            "port-version": 1
+            "port-version": 2
         },
         "gsl":
         {

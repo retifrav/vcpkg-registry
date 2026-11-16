@@ -197,8 +197,9 @@ endif()
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${OPENGL_gl_LIBRARY}
+        ${OPENGL_glu_LIBRARY} # GLEW does not link it since 2.3.0
         freetype
-        GLEW::glew
+        glew::glew
         glm::glm
         pcre::pcre2-posix
         png

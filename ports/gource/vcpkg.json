@@ -1,7 +1,7 @@
 {
     "name": "gource",
     "version": "0.55.0",
-    "port-version": 1,
+    "port-version": 2,
     "description": "Visualization tool for source control repositories",
     "homepage": "https://gource.io/",
     "license": "GPL-3.0-or-later",
@@ -24,7 +24,10 @@
         "boost-filesystem",
         "boost-format",
         "freetype",
-        "glew",
+        {
+            "name": "glew",
+            "version>=": "2.3.1"
+        },
         "glm",
         "pcre",
         "png",
