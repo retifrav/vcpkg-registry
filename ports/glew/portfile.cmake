@@ -2,63 +2,61 @@ if(VCPKG_TARGET_IS_LINUX)
     message(STATUS "[INFO] ${PORT} requires the following packages to be available in the system:
 - libxmu-dev
 - libxi-dev
-- libgl-dev"
+- libgl-dev
+- libglu1-mesa-dev (GL/glew.h includes GL/glu.h)"
     )
 endif()
 
-set(YOU_LIKE_TO_SUFFER NO)
-# sources on GitHub do not contain required headers
-# I guess, because fuck you, that's why
-if(YOU_LIKE_TO_SUFFER)
-    vcpkg_from_git(
-        OUT_SOURCE_PATH SOURCE_PATH
-        URL git@github.com:nigels-com/glew.git
-        REF 9fb23c3e61cbd2d581e33ff7d8579b572b38ee26
-        PATCHES
-            single-target.patch
-    )
-else()
-    vcpkg_download_distfile(
-        ARCHIVE
-        URLS
-            "https://github.com/nigels-com/glew/releases/download/glew-${VERSION}/glew-${VERSION}.tgz"
-            "https://files.decovar.dev/public/packages/glew/v${VERSION}/src/glew-${VERSION}.tgz"
-        FILENAME "glew-2.2.0.tgz"
-        SHA512 57453646635609d54f62fb32a080b82b601fd471fcfd26e109f479b3fef6dfbc24b83f4ba62916d07d62cd06d1409ad7aa19bc1cd7cf3639c103c815b8be31d1
-    )
+# not from Git, because their repository https://github.com/nigels-com/glew/tree/285c35d395979771f9409710b2d401db8026e15a
+# does not contain shit and is fucked beyond reconciliation
+vcpkg_download_distfile(
+    ARCHIVE
+    URLS
+        "https://github.com/nigels-com/glew/releases/download/glew-${VERSION}/glew-${VERSION}.tgz"
+        "https://files.decovar.dev/public/packages/glew/v${VERSION}/src/glew-${VERSION}.tgz"
+    FILENAME "glew-${VERSION}.tgz"
+    SHA512 cb4caecf32ec0f180c2691dc7769ffc99571c64f259a2663a2b80e788f1c2fd5362c59e0caaeefed6fb78a4070366d244666a657358049b09071b59fae2377e0
+)
 
-    vcpkg_extract_source_archive(
-        SOURCE_PATH
-        ARCHIVE ${ARCHIVE}
-        SOURCE_BASE glew
-        PATCHES
-            single-target.patch
-    )
+vcpkg_extract_source_archive(
+    SOURCE_PATH
+    ARCHIVE "${ARCHIVE}"
+    SOURCE_BASE glew
+    PATCHES
+        001-single-target-and-installation.patch
+)
+
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
+    DESTINATION "${SOURCE_PATH}/build/cmake"
+)
+file(COPY
+    "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"
+    DESTINATION "${SOURCE_PATH}/build/cmake"
+)
+
+set(GLEW_OPTIONS "")
+if(VCPKG_TARGET_IS_EMSCRIPTEN)
+    list(APPEND GLEW_OPTIONS -DGLEW_X11=0)
 endif()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}/build/cmake"
     OPTIONS
         -DBUILD_UTILS=0
+        ${GLEW_OPTIONS}
 )
 
 vcpkg_cmake_install()
 
-vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
+vcpkg_cmake_config_fixup()
 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
-    file(REMOVE_RECURSE
-        "${CURRENT_PACKAGES_DIR}/bin"
-        "${CURRENT_PACKAGES_DIR}/debug/bin"
-    )
-    foreach(FILE
-        "${CURRENT_PACKAGES_DIR}/include/GL/glew.h"
-        "${CURRENT_PACKAGES_DIR}/include/GL/wglew.h"
-        "${CURRENT_PACKAGES_DIR}/include/GL/glxew.h"
-    )
-        file(READ ${FILE} _contents)
-        string(REPLACE "#ifdef GLEW_STATIC" "#if 1" _contents "${_contents}")
-        file(WRITE ${FILE} "${_contents}")
+    foreach(HEADER_NAME glew wglew)
+        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/GL/${HEADER_NAME}.h"
+            "#ifdef GLEW_STATIC"
+            "#if 1"
+        )
     endforeach()
 endif()
 
@@ -68,13 +66,11 @@ file(REMOVE_RECURSE
 )
 
 file(
-    INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-)
-
-file(
-    INSTALL "${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+    INSTALL
+        "${CMAKE_CURRENT_LIST_DIR}/usage"
+        "${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake"
+    DESTINATION
+        "${CURRENT_PACKAGES_DIR}/share/${PORT}"
 )
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")

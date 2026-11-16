@@ -1,6 +1,6 @@
 {
     "name": "glew",
-    "version": "2.2.0",
+    "version": "2.3.1",
     "description": "The OpenGL Extension Wrangler Library",
     "homepage": "http://glew.sourceforge.net/",
     "license": "BSD-3-Clause AND MIT",
@@ -12,6 +12,10 @@
         },
         {
             "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
             "host": true
         }
     ]

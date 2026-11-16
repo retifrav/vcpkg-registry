@@ -1,4 +1,9 @@
 To use GLEW in your project:
 
     find_package(glew CONFIG REQUIRED)
-    target_link_libraries(main PRIVATE GLEW::GLEW)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glew::glew)
+
+GLEW does not link GLU, so if you call GLU functions, then you need to link it yourself:
+
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_glu_LIBRARY})
