@@ -1,0 +1,30 @@
+diff --git a/lib/vtls/wolfssl.c b/lib/vtls/wolfssl.c
+index f3bea53..ea1b4f1 100644
+--- a/lib/vtls/wolfssl.c
++++ b/lib/vtls/wolfssl.c
+@@ -300,6 +300,12 @@ static int wssl_bio_cf_out_write(WOLFSSL_BIO *bio, const char *buf, int blen)
+               blen, (int)result, nwritten);
+ #ifdef USE_FULL_BIO
+   wolfSSL_BIO_clear_retry_flags(bio);
++#else
++  /* without the full BIO API the retry flags have to be cleared directly,
++     otherwise once set they stay set, and wolfSSL then reports every
++     later error (such as a connection reset) as WANT_READ */
++  wolfSSL_BIO_clear_flags(bio, WOLFSSL_BIO_FLAG_RETRY |
++                          WOLFSSL_BIO_FLAG_READ | WOLFSSL_BIO_FLAG_WRITE);
+ #endif
+   if(result == CURLE_AGAIN) {
+     wolfSSL_BIO_set_retry_write(bio);
+@@ -346,6 +352,12 @@ static int wssl_bio_cf_in_read(WOLFSSL_BIO *bio, char *buf, int blen)
+               nread);
+ #ifdef USE_FULL_BIO
+   wolfSSL_BIO_clear_retry_flags(bio);
++#else
++  /* without the full BIO API the retry flags have to be cleared directly,
++     otherwise once set they stay set, and wolfSSL then reports every
++     later error (such as a connection reset) as WANT_READ */
++  wolfSSL_BIO_clear_flags(bio, WOLFSSL_BIO_FLAG_RETRY |
++                          WOLFSSL_BIO_FLAG_READ | WOLFSSL_BIO_FLAG_WRITE);
+ #endif
+   if(result == CURLE_AGAIN)
+     wolfSSL_BIO_set_retry_read(bio);

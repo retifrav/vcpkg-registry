@@ -12,6 +12,7 @@ vcpkg_from_git(
     REF 3163ec065643ba20709f190111f42c3e1fe95273
     PATCHES
         001-dependencies-and-installation.patch
+        002-wolfssl-bio-retry-flags.patch # until it is fixed upstream
 )
 
 # dependencies are supposed to be found via their CMake configs
