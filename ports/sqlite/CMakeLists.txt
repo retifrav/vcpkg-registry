@@ -139,15 +139,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 ${CMAKE_DL_LIBS}
     )
 
-    if(SQLITE_ENABLE_MATH_FUNCTIONS)
-        find_library(MATH_LIBRARY m)
-        if(MATH_LIBRARY)
-            target_link_libraries(
-                ${PROJECT_NAME}
-                    PUBLIC
-                        ${MATH_LIBRARY}
+    # outside of the SQLITE_ENABLE_MATH_FUNCTIONS condition, because the CLI tool needs it regardless
+    find_library(MATH_LIBRARY m)
+    if(SQLITE_ENABLE_MATH_FUNCTIONS AND MATH_LIBRARY)
+        target_link_libraries(
+            ${PROJECT_NAME}
+                PRIVATE
+                    m # ${MATH_LIBRARY} expands to local path on the build host
         )
-        endif()
     endif()
 endif()
 
@@ -160,6 +159,12 @@ if(BUILD_SQLITE_TOOL)
             DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}"
     )
    target_link_libraries(${SQLITE_TOOL_NAME} PRIVATE ${PROJECT_NAME})
+   # shell.c calls ceil() itself (always in diskusedFunc(), and with SQLITE_ENABLE_MATH_FUNCTIONS
+   # also floor()), while the library links the math library only with SQLITE_ENABLE_MATH_FUNCTIONS
+   # and privately, so a shared one doesn't pass it on
+   if(MATH_LIBRARY)
+       target_link_libraries(${SQLITE_TOOL_NAME} PRIVATE m)
+   endif()
    # if(UNIX)
    #     if(CMAKE_BUILD_TYPE STREQUAL Release)
    #         add_custom_command(TARGET ${SQLITE_TOOL_NAME}
