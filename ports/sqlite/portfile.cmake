@@ -160,7 +160,7 @@ if("in-memory-vfs" IN_LIST FEATURES)
     vcpkg_execute_required_process(
         COMMAND "${GIT}" -c core.longpaths=true -c core.autocrlf=false --work-tree=. --git-dir=.git
             apply -p3 --ignore-whitespace --whitespace=nowarn --verbose
-            "${CMAKE_CURRENT_LIST_DIR}/001-dll-definitions.patch"
+            "${CMAKE_CURRENT_LIST_DIR}/001-include-path-and-dll-definitions.patch"
         WORKING_DIRECTORY "${CURRENT_PACKAGES_DIR}/share/${INSTALLED_CMAKE_PACKAGE_NAME}/etc"
         LOGNAME git-patching-memvfs
     )

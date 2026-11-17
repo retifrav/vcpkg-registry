@@ -142,7 +142,9 @@ The CLI tool doesn't use any of those variables (*as of `3.53.1`, `shell.c` refe
 
 The `in-memory-vfs` feature installs `memvfs.c` into `share/sqlite3/etc/`, for consumers to compile it in their own projects. It is written as a loadable extension: it includes `sqlite3ext.h`, so all its SQLite API calls go through the `sqlite3_api` routines table and don't depend on how SQLite is linked. The only thing that does is the `sqlite3_memvfs_init()` entry point itself.
 
-Upstream marks that function with `__declspec(dllexport)` on Windows unconditionally. `001-dll-definitions.patch` replaces that with its own `SQLITE_MEMVFS_API` macro, which is empty by default, so a consumer project that is a DLL and needs to export `sqlite3_memvfs_init()` should set `SQLITE_MEMVFS_API=__declspec(dllexport)` compile definition. It cannot be `SQLITE_API`, because for consumers of the SQLite DLL that one is `__declspec(dllimport)`, and defining a function declared as dllimport is an error ([C2491](https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/compiler-error-c2491)). The first `3.53.1` did use `SQLITE_API` there, which only worked because consumers were getting `__declspec(dllexport)` from it.
+Upstream includes `<sqlite3ext.h>`, but this port installs the headers into `include/sqlite3/`, and only `include` is in the consumers' include directories, so `001-include-path-and-dll-definitions.patch` changes that to `<sqlite3/sqlite3ext.h>` (*before `3.54.1#1` a consumer compiling `memvfs.c` failed with `sqlite3ext.h: No such file or directory`*). `sqlite3ext.h` itself includes `"sqlite3.h"` with quotes, which resolves next to it, so it needs no change.
+
+Upstream also marks `sqlite3_memvfs_init()` with `__declspec(dllexport)` on Windows unconditionally. The same patch replaces that with its own `SQLITE_MEMVFS_API` macro, which is empty by default, so a consumer project that is a DLL and needs to export `sqlite3_memvfs_init()` should set `SQLITE_MEMVFS_API=__declspec(dllexport)` compile definition. It cannot be `SQLITE_API`, because for consumers of the SQLite DLL that one is `__declspec(dllimport)`, and defining a function declared as dllimport is an error ([C2491](https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/compiler-error-c2491)). The first `3.53.1` did use `SQLITE_API` there, which only worked because consumers were getting `__declspec(dllexport)` from it.
 
 `memvfs.c` is not a part of the amalgamation, and it isn't even in SQLite repository anymore (*removed in 2025-10, see the links in `portfile.cmake`*), so the port downloads the copy saved from `3.49.1` (*Git blob `83fc946`*).
 
@@ -154,7 +156,7 @@ To update the patch, in a temporary folder:
 $ mkdir -p ./ext/misc && cp /path/to/memvfs.c ./ext/misc/
 $ git init && git add ./ext/misc/memvfs.c
 $ # edit ./ext/misc/memvfs.c
-$ git diff > /path/to/ports/sqlite/001-dll-definitions.patch
+$ git diff > /path/to/ports/sqlite/001-include-path-and-dll-definitions.patch
 ```
 
 ### Checking on Windows
