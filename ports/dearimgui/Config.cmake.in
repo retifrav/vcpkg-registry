@@ -2,6 +2,16 @@
 
 include(CMakeFindDependencyMacro)
 
+if(@BACKEND_OPENGL2@ OR @BACKEND_OPENGL3@)
+    # the target links to OpenGL::GL, which is resolved on the consumer side
+    find_dependency(OpenGL)
+endif()
+
+if(@BACKEND_VULKAN@)
+    # the target links to Vulkan::Vulkan, which is resolved on the consumer side
+    find_dependency(Vulkan)
+endif()
+
 if(@BACKEND_GLFW@)
     find_dependency(glfw3 CONFIG REQUIRED)
 endif()

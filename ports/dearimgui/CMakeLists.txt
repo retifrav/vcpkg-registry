@@ -63,9 +63,15 @@ if(BACKEND_OPENGL2 OR BACKEND_OPENGL3)
             ${OPENGL_INCLUDE_DIR}
     )
 
+    # using imported target instead of library paths, because `${OPENGL_LIBRARIES}` expands
+    # to local paths on the build host. Consumers resolve it themselves via `find_dependency()`
+    # in `Config.cmake.in`. With GLVND it links both `OpenGL::OpenGL` and `OpenGL::GLX`,
+    # and unlike `${OPENGL_LIBRARIES}` it does not bring GLU, which Dear ImGui does not need.
+    # It is `PRIVATE`, because no public header includes GL headers and only the backends sources
+    # call GL functions. Static library still exports it as `$<LINK_ONLY:OpenGL::GL>`
     target_link_libraries(${PROJECT_NAME}
-        PUBLIC # PRIVATE?
-            ${OPENGL_LIBRARIES}
+        PRIVATE
+            OpenGL::GL
     )
 endif()
 
@@ -93,9 +99,14 @@ if(BACKEND_VULKAN)
         PRIVATE
             ${Vulkan_INCLUDE_DIRS}
     )
+    # using imported target instead of library paths, because `${Vulkan_LIBRARIES}` expands
+    # to local paths on the build host. Consumers resolve it themselves via `find_dependency()`
+    # in `Config.cmake.in`. It is `PUBLIC`, because the public `imgui_impl_vulkan.h` includes
+    # `vulkan/vulkan.h` and uses Vulkan types in its API, so consumers need its include
+    # directories too
     target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-            ${Vulkan_LIBRARIES}
+        PUBLIC
+            Vulkan::Vulkan
     )
 
     list(APPEND sources
