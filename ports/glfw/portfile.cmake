@@ -4,6 +4,7 @@ vcpkg_from_git(
     REF d9d6f0f1f967807ffade6598ea9a631ebaf37a56
     PATCHES
         001-disable-pkgconfig.patch
+        002-system-libraries-by-name.patch
 )
 
 vcpkg_cmake_configure(

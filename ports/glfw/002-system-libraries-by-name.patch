@@ -1,0 +1,21 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 24f099f..16a9ba9 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -217,14 +217,14 @@ if (UNIX AND NOT APPLE)
+     find_library(RT_LIBRARY rt)
+     mark_as_advanced(RT_LIBRARY)
+     if (RT_LIBRARY)
+-        target_link_libraries(glfw PRIVATE "${RT_LIBRARY}")
++        target_link_libraries(glfw PRIVATE rt) # ${RT_LIBRARY} expands to local path on the build host
+         list(APPEND glfw_PKG_LIBS "-lrt")
+     endif()
+ 
+     find_library(MATH_LIBRARY m)
+     mark_as_advanced(MATH_LIBRARY)
+     if (MATH_LIBRARY)
+-        target_link_libraries(glfw PRIVATE "${MATH_LIBRARY}")
++        target_link_libraries(glfw PRIVATE m) # ${MATH_LIBRARY} expands to local path on the build host
+         list(APPEND glfw_PKG_LIBS "-lm")
+     endif()
+ 
