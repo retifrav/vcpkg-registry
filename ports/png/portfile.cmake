@@ -21,7 +21,7 @@ vcpkg_from_git(
     URL git@github.com:pnggroup/libpng.git
     REF 4e3f57d50f552841550a36eabbb3fbcecacb7750
     PATCHES
-        001-single-unsuffixed-target-dependencies-installation.patch
+        001-single-unsuffixed-target-and-installation.patch
 )
 
 file(COPY

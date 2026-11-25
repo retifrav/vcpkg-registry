@@ -1,7 +1,7 @@
 {
     "name": "png",
     "version": "1.6.53",
-    "port-version": 1,
+    "port-version": 2,
     "description": "PNG reference library",
     "homepage": "https://libpng.sourceforge.io/",
     "license": "libpng-2.0",
