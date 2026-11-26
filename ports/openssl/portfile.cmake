@@ -13,7 +13,7 @@ endif()
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:openssl/openssl.git
-    REF fe686e15d84334b284f883118ed92f64b409b3aa # "openssl-${VERSION}"
+    REF aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f # "openssl-${VERSION}"
     PATCHES
         cmake-config.patch
         command-line-length.patch
@@ -22,6 +22,7 @@ vcpkg_from_git(
         windows/install-pdbs.patch
         windows/install-programs.diff # https://github.com/openssl/openssl/issues/28744
         unix/android-cc.patch
+        unix/default-search-dirs.patch
         unix/move-openssldir.patch
         unix/no-empty-dirs.patch
         unix/no-static-libs-for-shared.patch

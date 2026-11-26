@@ -1,0 +1,26 @@
+diff --git a/Configurations/unix-Makefile.tmpl b/Configurations/unix-Makefile.tmpl
+index 03b3d86..03f535c 100644
+--- a/Configurations/unix-Makefile.tmpl
++++ b/Configurations/unix-Makefile.tmpl
+@@ -336,6 +336,10 @@ libdir={- file_name_is_absolute($libdir)
+           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
+ ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
+ MODULESDIR=$(libdir)/ossl-modules
++# The default search directories compiled into libcrypto. They must not depend
++# on the install prefix, which is a folder on the build machine
++ENGINESDIR_DEFAULT=$(OPENSSLDIR)/engines-{- $sover_dirname -}
++MODULESDIR_DEFAULT=$(OPENSSLDIR)/ossl-modules
+ 
+ # Convenience variable for those who want to set the rpath in shared
+ # libraries and applications
+@@ -451,8 +455,8 @@ LIB_CPPFLAGS={- our $lib_cppflags =
+                 join(' ', $lib_cppflags,
+                           (map { '-D'.$_ }
+                                'OPENSSLDIR="\"$(OPENSSLDIR)\""',
+-                               'ENGINESDIR="\"$(ENGINESDIR)\""',
+-                               'MODULESDIR="\"$(MODULESDIR)\""'),
++                               'ENGINESDIR="\"$(ENGINESDIR_DEFAULT)\""',
++                               'MODULESDIR="\"$(MODULESDIR_DEFAULT)\""'),
+                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+ LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
+                         $target{shared_cflag} || (),

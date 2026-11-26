@@ -73,15 +73,20 @@ endif()
 cmake_path(NATIVE_PATH VCPKG_DETECTED_CMAKE_AR NORMALIZE ar)
 cmake_path(NATIVE_PATH VCPKG_DETECTED_CMAKE_LINKER NORMALIZE ld)
 
+# `--prefix` and `--openssldir` are not set here, because OpenSSL compiles them into the libraries
+# as the default locations of its configuration file, engines and modules, and the packages folder
+# on the build machine is a path that an unprivileged user on another machine might be able to create
+# and plant something there to be loaded into a privileged process (CVE-2026-34054, see
+# https://github.com/microsoft/vcpkg/pull/50518), so OpenSSL keeps its default `Program Files` paths,
+# which require administrative permissions, and the results are installed with `DESTDIR` instead
+# and then moved to where they should be
 vcpkg_build_nmake(
     SOURCE_PATH "${SOURCE_PATH}"
     PREFER_JOM
     CL_LANGUAGE NONE
     PRERUN_SHELL_RELEASE "${PERL}" Configure
-        ${CONFIGURE_OPTIONS} 
+        ${CONFIGURE_OPTIONS}
         ${OPENSSL_ARCH}
-        "--prefix=${install_dir_native}"
-        "--openssldir=${install_dir_native}"
         "AS=${as}"
         "CC=${cc}"
         "CFLAGS=${VCPKG_COMBINED_C_FLAGS_RELEASE}"
@@ -93,8 +98,6 @@ vcpkg_build_nmake(
         ${CONFIGURE_OPTIONS}
         ${OPENSSL_ARCH}
         --debug
-        "--prefix=${install_dir_native}\\debug"
-        "--openssldir=${install_dir_native}\\debug"
         "AS=${as}"
         "CC=${cc}"
         "CFLAGS=${VCPKG_COMBINED_C_FLAGS_DEBUG}"
@@ -108,53 +111,74 @@ vcpkg_build_nmake(
     OPTIONS
         "INSTALL_PDBS=${OPENSSL_BUILD_MAKES_PDBS}" # install-pdbs.patch
     OPTIONS_RELEASE
+        "DESTDIR=${install_dir_native}"
         install_runtime install_ssldirs # extra targets
+    OPTIONS_DEBUG
+        "DESTDIR=${install_dir_native}\\debug"
 )
 
-set(scripts "bin/c_rehash.pl" "misc/CA.pl" "misc/tsget.pl")
+# moves what was installed into `Program Files/OpenSSL/` under `DESTDIR` up into `DESTDIR` itself,
+# and returns the `Program Files` folder, in which `Common Files/SSL/` (OPENSSLDIR) is left
+function(z_rearrange_openssl_dirs)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "FLAVOR_PREFIX;OUT_PROGRAM_FILES_DIR" "")
+    if(DEFINED ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "z_rearrange_openssl_dirs() was passed extra arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
+    set(PREFIX_DIR "${CURRENT_PACKAGES_DIR}${ARG_FLAVOR_PREFIX}")
+    # `Program Files` or `Program Files (x86)`, depending on the target architecture
+    file(GLOB PROGRAM_FILES_DIR LIST_DIRECTORIES true "${PREFIX_DIR}/Program*")
+    list(LENGTH PROGRAM_FILES_DIR PROGRAM_FILES_DIR_COUNT)
+    if(NOT PROGRAM_FILES_DIR_COUNT EQUAL 1)
+        message(FATAL_ERROR "Expected exactly one Program Files folder in ${PREFIX_DIR}, found: ${PROGRAM_FILES_DIR}")
+    endif()
+    set(OPENSSL_INSTALL_DIR "${PROGRAM_FILES_DIR}/OpenSSL")
+    if(NOT EXISTS "${OPENSSL_INSTALL_DIR}")
+        message(FATAL_ERROR "${OPENSSL_INSTALL_DIR} does not exist")
+    endif()
+
+    # there is no `file()` command that would move folders and merge them with the existing ones
+    file(GLOB OPENSSL_INSTALL_ITEMS LIST_DIRECTORIES true "${OPENSSL_INSTALL_DIR}/*")
+    file(COPY ${OPENSSL_INSTALL_ITEMS} DESTINATION "${PREFIX_DIR}")
+    file(REMOVE_RECURSE "${OPENSSL_INSTALL_DIR}")
+
+    set("${ARG_OUT_PROGRAM_FILES_DIR}" "${PROGRAM_FILES_DIR}" PARENT_SCOPE)
+endfunction()
+
+z_rearrange_openssl_dirs(OUT_PROGRAM_FILES_DIR RELEASE_PROGRAM_FILES_DIR)
+set(RELEASE_OPENSSLDIR "${RELEASE_PROGRAM_FILES_DIR}/Common Files/SSL")
+if(NOT VCPKG_BUILD_TYPE)
+    z_rearrange_openssl_dirs(
+        FLAVOR_PREFIX "/debug"
+        OUT_PROGRAM_FILES_DIR DEBUG_PROGRAM_FILES_DIR
+    )
+    file(REMOVE_RECURSE "${DEBUG_PROGRAM_FILES_DIR}")
+endif()
+
 if("tools" IN_LIST FEATURES)
     file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/tools/${PORT}")
-    file(RENAME "${CURRENT_PACKAGES_DIR}/openssl.cnf" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/openssl.cnf")
+    file(COPY_FILE "${RELEASE_OPENSSLDIR}/openssl.cnf" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/openssl.cnf")
     if("fips" IN_LIST FEATURES)
-	file(RENAME "${CURRENT_PACKAGES_DIR}/fipsmodule.cnf" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/fipsmodule.cnf")
+        file(COPY_FILE "${RELEASE_OPENSSLDIR}/fipsmodule.cnf" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/fipsmodule.cnf")
     endif()
-    foreach(script IN LISTS scripts)
-        file(COPY "${CURRENT_PACKAGES_DIR}/${script}" DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}")
-        file(REMOVE "${CURRENT_PACKAGES_DIR}/${script}" "${CURRENT_PACKAGES_DIR}/debug/${script}")
-    endforeach()
+    file(RENAME "${CURRENT_PACKAGES_DIR}/bin/c_rehash.pl" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/c_rehash.pl")
+    file(COPY_FILE "${RELEASE_OPENSSLDIR}/misc/CA.pl" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/CA.pl")
+    file(COPY_FILE "${RELEASE_OPENSSLDIR}/misc/tsget.pl" "${CURRENT_PACKAGES_DIR}/tools/${PORT}/tsget.pl")
     vcpkg_copy_tools(TOOL_NAMES openssl AUTO_CLEAN)
 else()
-    file(REMOVE "${CURRENT_PACKAGES_DIR}/openssl.cnf")
-    file(REMOVE "${CURRENT_PACKAGES_DIR}/fipsmodule.cnf")
-    foreach(script IN LISTS scripts)
-        file(REMOVE "${CURRENT_PACKAGES_DIR}/${script}" "${CURRENT_PACKAGES_DIR}/debug/${script}")
-    endforeach()
+    file(REMOVE "${CURRENT_PACKAGES_DIR}/bin/c_rehash.pl")
     if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
         file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/bin" "${CURRENT_PACKAGES_DIR}/debug/bin")
     endif()
 endif()
+file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/bin/c_rehash.pl")
 
-vcpkg_copy_pdbs()
-
+# unlike upstream, not leaving the rest of `Program Files` (OPENSSLDIR with the configuration files
+# and the empty `certs/` and `private/`) in the package, as nothing would read it from there
 file(REMOVE_RECURSE
-    "${CURRENT_PACKAGES_DIR}/certs"
-    "${CURRENT_PACKAGES_DIR}/misc"
-    "${CURRENT_PACKAGES_DIR}/private"
+    "${RELEASE_PROGRAM_FILES_DIR}"
     "${CURRENT_PACKAGES_DIR}/lib/engines-3"
-    "${CURRENT_PACKAGES_DIR}/debug/certs"
-    "${CURRENT_PACKAGES_DIR}/debug/misc"
     "${CURRENT_PACKAGES_DIR}/debug/lib/engines-3"
-    "${CURRENT_PACKAGES_DIR}/debug/private"
     "${CURRENT_PACKAGES_DIR}/debug/include"
     "${CURRENT_PACKAGES_DIR}/debug/share"
-)
-file(REMOVE
-    "${CURRENT_PACKAGES_DIR}/ct_log_list.cnf"
-    "${CURRENT_PACKAGES_DIR}/ct_log_list.cnf.dist"
-    "${CURRENT_PACKAGES_DIR}/openssl.cnf.dist"
-    "${CURRENT_PACKAGES_DIR}/debug/ct_log_list.cnf"
-    "${CURRENT_PACKAGES_DIR}/debug/ct_log_list.cnf.dist"
-    "${CURRENT_PACKAGES_DIR}/debug/openssl.cnf"
-    "${CURRENT_PACKAGES_DIR}/debug/openssl.cnf.dist"
-    "${CURRENT_PACKAGES_DIR}/debug/fipsmodule.cnf"
 )
