@@ -117,26 +117,20 @@ index 73de511..fa61a8c 100644
  		NAMESPACE ${PROJECT_NAME}::
 diff --git a/Config.cmake.in b/Config.cmake.in
 new file mode 100644
-index 0000000..491e739
+index 0000000..6ceea6e
 --- /dev/null
 +++ b/Config.cmake.in
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,22 @@
 +@PACKAGE_INIT@
 +
 +include(CMakeFindDependencyMacro)
 +
 +find_dependency(Threads)
 +
-+if(@HTTPLIB_IS_USING_OPENSSL@)
-+    # OpenSSL COMPONENTS were added in Cmake v3.11
-+    if(CMAKE_VERSION VERSION_LESS "3.11")
-+        find_dependency(OpenSSL @_HTTPLIB_OPENSSL_MIN_VER@)
-+    else()
-+        # Once the COMPONENTS were added, they were made optional when not specified.
-+        # Since we use both, we need to search for both.
-+        find_dependency(OpenSSL @_HTTPLIB_OPENSSL_MIN_VER@ COMPONENTS Crypto SSL)
-+    endif()
-+endif()
++# there is no lookup for OpenSSL here, because this port builds without it
++# (`HTTPLIB_USE_OPENSSL_IF_AVAILABLE=0` in the portfile and no `openssl` dependency in the manifest);
++# if that ever changes, it has to be found in CONFIG mode, both here and in CMakeLists.txt:
++# `find_dependency(OpenSSL CONFIG REQUIRED)`
 +
 +if(@HTTPLIB_IS_USING_ZLIB@)
 +    find_dependency(zlib CONFIG REQUIRED)
