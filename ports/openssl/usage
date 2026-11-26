@@ -1,5 +1,8 @@
 To use OpenSSL in your project:
 
+    # it is important to find it exactly in CONFIG mode, otherwise consumers
+    # that would find OpenSSL in plain non-CONFIG form might end up linking
+    # Release libraries in Debug configuration
     find_package(OpenSSL CONFIG REQUIRED)
     target_link_libraries(main
         PRIVATE

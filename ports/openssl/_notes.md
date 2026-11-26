@@ -9,6 +9,7 @@
     - [Default folders on Windows](#default-folders-on-windows)
         - [MinGW](#mingw)
 - [CMake config without the vcpkg toolchain](#cmake-config-without-the-vcpkg-toolchain)
+- [Differences from the upstream port](#differences-from-the-upstream-port)
 
 <!-- /MarkdownTOC -->
 
@@ -72,3 +73,15 @@ Things to keep in mind:
 - `find_library()` does not search again for a cache variable that already holds a found path, so an existing build folder of a consumer keeps the wrong `LIB_EAY_*` / `SSL_EAY_*` values from before the fix until those cache entries are deleted (*or the project is configured from scratch*)
 - without the toolchain, a consumer that calls a module-mode `find_package(OpenSSL)` before any config-mode one still gets the plain `FindOpenSSL.cmake` behaviour, because the config is not involved there, and afterwards it returns early, as the targets already exist
 - a known upstream quirk of the wrapper: with a non-MSVC multi-config generator, every config-mode `find_package(OpenSSL CONFIG)` after the first one rewrites the already rewritten `OPENSSL_LIBRARIES` (*and `OPENSSL_CRYPTO_LIBRARIES` / `OPENSSL_SSL_LIBRARIES`*) once more, because the config returns early then, but the wrapper does not. That only gives a CMake dev warning (*`Link library type specifier "debug" is followed by specifier "optimized"`*) to a project that links those variables instead of the `OpenSSL::*` targets, and the resulting libraries are still right. It is kept as it is upstream, and the copy in the config does not have it, as it only runs on the first config-mode lookup
+
+## Differences from the upstream port
+
+Last compared with the microsoft/vcpkg port at `3.6.5#2` (*[microsoft/vcpkg#54220](https://github.com/microsoft/vcpkg/pull/54220)*). Apart from the formatting, the wording of messages and comments, and `vcpkg_from_git` with a commit hash, this port deliberately differs from it in the following, and that has to survive an update:
+
+- `unix/default-search-dirs.patch`, which upstream does not have - see [ENGINESDIR and MODULESDIR](#enginesdir-and-modulesdir)
+- the block in `cmake-config.patch` that pre-seeds the libraries around the `find_package(OpenSSL MODULE)` chainload (*and adds `crypt32`/`ws2_32` for the `no-shared` builds*) - see [CMake config without the vcpkg toolchain](#cmake-config-without-the-vcpkg-toolchain). The rest of that patch is the same as upstream
+- the end of `windows/portfile.cmake`: `Program Files/` is removed from the package entirely, and there is no `vcpkg_cmake_config_fixup()` (*upstream needs it only to get rid of `debug/share`, which is removed explicitly here*) - see [Default folders on Windows](#default-folders-on-windows)
+- no `vcpkg_copy_pdbs()`, as PDB files are of no interest in this registry
+- `usage` tells to use `find_package(OpenSSL CONFIG REQUIRED)`
+
+Everything else is supposed to be the same as upstream (*the other patches, `unix/configure`, `install-pc-files.cmake` and `openssl.pc.in` are byte-identical copies, and `vcpkg-cmake-wrapper.cmake.in` differs only in formatting*), so an update starts with comparing the two port folders and taking over what is new there. With `3.6.5` that was `no-asm` for any universal build (*more than one architecture in `VCPKG_OSX_ARCHITECTURES`, like in the `decovar-arm64-*-fat` triplets*) instead of the unconditional one for iOS, and the `arm64ec` target on Windows.
