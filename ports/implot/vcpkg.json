@@ -1,6 +1,6 @@
 {
     "name": "implot",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Immediate mode plotting",
     "homepage": "https://github.com/epezent/implot",
     "license": "MIT",

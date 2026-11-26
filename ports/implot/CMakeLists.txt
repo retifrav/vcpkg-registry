@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
 
-set(IMPLOT_VERSION "0.0.0" CACHE STRING "ImPlot version")
+set(IMPLOT_VERSION "0.0.0" CACHE STRING "Project version")
 
 project("implot"
     VERSION "${IMPLOT_VERSION}"
