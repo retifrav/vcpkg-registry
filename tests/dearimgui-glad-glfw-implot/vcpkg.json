@@ -1,6 +1,4 @@
 {
-    "name": "dearimgui-glad-glfw-implot",
-    "version": "0",
     "dependencies":
     [
         "glad",
