@@ -1359,7 +1359,7 @@
         "wolfssl":
         {
             "baseline": "5.9.4",
-            "port-version": 0
+            "port-version": 1
         },
         "wtl":
         {

@@ -29,11 +29,6 @@ if("quic" IN_LIST FEATURES)
     set(ENABLE_QUIC yes)
 endif()
 #
-set(ENABLE_CURVE25519 no)
-if("curve25519" IN_LIST FEATURES)
-    set(ENABLE_CURVE25519 yes)
-endif()
-#
 # these defines have no CMake option, so they can only be passed as compiler flags, but those do not
 # get into the generated `wolfssl/options.h`, so they are also added there after installation,
 # otherwise consumers would build against a different configuration than the library. Everything else
@@ -90,17 +85,27 @@ vcpkg_cmake_configure(
         -DWOLFSSL_KEYGEN=yes
         -DWOLFSSL_PKCS7=yes
         -DWOLFSSL_X963KDF=yes
-        # was disabled by default in 5.8.4 and is enabled in 5.9.4 (although the option
-        # description still says "disabled"), and then ClientHello grows to ~1.5 KB
-        # with a post-quantum (hybrid ML-KEM) key share, which some servers reset
-        # the connection on (for example, badssl.com does)
-        -DWOLFSSL_MLKEM=no
+        # post-quantum hybrid key exchange in TLS 1.3. Upstream default was `no` in 5.8.4
+        # and is `yes` in 5.9.4 (although the option description still says "disabled"),
+        # so it is set explicitly. Such a key share is sent right away, so ClientHello grows
+        # from ~300 bytes to ~1.5 KB and no longer fits into one TCP segment, which some servers
+        # cannot handle (for example, badssl.com resets such a connection every now and then).
+        # An application that has to talk to a server like that can set classical groups
+        # for that connection (`CURLOPT_SSL_EC_CURVES` with cURL)
+        -DWOLFSSL_MLKEM=yes
+        # ML-KEM is of little use without Curve25519, wolfSSL sends only one key share,
+        # and without Curve25519 that is SecP256r1MLKEM768, which hardly any server supports,
+        # so the only result would be an extra round trip (HelloRetryRequest) to agree
+        # on a classical group. With Curve25519 it is X25519MLKEM768, the same one that browsers
+        # and OpenSSL send. A server that does not support it still costs that extra round trip,
+        # as there is no second (classical) key share, like OpenSSL has
+        -DWOLFSSL_CURVE25519=yes
+        #
         -DWOLFSSL_ASIO=${ENABLE_ASIO}
         -DWOLFSSL_DTLS=${ENABLE_DTLS}
         -DWOLFSSL_DTLS13=${ENABLE_DTLS}
         -DWOLFSSL_DTLS_CID=${ENABLE_DTLS}
         -DWOLFSSL_QUIC=${ENABLE_QUIC}
-        -DWOLFSSL_CURVE25519=${ENABLE_CURVE25519}
     OPTIONS_RELEASE
         -DCMAKE_C_FLAGS=${VCPKG_COMBINED_C_FLAGS_RELEASE}
     OPTIONS_DEBUG

@@ -3,6 +3,12 @@
     [
         {
             "version": "5.9.4",
+            "port-version": 1,
+            "git-tree": "9f5bec8d120117a2a5be09ee3b5d58e36e2d6e9f"
+        },
+        {
+            "version": "5.9.4",
+            "port-version": 0,
             "git-tree": "d4f82ff4e69f044706c11fcba8110566c928f880"
         },
         {

@@ -30,7 +30,8 @@ A personal vcpkg git registry (`retifrav/vcpkg-registry`), consumed through a `v
 
 - A new wolfSSL define goes in as a CMake option if one exists, otherwise into `WOLFSSL_DEFINES_WITHOUT_OPTION` in the portfile. Never pass it as a raw C flag alone: flags don't reach the generated `wolfssl/options.h`, so consumers would compile against a different configuration than the library.
 - On a wolfSSL update, diff the `add_option` defaults in its `CMakeLists.txt` against the previous version. The option descriptions are not reliable about defaults.
-- When badssl.com checks fail, measure the ClientHello size before blaming the service.
+- badssl.com randomly resets any connection whose ClientHello spans more than one TCP segment, and with a post-quantum key share both back ends send about 1.5 KB. `badssl()` in the test script repeats those requests, so a reset there is never a reason to make the ClientHello smaller in a port.
+- In the `wolfssl` port `WOLFSSL_MLKEM` and `WOLFSSL_CURVE25519` are unconditional and belong together, so don't turn either back into a feature. Without Curve25519 every server answers the ML-KEM key share with a HelloRetryRequest, and there is no post-quantum key exchange at all.
 
 ## Versions database
 

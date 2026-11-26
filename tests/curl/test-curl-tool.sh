@@ -7,7 +7,8 @@
 #
 # It needs network access to httpbingo.org, badssl.com, nghttp2.org, www.facebook.com, github.com
 # and echo.websocket.org. Those are third-party services, so if a single check fails, re-run it
-# before blaming cURL.
+# before blaming cURL. The only failure that is handled here is badssl.com resetting the connection,
+# those requests are repeated (see `badssl()` below).
 #
 # Windows caveats:
 #
@@ -152,6 +153,28 @@ skipped=0
 crl()
 {
     "$curlTool" --max-time "$timeout" "$@"
+}
+
+# badssl.com every now and then resets the connection, if ClientHello did not fit into one TCP segment,
+# which is the case with a post-quantum key share (X25519MLKEM768 makes ClientHello about 1.5 KB),
+# and it does so to any client, cURL or not. So that is not a cURL failure, and the request is repeated
+badssl()
+{
+    local output exitCode attempt
+    for attempt in 1 2 3 4 5; do
+        output="$(crl "$@" 2>&1)"
+        exitCode=$?
+        case "$output" in
+            # the second one is how it is reported on Windows
+            *"Connection reset by peer"*|*"Connection was reset"*)
+                echo "attempt $attempt: badssl.com has reset the connection"
+            ;;
+            *) break
+            ;;
+        esac
+    done
+    printf '%s\n' "$output"
+    return $exitCode
 }
 
 section()
@@ -390,17 +413,17 @@ section "TLS"
 
 if hasFeature SSL; then
     check 'expired certificate is rejected' "$certErrors" -- \
-        crl -sS -o /dev/null https://expired.badssl.com/
+        badssl -sS -o /dev/null https://expired.badssl.com/
     check 'self-signed certificate is rejected' "$certErrors" -- \
-        crl -sS -o /dev/null https://self-signed.badssl.com/
+        badssl -sS -o /dev/null https://self-signed.badssl.com/
     check 'untrusted root is rejected' "$certErrors" -- \
-        crl -sS -o /dev/null https://untrusted-root.badssl.com/
+        badssl -sS -o /dev/null https://untrusted-root.badssl.com/
     check 'wrong host name is rejected' "$certErrors" -- \
-        crl -sS -o /dev/null https://wrong.host.badssl.com/
+        badssl -sS -o /dev/null https://wrong.host.badssl.com/
     check 'TLS 1.0 only server is rejected' 35 -- \
-        crl -sS -o /dev/null https://tls-v1-0.badssl.com:1010/
+        badssl -sS -o /dev/null https://tls-v1-0.badssl.com:1010/
     check '-k skips verification' 0 '^200$' -- \
-        crl -sS -k -o /dev/null -w '%{http_code}\n' https://self-signed.badssl.com/
+        badssl -sS -k -o /dev/null -w '%{http_code}\n' https://self-signed.badssl.com/
     check 'TLS 1.3 only' 0 '^200$' -- \
         crl -sS --tlsv1.3 -o /dev/null -w '%{http_code}\n' https://httpbingo.org/get
     if [ $schannel -eq 1 ]; then
