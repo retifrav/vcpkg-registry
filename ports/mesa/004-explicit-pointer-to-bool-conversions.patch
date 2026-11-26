@@ -1,0 +1,13 @@
+diff --git a/src/compiler/nir/nir_validate.c b/src/compiler/nir/nir_validate.c
+index 20116c51a2e..1d46a8a3d28 100644
+--- a/src/compiler/nir/nir_validate.c
++++ b/src/compiler/nir/nir_validate.c
+@@ -119,7 +119,7 @@ validate_assert_impl(validate_state *state, bool cond, const char *str,
+ }
+ 
+ #define validate_assert(state, cond) \
+-   validate_assert_impl(state, (cond), #cond, __FILE__, __LINE__)
++   validate_assert_impl(state, !!(cond), #cond, __FILE__, __LINE__)
+ 
+ static void
+ validate_num_components(validate_state *state, unsigned num_components)

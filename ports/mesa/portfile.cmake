@@ -14,6 +14,7 @@ vcpkg_from_git(
         001-dependencies.patch
         002-single-library-type-spirv-to-dxil.patch
         003-disable-we4189.patch # fails `src/compiler/nir/nir_lower_non_uniform_access.c:75`, should be fixed properly instead if disabling
+        004-explicit-pointer-to-bool-conversions.patch # MSVC 14.52 reports a pointer passed to a `bool` parameter as C4047 and C4024, and Mesa makes C4024 an error with `/we4024`
 )
 
 x_vcpkg_get_python_packages(
@@ -22,7 +23,7 @@ x_vcpkg_get_python_packages(
     PACKAGES
         packaging
         mako
-        pyyaml # doesn't seem to be needed on Windows, but is needed on other platforms
+        pyyaml # required on every platform, Mesa's `meson.build` fails the configuration without the `yaml` module
 )
 get_filename_component(PYTHON3_DIR "${PYTHON3}" DIRECTORY)
 vcpkg_add_to_path(PREPEND "${PYTHON3_DIR}")

@@ -34,6 +34,14 @@ Other dependencies that Mesa looks up (*expat, libva, lua, libelf, libudev, Dire
 
 The Flex and Bison tools are acquired only with the `opengl`, `gles1` or `gles2` features. Mesa requires them when `needs_flex_bison` in its `meson.build` is true, which is `with_any_opengl or with_freedreno_vk or with_intel_tools or with_gallium` as of `26.1.1` - they generate the GLSL compiler, glcpp and `src/mesa/program` parsers, the Intel and Freedreno assemblers. This port has no Gallium or Vulkan drivers and does not pass `-Dtools`, so `with_any_opengl` (*`opengl`, `gles1` or `gles2`*) is the only part of it that applies here. Should the port ever enable Gallium drivers (*`-Dgallium-drivers`*) or Mesa tools (*`-Dtools`*), the condition in `portfile.cmake` has to be extended.
 
+## Pointers passed to bool parameters
+
+MSVC 14.52 (*Visual Studio 2026 18.12*) reports a pointer passed to a `bool` parameter as C4047 (*"'bool' differs in levels of indirection from 'hash_entry *'"*) and C4024 (*"different types for formal and actual parameter"*), even though in C that is a valid implicit conversion, which the MSVC of Visual Studio 18.10 accepted silently. Mesa's `meson.build` passes `/we4024`, so C4024 fails the build. As of `26.1.1` the only such arguments in what `spirv_to_dxil` compiles are the `validate_assert(state, <pointer>)` calls in `src/compiler/nir/nir_validate.c`, which the macro passes into `validate_assert_impl(..., bool cond, ...)`: `004-explicit-pointer-to-bool-conversions.patch` makes the macro pass `!!(cond)` instead. Upstream Mesa (*`main` and `26.1.8` at the time of writing*) still has the plain `(cond)`.
+
+Pointers converted to `bool` in an initialization or a `return` (*`nir_print.c`, `nir_propagate_invariant.c`, `nir_split_vars.c`, `util/fossilize_db.c`, `util/mesa_cache_db.c` as of `26.1.1`*) only get C4047, which stays a warning, so they are not patched.
+
+The sites were found on Linux with GCC, by building the `spirv_to_dxil` sources with a fake `stdbool.h` (*`#define bool unsigned char`, C only*) first on the include path, plus `-ftrack-macro-expansion=0`: passing a pointer to a `bool` parameter then becomes a `passing argument N of '...' makes integer from pointer without a cast` diagnostic at the call site. Meson setup takes the `portfile.cmake` options, with `-Dplatforms=[]` instead of `['windows']` and `ninja -k 0`, so every translation unit gets compiled. It reported exactly the eight `nir_validate.c` lines MSVC 14.52 failed on, but it cannot see Windows-only (*`#ifdef _WIN32`*) code.
+
 ## Updating to a new version
 
 Check that the above still holds:
@@ -41,4 +49,5 @@ Check that the above still holds:
 1. Look through the `dependencies :` of the files listed above, and `deps_for_libmesa_util` in particular, for new external dependencies;
 2. Compare `meson.options` with the previous version for new `auto` features: they are disabled now, so a new one that `spirv_to_dxil` actually needs has to be enabled explicitly in the `portfile.cmake`;
 3. Check that `needs_flex_bison` in `meson.build` still matches the condition for acquiring flex and bison in the `portfile.cmake`, see [build tools](#build-tools);
-4. After building, check `buildtrees/mesa/config-<triplet>-rel-out.log` (*and `-dbg-`*) for `Run-time dependency ... found: YES` lines, and the installed `spirv_to_dxil.lib` for undefined symbols of libraries that the port does not depend on (*for example, with `dumpbin /symbols`*).
+4. After building, check `buildtrees/mesa/config-<triplet>-rel-out.log` (*and `-dbg-`*) for `Run-time dependency ... found: YES` lines, and the installed `spirv_to_dxil.lib` for undefined symbols of libraries that the port does not depend on (*for example, with `dumpbin /symbols`*);
+5. Check whether `004-explicit-pointer-to-bool-conversions.patch` is still needed (*upstream may have made the conversion explicit, or MSVC may have stopped reporting it*) and whether new pointer-to-`bool` arguments appeared, see [pointers passed to bool parameters](#pointers-passed-to-bool-parameters).

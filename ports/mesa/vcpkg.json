@@ -1,6 +1,7 @@
 {
     "name": "mesa",
     "version": "26.1.1",
+    "port-version": 1,
     "description": "3D graphics library",
     "homepage": "https://docs.mesa3d.org/",
     "license": "MIT AND BSL-1.0 AND SGI-B-2.0",
