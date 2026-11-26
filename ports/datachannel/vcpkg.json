@@ -1,6 +1,7 @@
 {
     "name": "datachannel",
     "version": "0.21.2",
+    "port-version": 1,
     "description": "WebRTC network library featuring Data Channels, Media Transport, and WebSockets",
     "homepage": "https://libdatachannel.org/",
     "license": "MPL-2.0",

@@ -879,7 +879,7 @@
         "datachannel":
         {
             "baseline": "0.21.2",
-            "port-version": 0
+            "port-version": 1
         },
         "dawn":
         {

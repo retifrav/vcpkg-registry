@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8a61757f..e40ea98e 100644
+index 8a61757f..a33d720f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,5 +1,5 @@
@@ -210,11 +210,12 @@ index 8a61757f..e40ea98e 100644
 @@ -400,63 +371,46 @@ else()
  		endif()
  	endif()
- 	find_package(OpenSSL REQUIRED)
+-	find_package(OpenSSL REQUIRED)
 -	target_compile_definitions(datachannel PRIVATE USE_GNUTLS=0)
 -	target_compile_definitions(datachannel-static PRIVATE USE_GNUTLS=0)
 -	target_link_libraries(datachannel PRIVATE OpenSSL::SSL)
 -	target_link_libraries(datachannel-static PRIVATE OpenSSL::SSL)
++	find_package(OpenSSL CONFIG REQUIRED)
 +	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_GNUTLS=0)
 +	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL)
  endif()
@@ -351,7 +352,7 @@ index 8a61757f..e40ea98e 100644
  # Examples
 diff --git a/cmake/Config.cmake.in b/cmake/Config.cmake.in
 new file mode 100644
-index 00000000..80b53f12
+index 00000000..5cf153f6
 --- /dev/null
 +++ b/cmake/Config.cmake.in
 @@ -0,0 +1,13 @@
@@ -360,7 +361,7 @@ index 00000000..80b53f12
 +include(CMakeFindDependencyMacro)
 +
 +find_dependency(juice CONFIG REQUIRED)
-+find_dependency(OpenSSL REQUIRED)
++find_dependency(OpenSSL CONFIG REQUIRED)
 +find_dependency(plog CONFIG REQUIRED)
 +find_dependency(SRTP CONFIG REQUIRED)
 +find_dependency(usrsctp CONFIG REQUIRED)
