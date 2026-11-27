@@ -4,7 +4,7 @@ set(VCPKG_BUILD_TYPE release)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:Tencent/rapidjson.git
-    REF 24b5e7a8b27f42fa16b96fc70aade9106cf7102f
+    REF 297637bc0a0f00dc504dbc1a47ebdaa577f8ae19
     PATCHES
         001-installation.patch
 )

@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index be860c93..05ad4113 100644
+index be860c93..d209f6ea 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,19 +1,12 @@
@@ -49,7 +49,7 @@ index be860c93..05ad4113 100644
  endif()
  
  option(RAPIDJSON_BUILD_ASAN "Build rapidjson with address sanitizer (gcc/clang)" OFF)
-@@ -37,24 +35,12 @@ option(RAPIDJSON_BUILD_UBSAN "Build rapidjson with undefined behavior sanitizer
+@@ -37,23 +35,8 @@ option(RAPIDJSON_BUILD_UBSAN "Build rapidjson with undefined behavior sanitizer
  option(RAPIDJSON_ENABLE_INSTRUMENTATION_OPT "Build rapidjson with -march or -mcpu options" ON)
  
  option(RAPIDJSON_HAS_STDSTRING "" OFF)
@@ -58,10 +58,10 @@ index be860c93..05ad4113 100644
 -endif()
  
  option(RAPIDJSON_USE_MEMBERSMAP "" OFF)
- if(RAPIDJSON_USE_MEMBERSMAP)
-     add_definitions(-DRAPIDJSON_USE_MEMBERSMAP=1)
- endif()
- 
+-if(RAPIDJSON_USE_MEMBERSMAP)
+-    add_definitions(-DRAPIDJSON_USE_MEMBERSMAP=1)
+-endif()
+-
 -find_program(CCACHE_FOUND ccache)
 -if(CCACHE_FOUND)
 -    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -70,11 +70,10 @@ index be860c93..05ad4113 100644
 -        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -fcolor-diagnostics")
 -    endif()
 -endif(CCACHE_FOUND)
--
+ 
  find_program(VALGRIND_FOUND valgrind)
  
- if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-@@ -143,27 +129,13 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "XL")
+@@ -143,27 +126,13 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "XL")
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qarch=auto")
  endif()
  
@@ -106,7 +105,7 @@ index be860c93..05ad4113 100644
  
  if(RAPIDJSON_BUILD_EXAMPLES)
      add_subdirectory(example)
-@@ -178,80 +150,29 @@ if(RAPIDJSON_BUILD_TESTS)
+@@ -178,80 +147,38 @@ if(RAPIDJSON_BUILD_TESTS)
      include(CTest)
  endif()
  
@@ -141,10 +140,15 @@ index be860c93..05ad4113 100644
 -    PATTERN "CMakeFiles" EXCLUDE
 -    PATTERN "Makefile" EXCLUDE
 -    PATTERN "cmake_install.cmake" EXCLUDE)
-+add_library(${PROJECT_NAME} INTERFACE)
++include(GNUInstallDirs)
  
 -# Provide config and version files to be used by other applications
 -# ===============================
++add_library(${PROJECT_NAME} INTERFACE)
+ 
+-################################################################################
+-# Export package for use from the build tree
+-EXPORT( PACKAGE ${PROJECT_NAME} )
 +target_include_directories(${PROJECT_NAME}
 +    INTERFACE
 +        # where top-level project will look for the library's public headers
@@ -153,10 +157,6 @@ index be860c93..05ad4113 100644
 +        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 +)
  
--################################################################################
--# Export package for use from the build tree
--EXPORT( PACKAGE ${PROJECT_NAME} )
--
 -# Create the RapidJSONConfig.cmake file for other cmake projects.
 -# ... for the build tree
 -SET( CONFIG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -174,16 +174,22 @@ index be860c93..05ad4113 100644
 -FILE( RELATIVE_PATH REL_INCLUDE_DIR
 -    "${CMAKECONFIG_INSTALL_DIR}"
 -    "${CMAKE_INSTALL_PREFIX}/include" )
--
++if(RAPIDJSON_HAS_STDSTRING)
++    target_compile_definitions(${PROJECT_NAME}
++        INTERFACE
++            "RAPIDJSON_HAS_STDSTRING"
++    )
++endif()
+ 
 -SET( ${PROJECT_NAME}_INCLUDE_DIR "\${${PROJECT_NAME}_CMAKE_DIR}/${REL_INCLUDE_DIR}" )
 -SET( CONFIG_SOURCE_DIR )
 -SET( CONFIG_DIR )
 -CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in
 -    ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake @ONLY )
-+if(RAPIDJSON_HAS_STDSTRING)
++if(RAPIDJSON_USE_MEMBERSMAP)
 +    target_compile_definitions(${PROJECT_NAME}
 +        INTERFACE
-+            "RAPIDJSON_HAS_STDSTRING"
++            "RAPIDJSON_USE_MEMBERSMAP=1"
 +    )
 +endif()
  
