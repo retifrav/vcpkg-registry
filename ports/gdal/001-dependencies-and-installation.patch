@@ -222,8 +222,7 @@ index 47675f0c90..460a31c4b0 100644
 -]])
 +set(GDAL_IMPORT_DEPENDENCIES)
  if(TARGET Threads::Threads)
--  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(Threads)\n")
-+  string(APPEND GDAL_IMPORT_DEPENDENCIES "#find_dependency(Threads)\n") # where are the platform checks? Finding Threads isn't needed everywhere
+   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(Threads)\n")
  endif()
  
  # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
