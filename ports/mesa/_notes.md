@@ -1,6 +1,10 @@
 # Maintainer notes
 
-At the moment this port is used only for getting the SpirvToDxil library (*the `spirv-to-dxil` default feature*). No Gallium or Vulkan drivers are built (*`-Dgallium-drivers=[]` and `-Dvulkan-drivers=[]`*), and neither are other features (*`opengl`, `gles1`, `gles2`, `egl`, `offscreen`*).
+At the moment this port is used only for getting the SpirvToDxil library (*the `spirv-to-dxil` default feature*). No Gallium or Vulkan drivers are built (*`-Dgallium-drivers=[]` and `-Dvulkan-drivers=[]`*), and neither are other features (*`opengl`, `gles1`, `gles2`, `egl`*).
+
+LLVM is always disabled (*`-Dllvm=disabled`*), and the port has no `llvm` feature - unlike the upstream microsoft/vcpkg port, which has one and on Windows always builds with LLVM. So an `"llvm" IN_LIST FEATURES` condition taken over from there would never be true here.
+
+There is no `offscreen` feature (*OSMesa*) either: as of `26.1.1` Mesa's `meson.options` has no `osmesa` option, so there is nothing for it to enable.
 
 ## No feature auto-discovery
 

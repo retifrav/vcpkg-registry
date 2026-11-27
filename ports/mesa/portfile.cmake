@@ -73,24 +73,12 @@ list(APPEND MESA_OPTIONS -Dcpp_rtti=true)
 # on Windows, which requires LLVM and conflicts with `-Dllvm=disabled`
 list(APPEND MESA_OPTIONS -Dgallium-drivers=[])
 list(APPEND MESA_OPTIONS -Dvulkan-drivers=[])
+list(APPEND MESA_OPTIONS -Dllvm=disabled)
 
 if("opengl" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Dopengl=true)
 else()
     list(APPEND MESA_OPTIONS -Dopengl=false)
-endif()
-
-# seems to be deprecated?
-#if("offscreen" IN_LIST FEATURES)
-#    list(APPEND MESA_OPTIONS -Dosmesa=true)
-#else()
-#    list(APPEND MESA_OPTIONS -Dosmesa=false)
-#endif()
-
-if("llvm" IN_LIST FEATURES)
-    list(APPEND MESA_OPTIONS -Dllvm=enabled)
-else()
-    list(APPEND MESA_OPTIONS -Dllvm=disabled)
 endif()
 
 set(MESA_USE_GLES NO)

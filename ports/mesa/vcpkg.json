@@ -47,14 +47,6 @@
                 "opengl"
             ]
         },
-        "offscreen":
-        {
-            "description": "Build with support for offscreen rendering (OSMesa)",
-            "dependencies":
-            [
-                "opengl"
-            ]
-        },
         "opengl":
         {
             "description": "Build OpenGL library"
