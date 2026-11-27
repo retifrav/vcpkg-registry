@@ -1,0 +1,311 @@
+diff --git a/build/VS2010/libzstd-dll/libzstd-dll.rc b/build/VS2010/libzstd-dll/libzstd-dll.rc
+index 13e8746..82244f6 100644
+--- a/build/VS2010/libzstd-dll/libzstd-dll.rc
++++ b/build/VS2010/libzstd-dll/libzstd-dll.rc
+@@ -35,9 +35,17 @@ BEGIN
+             VALUE "CompanyName", "Meta Platforms, Inc."
+             VALUE "FileDescription", "Zstandard - Fast and efficient compression algorithm"
+             VALUE "FileVersion", ZSTD_VERSION_STRING
+-            VALUE "InternalName", "libzstd.dll"
++#ifdef _DEBUG
++            VALUE "InternalName", "zstdd.dll"
++#else
++            VALUE "InternalName", "zstd.dll"
++#endif
+             VALUE "LegalCopyright", "Copyright (c) Meta Platforms, Inc. and affiliates."
+-            VALUE "OriginalFilename", "libzstd.dll"
++#ifdef _DEBUG
++            VALUE "OriginalFilename", "zstdd.dll"
++#else
++            VALUE "OriginalFilename", "zstd.dll"
++#endif
+             VALUE "ProductName", "Zstandard"
+             VALUE "ProductVersion", ZSTD_VERSION_STRING
+         END
+diff --git a/build/cmake/CMakeLists.txt b/build/cmake/CMakeLists.txt
+index 6d39885..bb3de6d 100644
+--- a/build/cmake/CMakeLists.txt
++++ b/build/cmake/CMakeLists.txt
+@@ -7,7 +7,7 @@
+ # in the COPYING file in the root directory of this source tree).
+ # ################################################################
+ 
+-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.28)
+ 
+ #-----------------------------------------------------------------------------
+ # Setup CMake environment
+@@ -84,8 +84,3 @@ include(ZstdDependencies)
+ # Configure build targets
+ #-----------------------------------------------------------------------------
+ include(ZstdBuild)
+-
+-#-----------------------------------------------------------------------------
+-# Configure package generation
+-#-----------------------------------------------------------------------------
+-include(ZstdPackage)
+diff --git a/build/cmake/CMakeModules/ZstdVersion.cmake b/build/cmake/CMakeModules/ZstdVersion.cmake
+index fceb0ec..fe50a42 100644
+--- a/build/cmake/CMakeModules/ZstdVersion.cmake
++++ b/build/cmake/CMakeModules/ZstdVersion.cmake
+@@ -2,20 +2,6 @@
+ # ZSTD Version Configuration
+ # ################################################################
+ 
+-# Setup CMake policy version
+-set(ZSTD_MAX_VALIDATED_CMAKE_MAJOR_VERSION "3")
+-set(ZSTD_MAX_VALIDATED_CMAKE_MINOR_VERSION "13")
+-
+-# Determine appropriate policy version
+-if("${ZSTD_MAX_VALIDATED_CMAKE_MAJOR_VERSION}" EQUAL "${CMAKE_MAJOR_VERSION}" AND
+-   "${ZSTD_MAX_VALIDATED_CMAKE_MINOR_VERSION}" GREATER "${CMAKE_MINOR_VERSION}")
+-    set(ZSTD_CMAKE_POLICY_VERSION "${CMAKE_VERSION}")
+-else()
+-    set(ZSTD_CMAKE_POLICY_VERSION "${ZSTD_MAX_VALIDATED_CMAKE_MAJOR_VERSION}.${ZSTD_MAX_VALIDATED_CMAKE_MINOR_VERSION}.0")
+-endif()
+-
+-cmake_policy(VERSION ${ZSTD_CMAKE_POLICY_VERSION})
+-
+ # Parse version from header file
+ include(GetZstdLibraryVersion)
+ GetZstdLibraryVersion(${LIBRARY_DIR}/zstd.h zstd_VERSION_MAJOR zstd_VERSION_MINOR zstd_VERSION_PATCH)
+diff --git a/build/cmake/lib/CMakeLists.txt b/build/cmake/lib/CMakeLists.txt
+index 5ce2400..2cff26e 100644
+--- a/build/cmake/lib/CMakeLists.txt
++++ b/build/cmake/lib/CMakeLists.txt
+@@ -7,11 +7,9 @@
+ # in the COPYING file in the root directory of this source tree).
+ # ################################################################
+ 
+-project(libzstd C) # ASM language is conditionally enabled where supported
+-
+ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+ option(ZSTD_BUILD_STATIC "BUILD STATIC LIBRARIES" ON)
+-option(ZSTD_BUILD_SHARED "BUILD SHARED LIBRARIES" ON)
++option(ZSTD_BUILD_SHARED "BUILD SHARED LIBRARIES" OFF)
+ option(ZSTD_BUILD_COMPRESSION "BUILD COMPRESSION MODULE" ON)
+ option(ZSTD_BUILD_DECOMPRESSION "BUILD DECOMPRESSION MODULE" ON)
+ option(ZSTD_BUILD_DICTBUILDER "BUILD DICTBUILDER MODULE" ON)
+@@ -29,8 +27,22 @@ set_property(CACHE ZDICTLIB_VISIBLE PROPERTY STRINGS "" "hidden" "default" "prot
+ set_property(CACHE ZSTDLIB_STATIC_API PROPERTY STRINGS "" "hidden" "default" "protected" "internal")
+ set_property(CACHE ZDICTLIB_STATIC_API PROPERTY STRINGS "" "hidden" "default" "protected" "internal")
+ 
+-if(NOT ZSTD_BUILD_SHARED AND NOT ZSTD_BUILD_STATIC)
+-    message(SEND_ERROR "You need to build at least one flavor of libzstd")
++if(ZSTD_BUILD_SHARED AND ZSTD_BUILD_STATIC)
++    message(
++        FATAL_ERROR
++            "Cannot build both static and shared variants of the library at the same time, you should set "
++            "either ZSTD_BUILD_SHARED or ZSTD_BUILD_STATIC but not both"
++    )
++elseif(ZSTD_BUILD_SHARED)
++    set(ZSTD_LIBRARY_TYPE SHARED)
++elseif(ZSTD_BUILD_STATIC)
++    set(ZSTD_LIBRARY_TYPE STATIC)
++else()
++    message(
++        FATAL_ERROR
++            "Neither shared nor static variant of the library is enabled, you should set "
++            "either ZSTD_BUILD_SHARED or ZSTD_BUILD_STATIC"
++    )
+ endif()
+ 
+ file(GLOB CommonSources ${LIBRARY_DIR}/common/*.c)
+@@ -123,168 +135,61 @@ endmacro ()
+ # Define directories containing the library's public headers
+ set(PUBLIC_INCLUDE_DIRS ${LIBRARY_DIR})
+ set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} /I \"${LIBRARY_DIR}\"")
+-# Split project to static and shared libraries build
+-if (ZSTD_BUILD_SHARED)
+-    add_library(libzstd_shared SHARED ${Sources} ${Headers} ${PlatformDependResources})
+-    target_include_directories(libzstd_shared INTERFACE $<BUILD_INTERFACE:${PUBLIC_INCLUDE_DIRS}>)
+-    if (ZSTD_MULTITHREAD_SUPPORT)
+-        target_compile_definitions(libzstd_shared PUBLIC ZSTD_MULTITHREAD)
+-        if (UNIX)
+-            target_link_libraries(libzstd_shared ${THREADS_LIBS})
+-        endif ()
+-    endif ()
+-    add_definition(libzstd_shared ZSTDLIB_VISIBLE)
+-    add_definition(libzstd_shared ZSTDERRORLIB_VISIBLE)
+-    add_definition(libzstd_shared ZDICTLIB_VISIBLE)
+-    add_definition(libzstd_shared ZSTDLIB_STATIC_API)
+-    add_definition(libzstd_shared ZDICTLIB_STATIC_API)
+-endif ()
+-if (ZSTD_BUILD_STATIC)
+-    add_library(libzstd_static STATIC ${Sources} ${Headers})
+-    target_include_directories(libzstd_static INTERFACE $<BUILD_INTERFACE:${PUBLIC_INCLUDE_DIRS}>)
+-    if (ZSTD_MULTITHREAD_SUPPORT)
+-        target_compile_definitions(libzstd_static PUBLIC ZSTD_MULTITHREAD)
+-        if (UNIX)
+-            target_link_libraries(libzstd_static ${THREADS_LIBS})
+-        endif ()
+-    endif ()
+-    add_definition(libzstd_static ZSTDLIB_VISIBLE)
+-    add_definition(libzstd_static ZSTDERRORLIB_VISIBLE)
+-    add_definition(libzstd_static ZDICTLIB_VISIBLE)
+-    add_definition(libzstd_static ZSTDLIB_STATIC_API)
+-    add_definition(libzstd_static ZDICTLIB_STATIC_API)
+-endif ()
+-if (ZSTD_BUILD_SHARED AND NOT ZSTD_BUILD_STATIC)
+-    if (NOT BUILD_SHARED_LIBS)
+-        message(WARNING "BUILD_SHARED_LIBS is OFF, but ZSTD_BUILD_SHARED is ON and ZSTD_BUILD_STATIC is OFF, which takes precedence, so libzstd is a shared library")
+-    endif ()
+-    add_library(libzstd INTERFACE)
+-    target_link_libraries(libzstd INTERFACE libzstd_shared)
+-endif ()
+-if (ZSTD_BUILD_STATIC AND NOT ZSTD_BUILD_SHARED)
+-    if (BUILD_SHARED_LIBS)
+-        message(WARNING "BUILD_SHARED_LIBS is ON, but ZSTD_BUILD_SHARED is OFF and ZSTD_BUILD_STATIC is ON, which takes precedence, is set so libzstd is a static library")
+-    endif ()
+-    add_library(libzstd INTERFACE)
+-    target_link_libraries(libzstd INTERFACE libzstd_static)
++# Single library target, its type is chosen by ZSTD_BUILD_SHARED / ZSTD_BUILD_STATIC
++add_library(${PROJECT_NAME} ${ZSTD_LIBRARY_TYPE} ${Sources} ${Headers})
++if (ZSTD_BUILD_SHARED AND PlatformDependResources)
++    target_sources(${PROJECT_NAME} PRIVATE ${PlatformDependResources})
+ endif ()
+-if (ZSTD_BUILD_SHARED AND ZSTD_BUILD_STATIC)
+-    # If both ZSTD_BUILD_SHARED and ZSTD_BUILD_STATIC are set, which is the
+-    # default, fallback to using BUILD_SHARED_LIBS to determine whether to
+-    # set libzstd to static or shared.
+-    if (BUILD_SHARED_LIBS)
+-        add_library(libzstd INTERFACE)
+-        target_link_libraries(libzstd INTERFACE libzstd_shared)
+-    else ()
+-        add_library(libzstd INTERFACE)
+-        target_link_libraries(libzstd INTERFACE libzstd_static)
++# PUBLIC and not INTERFACE, so the resource compiler finds zstd.h too
++target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PUBLIC_INCLUDE_DIRS}>)
++if (ZSTD_MULTITHREAD_SUPPORT)
++    target_compile_definitions(${PROJECT_NAME} PUBLIC ZSTD_MULTITHREAD)
++    if (UNIX AND NOT APPLE)
++        target_link_libraries(${PROJECT_NAME} ${THREADS_LIBS})
+     endif ()
+ endif ()
++add_definition(${PROJECT_NAME} ZSTDLIB_VISIBLE)
++add_definition(${PROJECT_NAME} ZSTDERRORLIB_VISIBLE)
++add_definition(${PROJECT_NAME} ZDICTLIB_VISIBLE)
++add_definition(${PROJECT_NAME} ZSTDLIB_STATIC_API)
++add_definition(${PROJECT_NAME} ZDICTLIB_STATIC_API)
+ 
+ # Add specific compile definitions for MSVC project
+ if (MSVC)
+     if (ZSTD_BUILD_SHARED)
+-        set_property(TARGET libzstd_shared APPEND PROPERTY COMPILE_DEFINITIONS "ZSTD_DLL_EXPORT=1;ZSTD_HEAPMODE=0;_CONSOLE;_CRT_SECURE_NO_WARNINGS")
++        set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS "ZSTD_DLL_EXPORT=1;ZSTD_HEAPMODE=0;_CONSOLE;_CRT_SECURE_NO_WARNINGS")
+     endif ()
+     if (ZSTD_BUILD_STATIC)
+-        set_property(TARGET libzstd_static APPEND PROPERTY COMPILE_DEFINITIONS "ZSTD_HEAPMODE=0;_CRT_SECURE_NO_WARNINGS")
++        set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY COMPILE_DEFINITIONS "ZSTD_HEAPMODE=0;_CRT_SECURE_NO_WARNINGS")
+     endif ()
+ endif ()
+ 
+-# With MSVC static library needs to be renamed to avoid conflict with import library
+-if (MSVC OR (WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MINGW))
+-    set(STATIC_LIBRARY_BASE_NAME zstd_static)
+-else ()
+-    set(STATIC_LIBRARY_BASE_NAME zstd)
+-endif ()
++# The binaries are named the same for static and shared variants
++set_target_properties(
++        ${PROJECT_NAME}
++        PROPERTIES
++        OUTPUT_NAME zstd
++        DEBUG_POSTFIX d
++        PUBLIC_HEADER "${PublicHeaders}")
+ 
+-# Define static and shared library names
+ if (ZSTD_BUILD_SHARED)
+     set_target_properties(
+-            libzstd_shared
++            ${PROJECT_NAME}
+             PROPERTIES
+-            OUTPUT_NAME zstd
+             VERSION ${ZSTD_FULL_VERSION}
+             SOVERSION ${zstd_VERSION_MAJOR})
+-
+-    if (ZSTD_FRAMEWORK)
+-        set_target_properties(
+-                libzstd_shared
+-                PROPERTIES
+-                FRAMEWORK TRUE
+-                FRAMEWORK_VERSION "${ZSTD_FULL_VERSION}"
+-                PRODUCT_BUNDLE_IDENTIFIER "github.com/facebook/zstd"
+-                XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
+-                PUBLIC_HEADER "${PublicHeaders}"
+-                OUTPUT_NAME "zstd"
+-                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+-                XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
+-                XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
+-                MACOSX_FRAMEWORK_IDENTIFIER "github.com/facebook/zstd"
+-                MACOSX_FRAMEWORK_BUNDLE_VERSION "${ZSTD_FULL_VERSION}"
+-                MACOSX_FRAMEWORK_SHORT_VERSION_STRING "${ZSTD_SHORT_VERSION}"
+-                MACOSX_RPATH TRUE
+-                RESOURCE ${PublicHeaders})
+-    endif ()
+ endif ()
+ 
+ if (ZSTD_BUILD_STATIC)
+     set_target_properties(
+-            libzstd_static
++            ${PROJECT_NAME}
+             PROPERTIES
+-            POSITION_INDEPENDENT_CODE On
+-            OUTPUT_NAME ${STATIC_LIBRARY_BASE_NAME})
+-
+-    if (ZSTD_FRAMEWORK)
+-        set_target_properties(
+-                libzstd_static
+-                PROPERTIES
+-                FRAMEWORK TRUE
+-                FRAMEWORK_VERSION "${ZSTD_FULL_VERSION}"
+-                PRODUCT_BUNDLE_IDENTIFIER "github.com/facebook/zstd/${STATIC_LIBRARY_BASE_NAME}"
+-                XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
+-                PUBLIC_HEADER "${PublicHeaders}"
+-                OUTPUT_NAME "${STATIC_LIBRARY_BASE_NAME}"
+-                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+-                XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
+-                XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
+-                MACOSX_FRAMEWORK_IDENTIFIER "github.com/facebook/zstd/${STATIC_LIBRARY_BASE_NAME}"
+-                MACOSX_FRAMEWORK_BUNDLE_VERSION "${ZSTD_FULL_VERSION}"
+-                MACOSX_FRAMEWORK_SHORT_VERSION_STRING "${ZSTD_SHORT_VERSION}"
+-                MACOSX_RPATH TRUE
+-                RESOURCE ${PublicHeaders})
+-    endif ()
++            POSITION_INDEPENDENT_CODE On)
+ endif ()
+ 
+-# pkg-config
+-include(JoinPaths) # can be replaced by cmake_path(APPEND) in CMake 3.20
+-set(PREFIX "${CMAKE_INSTALL_PREFIX}")
+-set(EXEC_PREFIX "\${prefix}")
+-join_paths(LIBDIR "\${exec_prefix}" "${CMAKE_INSTALL_LIBDIR}")
+-join_paths(INCLUDEDIR "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+-set(LIBS_PRIVATE "${THREADS_LIBS}")
+-set(VERSION "${zstd_VERSION}")
+-
+-configure_file("${LIBRARY_DIR}/libzstd.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/libzstd.pc" @ONLY)
+-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libzstd.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+-
+ # install target
+-install(FILES ${PublicHeaders} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+-
+-foreach(target_suffix IN ITEMS "_shared" "_static" "")
+-    if(TARGET "libzstd${target_suffix}")
+-        install(TARGETS "libzstd${target_suffix}"
+-            EXPORT "zstdExports${target_suffix}"
+-            INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+-            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+-            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+-            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+-            BUNDLE DESTINATION "${CMAKE_INSTALL_BINDIR}"
+-            FRAMEWORK DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runtime OPTIONAL
+-            PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+-            )
+-    endif()
+-endforeach()
++set(PROJECT_NAMESPACE_FOR_PACKAGE "zstd")
++include("${CMAKE_CURRENT_SOURCE_DIR}/Installing.cmake")
+ 
+ # uninstall target
+ if (NOT ZSTD_IS_SUBPROJECT AND NOT TARGET uninstall)

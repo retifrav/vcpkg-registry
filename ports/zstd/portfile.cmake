@@ -1,9 +1,18 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL git@github.com:facebook/zstd.git
-    REF 794ea1b0afca0f020f4e57b6732332231fb23c70
+    REF 916e8e70b33317d469a41ee837e47317807815c8
     PATCHES
-        single-target.patch
+        001-single-target.patch
+)
+
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Installing.cmake"
+    DESTINATION "${SOURCE_PATH}/build/cmake/lib"
+)
+file(COPY
+    "${CURRENT_HOST_INSTALLED_DIR}/share/decovar-vcpkg-cmake/common/Config.cmake.in"
+    DESTINATION "${SOURCE_PATH}/build/cmake/lib"
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" ZSTD_BUILD_STATIC)
@@ -23,9 +32,7 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
-
-vcpkg_fixup_pkgconfig()
+vcpkg_cmake_config_fixup()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
