@@ -1,0 +1,22 @@
+{
+    "name": "lz4",
+    "version": "1.11.1",
+    "description": "Extremely fast lossless compression algorithm",
+    "homepage": "https://lz4.org/",
+    "license": "BSD-2-Clause",
+    "dependencies":
+    [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        {
+            "name": "decovar-vcpkg-cmake",
+            "host": true
+        }
+    ]
+}
