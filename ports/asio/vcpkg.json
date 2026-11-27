@@ -29,7 +29,7 @@
                 "boost-coroutine"
             ]
         },
-        "ssl":
+        "openssl":
         {
             "description": "Enabled SSL support",
             "dependencies":

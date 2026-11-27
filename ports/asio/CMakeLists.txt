@@ -8,8 +8,6 @@ option(ASIO_COROUTINE "Enable launching coroutines with spawn() (requires Boost)
 option(ASIO_SSL "Enabled SSL support (requires OpenSSL)" 0)
 option(ASIO_REGEX "Enable using read_until() or async_read_until() overloads with regular expressions (requires Boost)" 0)
 
-set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Filename postfix for libraries under DEBUG configuration")
-
 add_library(${PROJECT_NAME} INTERFACE)
 add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
 
