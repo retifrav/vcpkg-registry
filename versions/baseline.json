@@ -868,8 +868,8 @@
         },
         "cpp-http":
         {
-            "baseline": "0.15.3",
-            "port-version": 2
+            "baseline": "0.67.0",
+            "port-version": 0
         },
         "curl":
         {

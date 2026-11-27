@@ -1,7 +1,6 @@
 {
     "name": "cpp-http",
-    "version": "0.15.3",
-    "port-version": 2,
+    "version": "0.67.0",
     "description": "Header-only HTTP/HTTPS server and client library",
     "homepage": "https://github.com/yhirose/cpp-httplib",
     "license": "MIT",
@@ -15,20 +14,52 @@
             "name": "vcpkg-cmake-config",
             "host": true
         },
-        "brotli",
         {
-            "name": "zlib",
-            "version>=": "1.3.2"
+            "name": "decovar-vcpkg-cmake",
+            "host": true
         }
+    ],
+    "default-features":
+    [
+        "brotli",
+        "zlib",
+        "zstd"
     ],
     "features":
     {
-        "tests":
+        "brotli":
         {
-            "description": "Enable tests",
+            "description": "Brotli compression support",
             "dependencies":
             [
-                "gtest"
+                "brotli"
+            ]
+        },
+        "openssl":
+        {
+            "description": "HTTPS support via OpenSSL",
+            "dependencies":
+            [
+                "openssl"
+            ]
+        },
+        "zlib":
+        {
+            "description": "gzip compression support",
+            "dependencies":
+            [
+                {
+                    "name": "zlib",
+                    "version>=": "1.3.2"
+                }
+            ]
+        },
+        "zstd":
+        {
+            "description": "Zstandard compression support",
+            "dependencies":
+            [
+                "zstd"
             ]
         }
     }
