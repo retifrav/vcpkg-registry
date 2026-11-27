@@ -70,7 +70,7 @@
             "dependencies":
             [
                 {
-                    "$comment": "Defaults to Schannel on Windows, unless http3 is also enabled",
+                    "$comment": "Defaults to Schannel on Windows",
                     "name": "curl",
                     "default-features": false,
                     "features":
